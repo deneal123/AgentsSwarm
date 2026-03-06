@@ -1,0 +1,39 @@
+[submodule "services/gateway_service"]
+	path = services/gateway_service
+	url = https://github.com/deneal123/gateway_service.git
+	branch = main
+
+[submodule "services/orchestrator"]
+	path = services/orchestrator
+	url = https://github.com/deneal123/orchestrator.git
+	branch = main
+
+[submodule "services/vllm_service"]
+	path = services/vllm_service
+	url = https://github.com/deneal123/vllm_service.git
+	branch = main
+
+[submodule "services/triton_inference"]
+	path = services/triton_inference
+	url = https://github.com/deneal123/triton_inference.git
+	branch = main
+
+[submodule "services/smolvla_service"]
+	path = services/smolvla_service
+	url = https://github.com/deneal123/smolvla_service.git
+	branch = main
+
+[submodule "services/communication_service"]
+	path = services/communication_service
+	url = https://github.com/deneal123/communication_service.git
+	branch = main
+
+[submodule "services/robot_edge"]
+	path = services/robot_edge
+	url = https://github.com/deneal123/robot_edge.git
+	branch = main
+
+[submodule "services/frontend"]
+	path = services/frontend
+	url = https://github.com/deneal123/frontend.git
+	branch = main

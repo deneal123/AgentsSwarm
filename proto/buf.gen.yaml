@@ -1,0 +1,74 @@
+version: v2
+# =============================================================================
+# buf.gen.yaml — генерация gRPC/Protobuf клиентов для всех сервисов
+#
+# Использование:
+#   cd proto/
+#   buf generate                      # через buf registry (требует `buf registry login`)
+#   bash scripts/gen-proto.sh         # локально через grpcio-tools (без регистрации)
+#
+# Результат:
+#   services/<service>/src/<pkg>/proto/   — *_pb2.py + *_pb2.pyi + *_pb2_grpc.py
+#   services/frontend/src/proto/          — *.ts (ConnectRPC)
+# =============================================================================
+
+plugins:
+  # ── GatewayService ──────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/gateway_service/src/gateway/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/gateway_service/src/gateway/proto
+  - remote: buf.build/grpc/python
+    out: ../services/gateway_service/src/gateway/proto
+
+  # ── Orchestrator ────────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/orchestrator/src/orchestrator/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/orchestrator/src/orchestrator/proto
+  - remote: buf.build/grpc/python
+    out: ../services/orchestrator/src/orchestrator/proto
+
+  # ── vLLMService ─────────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/vllm_service/src/vllm_service/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/vllm_service/src/vllm_service/proto
+  - remote: buf.build/grpc/python
+    out: ../services/vllm_service/src/vllm_service/proto
+
+  # ── TritonInference ─────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/triton_inference/src/triton_service/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/triton_inference/src/triton_service/proto
+  - remote: buf.build/grpc/python
+    out: ../services/triton_inference/src/triton_service/proto
+
+  # ── SmolVLAService ──────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/smolvla_service/src/smolvla_service/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/smolvla_service/src/smolvla_service/proto
+  - remote: buf.build/grpc/python
+    out: ../services/smolvla_service/src/smolvla_service/proto
+
+  # ── RobotEdge ───────────────────────────────────────────────────────────────
+  - remote: buf.build/protocolbuffers/python
+    out: ../services/robot_edge/src/robot_edge/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../services/robot_edge/src/robot_edge/proto
+  - remote: buf.build/grpc/python
+    out: ../services/robot_edge/src/robot_edge/proto
+
+  # ── Frontend (TypeScript, ConnectRPC) ───────────────────────────────────────
+  # Генерирует TypeScript-типы + ConnectRPC клиенты
+  # Зависимости npm: @connectrpc/connect @connectrpc/connect-web @bufbuild/protobuf
+  - remote: buf.build/connectrpc/es
+    out: ../services/frontend/src/proto
+    opt:
+      - target=ts
+  - remote: buf.build/bufbuild/es
+    out: ../services/frontend/src/proto
+    opt:
+      - target=ts

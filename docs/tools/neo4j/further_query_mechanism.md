@@ -1,0 +1,99 @@
+Implicit (or auto-commit) transactions
+Implicit transactions are the only ones that can be used for CALL { …​ } IN TRANSACTIONS queries.
+Implicit transactions are the most basic and limited form of transactions. The driver does not automatically retry implicit transactions, as it does instead for queries run with .execute_query() and with managed transactions. Implicit transactions should only be used when the other query interfaces do not fit the purpose, or for quick prototyping.
+
+You run an implicit transaction with the method Session.run(). It returns a Result object that needs to be processed accordingly.
+
+with driver.session(database="<database-name>") as session:
+    res = session.run("CREATE (a:Person {name: $name})", name="Licia")
+    res.consume()
+To ensure an implicit transaction is committed, consume all records (either by calling .consume() on its result or by iterating over all records). Not consuming all records yields potentially surprising behavior: there is no guarantee on when exactly an implicit transaction will be committed during the lifetime of a session.
+
+Don’t rely on session closure for committing implicit transactions. Pending queries will be committed to the database before closing the session, but there is no guarantee that they will succeed, and no exception will be raised unless the result is explicitly processed in some way. The following example contains a broken query which might not result in an exception:
+
+with driver.session(database="<database-name>") as session:
+    session.run("""
+    UNWIND [4, 2, 1, 0] AS i
+    CALL (i) {
+      CREATE (:Person {num: 100/i}) // Fails for i = 0
+    } IN TRANSACTIONS OF 2 ROWS
+    RETURN i
+    """)
+Since the driver cannot figure out whether the query in a session.run() call requires a read or write session with the database, it defaults to write. If your implicit transaction contains read queries only, there is a performance gain in making the driver aware by setting the keyword argument default_access_mode=neo4j.READ_ACCESS when creating the session.
+
+Import CSV files
+The most common use case for using Session.run() is for importing large CSV files into the database with the LOAD CSV Cypher clause, and preventing timeout errors due to the size of the transaction.
+
+Import CSV data into a Neo4j database
+with driver.session(database="<database-name>") as session:
+    result = session.run("""
+        LOAD CSV FROM 'https://data.neo4j.com/bands/artists.csv' AS line
+        CALL {
+            WITH line
+            MERGE (:Artist {name: line[1], age: toInteger(line[2])})
+        } IN TRANSACTIONS OF 2 ROWS
+    """)
+    print(result.consume().counters)
+While LOAD CSV can be a convenience, there is nothing wrong in deferring the parsing of the CSV file to your Python application and avoiding LOAD CSV. In fact, moving the parsing logic to the application can give you more control over the importing process. For efficient bulk data insertion, see Performance → Batch data creation.
+For more information, see Cypher → Clauses → Load CSV.
+
+Transaction configuration
+The Query object allows to specify a query timeout and to attach metadata to the transaction. The metadata is visible in the server logs (as described for the unit_of_work decorator).
+
+from neo4j import Query
+
+with driver.session(database="<database-name>") as session:
+    query = Query("CREATE (a:Person {name: $name})",
+                  timeout=1.0,
+                  metadata={"app_name": "people"})
+    result = session.run(query, name="John")
+Dynamic values in property keys, relationship types, and labels
+In general, you should not concatenate parameters directly into a query, but rather use query parameters. There can however be circumstances where your query structure prevents the usage of parameters in all its parts. In fact, although parameters work for literals and expressions, as well as node labels and relationship types, they can’t be used for property keys, so MATCH (n) WHERE n.$param = 'something' is invalid.
+
+When using string concatenation, enclose the dynamic values in backticks and escape them yourself to protect against Cypher injections. Notice that Cypher processes Unicode, so take care of the Unicode literal \u0060 as well.
+
+Manually escaping dynamic property keys before concatenation
+key = "nam\\u0060e"
+# convert \u0060 to literal backtick and then escape backticks
+escaped_key = key.replace("\\u0060", "`").replace("`", "``")
+
+driver.execute_query(
+    f"MATCH (p:Person {{`{escaped_key}`: $name}}) RETURN p.name",
+    name="Alice",
+    database_="<database-name>"
+)
+# rewritten to
+# MATCH (p:Person {`nam``e`: $name}) RETURN p.name
+Another workaround to avoid string concatenation is to use APOC procedures, such as apoc.merge.node, which supports dynamic labels and property keys.
+
+Using apoc.merge.node to create a node with dynamic labels/property keys.
+property_key = "name"
+label = "Person"
+
+driver.execute_query(
+    "CALL apoc.merge.node($labels, $properties)",
+    labels=[label], properties={property_key: "Alice"},
+    database_="<database-name>"
+)
+If you are running Neo4j in Docker, APOC needs to be enabled when starting the container. See APOC → Installation → Docker.
+Logging
+The driver logs messages through the native logging library to a logger named neo4j. To redirect log messages to standard output, use the watch function:
+
+import sys
+from neo4j.debug import watch
+
+watch("neo4j", out=sys.stdout)
+Example of log output upon driver connection
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,616  [#0000]  _: <POOL> created, routing address IPv4Address(('localhost', 7687))
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,616  [#0000]  _: <POOL> acquire routing connection, access_mode='WRITE', database='neo4j'
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,616  [#0000]  _: <ROUTING> checking table freshness (readonly=False): table expired=True, has_server_for_mode=False, table routers={IPv4Address(('localhost', 7687))} => False
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,616  [#0000]  _: <POOL> attempting to update routing table from IPv4Address(('localhost', 7687))
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,616  [#0000]  _: <RESOLVE> in: localhost:7687
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,617  [#0000]  _: <RESOLVE> dns resolver out: 127.0.0.1:7687
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,617  [#0000]  _: <POOL> _acquire router connection, database='neo4j', address=ResolvedIPv4Address(('127.0.0.1', 7687))
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,617  [#0000]  _: <POOL> trying to hand out new connection
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,617  [#0000]  C: <OPEN> 127.0.0.1:7687
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,619  [#AF18]  C: <MAGIC> 0x6060B017
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,619  [#AF18]  C: <HANDSHAKE> 0x00000005 0x00020404 0x00000104 0x00000003
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,620  [#AF18]  S: <HANDSHAKE> 0x00000005
+[DEBUG   ] [Thread 139807941394432] [Task None           ] 2023-03-31 09:31:39,620  [#AF18]  C: HELLO {'user_agen

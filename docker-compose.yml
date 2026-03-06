@@ -1,0 +1,619 @@
+# ==============================================================================
+# AgentsSwarm — Docker Compose (Production)
+# ==============================================================================
+# Production configuration:
+#   - Pre-built images only (no build context)
+#   - No source code volume mounts
+#   - Resource limits (CPU + memory)
+#   - restart: always
+#   - JSON logging with rotation
+#   - Restricted port exposure
+#
+# Profiles:
+#   gpu         — AI inference services (Triton, vLLM, SmolVLA)
+#   monitoring  — Prometheus, Grafana, Jaeger
+#
+# Usage:
+#   docker compose -f docker-compose.yml up -d
+#   docker compose -f docker-compose.yml --profile gpu up -d
+# ==============================================================================
+
+x-logging: &prod-logging
+  driver: "json-file"
+  options:
+    max-size: "100m"
+    max-file: "5"
+    compress: "true"
+    labels: "service,environment"
+
+x-deploy-small: &deploy-small
+  resources:
+    limits:
+      cpus: "1.0"
+      memory: "512M"
+    reservations:
+      cpus: "0.25"
+      memory: "256M"
+
+x-deploy-medium: &deploy-medium
+  resources:
+    limits:
+      cpus: "2.0"
+      memory: "2G"
+    reservations:
+      cpus: "0.5"
+      memory: "512M"
+
+x-deploy-large: &deploy-large
+  resources:
+    limits:
+      cpus: "4.0"
+      memory: "8G"
+    reservations:
+      cpus: "1.0"
+      memory: "2G"
+
+x-service-base: &service-base
+  restart: always
+  logging: *prod-logging
+  networks:
+    - swarm-net
+
+networks:
+  swarm-net:
+    driver: bridge
+    name: agentsswarm_prod
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  postgres_data:
+    name: agentsswarm_prod_postgres_data
+  influxdb_data:
+    name: agentsswarm_prod_influxdb_data
+  influxdb_config:
+    name: agentsswarm_prod_influxdb_config
+  neo4j_data:
+    name: agentsswarm_prod_neo4j_data
+  neo4j_logs:
+    name: agentsswarm_prod_neo4j_logs
+  neo4j_plugins:
+    name: agentsswarm_prod_neo4j_plugins
+  redis_data:
+    name: agentsswarm_prod_redis_data
+  minio_data:
+    name: agentsswarm_prod_minio_data
+  emqx_data:
+    name: agentsswarm_prod_emqx_data
+  emqx_log:
+    name: agentsswarm_prod_emqx_log
+  rabbitmq_data:
+    name: agentsswarm_prod_rabbitmq_data
+
+services:
+
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+
+  postgres:
+    <<: *service-base
+    image: postgres:16-alpine
+    container_name: agentsswarm-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    # Expose only on internal network in production; access via reverse proxy
+    expose:
+      - "5432"
+    deploy: *deploy-small
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  influxdb:
+    <<: *service-base
+    image: influxdb:2.7-alpine
+    container_name: agentsswarm-influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME:?INFLUXDB_USERNAME is required}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:?INFLUXDB_PASSWORD is required}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-agentsswarm}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUXDB_RETENTION:-30d}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:?INFLUXDB_TOKEN is required}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    expose:
+      - "8086"
+    deploy: *deploy-medium
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  neo4j:
+    <<: *service-base
+    image: neo4j:5.26-community
+    container_name: agentsswarm-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:?NEO4J_USER is required}/${NEO4J_PASSWORD:?NEO4J_PASSWORD is required}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
+      NEO4J_dbms_security_procedures_allowlist: "apoc.*"
+      NEO4J_server_memory_heap_initial__size: "1G"
+      NEO4J_server_memory_heap_max__size: "2G"
+      NEO4J_server_memory_pagecache__size: "1G"
+      NEO4J_server_jvm_additional: "-XX:+UseG1GC"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_plugins:/plugins
+    expose:
+      - "7474"
+      - "7687"
+    deploy: *deploy-large
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/db/neo4j/cluster/available || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  redis:
+    <<: *service-base
+    image: redis/redis-stack:7.4.0-v3
+    container_name: agentsswarm-redis
+    environment:
+      REDIS_ARGS: >-
+        --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+        --maxmemory ${REDIS_MAX_MEMORY:-4gb}
+        --maxmemory-policy allkeys-lru
+        --appendonly yes
+        --save 60 1000
+        --loglevel warning
+        --tcp-backlog 511
+        --maxclients 1000
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+      - "8001"
+    deploy: *deploy-medium
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  minio:
+    <<: *service-base
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: agentsswarm-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+      MINIO_VOLUMES: "/data"
+    volumes:
+      - minio_data:/data
+    expose:
+      - "9000"
+      - "9001"
+    deploy: *deploy-medium
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================================================
+  # MESSAGE BROKERS
+  # ============================================================================
+
+  emqx:
+    <<: *service-base
+    image: emqx/emqx:5.8.3
+    container_name: agentsswarm-emqx
+    environment:
+      EMQX_NODE__NAME: "emqx@agentsswarm-emqx"
+      EMQX_CLUSTER__DISCOVERY_STRATEGY: manual
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_DASHBOARD_USER:?EMQX_DASHBOARD_USER is required}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD:?EMQX_DASHBOARD_PASSWORD is required}
+      EMQX_MQTT__MAX_PACKET_SIZE: "1MB"
+      EMQX_RETAINER__ENABLE: "true"
+      EMQX_LOG__CONSOLE__LEVEL: warning
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+      - ./infrastructure/emqx/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+      - "${MQTT_WS_PORT:-8083}:8083"
+    expose:
+      - "8084"
+      - "18083"
+    deploy: *deploy-medium
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/emqx/bin/emqx ctl status | grep -q 'is running'"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq:
+    <<: *service-base
+    image: rabbitmq:3.13-management-alpine
+    container_name: agentsswarm-rabbitmq
+    hostname: agentsswarm-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 3600000"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    expose:
+      - "5672"
+      - "15672"
+    deploy: *deploy-small
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================================
+  # APPLICATION SERVICES
+  # ============================================================================
+
+  gateway:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/gateway_service:${TAG:-latest}
+    container_name: agentsswarm-gateway
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "${GATEWAY_PORT:-8005}:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy: *deploy-medium
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8005/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  orchestrator:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/orchestrator:${TAG:-latest}
+    container_name: agentsswarm-orchestrator
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      NEO4J_URI: bolt://neo4j:7687
+      INFLUXDB_URL: http://influxdb:8086
+    expose:
+      - "8006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    deploy: *deploy-large
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8006/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  celery-worker:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/orchestrator:${TAG:-latest}
+    container_name: agentsswarm-celery-worker
+    command: >
+      celery -A src.orchestrator.celery_app worker
+      --loglevel=warning
+      --concurrency=${CELERY_CONCURRENCY:-8}
+      -Q default,high_priority,low_priority
+      --max-tasks-per-child=1000
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy: *deploy-large
+
+  celery-beat:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/orchestrator:${TAG:-latest}
+    container_name: agentsswarm-celery-beat
+    command: >
+      celery -A src.orchestrator.celery_app beat
+      --loglevel=warning
+      --scheduler redbeat.RedBeatScheduler
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy: *deploy-small
+
+  communication:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/communication_service:${TAG:-latest}
+    container_name: agentsswarm-communication
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      MQTT_BROKER_HOST: emqx
+      RABBITMQ_HOST: rabbitmq
+    expose:
+      - "8008"
+    depends_on:
+      emqx:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy: *deploy-small
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8008/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================================
+  # AI SERVICES (profile: gpu)
+  # ============================================================================
+
+  triton:
+    <<: *service-base
+    image: nvcr.io/nvidia/tritonserver:${TRITON_TAG:-24.10-py3}
+    container_name: agentsswarm-triton
+    profiles: ["gpu"]
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${TRITON_GPU_DEVICES:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    command: >
+      tritonserver
+      --model-repository=/models
+      --model-control-mode=poll
+      --repository-poll-secs=60
+      --allow-grpc=true
+      --allow-http=true
+      --allow-metrics=true
+      --grpc-port=8001
+      --http-port=8000
+      --metrics-port=8002
+      --log-verbose=0
+      --strict-model-config=false
+    volumes:
+      - ${TRITON_MODEL_REPO:?TRITON_MODEL_REPO is required in gpu profile}:/models:ro
+    expose:
+      - "8000"
+      - "8001"
+      - "8002"
+    deploy:
+      resources:
+        limits:
+          cpus: "8.0"
+          memory: "16G"
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "4gb"
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/v2/health/ready || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+
+  vllm:
+    <<: *service-base
+    image: vllm/vllm-openai:${VLLM_TAG:-v0.6.4.post1}
+    container_name: agentsswarm-vllm
+    profiles: ["gpu"]
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${VLLM_GPU_DEVICES:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      HF_TOKEN: ${HF_TOKEN:?HF_TOKEN is required in gpu profile}
+      VLLM_LOGGING_LEVEL: WARNING
+    command: >
+      --model ${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}
+      --host 0.0.0.0
+      --port 8003
+      --max-model-len ${VLLM_MAX_MODEL_LEN:-16384}
+      --dtype ${VLLM_DTYPE:-float16}
+      --tensor-parallel-size ${VLLM_TENSOR_PARALLEL_SIZE:-1}
+      --gpu-memory-utilization ${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+      --enable-lora
+      --max-loras ${VLLM_MAX_LORAS:-4}
+      --max-lora-rank 64
+      --served-model-name qwen2.5-7b
+      --disable-log-requests
+    volumes:
+      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+    expose:
+      - "8003"
+    deploy:
+      resources:
+        limits:
+          cpus: "8.0"
+          memory: "24G"
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "16gb"
+    ulimits:
+      memlock: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8003/health || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 300s
+
+  vllm-vlm:
+    <<: *service-base
+    image: vllm/vllm-openai:${VLLM_TAG:-v0.6.4.post1}
+    container_name: agentsswarm-vllm-vlm
+    profiles: ["gpu"]
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${VLLM_VLM_GPU_DEVICES:-1}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      HF_TOKEN: ${HF_TOKEN:?HF_TOKEN is required in gpu profile}
+      VLLM_LOGGING_LEVEL: WARNING
+    command: >
+      --model ${VLLM_VLM_MODEL:-HuggingFaceTB/SmolVLM2-2.2B-Instruct}
+      --host 0.0.0.0
+      --port 8004
+      --max-model-len ${VLLM_VLM_MAX_MODEL_LEN:-8192}
+      --dtype ${VLLM_VLM_DTYPE:-bfloat16}
+      --tensor-parallel-size ${VLLM_VLM_TENSOR_PARALLEL_SIZE:-1}
+      --gpu-memory-utilization ${VLLM_VLM_GPU_MEMORY_UTILIZATION:-0.85}
+      --served-model-name smolvlm2
+      --disable-log-requests
+    volumes:
+      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+    expose:
+      - "8004"
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: "12G"
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "8gb"
+    ulimits:
+      memlock: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8004/health || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+
+  smolvla:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/smolvla_service:${TAG:-latest}
+    container_name: agentsswarm-smolvla
+    profiles: ["gpu"]
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${SMOLVLA_GPU_DEVICES:-0}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    env_file: .env
+    volumes:
+      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+    expose:
+      - "50051"
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: "16G"
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "8gb"
+    ulimits:
+      memlock: -1
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import grpc; ch=grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(ch).result(timeout=5)\" || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  frontend:
+    <<: *service-base
+    image: ${REGISTRY:-ghcr.io/deneal123/agentsswarm}/frontend:${TAG:-latest}
+    container_name: agentsswarm-frontend
+    environment:
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    deploy: *deploy-small
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

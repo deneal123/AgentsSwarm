@@ -1,0 +1,7 @@
+version: v2
+modules:
+  - path: .
+    name: buf.build/deneal123/agentsswarm
+    deps:
+      - buf.build/googleapis/googleapis
+      - buf.build/grpc/grpc

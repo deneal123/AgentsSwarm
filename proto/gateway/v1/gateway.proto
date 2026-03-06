@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package gateway.v1;
+
+option python_package = "gateway.v1";
+
+import "common/v1/types.proto";
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// GatewayService — внутренний gRPC интерфейс API-шлюза
+//
+// Используется другими микросервисами для:
+//   - Верификации JWT-токенов (AuthService)
+//   - Push-уведомлений в WebSocket-соединения (NotificationService)
+//
+// Внешний API (REST/WebSocket для frontend) реализован через FastAPI,
+// и к Protobuf не относится.
+// =============================================================================
+
+// ─── Auth Service ─────────────────────────────────────────────────────────────
+
+message VerifyTokenRequest {
+    string token = 1;  // JWT Bearer token (без префикса "Bearer ")
+}
+
+message UserInfo {
+    string user_id   = 1;
+    string email     = 2;
+    string role      = 3;  // "ADMIN" | "OPERATOR" | "VIEWER"
+    repeated string permissions = 4;
+    google.protobuf.Timestamp expires_at = 5;
+}
+
+message VerifyTokenResponse {
+    bool     valid    = 1;
+    UserInfo user     = 2;  // заполнено только если valid=true
+    string   error    = 3;  // причина отказа если valid=false
+}
+
+message GetUserInfoRequest {
+    string user_id = 1;
+}
+
+// ─── Notification Service ─────────────────────────────────────────────────────
+
+enum NotificationType {
+    NOTIFICATION_TYPE_UNSPECIFIED = 0;
+    NOTIFICATION_TYPE_INFO        = 1;
+    NOTIFICATION_TYPE_WARNING     = 2;
+    NOTIFICATION_TYPE_ERROR       = 3;
+    NOTIFICATION_TYPE_ROBOT_EVENT = 4;
+    NOTIFICATION_TYPE_TASK_UPDATE = 5;
+    NOTIFICATION_TYPE_CHAT_REPLY  = 6;
+}
+
+message Notification {
+    string              id        = 1;
+    NotificationType    type      = 2;
+    string              title     = 3;
+    string              message   = 4;
+    map<string, string> payload   = 5;  // данные для фронтенда
+    google.protobuf.Timestamp timestamp = 6;
+}
+
+message SendNotificationRequest {
+    string       user_id      = 1;  // "" = broadcast
+    Notification notification = 2;
+}
+
+message SendNotificationResponse {
+    bool   delivered = 1;
+    int32  recipients = 2;  // кол-во доставленных соединений
+}
+
+message BroadcastEventRequest {
+    string              event_type = 1;  // "robot_status" | "task_update" | "alert"
+    string              robot_id   = 2;  // "" = не привязан к роботу
+    string              task_id    = 3;  // "" = не привязан к задаче
+    map<string, string> payload    = 4;
+    common.v1.Severity  severity   = 5;
+    google.protobuf.Timestamp timestamp = 6;
+}
+
+message BroadcastEventResponse {
+    int32 recipients = 1;  // кол-во WebSocket-клиентов, получивших событие
+}
+
+// ─── Connection Info ──────────────────────────────────────────────────────────
+
+message ActiveConnectionsRequest {
+    string user_id = 1;  // "" = все соединения
+}
+
+message ConnectionInfo {
+    string user_id        = 1;
+    string connection_id  = 2;
+    string remote_addr    = 3;
+    string channel        = 4;  // "chat" | "telemetry" | "notifications"
+    google.protobuf.Timestamp connected_at = 5;
+}
+
+message ActiveConnectionsResponse {
+    repeated ConnectionInfo connections = 1;
+    int32 total = 2;
+}
+
+// ─── Services ─────────────────────────────────────────────────────────────────
+
+service AuthService {
+    // Верификация JWT (вызывается другими микросервисами)
+    rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+
+    // Получить полную информацию о пользователе
+    rpc GetUserInfo(GetUserInfoRequest) returns (UserInfo);
+}
+
+service NotificationService {
+    // Отправить уведомление конкретному пользователю (или всем если user_id="")
+    rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+
+    // Широковещательная рассылка события всем подключённым клиентам
+    rpc BroadcastEvent(BroadcastEventRequest) returns (BroadcastEventResponse);
+
+    // Получить список активных WebSocket-соединений
+    rpc GetActiveConnections(ActiveConnectionsRequest) returns (ActiveConnectionsResponse);
+}

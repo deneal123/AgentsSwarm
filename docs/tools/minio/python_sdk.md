@@ -1,0 +1,101 @@
+Python SDK
+The MinIO Python Client SDK provides high level APIs to access any MinIO Object Storage or other Amazon S3 compatible service.
+
+This Quickstart Guide covers how to install the MinIO client SDK, connect to the object storage service, and create a sample file uploader.
+
+The example below uses:
+
+Python version 3.7+
+The MinIO mc command line tool
+The MinIO play test server
+The play server is a public MinIO cluster located at https://play.min.io. This cluster runs the latest stable version of MinIO and may be used for testing and development. The access credentials in the example are open to the public and all data uploaded to play should be considered public and world-readable.
+
+For a complete list of APIs and examples, see the Python Client API Reference
+
+Install the MinIO Python SDK
+The Python SDK requires Python version 3.7+. You can install the SDK with pip or from the minio/minio-py GitHub repository:
+
+Using pip
+pip3 install minio
+Using source from GitHub
+git clone https://github.com/minio/minio-py
+cd minio-py
+python setup.py install
+Create a MinIO client
+To connect to the target service, create a MinIO client using the Minio() method with the following required parameters:
+
+Parameter	Description
+endpoint	URL of the target service.
+access_key	Access key (user ID) of a user account in the service.
+secret_key	Secret key (password) for the user account.
+For example:
+
+from minio import Minio
+
+client = Minio("play.min.io",
+    access_key="Q3AM3UQ867SPQQA43P2F",
+    secret_key="zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
+)
+Example - file uploader
+This example does the following:
+
+Connects to the MinIO play server using the provided credentials.
+Creates a bucket named python-test-bucket if it does not already exist.
+Uploads a file named test-file.txt from /tmp, renaming it my-test-file.txt.
+Verifies the file was created using mc ls.
+file_uploader.py
+# file_uploader.py MinIO Python SDK example
+from minio import Minio
+from minio.error import S3Error
+
+def main():
+    # Create a client with the MinIO server playground, its access key
+    # and secret key.
+    client = Minio("play.min.io",
+        access_key="Q3AM3UQ867SPQQA43P2F",
+        secret_key="zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
+    )
+
+    # The file to upload, change this path if needed
+    source_file = "/tmp/test-file.txt"
+
+    # The destination bucket and filename on the MinIO server
+    bucket_name = "python-test-bucket"
+    destination_file = "my-test-file.txt"
+
+    # Make the bucket if it doesn't exist.
+    found = client.bucket_exists(bucket_name)
+    if not found:
+        client.make_bucket(bucket_name)
+        print("Created bucket", bucket_name)
+    else:
+        print("Bucket", bucket_name, "already exists")
+
+    # Upload the file, renaming it in the process
+    client.fput_object(
+        bucket_name, destination_file, source_file,
+    )
+    print(
+        source_file, "successfully uploaded as object",
+        destination_file, "to bucket", bucket_name,
+    )
+
+if __name__ == "__main__":
+    try:
+        main()
+    except S3Error as exc:
+        print("error occurred.", exc)
+To run this example:
+
+Create a file in /tmp named test-file.txt. To use a different path or filename, modify the value of source_file.
+
+Run file_uploader.py with the following command:
+
+python file_uploader.py
+If the bucket does not exist on the server, the output resembles the following:
+
+Created bucket python-test-bucket
+/tmp/test-file.txt successfully uploaded as object my-test-file.txt to bucket python-test-bucket
+Verify the uploaded file with mc ls:
+mc ls play/python-test-bucket
+[2023-11-03 22:18:54 UTC]  20KiB STANDARD my-test-file.txt

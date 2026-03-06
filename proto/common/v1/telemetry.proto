@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package common.v1;
+
+option python_package = "common.v1";
+
+import "common/v1/types.proto";
+import "google/protobuf/timestamp.proto";
+
+// Телеметрия одного робота — отправляется роботом в облако по MQTT/gRPC
+
+message SensorData {
+    string sensor_type  = 1;  // "lidar" | "camera" | "imu" | "battery"
+    google.protobuf.Timestamp timestamp = 2;
+    map<string, float> values = 3;   // числовые показания
+    bytes raw_data = 4;              // бинарные данные (если нужны)
+}
+
+message RobotEvent {
+    string event_type   = 1;  // "obstacle_detected" | "task_done" | "battery_low" ...
+    Severity severity   = 2;
+    string description  = 3;
+    map<string, string> metadata = 4;
+    google.protobuf.Timestamp timestamp = 5;
+}
+
+message RobotTelemetry {
+    string robot_id     = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    RobotStatus status  = 3;
+    Position position   = 4;
+    float battery_level = 5;   // процент [0, 100]
+    float velocity      = 6;   // м/с
+    map<string, SensorData> sensors = 7;
+    repeated RobotEvent events = 8;
+    string current_task_id = 9;
+    string zone_id      = 10;
+}

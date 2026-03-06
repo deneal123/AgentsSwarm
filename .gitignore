@@ -1,0 +1,96 @@
+# ─── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.Python
+pip-wheel-metadata/
+*.pyd
+.pytest_cache
+COPILOT_SYSTEM.md
+
+# ─── Poetry ────────────────────────────────────────────────────────────────────
+poetry.toml
+# НЕ игнорировать poetry.lock — он нужен для воспроизводимых сборок
+
+# ─── Mypy / Ruff / Coverage ────────────────────────────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ─── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+dist/
+.next/
+.nuxt/
+*.local
+
+# ─── IDE / Editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Docker volumes / Data ─────────────────────────────────────────────────────
+volumes/
+postgres_data/
+influxdb_data/
+neo4j_data/
+redis_data/
+minio_data/
+model_store/
+models/
+lora_adapters/
+
+# ─── Infrastructure data (runtime, не коммитим) ────────────────────────────────
+infrastructure/jaeger/data/*
+!infrastructure/jaeger/data/.gitkeep
+infrastructure/emqx/data/
+infrastructure/rabbitmq/data/
+
+# ─── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Compiled Protobuf ─────────────────────────────────────────────────────────
+*_pb2.py
+*_pb2_grpc.py
+*_pb2.pyi
+
+# ─── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── Secrets / Certs ───────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+certs/
+
+# ─── Misc ──────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+.terraform/

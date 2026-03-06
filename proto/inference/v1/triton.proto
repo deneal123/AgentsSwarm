@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package inference.v1;
+
+option python_package = "inference.v1";
+
+import "common/v1/types.proto";
+import "google/protobuf/timestamp.proto";
+
+// ─── Triton Inference Service ─────────────────────────────────────────────────
+
+message ImageRequest {
+    bytes  image_data  = 1;   // JPEG/PNG bytes
+    string model_name  = 2;   // "yolov8" | "ensemble_detect_track"
+    string robot_id    = 3;
+    string session_id  = 4;   // для persistent tracking
+    google.protobuf.Timestamp timestamp = 5;
+}
+
+message Detection {
+    string class_name  = 1;
+    float  confidence  = 2;   // [0, 1]
+    common.v1.BoundingBox bbox = 3;
+    common.v1.BoundingBoxNorm bbox_norm = 4;
+    int32  track_id    = 5;   // -1 если трекинг не запрашивался
+    map<string, float> extra = 6;
+}
+
+message DetectionResponse {
+    repeated Detection detections = 1;
+    float  processing_time_ms = 2;
+    string model_version      = 3;
+    google.protobuf.Timestamp timestamp = 4;
+}
+
+message BatchImageRequest {
+    repeated ImageRequest images = 1;
+}
+
+message BatchDetectionResponse {
+    repeated DetectionResponse results = 1;
+}
+
+service TritonInferenceService {
+    // Детекция объектов на одном изображении
+    rpc DetectObjects(ImageRequest) returns (DetectionResponse);
+
+    // Детекция + трекинг (persistent session)
+    rpc TrackObjects(ImageRequest) returns (DetectionResponse);
+
+    // Батчевая детекция
+    rpc DetectBatch(BatchImageRequest) returns (BatchDetectionResponse);
+
+    // Потоковая детекция (видеопоток)
+    rpc StreamDetections(stream ImageRequest) returns (stream DetectionResponse);
+}
