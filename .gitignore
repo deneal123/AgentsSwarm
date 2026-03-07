@@ -96,9 +96,3 @@ certs/
 .terraform/
 
 
-services/gateway_service
-services/orchestrator
-services/robot_edge
-services/smolvla_service
-services/triton_inference
-services/vllm_service
