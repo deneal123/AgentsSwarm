@@ -1,0 +1,24 @@
+[submodule "services/gateway_service"]
+	path = services/gateway_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = gateway_service
+[submodule "services/orchestrator"]
+	path = services/orchestrator
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = orchestrator
+[submodule "services/vllm_service"]
+	path = services/vllm_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = vllm_service
+[submodule "services/triton_inference"]
+	path = services/triton_inference
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = triton_inference
+[submodule "services/smolvla_service"]
+	path = services/smolvla_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = smolvla_service
+[submodule "services/robot_edge"]
+	path = services/robot_edge
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = robot_edge
