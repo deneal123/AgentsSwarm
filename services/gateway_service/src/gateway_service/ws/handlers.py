@@ -253,6 +253,7 @@ async def telemetry_handler(
     app_state: object,
     settings: Settings,
     manager: ConnectionManager,
+    last_message_id: str | None = None,
 ) -> None:
     """
     /ws/telemetry
@@ -276,7 +277,12 @@ async def telemetry_handler(
         await websocket.close(code=4001)
         return
 
-    conn_id = await manager.connect(websocket, user.user_id, channel="telemetry")
+    conn_id = await manager.connect(
+        websocket,
+        user.user_id,
+        channel="telemetry",
+        last_message_id=last_message_id,
+    )
     redis_client = getattr(app_state, "redis", None)
 
     subscribed_robots: set[str] = set()
@@ -392,6 +398,7 @@ async def notifications_handler(
     app_state: object,
     settings: Settings,
     manager: ConnectionManager,
+    last_message_id: str | None = None,
 ) -> None:
     """
     /ws/notifications
@@ -416,7 +423,12 @@ async def notifications_handler(
         await websocket.close(code=4001)
         return
 
-    conn_id = await manager.connect(websocket, user.user_id, channel="notifications")
+    conn_id = await manager.connect(
+        websocket,
+        user.user_id,
+        channel="notifications",
+        last_message_id=last_message_id,
+    )
     redis_client = getattr(app_state, "redis", None)
 
     async def _listen_redis() -> None:

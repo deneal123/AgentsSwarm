@@ -5,20 +5,96 @@ ConnectionManager — реестр активных WebSocket-соединени
 Поддерживает множественные вкладки/устройства одного пользователя.
 
 Потокобезопасность: asyncio.Lock защищает операции connect/disconnect.
+
+Reconnect buffer:
+  MessageBuffer хранит последние N сообщений (per channel).
+  При переподключении клиент передаёт ?last_message_id=<uuid>,
+  и ему автоматически отдаются пропущенные сообщения.
 """
 
 from __future__ import annotations
 
 import asyncio
 import uuid
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import NamedTuple
 
 import structlog
 from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 
 logger = structlog.get_logger(__name__)
+
+# ─── Message Buffer ──────────────────────────────────────────────────────────
+
+_DEFAULT_BUFFER_SIZE = 100  # максимум сообщений в буфере на канал
+
+
+class _BufferedMessage(NamedTuple):
+    message_id: str
+    channel: str
+    payload: dict
+
+
+class MessageBuffer:
+    """
+    Кольцевой буфер сообщений для поддержки переподключения клиентов.
+
+    Каждое сообщение получает уникальный message_id (UUID4).
+    При переподключении клиент передаёт last_message_id,
+    и ему возвращаются все сообщения, опубликованные после него.
+
+    Потокобезопасность: guarded by asyncio.Lock (не нужна для asyncio,
+    но оставлена для консистентности с ConnectionManager).
+    """
+
+    def __init__(self, maxsize: int = _DEFAULT_BUFFER_SIZE) -> None:
+        self._maxsize = maxsize
+        # channel → deque[_BufferedMessage]
+        self._buffers: dict[str, deque[_BufferedMessage]] = {}
+
+    def store(self, channel: str, payload: dict, message_id: str | None = None) -> str:
+        """
+        Сохранить сообщение в буфер.
+        Возвращает присвоенный message_id.
+        """
+        mid = message_id or str(uuid.uuid4())
+        buf = self._buffers.setdefault(channel, deque(maxlen=self._maxsize))
+        buf.append(_BufferedMessage(message_id=mid, channel=channel, payload=payload))
+        return mid
+
+    def get_missed(self, channel: str, last_message_id: str) -> list[dict]:
+        """
+        Вернуть все сообщения из канала, опубликованные *после* last_message_id.
+        Если last_message_id не найден в буфере — возвращает все буферизованные.
+        """
+        buf = self._buffers.get(channel)
+        if buf is None:
+            return []
+
+        messages = list(buf)
+
+        # Найти индекс last_message_id
+        found_idx: int | None = None
+        for i, msg in enumerate(messages):
+            if msg.message_id == last_message_id:
+                found_idx = i
+                break
+
+        if found_idx is None:
+            # Клиент пропустил слишком много — отдаём весь буфер
+            return [m.payload | {"_message_id": m.message_id} for m in messages]
+
+        # Отдаём всё после найденного
+        return [
+            m.payload | {"_message_id": m.message_id}
+            for m in messages[found_idx + 1:]
+        ]
+
+    def clear_channel(self, channel: str) -> None:
+        self._buffers.pop(channel, None)
 
 
 @dataclass
@@ -31,6 +107,7 @@ class _Connection:
     channel: str  # "chat" | "telemetry" | "notifications"
     connected_at: datetime = field(default_factory=datetime.utcnow)
     last_pong: datetime = field(default_factory=datetime.utcnow)
+    last_message_id: str | None = None  # ID последнего полученного сообщения (для replay)
 
     def is_connected(self) -> bool:
         return self.websocket.client_state == WebSocketState.CONNECTED
@@ -43,25 +120,28 @@ class ConnectionManager:
     Использование:
         manager = ConnectionManager()
 
-        # При подключении
-        conn_id = await manager.connect(websocket, user_id, channel="chat")
+        # При подключении (с поддержкой replay пропущенных сообщений)
+        conn_id = await manager.connect(websocket, user_id, channel="telemetry",
+                                        last_message_id="<uuid>")
 
         # Отправка конкретному пользователю (все его вкладки/устройства)
         await manager.send_to_user(user_id, {"type": "message", "data": "..."})
 
-        # Широковещательная рассылка
+        # Широковещательная рассылка (буферизуется для reconnect)
         await manager.broadcast({"type": "system", "data": "..."})
 
         # При отключении
         await manager.disconnect(conn_id)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, buffer_size: int = _DEFAULT_BUFFER_SIZE) -> None:
         # connection_id → _Connection
         self._connections: dict[str, _Connection] = {}
         # user_id → set[connection_id]
         self._user_index: dict[str, set[str]] = {}
         self._lock = asyncio.Lock()
+        # Буфер для reconnect (per channel)
+        self._buffer = MessageBuffer(maxsize=buffer_size)
 
     # ─── Connect / Disconnect ────────────────────────────────────────────────
 
@@ -70,11 +150,15 @@ class ConnectionManager:
         websocket: WebSocket,
         user_id: str,
         channel: str = "notifications",
+        last_message_id: str | None = None,
     ) -> str:
         """
         Зарегистрировать принятое WebSocket-соединение.
         Возвращает connection_id.
         Ожидает, что websocket.accept() уже был вызван вызывающей стороной.
+
+        Если передан last_message_id — клиенту немедленно отправляются
+        все пропущенные сообщения из буфера (replay).
         """
         conn_id = str(uuid.uuid4())
 
@@ -83,6 +167,7 @@ class ConnectionManager:
             user_id=user_id,
             websocket=websocket,
             channel=channel,
+            last_message_id=last_message_id,
         )
 
         async with self._lock:
@@ -94,8 +179,27 @@ class ConnectionManager:
             connection_id=conn_id,
             user_id=user_id,
             channel=channel,
+            reconnect=last_message_id is not None,
             total_connections=len(self._connections),
         )
+
+        # Replay пропущенных сообщений
+        if last_message_id is not None:
+            missed = self._buffer.get_missed(channel, last_message_id)
+            if missed:
+                logger.info(
+                    "ws.replay_missed",
+                    connection_id=conn_id,
+                    count=len(missed),
+                    channel=channel,
+                )
+                for msg in missed:
+                    try:
+                        await websocket.send_json(msg)
+                    except Exception as exc:
+                        logger.warning("ws.replay_send_failed", connection_id=conn_id, error=str(exc))
+                        break
+
         return conn_id
 
     async def disconnect(self, connection_id: str) -> None:
@@ -177,11 +281,28 @@ class ConnectionManager:
             await self.disconnect(connection_id)
             return False
 
-    async def broadcast(self, message: dict, channel: str | None = None) -> int:
+    async def broadcast(
+        self,
+        message: dict,
+        channel: str | None = None,
+        buffer: bool = True,
+    ) -> int:
         """
         Широковещательная рассылка всем (или только нужному каналу).
         Возвращает кол-во доставленных.
+
+        buffer=True (по умолчанию): сообщение сохраняется в reconnect-буфер.
+        message_id добавляется в payload как '_message_id'.
         """
+        # Буферизуем сообщение (если нужен канал)
+        if buffer and channel is not None:
+            mid = self._buffer.store(channel, message)
+            message = message | {"_message_id": mid}
+        elif buffer:
+            # Broadcast на все каналы — буферизуем в общий буфер
+            mid = self._buffer.store("*", message)
+            message = message | {"_message_id": mid}
+
         async with self._lock:
             targets = [
                 c for c in self._connections.values()
@@ -260,6 +381,22 @@ class ConnectionManager:
             }
             for c in self._connections.values()
         ]
+
+    # ─── Reconnect Buffer ─────────────────────────────────────────────────────
+
+    def get_missed_messages(self, channel: str, last_message_id: str) -> list[dict]:
+        """
+        Получить сообщения, пропущенные клиентом (для ручного вызова из хэндлеров).
+        Удобно использовать в telemetry_handler при ре-подписке.
+        """
+        return self._buffer.get_missed(channel, last_message_id)
+
+    def store_message(self, channel: str, payload: dict) -> str:
+        """
+        Вручную сохранить сообщение в буфер (без отправки).
+        Возвращает message_id.
+        """
+        return self._buffer.store(channel, payload)
 
 
 # ─── Singleton ───────────────────────────────────────────────────────────────

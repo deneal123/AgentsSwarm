@@ -106,14 +106,14 @@ API-шлюз на FastAPI — единая точка входа для фрон
 
 ## Этап 8 — Тесты
 
-- [ ] **conftest.py.** Фикстуры: TestClient (async), mock Redis, mock RabbitMQ, mock gRPC, test user tokens (operator, admin).
+- [x] **conftest.py.** Фикстуры: TestClient (async), mock Redis, mock RabbitMQ, mock gRPC, test user tokens (operator, admin).
 
-- [ ] **Unit: auth.** Тесты create_token, verify_token, expired token, invalid token, RBAC role checks.
+- [x] **Unit: auth.** Тесты create_token, verify_token, expired token, invalid token, RBAC role checks.
 
-- [ ] **Unit: schemas.** Валидация всех Pydantic-моделей: обязательные поля, типы, enum values, пагинация.
+- [x] **Unit: schemas.** Валидация всех Pydantic-моделей: обязательные поля, типы, enum values, пагинация.
 
-- [ ] **Unit: rate limiter.** Тесты token bucket: allowed requests, rate exceeded, TTL reset.
+- [x] **Unit: rate limiter.** Тесты token bucket: allowed requests, rate exceeded, TTL reset.
 
-- [ ] **Integration: REST API.** Тесты CRUD для robots, tasks, zones, chat. Проверка auth, пагинации, фильтрации, ошибок.
+- [x] **Integration: REST API.** Тесты CRUD для robots, tasks, zones, chat. Проверка auth, пагинации, фильтрации, ошибок.
 
-- [ ] **Integration: WebSocket.** Тесты подключения, аутентификации через WS, приём/отправка сообщений, heartbeat, disconnect.
+- [x] **Integration: WebSocket.** Тесты подключения, аутентификации через WS, приём/отправка сообщений, heartbeat, disconnect.

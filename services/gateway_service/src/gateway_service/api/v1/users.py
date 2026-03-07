@@ -1,11 +1,16 @@
 """
 Auth endpoints:
-  POST /api/v1/auth/login    — получить пару токенов
-  POST /api/v1/auth/register — регистрация (только ADMIN может задать роль)
-  GET  /api/v1/auth/me       — профиль текущего пользователя
-  PUT  /api/v1/auth/me       — обновить профиль (email, пароль, display_name)
-  POST /api/v1/auth/refresh  — обновить access token по refresh token
-  POST /api/v1/auth/logout   — отозвать refresh token (добавить в blacklist)
+  POST /api/v1/auth/login            — получить пару токенов
+  POST /api/v1/auth/register         — регистрация (только ADMIN может задать роль)
+  GET  /api/v1/auth/me               — профиль текущего пользователя
+  PUT  /api/v1/auth/me               — обновить профиль (email, пароль, display_name)
+  POST /api/v1/auth/refresh          — обновить access token по refresh token
+  POST /api/v1/auth/logout           — отозвать refresh token (добавить в blacklist)
+
+Admin-only endpoints:
+  GET    /api/v1/auth/admin/users            — список всех пользователей
+  DELETE /api/v1/auth/admin/users/{user_id}  — удалить пользователя
+  PUT    /api/v1/auth/admin/users/{user_id}/role — изменить роль пользователя
 """
 
 from __future__ import annotations
@@ -38,6 +43,7 @@ from gateway_service.auth.schemas import (
     UserUpdateRequest,
 )
 from gateway_service.config import Settings, get_settings
+from gateway_service.schemas.common import MessageResponse, PaginatedResponse, PaginationParams, pagination_params
 from gateway_service.services.user_service import AbstractUserService, get_user_service
 
 logger = structlog.get_logger(__name__)
@@ -294,3 +300,118 @@ async def logout(
 
     logger.info("auth.logout", user_id=current_user.user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin: GET /auth/admin/users ─────────────────────────────────────────────
+
+
+@router.get(
+    "/admin/users",
+    response_model=PaginatedResponse[UserContext],
+    summary="[Admin] Список всех пользователей",
+    responses={
+        403: {"description": "Только администратор"},
+    },
+)
+async def admin_list_users(
+    role: UserRole | None = None,
+    pagination: PaginationParams = Depends(pagination_params),
+    current_user: UserContext = Depends(require_admin),
+    user_service: AbstractUserService = Depends(get_user_service),
+) -> PaginatedResponse[UserContext]:
+    logger.info("admin.list_users", admin_id=current_user.user_id, role_filter=role)
+    role_str = role.value if role is not None else None
+    records, total = await user_service.list_users(
+        page=pagination.page,
+        page_size=pagination.page_size,
+        role=role_str,
+    )
+    items = [_user_record_to_context(r) for r in records]
+    return PaginatedResponse.create(
+        items=items,
+        total=total,
+        page=pagination.page,
+        page_size=pagination.page_size,
+    )
+
+
+# ─── Admin: DELETE /auth/admin/users/{user_id} ────────────────────────────────
+
+
+@router.delete(
+    "/admin/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="[Admin] Удалить пользователя",
+    responses={
+        204: {"description": "Пользователь удалён"},
+        403: {"description": "Только администратор"},
+        404: {"description": "Пользователь не найден"},
+    },
+)
+async def admin_delete_user(
+    user_id: str,
+    current_user: UserContext = Depends(require_admin),
+    user_service: AbstractUserService = Depends(get_user_service),
+) -> Response:
+    if user_id == current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error_code": "SELF_DELETE_FORBIDDEN", "message": "Cannot delete your own account"},
+        )
+    try:
+        await user_service.delete(user_id)
+    except UserNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_code": "USER_NOT_FOUND", "message": exc.message},
+        ) from exc
+
+    logger.info("admin.user_deleted", admin_id=current_user.user_id, target_user_id=user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ─── Admin: PUT /auth/admin/users/{user_id}/role ──────────────────────────────
+
+
+class _RoleUpdateRequest(UserUpdateRequest):
+    """Тело запроса на смену роли."""
+    role: UserRole
+
+
+from pydantic import BaseModel as _BaseModel
+
+
+class _AdminRoleUpdate(_BaseModel):
+    role: UserRole
+
+
+@router.put(
+    "/admin/users/{user_id}/role",
+    response_model=UserContext,
+    summary="[Admin] Изменить роль пользователя",
+    responses={
+        403: {"description": "Только администратор"},
+        404: {"description": "Пользователь не найден"},
+    },
+)
+async def admin_update_user_role(
+    user_id: str,
+    body: _AdminRoleUpdate,
+    current_user: UserContext = Depends(require_admin),
+    user_service: AbstractUserService = Depends(get_user_service),
+) -> UserContext:
+    try:
+        record = await user_service.update_role(user_id, body.role.value)
+    except UserNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_code": "USER_NOT_FOUND", "message": exc.message},
+        ) from exc
+
+    logger.info(
+        "admin.role_updated",
+        admin_id=current_user.user_id,
+        target_user_id=user_id,
+        new_role=body.role.value,
+    )
+    return _user_record_to_context(record)

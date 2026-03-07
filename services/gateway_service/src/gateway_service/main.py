@@ -239,13 +239,25 @@ def _register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError) -> ORJSONResponse:
-        logger.debug("validation.error", errors=exc.errors(), path=request.url.path)
+        # pydantic v2 может включать в ctx не-сериализуемые объекты (напр., ValueError)
+        # Конвертируем их в строки для безопасной сериализации через orjson
+        def _sanitize_error(err: dict) -> dict:
+            sanitized = {k: v for k, v in err.items() if k != "ctx"}
+            if "ctx" in err:
+                sanitized["ctx"] = {
+                    k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+                    for k, v in err["ctx"].items()
+                }
+            return sanitized
+
+        sanitized_errors = [_sanitize_error(e) for e in exc.errors()]
+        logger.debug("validation.error", errors=sanitized_errors, path=request.url.path)
         return ORJSONResponse(
             status_code=422,
             content={
                 "error_code": "VALIDATION_ERROR",
                 "message": "Request validation failed",
-                "details": exc.errors(),
+                "details": sanitized_errors,
             },
         )
 

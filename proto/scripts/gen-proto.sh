@@ -76,7 +76,7 @@ PROTO_FILES=(
 )
 
 # Путь к google/protobuf well-known types (через grpcio-tools)
-PROTO_INCLUDE="$(python3 -c "import grpc_tools; import os; print(os.path.dirname(grpc_tools.__file__))" 2>/dev/null)/grpc_tools/_proto"
+PROTO_INCLUDE="$(python3 -c 'import grpc_tools, os; print(os.path.join(os.path.dirname(grpc_tools.__file__), "_proto"))' 2>/dev/null)"
 
 # ─── Маппинг сервис → выходная директория ─────────────────────────────────────
 declare -A SERVICE_DIRS=(

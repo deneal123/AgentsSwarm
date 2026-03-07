@@ -21,9 +21,13 @@ from passlib.context import CryptContext
 
 logger = structlog.get_logger(__name__)
 
-# ─── Password hashing ────────────────────────────────────────────────────────
+# ─── Password hashing ───────────────────────────────────────────────────────
 
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_pwd_ctx = CryptContext(
+    schemes=["pbkdf2_sha256"],
+    deprecated="auto",
+    pbkdf2_sha256__rounds=30000,
+)
 
 
 def hash_password(plain: str) -> str:
@@ -96,6 +100,23 @@ class AbstractUserService(ABC):
         display_name: str | None = None,
     ) -> UserRecord:
         """Обновить данные пользователя. Raises UserNotFoundError."""
+
+    @abstractmethod
+    async def list_users(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        role: str | None = None,
+    ) -> tuple[list[UserRecord], int]:
+        """Постраничный список пользователей. Возвращает (items, total)."""
+
+    @abstractmethod
+    async def delete(self, user_id: str) -> None:
+        """Удалить пользователя. Raises UserNotFoundError."""
+
+    @abstractmethod
+    async def update_role(self, user_id: str, role: str) -> UserRecord:
+        """Изменить роль пользователя. Raises UserNotFoundError."""
 
 
 # ─── In-Memory реализация (dev / тесты) ──────────────────────────────────────
@@ -219,6 +240,43 @@ class InMemoryUserService(AbstractUserService):
         if display_name is not None:
             user.display_name = display_name
 
+        return user
+
+    async def list_users(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        role: str | None = None,
+    ) -> tuple[list[UserRecord], int]:
+        await self._ensure_default_admin()
+        all_users = list(self._users.values())
+        if role is not None:
+            all_users = [u for u in all_users if u.role == role]
+        total = len(all_users)
+        offset = (page - 1) * page_size
+        return all_users[offset : offset + page_size], total
+
+    async def delete(self, user_id: str) -> None:
+        from gateway_service.auth.exceptions import UserNotFoundError
+
+        user = self._users.get(user_id)
+        if user is None:
+            raise UserNotFoundError(user_id)
+
+        del self._users[user_id]
+        self._by_username.pop(user.username.lower(), None)
+        self._by_email.pop(user.email.lower(), None)
+        logger.info("user_service.deleted", user_id=user_id)
+
+    async def update_role(self, user_id: str, role: str) -> UserRecord:
+        from gateway_service.auth.exceptions import UserNotFoundError
+
+        user = self._users.get(user_id)
+        if user is None:
+            raise UserNotFoundError(user_id)
+
+        user.role = role
+        logger.info("user_service.role_updated", user_id=user_id, role=role)
         return user
 
 
