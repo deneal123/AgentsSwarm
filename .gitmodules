@@ -22,3 +22,7 @@
 	path = services/robot_edge
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = robot_edge
+[submodule "services/frontend"]
+	path = services/frontend
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = frontend
