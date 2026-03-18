@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "destil"
+version = "v0.2.0"
+description = "Pipeline for distillation smolVLA model"
+authors = ["GravyTalk <deneaL123@mail.ru>"]
+readme = "README.md"
+homepage = "https://github.com/deneal123/distil"
+repository = "https://github.com/deneal123/distil"
+packages = [
+    { include = "models", from = "src" },
+    { include = "datasets", from = "src" },
+    { include = "training", from = "src" },
+    { include = "utils", from = "src" }
+]
+include = [
+    { path = "*.yaml", format = ["sdist", "wheel"] },
+    { path = "*.toml", format = ["sdist", "wheel"] },
+    { path = "*.crt", format = ["sdist", "wheel"] }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+torch = { version = "==2.7.1", source = "pytorch-cu126" }
+torchvision = { version = "==0.22.1", source = "pytorch-cu126" }
+torchaudio = { version = "==2.7.1", source = "pytorch-cu126" }
+lerobot = ">=0.4.4,<0.5.0"
+onnx = "==1.20.1"
+fvcore = ">=0.1.5.post20221221,<0.2.0"
+torchprofile = ">=0.0.4,<0.0.5"
+num2words = ">=0.5.14,<0.6.0"
+transformers = ">=4.40,<5.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "==25.1.0"
+isort = "==6.0.1"
+pre-commit = "==4.3.0"
+notebook = "==7.4.7"
+build = ">=1.4.0,<2.0.0"
+twine = ">=6.2.0,<7.0.0"
+
+[[tool.poetry.source]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
