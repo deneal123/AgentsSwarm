@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "nvidia_issac_simulation"
+version = "0.1.0"
+description = "Placeholder сервис для NVIDIA симуляции"
+authors = ["AgentsSwarm <noreply@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
