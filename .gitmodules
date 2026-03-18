@@ -6,10 +6,6 @@
 	path = services/orchestrator
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = orchestrator
-[submodule "services/data_storage_service"]
-	path = services/data_storage_service
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = data_storage_service
 [submodule "services/nvidia_issac_simulation"]
 	path = services/nvidia_issac_simulation
 	url = https://github.com/deneal123/AgentsSwarm.git
@@ -34,3 +30,7 @@
 	path = services/frontend
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = frontend
+[submodule "services/data_storage_service"]
+	path = services/data_storage_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = data_storage_service
