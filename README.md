@@ -1,3 +1,3 @@
-# nvidia_issac_simulation
+# nvidia_isaac_simulation
 
 Легковесный placeholder для ветки-сервисов NVIDIA.
