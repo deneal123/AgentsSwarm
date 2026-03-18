@@ -6,18 +6,26 @@
 	path = services/orchestrator
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = orchestrator
+[submodule "services/data_storage_service"]
+	path = services/data_storage_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = data_storage_service
+[submodule "services/nvidia_issac_simulation"]
+	path = services/nvidia_issac_simulation
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = nvidia_issac_simulation
+[submodule "services/ros_msp_service"]
+	path = services/ros_msp_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = ros_msp_service
 [submodule "services/vllm_service"]
 	path = services/vllm_service
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = vllm_service
-[submodule "services/triton_inference"]
-	path = services/triton_inference
+[submodule "services/smolvla_tools"]
+	path = services/smolvla_tools
 	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = triton_inference
-[submodule "services/smolvla_service"]
-	path = services/smolvla_service
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = smolvla_service
+	branch = smolvla_tools
 [submodule "services/robot_edge"]
 	path = services/robot_edge
 	url = https://github.com/deneal123/AgentsSwarm.git

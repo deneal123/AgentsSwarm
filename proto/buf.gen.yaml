@@ -37,22 +37,6 @@ plugins:
   - remote: buf.build/grpc/python
     out: ../services/vllm_service/src/vllm_service/proto
 
-  # ── TritonInference ─────────────────────────────────────────────────────────
-  - remote: buf.build/protocolbuffers/python
-    out: ../services/triton_inference/src/triton_service/proto
-  - remote: buf.build/protocolbuffers/pyi
-    out: ../services/triton_inference/src/triton_service/proto
-  - remote: buf.build/grpc/python
-    out: ../services/triton_inference/src/triton_service/proto
-
-  # ── SmolVLAService ──────────────────────────────────────────────────────────
-  - remote: buf.build/protocolbuffers/python
-    out: ../services/smolvla_service/src/smolvla_service/proto
-  - remote: buf.build/protocolbuffers/pyi
-    out: ../services/smolvla_service/src/smolvla_service/proto
-  - remote: buf.build/grpc/python
-    out: ../services/smolvla_service/src/smolvla_service/proto
-
   # ── RobotEdge ───────────────────────────────────────────────────────────────
   - remote: buf.build/protocolbuffers/python
     out: ../services/robot_edge/src/robot_edge/proto

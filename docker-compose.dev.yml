@@ -3,14 +3,12 @@
 # ==============================================================================
 # Profiles:
 #   default     — infra + brokers + app services
-#   gpu         — AI inference services (Triton, vLLM, SmolVLA)
-#   monitoring  — Prometheus, Grafana, Jaeger
+#   gpu         — AI inference services (vLLM)
 #
 # Usage:
 #   make up                               # default profile
 #   make up-gpu                           # default + gpu
-#   make up-monitoring                    # default + monitoring
-#   docker compose -f docker-compose.dev.yml --profile gpu --profile monitoring up -d
+#   docker compose -f docker-compose.dev.yml --profile gpu up -d
 # ==============================================================================
 
 x-logging: &default-logging
@@ -36,24 +34,10 @@ networks:
 volumes:
   postgres_data:
     name: agentsswarm_postgres_data
-  influxdb_data:
-    name: agentsswarm_influxdb_data
-  influxdb_config:
-    name: agentsswarm_influxdb_config
-  neo4j_data:
-    name: agentsswarm_neo4j_data
-  neo4j_logs:
-    name: agentsswarm_neo4j_logs
-  neo4j_plugins:
-    name: agentsswarm_neo4j_plugins
   redis_data:
     name: agentsswarm_redis_data
   minio_data:
     name: agentsswarm_minio_data
-  emqx_data:
-    name: agentsswarm_emqx_data
-  emqx_log:
-    name: agentsswarm_emqx_log
   rabbitmq_data:
     name: agentsswarm_rabbitmq_data
 
@@ -63,78 +47,26 @@ services:
   # DATABASES
   # ============================================================================
 
-  postgres:
-    <<: *python-service
-    image: postgres:16-alpine
-    container_name: agentsswarm-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-agentsswarm}
-      POSTGRES_USER: ${POSTGRES_USER:-agentsswarm}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentsswarm_secret}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentsswarm} -d ${POSTGRES_DB:-agentsswarm}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-  influxdb:
-    <<: *python-service
-    image: influxdb:2.7-alpine
-    container_name: agentsswarm-influxdb
-    environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME:-admin}
-      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-influxdb_secret}
-      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-agentsswarm}
-      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
-      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUXDB_RETENTION:-30d}
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-my-super-secret-influxdb-token}
-    volumes:
-      - influxdb_data:/var/lib/influxdb2
-      - influxdb_config:/etc/influxdb2
-    ports:
-      - "${INFLUXDB_PORT:-8086}:8086"
-    healthcheck:
-      test: ["CMD", "influx", "ping"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  neo4j:
-    <<: *python-service
-    image: neo4j:5.26-community
-    container_name: agentsswarm-neo4j
-    environment:
-      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-neo4j_secret}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_dbms_security_procedures_unrestricted: "apoc.*"
-      NEO4J_dbms_security_procedures_allowlist: "apoc.*"
-      NEO4J_server_memory_heap_initial__size: "512m"
-      NEO4J_server_memory_heap_max__size: "1G"
-      NEO4J_server_memory_pagecache__size: "512m"
-      NEO4J_server_jvm_additional: "-XX:+UseG1GC"
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-      - neo4j_plugins:/plugins
-      - ./infrastructure/neo4j/init.cypher:/var/lib/neo4j/import/init.cypher:ro
-    ports:
-      - "${NEO4J_HTTP_PORT:-7474}:7474"
-      - "${NEO4J_BOLT_PORT:-7687}:7687"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/db/neo4j/cluster/available || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+  # postgres:
+  #   <<: *python-service
+  #   image: postgres:16-alpine
+  #   container_name: agentsswarm-postgres
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB:-agentsswarm}
+  #     POSTGRES_USER: ${POSTGRES_USER:-agentsswarm}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentsswarm_secret}
+  #     PGDATA: /var/lib/postgresql/data/pgdata
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+  #   ports:
+  #     - "${POSTGRES_PORT:-5432}:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentsswarm} -d ${POSTGRES_DB:-agentsswarm}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 20s
 
   redis:
     <<: *python-service
@@ -146,7 +78,7 @@ services:
         --include /usr/local/etc/redis/redis.conf
     volumes:
       - redis_data:/data
-      - ./infrastructure/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT:-6379}:6379"
       - "${REDIS_UI_PORT:-8001}:8001"
@@ -179,276 +111,159 @@ services:
       retries: 5
       start_period: 20s
 
-  # ============================================================================
-  # MESSAGE BROKERS
-  # ============================================================================
+  # rabbitmq:
+  #   <<: *python-service
+  #   image: rabbitmq:3.13-management-alpine
+  #   container_name: agentsswarm-rabbitmq
+  #   hostname: agentsswarm-rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rabbitmq}
+  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_secret}
+  #     RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+  #     RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 3600000"
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #     - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+  #     - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+  #   ports:
+  #     - "${RABBITMQ_PORT:-5672}:5672"          # AMQP
+  #     - "${RABBITMQ_MGMT_PORT:-15672}:15672"   # Management UI
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+  #     interval: 15s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
 
-  emqx:
-    <<: *python-service
-    image: emqx/emqx:5.8.3
-    container_name: agentsswarm-emqx
-    environment:
-      EMQX_NODE__NAME: "emqx@agentsswarm-emqx"
-      EMQX_CLUSTER__DISCOVERY_STRATEGY: manual
-      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_DASHBOARD_USER:-admin}
-      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD:-emqx_admin_secret}
-      EMQX_MQTT__MAX_PACKET_SIZE: "1MB"
-      EMQX_MQTT__IDLE_TIMEOUT: "30s"
-      EMQX_MQTT__MAX_TOPIC_LEVELS: "10"
-      EMQX_RETAINER__ENABLE: "true"
-      EMQX_RETAINER__MAX_PAYLOAD_SIZE: "1MB"
-      # Authorization: allow all in dev
-      EMQX_AUTHORIZATION__NO_MATCH: "allow"
-      EMQX_LOG__CONSOLE__LEVEL: warning
-    volumes:
-      - emqx_data:/opt/emqx/data
-      - emqx_log:/opt/emqx/log
-    ports:
-      - "${MQTT_PORT:-1883}:1883"              # MQTT/TCP
-      - "${MQTT_WS_PORT:-8083}:8083"           # MQTT/WebSocket
-      - "${MQTT_WSS_PORT:-8084}:8084"          # MQTT/WSS
-      - "${EMQX_DASHBOARD_PORT:-18083}:18083"  # Dashboard
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/emqx/bin/emqx ctl status | grep -q 'is running'"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
-  rabbitmq:
-    <<: *python-service
-    image: rabbitmq:3.13-management-alpine
-    container_name: agentsswarm-rabbitmq
-    hostname: agentsswarm-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rabbitmq}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_secret}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
-      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit consumer_timeout 3600000"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./infrastructure/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
-    ports:
-      - "${RABBITMQ_PORT:-5672}:5672"          # AMQP
-      - "${RABBITMQ_MGMT_PORT:-15672}:15672"   # Management UI
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+  # gateway:
+  #   <<: *python-service
+  #   build:
+  #     context: ./services/gateway_service
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   image: ghcr.io/deneal123/agentsswarm/gateway_service:dev
+  #   container_name: agentsswarm-gateway
+  #   env_file: .env
+  #   environment:
+  #     ENVIRONMENT: development
+  #     # Override host to container name for internal routing
+  #     POSTGRES_HOST: postgres
+  #     REDIS_HOST: redis
+  #     RABBITMQ_HOST: rabbitmq
+  #   volumes:
+  #     - ./services/gateway_service/src:/app/src:cached
+  #     - ./services/gateway_service/tests:/app/tests:cached
+  #   ports:
+  #     - "${GATEWAY_PORT:-8005}:8005"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:8005/health || exit 1"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
 
-  # ============================================================================
-  # APPLICATION SERVICES
-  # ============================================================================
+  # orchestrator:
+  #   <<: *python-service
+  #   build:
+  #     context: ./services/orchestrator
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
+  #   container_name: agentsswarm-orchestrator
+  #   env_file: .env
+  #   environment:
+  #     ENVIRONMENT: development
+  #     POSTGRES_HOST: postgres
+  #     REDIS_HOST: redis
+  #     RABBITMQ_HOST: rabbitmq
+  #     NEO4J_URI: bolt://neo4j:7687
+  #     INFLUXDB_URL: http://influxdb:8086
+  #   volumes:
+  #     - ./services/orchestrator/src:/app/src:cached
+  #     - ./services/orchestrator/tests:/app/tests:cached
+  #   ports:
+  #     - "${ORCHESTRATOR_PORT:-8006}:8006"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     neo4j:
+  #       condition: service_healthy
+  #     influxdb:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:8006/health || exit 1"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
 
-  gateway:
-    <<: *python-service
-    build:
-      context: ./services/gateway_service
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/gateway_service:dev
-    container_name: agentsswarm-gateway
-    env_file: .env
-    environment:
-      ENVIRONMENT: development
-      # Override host to container name for internal routing
-      POSTGRES_HOST: postgres
-      REDIS_HOST: redis
-      RABBITMQ_HOST: rabbitmq
-    volumes:
-      - ./services/gateway_service/src:/app/src:cached
-      - ./services/gateway_service/tests:/app/tests:cached
-    ports:
-      - "${GATEWAY_PORT:-8005}:8005"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8005/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+  # celery-worker:
+  #   <<: *python-service
+  #   build:
+  #     context: ./services/orchestrator
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
+  #   container_name: agentsswarm-celery-worker
+  #   command: >
+  #     celery -A src.orchestrator.celery_app worker
+  #     --loglevel=info
+  #     --concurrency=4
+  #     -Q default,high_priority,low_priority
+  #     --max-tasks-per-child=1000
+  #   env_file: .env
+  #   environment:
+  #     ENVIRONMENT: development
+  #     POSTGRES_HOST: postgres
+  #     REDIS_HOST: redis
+  #     RABBITMQ_HOST: rabbitmq
+  #   volumes:
+  #     - ./services/orchestrator/src:/app/src:cached
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
 
-  orchestrator:
-    <<: *python-service
-    build:
-      context: ./services/orchestrator
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
-    container_name: agentsswarm-orchestrator
-    env_file: .env
-    environment:
-      ENVIRONMENT: development
-      POSTGRES_HOST: postgres
-      REDIS_HOST: redis
-      RABBITMQ_HOST: rabbitmq
-      NEO4J_URI: bolt://neo4j:7687
-      INFLUXDB_URL: http://influxdb:8086
-    volumes:
-      - ./services/orchestrator/src:/app/src:cached
-      - ./services/orchestrator/tests:/app/tests:cached
-    ports:
-      - "${ORCHESTRATOR_PORT:-8006}:8006"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-      influxdb:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8006/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+  # celery-beat:
+  #   <<: *python-service
+  #   build:
+  #     context: ./services/orchestrator
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
+  #   container_name: agentsswarm-celery-beat
+  #   command: >
+  #     celery -A src.orchestrator.celery_app beat
+  #     --loglevel=info
+  #     --scheduler redbeat.RedBeatScheduler
+  #   env_file: .env
+  #   environment:
+  #     ENVIRONMENT: development
+  #     REDIS_HOST: redis
+  #     RABBITMQ_HOST: rabbitmq
+  #   volumes:
+  #     - ./services/orchestrator/src:/app/src:cached
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
 
-  celery-worker:
-    <<: *python-service
-    build:
-      context: ./services/orchestrator
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
-    container_name: agentsswarm-celery-worker
-    command: >
-      celery -A src.orchestrator.celery_app worker
-      --loglevel=info
-      --concurrency=4
-      -Q default,high_priority,low_priority
-      --max-tasks-per-child=1000
-    env_file: .env
-    environment:
-      ENVIRONMENT: development
-      POSTGRES_HOST: postgres
-      REDIS_HOST: redis
-      RABBITMQ_HOST: rabbitmq
-    volumes:
-      - ./services/orchestrator/src:/app/src:cached
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
-  celery-beat:
-    <<: *python-service
-    build:
-      context: ./services/orchestrator
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/orchestrator:dev
-    container_name: agentsswarm-celery-beat
-    command: >
-      celery -A src.orchestrator.celery_app beat
-      --loglevel=info
-      --scheduler redbeat.RedBeatScheduler
-    env_file: .env
-    environment:
-      ENVIRONMENT: development
-      REDIS_HOST: redis
-      RABBITMQ_HOST: rabbitmq
-    volumes:
-      - ./services/orchestrator/src:/app/src:cached
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
-  communication:
-    <<: *python-service
-    build:
-      context: ./services/communication_service
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/communication_service:dev
-    container_name: agentsswarm-communication
-    env_file: .env
-    environment:
-      ENVIRONMENT: development
-      MQTT_BROKER_HOST: emqx
-      RABBITMQ_HOST: rabbitmq
-    volumes:
-      - ./services/communication_service/src:/app/src:cached
-    ports:
-      - "${COMMUNICATION_PORT:-8008}:8008"
-    depends_on:
-      emqx:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8008/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # ============================================================================
-  # AI SERVICES (profile: gpu)
-  # ============================================================================
-
-  triton:
-    <<: *python-service
-    image: nvcr.io/nvidia/tritonserver:24.10-py3
-    container_name: agentsswarm-triton
-    profiles: ["gpu"]
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: ${TRITON_GPU_DEVICES:-0}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    command: >
-      tritonserver
-      --model-repository=/models
-      --model-control-mode=poll
-      --repository-poll-secs=30
-      --allow-grpc=true
-      --allow-http=true
-      --allow-metrics=true
-      --grpc-port=8001
-      --http-port=8000
-      --metrics-port=8002
-      --log-verbose=0
-      --strict-model-config=false
-    volumes:
-      - ${TRITON_MODEL_REPO:-./models/triton}:/models:ro
-    ports:
-      - "${TRITON_HTTP_PORT:-8000}:8000"     # HTTP REST
-      - "${TRITON_GRPC_PORT:-8007}:8001"     # gRPC (8007 host → 8001 container; avoids conflict with Redis UI)
-      - "${TRITON_METRICS_PORT:-8002}:8002"  # Prometheus metrics
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    shm_size: "2gb"
-    ulimits:
-      memlock: -1
-      stack: 67108864
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/v2/health/ready || exit 1"]
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
 
   vllm:
     <<: *python-service
@@ -497,114 +312,76 @@ services:
       retries: 5
       start_period: 180s
 
-  vllm-vlm:
-    <<: *python-service
-    image: vllm/vllm-openai:v0.6.4.post1
-    container_name: agentsswarm-vllm-vlm
-    profiles: ["gpu"]
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: ${VLLM_VLM_GPU_DEVICES:-1}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-      HF_TOKEN: ${HF_TOKEN:-}
-      VLLM_LOGGING_LEVEL: WARNING
-    command: >
-      --model ${VLLM_VLM_MODEL:-HuggingFaceTB/SmolVLM2-2.2B-Instruct}
-      --host 0.0.0.0
-      --port 8004
-      --max-model-len ${VLLM_VLM_MAX_MODEL_LEN:-4096}
-      --dtype ${VLLM_VLM_DTYPE:-bfloat16}
-      --tensor-parallel-size ${VLLM_VLM_TENSOR_PARALLEL_SIZE:-1}
-      --gpu-memory-utilization ${VLLM_VLM_GPU_MEMORY_UTILIZATION:-0.80}
-      --served-model-name smolvlm2
-      --disable-log-requests
-    volumes:
-      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
-    ports:
-      - "${VLLM_VLM_PORT:-8004}:8004"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    shm_size: "8gb"
-    ulimits:
-      memlock: -1
-      stack: 67108864
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8004/health || exit 1"]
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
 
-  smolvla:
-    <<: *python-service
-    build:
-      context: ./services/smolvla_service
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/smolvla_service:dev
-    container_name: agentsswarm-smolvla
-    profiles: ["gpu"]
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: ${SMOLVLA_GPU_DEVICES:-0}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    env_file: .env
-    volumes:
-      - ./services/smolvla_service/src:/app/src:cached
-      - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
-    ports:
-      - "${SMOLVLA_GRPC_PORT:-50051}:50051"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    shm_size: "8gb"
-    ulimits:
-      memlock: -1
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import grpc; ch=grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(ch).result(timeout=5); print('ok')\" || exit 1"]
-      interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
+  # vllm-vlm:
+  #   <<: *python-service
+  #   image: vllm/vllm-openai:v0.6.4.post1
+  #   container_name: agentsswarm-vllm-vlm
+  #   profiles: ["gpu"]
+  #   runtime: nvidia
+  #   environment:
+  #     NVIDIA_VISIBLE_DEVICES: ${VLLM_VLM_GPU_DEVICES:-1}
+  #     NVIDIA_DRIVER_CAPABILITIES: compute,utility
+  #     HF_TOKEN: ${HF_TOKEN:-}
+  #     VLLM_LOGGING_LEVEL: WARNING
+  #   command: >
+  #     --model ${VLLM_VLM_MODEL:-HuggingFaceTB/SmolVLM2-2.2B-Instruct}
+  #     --host 0.0.0.0
+  #     --port 8004
+  #     --max-model-len ${VLLM_VLM_MAX_MODEL_LEN:-4096}
+  #     --dtype ${VLLM_VLM_DTYPE:-bfloat16}
+  #     --tensor-parallel-size ${VLLM_VLM_TENSOR_PARALLEL_SIZE:-1}
+  #     --gpu-memory-utilization ${VLLM_VLM_GPU_MEMORY_UTILIZATION:-0.80}
+  #     --served-model-name smolvlm2
+  #     --disable-log-requests
+  #   volumes:
+  #     - ${HF_HOME:-~/.cache/huggingface}:/root/.cache/huggingface
+  #   ports:
+  #     - "${VLLM_VLM_PORT:-8004}:8004"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   shm_size: "8gb"
+  #   ulimits:
+  #     memlock: -1
+  #     stack: 67108864
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:8004/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 15s
+  #     retries: 5
+  #     start_period: 120s
 
-  # ============================================================================
-  # FRONTEND
-  # ============================================================================
 
-  frontend:
-    <<: *python-service
-    build:
-      context: ./services/frontend
-      dockerfile: Dockerfile
-      target: development
-    image: ghcr.io/deneal123/agentsswarm/frontend:dev
-    container_name: agentsswarm-frontend
-    environment:
-      NODE_ENV: development
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8005}
-      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8005}
-    volumes:
-      - ./services/frontend/src:/app/src:cached
-      - ./services/frontend/public:/app/public:cached
-      # Preserve node_modules from container
-      - /app/node_modules
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    depends_on:
-      gateway:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:3000 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 45s
+  # frontend:
+  #   <<: *python-service
+  #   build:
+  #     context: ./services/frontend
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   image: ghcr.io/deneal123/agentsswarm/frontend:dev
+  #   container_name: agentsswarm-frontend
+  #   environment:
+  #     NODE_ENV: development
+  #     VITE_API_URL: ${VITE_API_URL:-http://localhost:8005}
+  #     VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8005}
+  #   volumes:
+  #     - ./services/frontend/src:/app/src:cached
+  #     - ./services/frontend/public:/app/public:cached
+  #     # Preserve node_modules from container
+  #     - /app/node_modules
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:3000"
+  #   depends_on:
+  #     gateway:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:3000 || exit 1"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 45s

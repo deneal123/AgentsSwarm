@@ -14,3 +14,5 @@
 - [x] [Lerobot](https://github.com/huggingface/lerobot)
 - [x] [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)
 - [x] [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)
+- [x] [RosMspServer](https://github.com/robotmcp/ros-mcp-server.git)
+- [x] [RosMspClient](https://github.com/robotmcp/robotmcp_client.git)

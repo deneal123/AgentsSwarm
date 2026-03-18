@@ -1,98 +1,257 @@
-# ─── Environment ───────────────────────────────────────────────────────────────
+*.pyc
 .env
-.env.*
-!.env.example
-
-# ─── Python ────────────────────────────────────────────────────────────────────
+.env.dev
+.env.prod
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 __pycache__/
+venv
+.venv
+.vscode/
+.qoder
+backend/logs/
+pytest_cache/
+
+
+.hydra/
+output/
+ckpt/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-.venv/
-venv/
-env/
+
+# Distribution / packaging
 .Python
-pip-wheel-metadata/
-*.pyd
-.pytest_cache
-COPILOT_SYSTEM.md
-
-# ─── Poetry ────────────────────────────────────────────────────────────────────
-poetry.toml
-# НЕ игнорировать poetry.lock — он нужен для воспроизводимых сборок
-
-# ─── Mypy / Ruff / Coverage ────────────────────────────────────────────────────
-.mypy_cache/
-.ruff_cache/
-.coverage
-coverage.xml
-htmlcov/
-.pytest_cache/
-.tox/
-
-# ─── Node / Frontend ───────────────────────────────────────────────────────────
-node_modules/
+build/
+develop-eggs/
 dist/
-.next/
-.nuxt/
-*.local
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# ─── IDE / Editor ──────────────────────────────────────────────────────────────
-.vscode/
+# PyInstaller
+# Usually these files are written by a python script from a template
+# before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Profiling data
+.prof
+
+# Folder specific to your needs
+**/tmp/
+**/outputs/skyseg.onnx
+skyseg.onnx
+
+# pixi environments
+.pixi
+*.egg-info
+
+logs/
+
+# dependencies
+frontend/node_modules
+/.pnp
+.pnp.js
 .idea/
+.env
+# testing
+/coverage
+
+# production
+frontend/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/nuget.config
+frontend/client.sln
+frontend/client.esproj
+frontend/obj/
+frontend/.vscode/
+frontend/.vs/
+frontend/node_modules/console-control-strings
+frontend/client.esproj.user
+
+infra/nginx/certs
+.env.prod
+
+/data
+
+/frontend/axe-report.json
+/frontend/test-results/
+/tmp_tpot
+/tmp_e2e
+.config
+
+# Infrastructure data (storage, databases, cache)
+/infra/storage/
+/infra/minio_data/
+/infra/redis_data/
+infra/storage/
+infra/minio_data/
+infra/redis_data/
+
+# Database dumps
+*.rdb
+*.dump
+*.sql.gz
+
+# Cache directories
+.cache/
+
+# Uploaded files and models (should be stored externally)
+uploads/
+models/*.pkl
+*.pkl
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
 *.swp
 *.swo
 *~
 
-# ─── Docker volumes / Data ─────────────────────────────────────────────────────
-volumes/
-postgres_data/
-influxdb_data/
-neo4j_data/
-redis_data/
-minio_data/
-model_store/
-models/
-lora_adapters/
+.qoder
+KODA.md
 
-# ─── Infrastructure data (runtime, не коммитим) ────────────────────────────────
-infrastructure/jaeger/data/*
-!infrastructure/jaeger/data/.gitkeep
-infrastructure/emqx/data/
-infrastructure/rabbitmq/data/
+.github
+.pytest_cache/
 
-# ─── Logs ──────────────────────────────────────────────────────────────────────
-*.log
-logs/
+# VS Code
+.vscode/
 
-# ─── Compiled Protobuf ─────────────────────────────────────────────────────────
-*_pb2.py
-*_pb2_grpc.py
-*_pb2.pyi
+COPILOT_SYSTEM.md
 
-# ─── OS ────────────────────────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-
-# ─── Jupyter ───────────────────────────────────────────────────────────────────
-.ipynb_checkpoints/
-*.ipynb
-
-# ─── Secrets / Certs ───────────────────────────────────────────────────────────
-*.pem
-*.key
-*.crt
-*.p12
-certs/
-
-# ─── Misc ──────────────────────────────────────────────────────────────────────
-*.bak
-*.tmp
-.terraform/
-
-
+infra/nginx
+infra/redis_data
+infra/storage

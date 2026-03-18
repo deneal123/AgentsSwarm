@@ -66,13 +66,9 @@ fi
 
 # ─── Определяем proto-файлы ───────────────────────────────────────────────────
 PROTO_FILES=(
-    "common/v1/types.proto"
-    "common/v1/telemetry.proto"
     "gateway/v1/gateway.proto"
     "orchestrator/v1/orchestrator.proto"
-    "inference/v1/triton.proto"
     "inference/v1/vllm.proto"
-    "inference/v1/smolvla.proto"
 )
 
 # Путь к google/protobuf well-known types (через grpcio-tools)
@@ -83,8 +79,6 @@ declare -A SERVICE_DIRS=(
     ["gateway"]="${ROOT_DIR}/services/gateway_service/src/gateway/proto"
     ["orchestrator"]="${ROOT_DIR}/services/orchestrator/src/orchestrator/proto"
     ["vllm"]="${ROOT_DIR}/services/vllm_service/src/vllm_service/proto"
-    ["triton"]="${ROOT_DIR}/services/triton_inference/src/triton_service/proto"
-    ["smolvla"]="${ROOT_DIR}/services/smolvla_service/src/smolvla_service/proto"
     ["robot_edge"]="${ROOT_DIR}/services/robot_edge/src/robot_edge/proto"
 )
 

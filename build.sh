@@ -22,7 +22,6 @@ declare -A SERVICES=(
     [gateway]="services/gateway_service"
     [orchestrator]="services/orchestrator"
     [vllm]="services/vllm_service"
-    [triton]="services/triton_inference"
     [smolvla]="services/smolvla_service"
     [communication]="services/communication_service"
     [robot-edge]="services/robot_edge"
