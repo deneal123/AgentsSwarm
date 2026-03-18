@@ -2,10 +2,10 @@
 	path = services/orchestrator
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = orchestrator
-[submodule "services/nvidia_issac_simulation"]
-	path = services/nvidia_issac_simulation
+[submodule "services/nvidia_isaac_simulation"]
+	path = services/nvidia_isaac_simulation
 	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = nvidia_issac_simulation
+	branch = nvidia_isaac_simulation
 [submodule "services/ros_msp_service"]
 	path = services/ros_msp_service
 	url = https://github.com/deneal123/AgentsSwarm.git
