@@ -1,7 +1,3 @@
-[submodule "services/gateway_service"]
-	path = services/gateway_service
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = gateway_service
 [submodule "services/orchestrator"]
 	path = services/orchestrator
 	url = https://github.com/deneal123/AgentsSwarm.git
