@@ -1,95 +1,36 @@
 # Документация: Платформа управления роем роботов с AI-оркестрацией
 
-**Версия документации:** 1.0  
-**Дата создания:** 2026-03-04  
-**Статус:** Проектирование  
 
----
+## План работ:
 
-## Назначение
-
-Данная документация описывает архитектуру, компоненты и принципы работы платформы **AgentsSwarm** — микросервисной системы для централизованного управления роем автономных роботов с использованием современных AI-моделей.
-
-Система обеспечивает:
-
-- Управление роем роботов через интерфейс с поддержкой естественного языка
-- Сбор и обработку телеметрии в реальном времени
-- AI-планирование и координацию задач между роботами
-- Компьютерное зрение с детекцией и трекингом объектов
-- Автономную работу роботов при потере связи с облаком
-- Масштабируемую инфраструктуру для тысяч устройств
-
----
-
-## Структура документации
-
-### Архитектура
-
-Общие архитектурные решения, принципы построения системы и межкомпонентное взаимодействие.
-
-| Документ | Описание |
-|----------|----------|
-| [Общий обзор системы](Архитектура/01-Общий-обзор-системы.md) | Высокоуровневое описание системы, её цели и принципы |
-| [Микросервисная архитектура](Архитектура/02-Микросервисная-архитектура.md) | Декомпозиция на микросервисы, их роли и зоны ответственности |
-| [Потоки данных](Архитектура/03-Потоки-данных.md) | Детальные сценарии движения данных через систему |
-| [Протоколы коммуникации](Архитектура/04-Протоколы-коммуникации.md) | Описание всех используемых протоколов и обоснование выбора |
-| [Схемы данных и сериализация](Архитектура/05-Схемы-данных-и-сериализация.md) | Форматы сообщений, Protobuf-схемы, контракты API |
-| [Безопасность](Архитектура/06-Безопасность.md) | Политики безопасности, аутентификация, шифрование |
-| [Масштабирование и отказоустойчивость](Архитектура/07-Масштабирование-и-отказоустойчивость.md) | Стратегии масштабирования и обеспечения непрерывной работы |
-| [Развёртывание и инфраструктура](Архитектура/08-Развертывание-и-инфраструктура.md) | Контейнеризация, оркестрация, CI/CD |
-
-### Микросервисы
-
-| Сервис | Документация |
-|--------|-------------|
-| **GatewayService** | [Обзор](GatewayService/01-Обзор.md) · [REST API](GatewayService/02-REST-API.md) · [WebSocket-интерфейс](GatewayService/03-WebSocket-интерфейс.md) |
-| **Orchestrator** | [Обзор](Orchestrator/01-Обзор.md) · [LangGraph-движок](Orchestrator/02-LangGraph-движок.md) · [Open-Agent SDK](Orchestrator/03-Open-Agent-SDK.md) · [Управление задачами](Orchestrator/04-Управление-задачами.md) · [Координация роя](Orchestrator/05-Координация-роя.md) |
-| **TritonInference** | [Обзор](TritonInference/01-Обзор.md) · [Модели и пайплайны](TritonInference/02-Модели-и-пайплайны.md) · [Конфигурация и оптимизация](TritonInference/03-Конфигурация-и-оптимизация.md) |
-| **vLLMService** | [Обзор](vLLMService/01-Обзор.md) · [Текстовые модели](vLLMService/02-Текстовые-модели.md) · [Мультимодальные модели](vLLMService/03-Мультимодальные-модели.md) |
-| **SmolVLA** | [Обзор](SmolVLA/01-Обзор.md) · [Cloud-версия](SmolVLA/02-Cloud-версия.md) · [Edge-версия](SmolVLA/03-Edge-версия.md) · [Обучение и адаптация](SmolVLA/04-Обучение-и-адаптация.md) |
-| **RobotEdge** | [Обзор](RobotEdge/01-Обзор.md) · [Edge AI Proxy](RobotEdge/02-Edge-AI-Proxy.md) · [ROS2 Bridge](RobotEdge/03-ROS2-Bridge.md) · [Локальные модели](RobotEdge/04-Локальные-модели.md) · [Автономная работа](RobotEdge/05-Автономная-работа.md) |
-| **CommunicationService** | [Обзор](CommunicationService/01-Обзор.md) · [MQTT-брокер](CommunicationService/02-MQTT-брокер.md) · [RabbitMQ](CommunicationService/03-RabbitMQ.md) · [Топики и маршрутизация](CommunicationService/04-Топики-и-маршрутизация.md) |
-| **DataStorage** | [Обзор](DataStorage/01-Обзор.md) · [InfluxDB](DataStorage/02-InfluxDB-временные-ряды.md) · [Neo4j](DataStorage/03-Neo4j-графовая-БД.md) · [Redis](DataStorage/04-Redis-кэш-и-Feature-Store.md) · [MinIO](DataStorage/05-MinIO-объектное-хранилище.md) · [PostgreSQL](DataStorage/06-PostgreSQL.md) |
-| **Frontend** | [Обзор](Frontend/01-Обзор.md) · [Dashboard UI](Frontend/02-Dashboard-UI.md) · [Chat Interface](Frontend/03-Chat-Interface.md) · [3D-Визуализация](Frontend/04-3D-Визуализация.md) |
-| **Мониторинг** | [Обзор](Мониторинг/01-Обзор.md) · [Метрики и алерты](Мониторинг/02-Метрики-и-алерты.md) · [Логирование и трассировка](Мониторинг/03-Логирование-и-трассировка.md) |
-
----
-
-## Технологический стек
-
-| Категория | Технологии |
-|-----------|------------|
-| Фронтенд | React, Three.js, WebSocket API |
-| API-шлюз | FastAPI (Python), WebSocket |
-| Оркестрация задач | Python, Celery, LangGraph, Open-Agent SDK |
-| AI-инференс | NVIDIA Triton, vLLM, SmolVLA (HuggingFace LeRobot) |
-| Брокеры сообщений | RabbitMQ, EMQX (MQTT) |
-| Краевые вычисления | ROS2, Docker, NVIDIA Jetson |
-| Хранение данных | InfluxDB, Neo4j, Redis, MinIO, PostgreSQL |
-| Мониторинг | Prometheus, Grafana, Jaeger, Elasticsearch |
-| Инфраструктура | Kubernetes, Docker, Helm |
-
----
-
-## Условные обозначения
-
-В документации используются следующие обозначения:
-
-- **gRPC** — межсервисные синхронные вызовы высокой производительности
-- **MQTT** — основной протокол связи с роботами
-- **WebSocket** — двунаправленная связь с фронтендом в реальном времени
-- **RabbitMQ** — внутренний брокер сообщений между микросервисами
-- **QoS 0/1/2** — уровни гарантии доставки MQTT (at most once / at least once / exactly once)
-- **Edge** — вычисления на стороне робота (краевые вычисления)
-- **Cloud** — вычисления в облаке / на серверах центра управления
-- **VLA** — Vision-Language-Action, архитектура моделей, объединяющая зрение, понимание языка и генерацию действий
+- [] Сконструировать из готовой среды и робота симуляцию на Nvidia Isaac + Ros2, запустить симуляцию и проверить работу.
+- [] Развернуть ros-msp-server для взаимодействия с роботом через клиента. Протестировать взаимодействие cli вызов заготовленной команды (вызов тула) -> проксирование через msp-server -> отображение заданного движения робота в симуляции.
+- [] Развертывание vllm локальной модели qwen с tool calling -> разработка простого агента (open-agents-sdk) для автоматизации движения работа через текстовые запросы.
+- [] Разработать простую реализацию базы данных и фронтенда для сессий, пользователей -> передача  текстового запроса через ui.
+- [] Сконфигурировать симуляцию с несколькими роботами и добавить оркестратор агентов, управление роем роботов.
+- [] Масштабирование системы и добавление новых субагентских макросистем nvidia-search-video-summarisation.
+- [] Субагент поиска информации по истории видеоконтента.
+- [] Субагент алертинга в реальном времени.
+- [] Субагент qa по видео и изображениям.
+- [] Субагент суммаризации долгих видео.
 
 
+## Sourses
 
-QA:
-
-- Где посмотреть информацию по машинкам? Какие вообще датчики есть, чтобы разрабатывать прослойку на ROS2, что может пригодится? Видел, что машинки уже запускали, проверяли как они ездят, может уже где-то лежит готовый образ с проектом для конкретно этой машинки?
-- Есть ли на машинках железо способное к офлайн инференсу? Есть ли смысл делать ноды с локальными моделями?
-- Как правильно сделать постановку задачи? Мы делаем рой мультиагентного планирования, какие задачи вообще должно потенциально это решать? Условно, доехать куче машинок от пункта А до пункта Б не мешая друг другу или иначе?
-- Допустим разработал проект с ros2, есть какой-нибудь способ тестить его без физической машинки? Может есть симулятор какой-то конкретно с этой конфигурацией машинки?
-- 
+- [x] [vLLM Server](https://github.com/vllm-project/vllm)
+- [x] [Ros2](https://github.com/ros2)
+- [x] [Redis](https://redis.readthedocs.io/en/stable/index.html)
+- [x] [RabbitMQ](https://www.rabbitmq.com/tutorials/tutorial-one-python)
+- [x] [PostgreSQL](https://www.geeksforgeeks.org/python/sqlalchemy-tutorial-in-python/)
+- [x] [Minio](https://docs.min.io/enterprise/aistor-object-store/developers/sdk/python/)
+- [x] [Lerobot](https://github.com/huggingface/lerobot)
+- [x] [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)
+- [x] [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)
+- [x] [RosMspServer](https://github.com/robotmcp/ros-mcp-server.git)
+- [x] [RosMspClient](https://github.com/robotmcp/robotmcp_client.git)
+- [x] [NVIDIA Isaac ROS](https://nvidia-isaac-ros.github.io/getting_started/index.html#system-requirements)
+- [x] [NVIDIA Isaac ROS Repositories and Packages](https://nvidia-isaac-ros.github.io/repositories_and_packages/index.html)
+- [x] [Multiple Robot ROS Navigation](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/ros_tutorials/tutorial_ros_multi_navigation.html)
+- [x] [Nvidia Vss Agent](https://docs.nvidia.com/vss/3.1.0/quickstart.html)
+- [x] [Nvidia Agent Workflows](https://docs.nvidia.com/vss/latest/adding-workflows.html)
+- [x] [video-search-and-summarization](https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization/tree/main)
