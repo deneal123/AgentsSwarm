@@ -1,0 +1,31 @@
+
+services:
+  isaac-sim-gui:
+    image: "${IMAGE}"
+    container_name: "${CONTAINER_NAME:-isaac-sim}-gui"
+    env_file:
+      - ../.env
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - ACCEPT_EULA=Y
+      - PRIVACY_CONSENT=Y
+    network_mode: host
+    ipc: host
+    gpus: all
+    shm_size: 8gb
+    user: "${ISAAC_USER:-0:0}"
+    working_dir: /isaac-sim
+    command: ["bash", "./runapp.sh"]
+    volumes:
+      - ${ISAAC_ROOT}/cache/main:/isaac-sim/.cache:rw
+      - ${ISAAC_ROOT}/cache/computecache:/isaac-sim/.nv/ComputeCache:rw
+      - ${ISAAC_ROOT}/logs:/isaac-sim/.nvidia-omniverse/logs:rw
+      - ${ISAAC_ROOT}/config:/isaac-sim/.nvidia-omniverse/config:rw
+      - ${ISAAC_ROOT}/data:/isaac-sim/.local/share/ov/data:rw
+      - ${ISAAC_ROOT}/pkg:/isaac-sim/.local/share/ov/pkg:rw
+      - ${HOME}/.Xauthority:/isaac-sim/.Xauthority:ro
+    devices:
+      - /dev/dri
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

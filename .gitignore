@@ -1,7 +1,5 @@
 *.pyc
 .env
-.env.dev
-.env.prod
 .envrc
 .venv
 env/
@@ -13,13 +11,9 @@ __pycache__/
 venv
 .venv
 .vscode/
-.qoder
-backend/logs/
-pytest_cache/
 
 
 .hydra/
-output/
 ckpt/
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -165,8 +159,6 @@ skyseg.onnx
 .pixi
 *.egg-info
 
-logs/
-
 # dependencies
 frontend/node_modules
 /.pnp
@@ -198,60 +190,38 @@ frontend/.vs/
 frontend/node_modules/console-control-strings
 frontend/client.esproj.user
 
-infra/nginx/certs
-.env.prod
 
-/data
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
 
-/frontend/axe-report.json
-/frontend/test-results/
-/tmp_tpot
-/tmp_e2e
-.config
+/.github
 
-# Infrastructure data (storage, databases, cache)
-/infra/storage/
-/infra/minio_data/
-/infra/redis_data/
-infra/storage/
-infra/minio_data/
-infra/redis_data/
+src/notebook/data/
+src/notebook/output/
+src/notebook/logs/
+src/notebook/reports/
 
-# Database dumps
-*.rdb
-*.dump
-*.sql.gz
+/data/materials/tolkovyj_slovar_chast1.pdf
+/data/materials/tolkovyj_slovar_chast2.pdf
+/data/materials/tolkovyj_slovar_chast1_extracted.txt
+/data/materials/tolkovyj_slovar_chast2_extracted.txt
+/data/materials/slovar_inostr_slov.pdf
+/data/materials/slovar_text_output.txt
 
-# Cache directories
-.cache/
+/logs
+/data/backup_etalons_19_01_2026
+/data/backup_etalons_before_ispr_risk34_19_01_2026
+/data/backup_etalons_risk16_20_01_2026
+/data/backup_etalons_FP_FN_34_22_01_2026
 
-# Uploaded files and models (should be stored externally)
-uploads/
-models/*.pkl
-*.pkl
+/data/materials/russian.txt
+/data/materials/russian_surnames.txt
 
-# Logs
-*.log
-logs/
+/src/notebook/*.json
 
-# Temporary files
-*.tmp
-*.temp
-*.swp
-*.swo
-*~
 
+/docs/architecture
+
+.cursor
 .qoder
 KODA.md
-
-.github
-.pytest_cache/
-
-# VS Code
-.vscode/
-
-COPILOT_SYSTEM.md
-
-infra/nginx
-infra/redis_data
-infra/storage
