@@ -99,7 +99,7 @@ check_env() {
 build() {
     print_banner
     echo -e "${YELLOW}Building Docker image...${NC}"
-    docker-compose build --no-cache
+    docker compose build --no-cache
     echo -e "${GREEN}Build complete!${NC}"
 }
 
@@ -115,7 +115,7 @@ up() {
         echo -e "${BLUE}Starting as Worker (rank ${VLLM_DATA_PARALLEL_RANK})${NC}"
     fi
     
-    docker-compose up -d
+    docker compose up -d
     
     echo ""
     echo -e "${GREEN}Service started!${NC}"
@@ -133,19 +133,19 @@ up() {
 down() {
     print_banner
     echo -e "${YELLOW}Stopping vLLM service...${NC}"
-    docker-compose down
+    docker compose down
     echo -e "${GREEN}Service stopped.${NC}"
 }
 
 logs() {
-    docker-compose logs -f
+    docker compose logs -f
 }
 
 status() {
     print_banner
     echo -e "${YELLOW}Service Status:${NC}"
     echo ""
-    docker-compose ps
+    docker compose ps
     echo ""
     
     # Try to check health endpoint
@@ -160,7 +160,7 @@ status() {
 }
 
 ps() {
-    docker-compose ps
+    docker compose ps
 }
 
 restart() {
@@ -175,7 +175,7 @@ clean() {
     read -p "Are you sure? (y/N) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker-compose down -v --rmi local
+        docker compose down -v --rmi local
         echo -e "${GREEN}Cleanup complete.${NC}"
     else
         echo "Cancelled."

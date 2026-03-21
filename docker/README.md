@@ -130,6 +130,15 @@ VLLM_DATA_PARALLEL_RPC_PORT=13345
 ./deploy.sh clean
 ```
 
+Or use `docker compose` directly:
+
+```bash
+docker compose build
+docker compose up -d
+docker compose logs -f
+docker compose down
+```
+
 ## Troubleshooting
 
 ### Service won't start
