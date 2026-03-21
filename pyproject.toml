@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "nvidia_isaac_simulation"
+version = "v0.0.0"
+description = ""
+authors = ["GravyTalk <deneaL123@mail.ru>"]
+readme = "README.md"
+homepage = ""
+repository = ""
+packages = [
+    { include = "nvidia_isaac_simulation", from = "src" },
+]
+include = [
+    { path = "*.yaml", format = ["sdist", "wheel"] },
+    { path = "*.toml", format = ["sdist", "wheel"] },
+    { path = "*.crt", format = ["sdist", "wheel"] }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "==25.1.0"
+isort = "==6.0.1"
+pre-commit = "==4.3.0"
+build = ">=1.4.0,<2.0.0"
+twine = ">=6.2.0,<7.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
