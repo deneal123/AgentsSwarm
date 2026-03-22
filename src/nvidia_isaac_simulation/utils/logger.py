@@ -2,7 +2,7 @@ import logging
 import sys
 from uuid import uuid4
 
-from nvidia_isaac_simulation.config.config import PROJECT_ROOT
+from nvidia_isaac_simulation.config import PROJECT_ROOT
 
 
 def setup_logging():
