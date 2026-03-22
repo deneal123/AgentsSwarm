@@ -1,7 +1,6 @@
 """FastAPI application for OpenAI-compatible API server."""
 
 import asyncio
-import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -31,8 +30,9 @@ from vllm_service.models.schemas import (
     ModelList,
     Usage,
 )
+from vllm_service.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager

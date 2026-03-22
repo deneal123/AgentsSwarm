@@ -1,6 +1,6 @@
 [project]
 name = "vllm_service"
-version = "v0.0.0"
+version = "v0.0.1"
 description = "OpenAI-compatible API server with Data Parallel support"
 authors = [
     { name = "GravyTalk", email = "deneaL123@mail.ru" }

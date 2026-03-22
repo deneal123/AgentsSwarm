@@ -2,7 +2,6 @@
 
 import argparse
 import asyncio
-import logging
 import os
 import time
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
@@ -12,9 +11,10 @@ from vllm.engine.arg_utils import EngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.outputs import RequestOutput
 
-from vllm_service.config.config import settings
+from vllm_service.config import settings
+from vllm_service.utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class VLLMEngineWrapper:

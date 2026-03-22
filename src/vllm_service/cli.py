@@ -2,7 +2,6 @@
 
 import argparse
 import asyncio
-import logging
 import os
 import sys
 from typing import Optional
@@ -10,18 +9,10 @@ from typing import Optional
 import uvicorn
 
 from vllm_service import __version__
-from vllm_service.config.config import settings
+from vllm_service.config import settings
+from vllm_service.utils import get_logger
 
-
-def setup_logging(log_level: str = "INFO") -> None:
-    """Setup logging configuration."""
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-        ],
-    )
+logger = get_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
