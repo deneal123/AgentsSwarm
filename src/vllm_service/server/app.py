@@ -1,6 +1,7 @@
 """FastAPI application for OpenAI-compatible API server."""
 
 import asyncio
+import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -30,9 +31,8 @@ from vllm_service.models.schemas import (
     ModelList,
     Usage,
 )
-from vllm_service.utils import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -54,7 +54,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="vLLM Service",
         description="OpenAI-compatible API server with Data Parallel support",
-        version=settings.version,
+        version=settings.get("version", "0.0.0"),
         lifespan=lifespan,
     )
     
@@ -118,12 +118,12 @@ async def list_models(request: Request) -> ModelList:
     """List available models."""
     _check_api_key(request)
     
-    engine = get_engine()
+    model_name = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
     model_info = ModelInfo(
-        id=settings.model_name,
+        id=model_name,
         owned_by="vllm-service",
     )
-    
+
     return ModelList(data=[model_info])
 
 
@@ -132,16 +132,17 @@ async def get_model(model_id: str, request: Request) -> ModelInfo:
     """Get model information."""
     _check_api_key(request)
     
-    if model_id != settings.model_name:
+    model_name = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
+    if model_id != model_name:
         raise HTTPException(status_code=404, detail="Model not found")
     
     return ModelInfo(
-        id=settings.model_name,
+        id=model_name,
         owned_by="vllm-service",
     )
 
 
-@api_router.post("/v1/chat/completions")
+@api_router.post("/v1/chat/completions", response_model=None)
 async def chat_completions(
     chat_request: ChatCompletionRequest,
     raw_request: Request,
@@ -243,7 +244,7 @@ def _build_chat_response(output, request_id: str, model: str) -> ChatCompletionR
     )
 
 
-@api_router.post("/v1/completions")
+@api_router.post("/v1/completions", response_model=None)
 async def completions(
     completion_request: CompletionRequest,
     raw_request: Request,

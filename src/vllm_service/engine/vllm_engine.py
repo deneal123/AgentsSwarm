@@ -1,9 +1,6 @@
 """vLLM Engine wrapper with Data Parallel support."""
 
-import argparse
-import asyncio
-import os
-import time
+import logging
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from vllm import SamplingParams
@@ -12,9 +9,8 @@ from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.outputs import RequestOutput
 
 from vllm_service.config import settings
-from vllm_service.utils import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class VLLMEngineWrapper:
@@ -23,7 +19,7 @@ class VLLMEngineWrapper:
     def __init__(self) -> None:
         """Initialize the vLLM engine with Data Parallel configuration."""
         self.engine: Optional[AsyncLLMEngine] = None
-        self.model_name: str = settings.model.model_name
+        self.model_name: str = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
         self._initialized: bool = False
 
     async def initialize(self) -> None:
@@ -39,41 +35,34 @@ class VLLMEngineWrapper:
 
     def _build_engine_args(self) -> EngineArgs:
         """Build engine arguments from settings."""
-        data_parallel_size = int(settings.data_parallel.get("data_parallel_size", 1))
-        data_parallel_rank = int(settings.data_parallel.get("data_parallel_rank", 0))
-        data_parallel_address = settings.data_parallel.get("data_parallel_address", "localhost")
-        data_parallel_rpc_port = int(settings.data_parallel.get("data_parallel_rpc_port", 13345))
-        data_parallel_size_local = int(settings.data_parallel.get("data_parallel_size_local", 1))
+        # Get all settings with defaults
+        data_parallel_size = int(settings.get("data_parallel_size", 1))
+        data_parallel_rank = int(settings.get("data_parallel_rank", 0))
+        data_parallel_address = settings.get("data_parallel_address", "localhost")
+        data_parallel_rpc_port = int(settings.get("data_parallel_rpc_port", 13345))
+        data_parallel_size_local = int(settings.get("data_parallel_size_local", 1))
         
-        args = [
-            "--model", self.model_name,
-            "--dtype", str(settings.model.get("model_dtype", "auto")),
-            "--max-model-len", str(settings.mdoel.get("max_model_len", 4096)),
-            "--gpu-memory-utilization", str(settings.model.get("gpu_memory_utilization", 0.9)),
-            "--tensor-parallel-size", str(settings.engine.get("tensor_parallel_size", 1)),
-            "--max-num-seqs", str(settings.engine.get("max_num_seqs", 256)),
-        ]
-        
-        if settings.engine.get("max_num_batched_tokens"):
-            args.extend(["--max-num-batched-tokens", str(settings.engine.max_num_batched_tokens)])
+        # Build EngineArgs directly
+        engine_args = EngineArgs(
+            model=self.model_name,
+            dtype=settings.get("model_dtype", "auto"),
+            max_model_len=int(settings.get("max_model_len", 4096)),
+            gpu_memory_utilization=float(settings.get("gpu_memory_utilization", 0.9)),
+            tensor_parallel_size=int(settings.get("tensor_parallel_size", 1)),
+            max_num_seqs=int(settings.get("max_num_seqs", 256)),
+            max_num_batched_tokens=int(settings.get("max_num_batched_tokens", 8192)) if settings.get("max_num_batched_tokens") else None,
+            # Data Parallel settings
+            data_parallel_size=data_parallel_size if data_parallel_size > 1 else None,
+            data_parallel_rank=data_parallel_rank if data_parallel_size > 1 else None,
+            data_parallel_master_address=data_parallel_address if data_parallel_size > 1 else None,
+            data_parallel_master_port=data_parallel_rpc_port if data_parallel_size > 1 else None,
+            data_parallel_size_local=data_parallel_size_local if data_parallel_size > 1 else None,
+        )
         
         if data_parallel_size > 1:
             logger.info(f"Configuring Data Parallel: size={data_parallel_size}, rank={data_parallel_rank}")
-            args.extend([
-                "--data-parallel-size", str(data_parallel_size),
-                "--data-parallel-rank", str(data_parallel_rank),
-                "--data-parallel-address", data_parallel_address,
-                "--data-parallel-rpc-port", str(data_parallel_rpc_port),
-                "--data-parallel-size-local", str(data_parallel_size_local),
-            ])
-            
-            if data_parallel_rank > 0:
-                args.append("--headless")
         
-        parser = EngineArgs.add_cli_args(argparse.ArgumentParser())
-        parsed_args = parser.parse_args(args)
-        
-        return EngineArgs.from_cli_args(parsed_args)
+        return engine_args
 
     async def generate(
         self,

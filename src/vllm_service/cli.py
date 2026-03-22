@@ -1,7 +1,7 @@
 """CLI entry point for vLLM service."""
 
 import argparse
-import asyncio
+import logging
 import os
 import sys
 from typing import Optional
@@ -10,9 +10,6 @@ import uvicorn
 
 from vllm_service import __version__
 from vllm_service.config import settings
-from vllm_service.utils import get_logger
-
-logger = get_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -195,27 +192,36 @@ def main() -> None:
     """Main entry point."""
     args = parse_args()
     
-    setup_logging(args.log_level)
+    # Setup logging
+    logging.basicConfig(
+        level=getattr(logging, args.log_level.upper()),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     logger = logging.getLogger(__name__)
-    
+
+    # Update settings from args
     update_settings_from_args(args)
-    
+
+    # Import here to avoid circular imports
     from vllm_service.server.app import create_app
     
-    host = os.environ.get("VLLM_HOST", "localhost")
-    port = int(os.environ("VLLM_PORT", 8000))
+    # Get configuration
+    host = settings.get("host", "0.0.0.0")
+    port = int(settings.get("port", 8000))
     log_level = args.log_level.lower()
     
     logger.info(f"Starting vLLM Service v{__version__}")
-    logger.info(f"Model: {settings.model.get('model_name', 'not set')}")
+    logger.info(f"Model: {settings.get('model_name', 'not set')}")
     logger.info(f"Host: {host}:{port}")
     
-    dp_size = int(settings.data_parallel.get("data_parallel_size", 1))
-    dp_rank = int(settings.data_parallel.get("data_parallel_rank", 0))
+    # Data Parallel info
+    dp_size = int(settings.get("data_parallel_size", 1))
+    dp_rank = int(settings.get("data_parallel_rank", 0))
     if dp_size > 1:
         logger.info(f"Data Parallel: size={dp_size}, rank={dp_rank}")
-        logger.info(f"Coordinator: {settings.data_parallel.get('data_parallel_address', 'localhost')}")
+        logger.info(f"Coordinator: {settings.get('data_parallel_address', 'localhost')}")
     
+    # Create and run app
     app = create_app()
     
     uvicorn.run(
