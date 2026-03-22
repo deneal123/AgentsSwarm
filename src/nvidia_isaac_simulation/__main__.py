@@ -1,3 +1,6 @@
-from nvidia_isaac_simulation.config import settings
+"""Entry point for running nvidia_isaac_simulation as a module."""
 
-__version__ = settings.version
+from nvidia_isaac_simulation.cli import main
+
+if __name__ == "__main__":
+    main()

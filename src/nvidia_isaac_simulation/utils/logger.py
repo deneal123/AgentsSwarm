@@ -5,10 +5,10 @@ from uuid import uuid4
 from nvidia_isaac_simulation.config import PROJECT_ROOT
 
 
-def setup_logging():
+def setup_logging(name: str) -> logging.Logger:
     log_dir = PROJECT_ROOT / 'logs'
     log_dir.mkdir(exist_ok=True)
-    root_logger = logging.getLogger()
+    root_logger = logging.getLogger(name)
     root_logger.setLevel(logging.DEBUG)
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
@@ -33,5 +33,13 @@ def setup_logging():
     return root_logger
 
 
+_logger: Optional[logging.Logger] = None
 
-logger = setup_logging()
+
+def get_logger(name: str) -> logging.Logger:
+    """Get or create the global logger instance."""
+    global _logger
+    if _logger is None:
+        _logger = setup_logging(name: str)
+    return _logger
+
