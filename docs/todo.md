@@ -14,28 +14,6 @@
 
 ## Шаги реализации
 
-### 1. Подготовка конфигурации (Настройки проекта)
-- Обновить/дополнить файлы в директории `src/nvidia_isaac_simulation/config/`:
-  - Определить жесткую конфигурацию симуляции: всегда `headless=True`, включение расширения WebRTC для стриминга (порты, битрейт, fps, разрешение, опционально STUN/TURN), устройство, настройки физики.
-  - Задать параметры робота (тип - LIMO/Carter, начальная позиция, путь к USD ассету, наличие сенсоров/камер).
-  - Зарезервировать параметры под мультиагентность (конфигурация количества роботов, смещения генерации позиций).
-  - Учесть переменные окружения (например, `ACCEPT_EULA=Y`, CUDA/RTX флаги, пути к ассетам); задокументировать обязательные env для headless/WebRTC.
-  - Для WebRTC задать: `WEBRTC_PORT` (например 8211), `WEBRTC_BITRATE`, `WEBRTC_FPS`, `WEBRTC_RESOLUTION`, `WEBRTC_STUN`/`TURN` (при необходимости NAT), `WEBRTC_LOG_LEVEL`; предусмотреть place-holder в config TOML.
-
-### 2. Создание ядра симуляции (Core App)
-- Создать в модуле `src/nvidia_isaac_simulation` основной класс (например, `AppCore` в новом файле `app.py`).
-- Логика этого класса:
-  - Инициализация контекста `SimulationApp` перед любыми другими импортами пакетов Isaac Sim/Omniverse (как требует документация: `from isaacsim.simulation_app import SimulationApp; simulation_app = SimulationApp({"headless": True})`).
-  - Убедиться, что загружается и активируется расширение для WebRTC (например, `omni.services.streaming.webrtc` / `omni.kit.webrtc.*`), включить через `simulation_app.ext_manager` или конфиг. Проверить, что сервис слушает нужный порт и поднимает default route `/streaming/webrtc`.
-  - Метод для запуска и управления жизненным циклом (запуск главного цикла, корректное завершение через `.close()`).
-
-### 2.1 Настройка WebRTC стриминга (детализация)
-- Включить extension: `omni.services.streaming.webrtc` (или соответствующий бандл Isaac Sim 6.0), проверить зависимости `omni.services.core`.
-- В конфиге: указать `rtc_signaling_host`/`rtc_signaling_port` (по умолчанию 8211), `rtc_ice_servers` (STUN/TURN), `max_framerate`, `max_bitrate`, `stream_resolution`.
-- Прописать SDP offer/answer флоу: сервер поднимает signaling endpoint; клиент (WebRTC viewer) шлет offer, получает answer, ICE candidates обмениваются автоматически.
-- Опционально: включить `webrtc.auth.enabled=false` на тестовом стенде либо задать токен/Basic Auth для продакшена.
-- Логи и метрики: включить логгирование стриминга (битрейт, fps, packet loss) для диагностики headless качества.
-
 ### 3. Настройка сцены (Scene Setup)
 - Добавить метод или отдельный класс для инициализации `World` (используя `isaacsim.core.api.world.World` или аналогичный Experimental API).
 - Загрузить базовое окружение:

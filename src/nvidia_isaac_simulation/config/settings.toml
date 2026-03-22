@@ -1,5 +1,5 @@
 [default]
-version = "v0.0.8"
+version = "v0.0.9"
 
 [default.simulation]
 headless = true
@@ -7,3 +7,8 @@ stream_resolution = [1920, 1080]
 max_framerate = 60
 max_bitrate = 10000000
 stun_server = "stun:stun.l.google.com:19302"
+physics_dt = 0.008333333
+rendering_dt = 0.016666667
+substeps = 2
+use_gpu_physx = true
+environment_usd = "Isaac/Environments/Grid/default_environment.usd"
