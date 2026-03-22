@@ -1,6 +1,7 @@
 import logging
 import sys
 from uuid import uuid4
+from typing import Optional
 
 from nvidia_isaac_simulation.config import PROJECT_ROOT
 
@@ -40,6 +41,6 @@ def get_logger(name: str) -> logging.Logger:
     """Get or create the global logger instance."""
     global _logger
     if _logger is None:
-        _logger = setup_logging(name: str)
+        _logger = setup_logging(name)
     return _logger
 
