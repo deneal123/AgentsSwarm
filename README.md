@@ -29,3 +29,8 @@ uv run \
   --index-strategy unsafe-best-match \
   --prerelease=allow \
   python -m pytest
+
+
+### TODO:
+
+- [] Починить гравитацию в сцене (возможно, проблема с единицами измерения или настройками физики)

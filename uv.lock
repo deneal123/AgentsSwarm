@@ -1811,7 +1811,7 @@ wheels = [
 
 [[package]]
 name = "nvidia-isaac-simulation"
-version = "0.0.8"
+version = "0.0.9"
 source = { editable = "." }
 dependencies = [
     { name = "isaacsim", extra = ["all", "extscache"] },

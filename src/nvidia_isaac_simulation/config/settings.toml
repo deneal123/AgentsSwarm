@@ -12,3 +12,14 @@ rendering_dt = 0.016666667
 substeps = 2
 use_gpu_physx = true
 environment_usd = "Isaac/Environments/Grid/default_environment.usd"
+gravity = [0.0, 0.0, -9.81]
+
+[default.robots]
+# тип робота: carter (по умолчанию)
+type = "nova_carter"
+# сколько роботов заспавнить при старте
+count = 1
+# шаг сетки по XY для раскладки роя
+spacing = 2.5
+# смещение по Z, чтобы роботы не проваливались в землю при загрузке
+z_offset = 0.5

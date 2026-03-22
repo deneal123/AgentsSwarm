@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 
 from nvidia_isaac_simulation.config import settings, PROJECT_ROOT
-from nvidia_isaac_simulation.scene import SceneSetup
+from nvidia_isaac_simulation.scene import SceneBuilder
+from nvidia_isaac_simulation.robots import WheeledRobotSpawner
 from nvidia_isaac_simulation.utils import get_logger
 from isaacsim.simulation_app import SimulationApp
 
@@ -12,21 +13,29 @@ class AppCore:
     def __init__(self):
         log_dir = PROJECT_ROOT / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
-        self._setup_envs()
         self.log_dir = log_dir
+        self._setup_envs()
         self._prev_cwd = Path.cwd()
         os.chdir(log_dir)
 
-        self.simulation_app = SimulationApp({"headless": settings.simulation.headless})
+        self.simulation_app = SimulationApp(
+            {
+                "headless": settings.simulation.headless,
+                "renderer": "RayTracedLighting",
+            }
+        )
         self._setup_settings()
         self.world = self._initialize_world()
+        self._spawn_default_robots()
     
     def _setup_envs(self):
         os.environ["ACCEPT_EULA"] = "Y"
-        os.environ.setdefault("CARB_LOGS", str(log_dir))
-        os.environ.setdefault("OMNI_APP_LOG_DIR", str(log_dir))
-        os.environ.setdefault("NV_STREAMER_LOG_DIR", str(log_dir))
+        os.environ.setdefault("CARB_LOGS", str(self.log_dir))
+        os.environ.setdefault("OMNI_APP_LOG_DIR", str(self.log_dir))
+        os.environ.setdefault("NV_STREAMER_LOG_DIR", str(self.log_dir))
         os.environ["OMNI_DISABLE_AUDIO"] = "1"
+        os.environ.setdefault("OMNI_USE_EGL", "1")
+        os.environ.setdefault("CARB_DISABLE_WINDOWING", "1")
        
     def _setup_settings(self):
         signal_port = int(settings.WEBRTC__SIGNALER_PORT)
@@ -37,7 +46,7 @@ class AppCore:
         self.simulation_app.set_setting("/log/fileAppend", True)
 
         logger.info(f"[AppCore] Включение Livestream. signal={signal_port}, stream={stream_port}, publicIp='{public_ip}'")
-        from isaacsim.core.utils.extensions import enable_extension
+        from isaacsim.core.utils.extensions import enable_extension, disable_extension
 
         for ext in [
             "omni.kit.livestream.core",
@@ -48,6 +57,17 @@ class AppCore:
             try:
                 enable_extension(ext)
                 logger.debug(f"[AppCore] Extension enabled: {ext}")
+            except Exception:
+                pass
+
+        # Disable heavy UI windows that fail in headless/GLFW-less setups
+        for ext in [
+            "omni.kit.window.property",
+            "omni.kit.property.usd",
+        ]:
+            try:
+                disable_extension(ext)
+                logger.debug(f"[AppCore] Extension disabled: {ext}")
             except Exception:
                 pass
 
@@ -72,14 +92,36 @@ class AppCore:
         self.simulation_app.set_setting("/app/window/fullscreen", False)
         self.simulation_app.set_setting("/app/window/enableHDPI", True)
         self.simulation_app.set_setting("/app/audio/enabled", False)
+        self.simulation_app.set_setting("/app/hydra/engine/delegate/hydraRTX", True)
+        self.simulation_app.set_setting("/app/hydra/engine/delegate/hydraStorm", False)
 
     def _initialize_world(self):
         try:
-            scene_setup = SceneSetup()
-            return scene_setup.initialize_world()
+            builder = SceneBuilder()
+            return builder.build()
         except Exception as exc:
             logger.error("[AppCore] Не удалось инициализировать World: %s", exc)
             return None
+
+    def _spawn_default_robots(self):
+        if self.world is None:
+            return
+        try:
+            robot_cfg = getattr(settings, "robots", {})
+            count = int(getattr(robot_cfg, "count", 1))
+            robot_type = getattr(robot_cfg, "type", "carter")
+            spacing = float(getattr(robot_cfg, "spacing", 2.5))
+            z_offset = float(getattr(robot_cfg, "z_offset", 0.5))
+
+            spawner = WheeledRobotSpawner(
+                world=self.world,
+                robot_type=robot_type,
+                spacing=spacing,
+                z_offset=z_offset,
+            )
+            spawner.spawn_robots(count=count)
+        except Exception as exc:
+            logger.error("[AppCore] Не удалось заспавнить роботов: %s", exc)
 
     def run(self):
         logger.info("[AppCore] Запуск основного цикла симуляции. Нажмите Ctrl+C для выхода.")
