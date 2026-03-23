@@ -112,12 +112,22 @@ class AppCore:
             robot_type = getattr(robot_cfg, "type", "carter")
             spacing = float(getattr(robot_cfg, "spacing", 2.5))
             z_offset = float(getattr(robot_cfg, "z_offset", 0.5))
+            robot_names = list(getattr(robot_cfg, "names", []))
+            enable_cameras = bool(getattr(robot_cfg, "enable_cameras", True))
+
+            if robot_names and len(robot_names) != count:
+                raise ValueError("settings.robots.count must match len(settings.robots.names)")
+
+            if not robot_names:
+                robot_names = [f"carter{i + 1}" for i in range(count)]
 
             spawner = WheeledRobotSpawner(
                 world=self.world,
                 robot_type=robot_type,
                 spacing=spacing,
                 z_offset=z_offset,
+                robot_names=robot_names,
+                enable_cameras=enable_cameras,
             )
             spawner.spawn_robots(count=count)
         except Exception as exc:
