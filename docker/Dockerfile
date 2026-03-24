@@ -36,8 +36,19 @@ COPY pyproject.toml ./
 COPY src ./src
 COPY README.md ./
 
-# Install dependencies using uv
-RUN uv pip install --system -e .
+# Install dependencies using uv (editable for hot reload support)
+RUN uv pip install --system -e . --no-deps
+RUN uv pip install --system "vllm>=0.7.0" \
+    fastapi>=0.115.0 \
+    uvicorn[standard]>=0.30.0 \
+    pydantic>=2.0.0 \
+    pydantic-settings>=2.0.0 \
+    httpx>=0.27.0 \
+    openai>=1.0.0 \
+    dynaconf>=3.0.0
+
+# Add app to Python path for hot reload (editable install points here)
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose port
 EXPOSE 8000

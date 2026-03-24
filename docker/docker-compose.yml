@@ -34,7 +34,7 @@ services:
       - VLLM_API_KEY=${VLLM_API_KEY:-}
       
       # Data Parallel Configuration
-      - VLLM_DATA_PARALLEL_SIZE=${VLLM_DATA_PARALLEL_SIZE:-2}
+      - VLLM_DATA_PARALLEL_SIZE=${VLLM_DATA_PARALLEL_SIZE:-1}
       - VLLM_DATA_PARALLEL_RANK=${VLLM_DATA_PARALLEL_RANK:-0}
       - VLLM_DATA_PARALLEL_ADDRESS=${VLLM_DATA_PARALLEL_ADDRESS:-10.0.0.1}
       - VLLM_DATA_PARALLEL_RPC_PORT=${VLLM_DATA_PARALLEL_RPC_PORT:-13345}
@@ -69,6 +69,8 @@ services:
     volumes:
       - huggingface-cache:/root/.cache/huggingface
       - model-cache:/root/.cache/model
+      # Mount source code for hot reload (dev mode)
+      - ../src:/app/src
     
     networks:
       - vllm-network

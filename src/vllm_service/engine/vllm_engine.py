@@ -4,7 +4,7 @@ import logging
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from vllm import SamplingParams
-from vllm.engine.arg_utils import EngineArgs
+from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.outputs import RequestOutput
 
@@ -33,7 +33,7 @@ class VLLMEngineWrapper:
         self._initialized = True
         logger.info("vLLM engine initialized successfully")
 
-    def _build_engine_args(self) -> EngineArgs:
+    def _build_engine_args(self) -> AsyncEngineArgs:
         """Build engine arguments from settings."""
         # Get all settings with defaults
         data_parallel_size = int(settings.get("data_parallel_size", 1))
@@ -42,8 +42,8 @@ class VLLMEngineWrapper:
         data_parallel_rpc_port = int(settings.get("data_parallel_rpc_port", 13345))
         data_parallel_size_local = int(settings.get("data_parallel_size_local", 1))
         
-        # Build EngineArgs directly
-        engine_args = EngineArgs(
+        # Build AsyncEngineArgs for async engine
+        engine_args = AsyncEngineArgs(
             model=self.model_name,
             dtype=settings.get("model_dtype", "auto"),
             max_model_len=int(settings.get("max_model_len", 4096)),
@@ -51,11 +51,10 @@ class VLLMEngineWrapper:
             tensor_parallel_size=int(settings.get("tensor_parallel_size", 1)),
             max_num_seqs=int(settings.get("max_num_seqs", 256)),
             max_num_batched_tokens=int(settings.get("max_num_batched_tokens", 8192)) if settings.get("max_num_batched_tokens") else None,
-            # Data Parallel settings
             data_parallel_size=data_parallel_size if data_parallel_size > 1 else None,
             data_parallel_rank=data_parallel_rank if data_parallel_size > 1 else None,
-            data_parallel_master_address=data_parallel_address if data_parallel_size > 1 else None,
-            data_parallel_master_port=data_parallel_rpc_port if data_parallel_size > 1 else None,
+            data_parallel_address=data_parallel_address if data_parallel_size > 1 else None,
+            data_parallel_rpc_port=data_parallel_rpc_port if data_parallel_size > 1 else None,
             data_parallel_size_local=data_parallel_size_local if data_parallel_size > 1 else None,
         )
         
