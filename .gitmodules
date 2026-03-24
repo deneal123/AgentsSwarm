@@ -1,0 +1,4 @@
+[submodule "MissionDispatch"]
+	path = MissionDispatch
+	url = https://github.com/deneal123/isaac_mission_dispatch.git
+	branch = main
