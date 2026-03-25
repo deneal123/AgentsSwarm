@@ -1,5 +1,6 @@
 """vLLM Engine wrapper with Data Parallel support."""
 
+import inspect
 import logging
 import os
 import torch
@@ -223,7 +224,11 @@ class VLLMEngineWrapper:
             # vLLM engine cleanup
             logger.info("Shutting down vLLM engine")
             try:
-                await self.engine.shutdown()
+                shutdown_fn = self.engine.shutdown
+                if inspect.iscoroutinefunction(shutdown_fn):
+                    await shutdown_fn()
+                else:
+                    shutdown_fn()
             except Exception as e:
                 logger.warning("Exception during AsyncLLMEngine.shutdown: %s", e)
             self._initialized = False
