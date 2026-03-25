@@ -4316,7 +4316,7 @@ wheels = [
 
 [[package]]
 name = "vllm-service"
-version = "0.0.0"
+version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "dynaconf" },
@@ -4358,7 +4358,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=6.2.0,<7.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
-    { name = "vllm", specifier = ">=0.6.0" },
+    { name = "vllm", specifier = ">=0.7.0" },
 ]
 provides-extras = ["dev"]
 

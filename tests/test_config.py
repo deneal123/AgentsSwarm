@@ -69,6 +69,52 @@ class TestModelConfig:
             os.environ[key] = value
             assert os.environ[key] == value
 
+    def test_update_settings_from_args_keeps_model_in_settings(self):
+        from vllm_service.cli import update_settings_from_args
+        from vllm_service.config import settings
+
+        # Start with default values to ensure deterministic operations.
+        settings.set("MODEL.model_name", "Qwen/Qwen2.5-7B-Instruct")
+        settings.set("MODEL.model_dtype", "auto")
+        settings.set("MODEL.max_model_len", 4096)
+        settings.set("MODEL.gpu_memory_utilization", 0.9)
+
+        # Preserve current env settings for model-related variables (if any)
+        prev_model_name = os.environ.get("VLLM_MODEL_NAME")
+        prev_model_dtype = os.environ.get("VLLM_MODEL_DTYPE")
+        prev_max_model_len = os.environ.get("VLLM_MAX_MODEL_LEN")
+        prev_gpu_memory_utilization = os.environ.get("VLLM_GPU_MEMORY_UTILIZATION")
+
+        class DummyArgs:
+            model = "test-model"
+            dtype = "float16"
+            max_model_len = 2048
+            gpu_memory_utilization = 0.5
+            host = None
+            port = None
+            api_key = None
+            data_parallel_size = None
+            data_parallel_rank = None
+            data_parallel_address = None
+            data_parallel_rpc_port = None
+            data_parallel_size_local = None
+            tensor_parallel_size = None
+            max_num_seqs = None
+
+        args = DummyArgs()
+        update_settings_from_args(args)
+
+        assert settings.get("MODEL.model_name") == "test-model"
+        assert settings.get("MODEL.model_dtype") == "float16"
+        assert settings.get("MODEL.max_model_len") == 2048
+        assert settings.get("MODEL.gpu_memory_utilization") == 0.5
+
+        # Ensure updating settings does not modify environment model variables.
+        assert os.environ.get("VLLM_MODEL_NAME") == prev_model_name
+        assert os.environ.get("VLLM_MODEL_DTYPE") == prev_model_dtype
+        assert os.environ.get("VLLM_MAX_MODEL_LEN") == prev_max_model_len
+        assert os.environ.get("VLLM_GPU_MEMORY_UTILIZATION") == prev_gpu_memory_utilization
+
     def test_server_env_vars(self):
         """Test server configuration environment variables."""
         env_vars = {

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -98,7 +99,7 @@ def _create_sampling_params(request: Union[ChatCompletionRequest, CompletionRequ
 
 def _check_api_key(request: Request) -> None:
     """Validate API key if configured."""
-    api_key = settings.get("api_key", "")
+    api_key = os.environ.get("VLLM_API_KEY", settings.get("default.server.api_key", ""))
     if api_key:
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
@@ -118,7 +119,7 @@ async def list_models(request: Request) -> ModelList:
     """List available models."""
     _check_api_key(request)
     
-    model_name = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
+    model_name = os.environ.get("VLLM_MODEL_NAME", settings.get("MODEL.model_name", settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")))
     model_info = ModelInfo(
         id=model_name,
         owned_by="vllm-service",
@@ -127,12 +128,12 @@ async def list_models(request: Request) -> ModelList:
     return ModelList(data=[model_info])
 
 
-@api_router.get("/v1/models/{model_id}", response_model=ModelInfo)
+@api_router.get("/v1/models/{model_id:path}", response_model=ModelInfo)
 async def get_model(model_id: str, request: Request) -> ModelInfo:
     """Get model information."""
     _check_api_key(request)
     
-    model_name = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
+    model_name = os.environ.get("VLLM_MODEL_NAME", settings.get("MODEL.model_name", settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")))
     if model_id != model_name:
         raise HTTPException(status_code=404, detail="Model not found")
     

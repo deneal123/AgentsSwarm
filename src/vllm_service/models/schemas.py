@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ModelInfo(BaseModel):
@@ -61,8 +61,7 @@ class ChatCompletionRequest(BaseModel):
     prompt_logprobs: Optional[int] = None
     logprobs: Optional[int] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class Usage(BaseModel):
@@ -117,8 +116,7 @@ class CompletionRequest(BaseModel):
     min_p: Optional[float] = Field(default=0.0, ge=0, le=1)
     repetition_penalty: Optional[float] = Field(default=1.0, ge=0)
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class CompletionChoice(BaseModel):

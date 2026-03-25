@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
+from vllm_service.config import settings
 
 
 @pytest.fixture
@@ -55,8 +56,7 @@ class TestModelsEndpoints:
 
     def test_get_model(self, client):
         """Test get model endpoint."""
-        import os
-        model_name = os.environ.get("VLLM_MODEL_NAME", "test-model")
+        model_name = settings.get("default.model.model_name", "test-model")
         response = client.get(f"/v1/models/{model_name}")
         assert response.status_code == 200
         data = response.json()

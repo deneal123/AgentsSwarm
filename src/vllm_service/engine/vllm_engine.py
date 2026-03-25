@@ -1,6 +1,7 @@
 """vLLM Engine wrapper with Data Parallel support."""
 
 import logging
+import os
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from vllm import SamplingParams
@@ -19,7 +20,7 @@ class VLLMEngineWrapper:
     def __init__(self) -> None:
         """Initialize the vLLM engine with Data Parallel configuration."""
         self.engine: Optional[AsyncLLMEngine] = None
-        self.model_name: str = settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
+        self.model_name: str = os.environ.get("VLLM_MODEL_NAME", settings.get("MODEL.model_name", settings.get("model_name", "Qwen/Qwen2.5-7B-Instruct")))
         self._initialized: bool = False
 
     async def initialize(self) -> None:
@@ -36,21 +37,21 @@ class VLLMEngineWrapper:
     def _build_engine_args(self) -> AsyncEngineArgs:
         """Build engine arguments from settings."""
         # Get all settings with defaults
-        data_parallel_size = int(settings.get("data_parallel_size", 1))
-        data_parallel_rank = int(settings.get("data_parallel_rank", 0))
-        data_parallel_address = settings.get("data_parallel_address", "localhost")
-        data_parallel_rpc_port = int(settings.get("data_parallel_rpc_port", 13345))
-        data_parallel_size_local = int(settings.get("data_parallel_size_local", 1))
+        data_parallel_size = int(settings.get("DATA_PARALLEL.data_parallel_size", 1))
+        data_parallel_rank = int(settings.get("DATA_PARALLEL.data_parallel_rank", 0))
+        data_parallel_address = settings.get("DATA_PARALLEL.data_parallel_address", "localhost")
+        data_parallel_rpc_port = int(settings.get("DATA_PARALLEL.data_parallel_rpc_port", 13345))
+        data_parallel_size_local = int(settings.get("DATA_PARALLEL.data_parallel_size_local", 1))
         
         # Build AsyncEngineArgs for async engine
         engine_args = AsyncEngineArgs(
             model=self.model_name,
-            dtype=settings.get("model_dtype", "auto"),
-            max_model_len=int(settings.get("max_model_len", 4096)),
-            gpu_memory_utilization=float(settings.get("gpu_memory_utilization", 0.9)),
-            tensor_parallel_size=int(settings.get("tensor_parallel_size", 1)),
-            max_num_seqs=int(settings.get("max_num_seqs", 256)),
-            max_num_batched_tokens=int(settings.get("max_num_batched_tokens", 8192)) if settings.get("max_num_batched_tokens") else None,
+            dtype=settings.get("MODEL.model_dtype", "auto"),
+            max_model_len=int(settings.get("MODEL.max_model_len", 4096)),
+            gpu_memory_utilization=float(settings.get("MODEL.gpu_memory_utilization", 0.9)),
+            tensor_parallel_size=int(settings.get("ENGINE.tensor_parallel_size", 1)),
+            max_num_seqs=int(settings.get("ENGINE.max_num_seqs", 256)),
+            max_num_batched_tokens=int(settings.get("ENGINE.max_num_batched_tokens", 8192)) if settings.get("ENGINE.max_num_batched_tokens") else None,
             data_parallel_size=data_parallel_size if data_parallel_size > 1 else None,
             data_parallel_rank=data_parallel_rank if data_parallel_size > 1 else None,
             data_parallel_address=data_parallel_address if data_parallel_size > 1 else None,
