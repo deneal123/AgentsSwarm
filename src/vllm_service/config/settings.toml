@@ -10,7 +10,7 @@ max_model_len = 4096
 gpu_memory_utilization = 0.9
 
 [default.data_parallel]
-data_parallel_size = 1
+data_parallel_size = 2
 data_parallel_rank = 0
 data_parallel_address = "localhost"
 data_parallel_rpc_port = 13345

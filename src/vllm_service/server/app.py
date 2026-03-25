@@ -5,6 +5,7 @@ import logging
 import os
 import time
 import uuid
+import json
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional, Union
 
@@ -79,6 +80,14 @@ api_router = APIRouter()
 
 def _create_sampling_params(request: Union[ChatCompletionRequest, CompletionRequest]) -> SamplingParams:
     """Create SamplingParams from request."""
+    # Normalize stop tokens for OpenAI-style conversation
+    stop_tokens = None
+    if request.stop:
+        stop_tokens = request.stop if isinstance(request.stop, list) else [request.stop]
+    else:
+        # Prevent model from generating beyond one assistant response.
+        stop_tokens = ["\nuser:", "\nassistant:"]
+    
     params = SamplingParams(
         n=request.n or 1,
         temperature=request.temperature,
@@ -86,13 +95,19 @@ def _create_sampling_params(request: Union[ChatCompletionRequest, CompletionRequ
         top_k=request.top_k if request.top_k and request.top_k > 0 else -1,
         min_p=request.min_p,
         repetition_penalty=request.repetition_penalty,
-        length_penalty=request.length_penalty,
-        stop=request.stop if isinstance(request.stop, list) else [request.stop] if request.stop else None,
-        max_tokens=request.max_tokens or request.max_completion_tokens or 512,
+        stop=stop_tokens,
+        max_tokens=request.max_tokens or getattr(request, "max_completion_tokens", None) or 512,
         min_tokens=request.min_tokens if hasattr(request, 'min_tokens') else 0,
         presence_penalty=request.presence_penalty,
         frequency_penalty=request.frequency_penalty,
         logprobs=request.logprobs,
+        logit_bias=request.logit_bias if hasattr(request, 'logit_bias') else None,
+        ignore_eos=request.ignore_eos if hasattr(request, 'ignore_eos') else False,
+        stop_token_ids=request.stop_token_ids if hasattr(request, 'stop_token_ids') else None,
+        skip_special_tokens=request.skip_special_tokens if hasattr(request, 'skip_special_tokens') else True,
+        spaces_between_special_tokens=request.spaces_between_special_tokens if hasattr(request, 'spaces_between_special_tokens') else True,
+        truncate_prompt_tokens=request.truncate_prompt_tokens if hasattr(request, 'truncate_prompt_tokens') else None,
+        prompt_logprobs=request.prompt_logprobs if hasattr(request, 'prompt_logprobs') else None,
     )
     return params
 
@@ -194,7 +209,7 @@ async def _stream_chat_response(
     """Stream chat completion response."""
     created = int(time.time())
     
-    async for output in await engine.chat_stream(
+    async for output in engine.chat_stream(
         messages=messages,
         sampling_params=sampling_params,
         request_id=request_id,
@@ -211,7 +226,7 @@ async def _stream_chat_response(
                     "finish_reason": output_item.finish_reason,
                 }]
             }
-            yield f"data: {chunk}\n\n"
+            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
     
     yield "data: [DONE]\n\n"
 
@@ -315,7 +330,7 @@ async def _stream_completion_response(
                     "finish_reason": output_item.finish_reason,
                 }]
             }
-            yield f"data: {chunk}\n\n"
+            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
     
     yield "data: [DONE]\n\n"
 

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import torch
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 from vllm import SamplingParams
@@ -37,11 +38,23 @@ class VLLMEngineWrapper:
     def _build_engine_args(self) -> AsyncEngineArgs:
         """Build engine arguments from settings."""
         # Get all settings with defaults
-        data_parallel_size = int(settings.get("DATA_PARALLEL.data_parallel_size", 1))
-        data_parallel_rank = int(settings.get("DATA_PARALLEL.data_parallel_rank", 0))
+        data_parallel_size = int(settings.get("DATA_PARALLEL.data_parallel_size", 1) or 1)
+        data_parallel_rank = settings.get("DATA_PARALLEL.data_parallel_rank")
         data_parallel_address = settings.get("DATA_PARALLEL.data_parallel_address", "localhost")
-        data_parallel_rpc_port = int(settings.get("DATA_PARALLEL.data_parallel_rpc_port", 13345))
-        data_parallel_size_local = int(settings.get("DATA_PARALLEL.data_parallel_size_local", 1))
+        data_parallel_rpc_port = settings.get("DATA_PARALLEL.data_parallel_rpc_port", 13345)
+        data_parallel_size_local = settings.get("DATA_PARALLEL.data_parallel_size_local", 1)
+
+        if data_parallel_size <= 1:
+            # For single-node mode, disable external load-balancing flags by
+            # leaving rank/address/rpc as None.
+            data_parallel_rank = None
+            data_parallel_address = None
+            data_parallel_rpc_port = None
+            data_parallel_size_local = None
+        else:
+            data_parallel_rank = int(data_parallel_rank or 0)
+            data_parallel_rpc_port = int(data_parallel_rpc_port or 13345)
+            data_parallel_size_local = int(data_parallel_size_local or 1)
         
         # Build AsyncEngineArgs for async engine
         engine_args = AsyncEngineArgs(
@@ -52,11 +65,11 @@ class VLLMEngineWrapper:
             tensor_parallel_size=int(settings.get("ENGINE.tensor_parallel_size", 1)),
             max_num_seqs=int(settings.get("ENGINE.max_num_seqs", 256)),
             max_num_batched_tokens=int(settings.get("ENGINE.max_num_batched_tokens", 8192)) if settings.get("ENGINE.max_num_batched_tokens") else None,
-            data_parallel_size=data_parallel_size if data_parallel_size > 1 else None,
-            data_parallel_rank=data_parallel_rank if data_parallel_size > 1 else None,
-            data_parallel_address=data_parallel_address if data_parallel_size > 1 else None,
-            data_parallel_rpc_port=data_parallel_rpc_port if data_parallel_size > 1 else None,
-            data_parallel_size_local=data_parallel_size_local if data_parallel_size > 1 else None,
+            data_parallel_size=data_parallel_size,
+            data_parallel_rank=data_parallel_rank,
+            data_parallel_address=data_parallel_address,
+            data_parallel_rpc_port=data_parallel_rpc_port,
+            data_parallel_size_local=data_parallel_size_local,
         )
         
         if data_parallel_size > 1:
@@ -115,13 +128,12 @@ class VLLMEngineWrapper:
         """Generate chat completion."""
         if not self._initialized:
             await self.initialize()
-        
-        # Use vLLM's chat capability
-        results_generator = self.engine.chat(
-            messages=messages,
+        prompt = self._messages_to_prompt(messages, chat_template)
+        # Use vLLM's chat capability via text generation prompt
+        results_generator = self.engine.generate(
+            prompt=prompt,
             sampling_params=sampling_params,
             request_id=request_id,
-            chat_template=chat_template,
         )
         
         final_output: Optional[RequestOutput] = None
@@ -140,24 +152,50 @@ class VLLMEngineWrapper:
         """Generate chat completion with streaming."""
         if not self._initialized:
             await self.initialize()
-        
-        results_generator = self.engine.chat(
-            messages=messages,
+        prompt = self._messages_to_prompt(messages, chat_template)
+        results_generator = self.engine.generate(
+            prompt=prompt,
             sampling_params=sampling_params,
             request_id=request_id,
-            chat_template=chat_template,
         )
         
         async for output in results_generator:
             yield output
+
+    def _messages_to_prompt(self, messages: List[Dict[str, Any]], chat_template: Optional[str] = None) -> str:
+        """Convert chat messages to a single prompt string."""
+        formatted = []
+        if chat_template:
+            formatted.append(f"system: {chat_template}")
+
+        for m in messages:
+            role = m.get("role", "user").lower()
+            content = m.get("content", "")
+            if content is None:
+                continue
+
+            if role not in {"system", "user", "assistant"}:
+                role = "user"
+
+            # OpenAI style role prefixes.
+            formatted.append(f"{role}: {content.strip()}")
+
+        # Always generate assistant message after last user turn.
+        if messages and messages[-1].get("role", "user").lower() == "user":
+            formatted.append("assistant:")
+        else:
+            # For safety in dialogue continuation, always include assistant slot.
+            formatted.append("assistant:")
+
+        return "\n".join(formatted)
 
     async def tokenize(self, text: str) -> List[int]:
         """Tokenize text."""
         if not self._initialized:
             await self.initialize()
         
-        # Get tokenizer from engine
-        tokenizer = self.engine.engine.tokenizer
+        # Get tokenizer from AsyncLLMEngine
+        tokenizer = self.engine.tokenizer
         return tokenizer.encode(text)
 
     async def detokenize(self, token_ids: List[int]) -> str:
@@ -165,7 +203,7 @@ class VLLMEngineWrapper:
         if not self._initialized:
             await self.initialize()
         
-        tokenizer = self.engine.engine.tokenizer
+        tokenizer = self.engine.tokenizer
         return tokenizer.decode(token_ids)
 
     async def get_model_config(self) -> Dict[str, Any]:
@@ -184,8 +222,19 @@ class VLLMEngineWrapper:
         if self.engine:
             # vLLM engine cleanup
             logger.info("Shutting down vLLM engine")
+            try:
+                await self.engine.shutdown()
+            except Exception as e:
+                logger.warning("Exception during AsyncLLMEngine.shutdown: %s", e)
             self._initialized = False
             self.engine = None
+
+            # Release CUDA memory if available.
+            try:
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception as e:
+                logger.debug("Failed to empty CUDA cache: %s", e)
 
 
 _engine: Optional[VLLMEngineWrapper] = None

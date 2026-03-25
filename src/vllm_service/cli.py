@@ -4,6 +4,8 @@ import argparse
 import logging
 import os
 import sys
+import socket
+import signal
 from typing import Optional
 
 import uvicorn
@@ -172,27 +174,49 @@ def update_settings_from_args(args: argparse.Namespace) -> None:
         settings.set("MODEL.gpu_memory_utilization", float(args.gpu_memory_utilization))
  
     if args.host is not None:
-        os.environ["VLLM_HOST"] = args.host
+        # Use local variable in main, do not override VLLM_HOST globally to avoid vLLM engine networking conflicts.
+        settings.set("host", args.host)
     if args.port is not None:
-        os.environ["VLLM_PORT"] = str(args.port)
+        settings.set("port", int(args.port))
     if args.api_key is not None:
         os.environ["VLLM_API_KEY"] = args.api_key
  
+    # Data Parallel arguments: keep in environment and structured settings.
     if args.data_parallel_size is not None:
         os.environ["VLLM_DATA_PARALLEL_SIZE"] = str(args.data_parallel_size)
+        settings.set("DATA_PARALLEL.data_parallel_size", args.data_parallel_size)
     if args.data_parallel_rank is not None:
         os.environ["VLLM_DATA_PARALLEL_RANK"] = str(args.data_parallel_rank)
+        settings.set("DATA_PARALLEL.data_parallel_rank", args.data_parallel_rank)
     if args.data_parallel_address is not None:
         os.environ["VLLM_DATA_PARALLEL_ADDRESS"] = args.data_parallel_address
+        settings.set("DATA_PARALLEL.data_parallel_address", args.data_parallel_address)
     if args.data_parallel_rpc_port is not None:
         os.environ["VLLM_DATA_PARALLEL_RPC_PORT"] = str(args.data_parallel_rpc_port)
+        settings.set("DATA_PARALLEL.data_parallel_rpc_port", args.data_parallel_rpc_port)
     if args.data_parallel_size_local is not None:
         os.environ["VLLM_DATA_PARALLEL_SIZE_LOCAL"] = str(args.data_parallel_size_local)
+        settings.set("DATA_PARALLEL.data_parallel_size_local", args.data_parallel_size_local)
  
     if args.tensor_parallel_size is not None:
         settings.set("ENGINE.tensor_parallel_size", int(args.tensor_parallel_size))
     if args.max_num_seqs is not None:
         settings.set("ENGINE.max_num_seqs", int(args.max_num_seqs))
+
+
+def _find_available_port(host: str, start_port: int, max_tries: int = 100) -> int:
+    """Find the first available port starting from start_port."""
+    for port in range(start_port, start_port + max_tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind((host, port))
+                return port
+            except OSError:
+                continue
+    raise RuntimeError(
+        f"No available ports in range {start_port}-{start_port + max_tries - 1}."
+    )
 
 
 def main() -> None:
@@ -213,8 +237,23 @@ def main() -> None:
     from vllm_service.server.app import create_app
     
     # Get configuration
-    host = os.environ.get("VLLM_HOST", settings.get("host", "0.0.0.0"))
-    port = int(os.environ.get("VLLM_PORT", settings.get("port", 8000)))
+    host = args.host or os.environ.get("VLLM_HOST", settings.get("host", "0.0.0.0"))
+    preferred_port = int(args.port or os.environ.get("VLLM_PORT", settings.get("port", 8000)))
+    try:
+        port = _find_available_port(host, preferred_port, max_tries=100)
+    except RuntimeError as e:
+        logger.error("Could not find available port: %s", e)
+        sys.exit(1)
+    
+    if port != preferred_port:
+        logger.warning(
+            "Preferred port %d is unavailable, using fallback port %d.",
+            preferred_port,
+            port,
+        )
+        os.environ["VLLM_PORT"] = str(port)
+    else:
+        logger.info("Using port %d", port)
     log_level = args.log_level.lower()
     
     logger.info(f"Starting vLLM Service v{__version__}")
@@ -231,14 +270,32 @@ def main() -> None:
     
     # Create and run app
     app = create_app()
-    
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level=log_level,
-    )
-
-
+ 
+    # Fail fast if host/port are already in use.
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((host, port))
+    except OSError as e:
+        logging.getLogger(__name__).warning(
+            "Port %s is unexpectedly unavailable on host %s (race condition): %s. Continuing.",
+            port,
+            host,
+            e,
+        )
+ 
+    try:
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            log_level=log_level,
+            lifespan="on",
+        )
+    except Exception as exc:
+        logger.error("Server run exception: %s", exc)
+        sys.exit(1)
+ 
+ 
 if __name__ == "__main__":
     main()

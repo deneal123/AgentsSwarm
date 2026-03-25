@@ -4,8 +4,8 @@ from openai import OpenAI
 import os
 
 # Configuration
-BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8000/v1")
-API_KEY = os.environ.get("VLLM_API_KEY", "your-api-key")
+BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8005/v1")
+API_KEY = os.environ.get("VLLM_API_KEY", "")
 MODEL = os.environ.get("VLLM_MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
 
 
@@ -75,10 +75,13 @@ def test_completion(client):
 def test_tokenize():
     """Test tokenize endpoint."""
     import httpx
+    headers = {}
+    if API_KEY:
+        headers["Authorization"] = f"Bearer {API_KEY}"
     response = httpx.post(
         f"{BASE_URL.replace('/v1', '')}/tokenize",
         json={"text": "Hello, world!"},
-        headers={"Authorization": f"Bearer {API_KEY}"},
+        headers=headers,
     )
     print(f"Tokenize result: {response.json()}")
     return response.json()
