@@ -1,9 +1,9 @@
 # Docker Compose for vLLM Service
-# Universal single-node deployment for Data Parallel cluster
+# Single-node or Data Parallel deployment
 # 
 # Usage:
-#   Node 0 (Coordinator): docker-compose up -d
-#   Node 1 (Worker):      docker-compose up -d
+#   Single node:     docker-compose up -d
+#   Data Parallel:  docker-compose up -d (configure via .env)
 #
 # Configure via .env file before running
 
@@ -15,9 +15,13 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     image: vllm-service:latest
-    container_name: vllm-service
+    container_name: ${VLLM_CONTAINER_NAME:-vllm-service}
     hostname: ${VLLM_HOSTNAME:-vllm-service}
     
+    # Use host network for Data Parallel (required for ZMQ)
+    network_mode: ${VLLM_NETWORK_MODE:-host}
+    ipc: ${VLLM_IPC_MODE:-host}
+
     ports:
       - "${VLLM_PORT:-8000}:8000"
     
@@ -34,9 +38,11 @@ services:
       - VLLM_API_KEY=${VLLM_API_KEY:-}
       
       # Data Parallel Configuration
+      # VLLM_DATA_PARALLEL_SIZE=1  -> single node (default)
+      # VLLM_DATA_PARALLEL_SIZE=2  -> DP cluster
       - VLLM_DATA_PARALLEL_SIZE=${VLLM_DATA_PARALLEL_SIZE:-1}
       - VLLM_DATA_PARALLEL_RANK=${VLLM_DATA_PARALLEL_RANK:-0}
-      - VLLM_DATA_PARALLEL_ADDRESS=${VLLM_DATA_PARALLEL_ADDRESS:-10.0.0.1}
+      - VLLM_DATA_PARALLEL_ADDRESS=${VLLM_DATA_PARALLEL_ADDRESS:-localhost}
       - VLLM_DATA_PARALLEL_RPC_PORT=${VLLM_DATA_PARALLEL_RPC_PORT:-13345}
       - VLLM_DATA_PARALLEL_SIZE_LOCAL=${VLLM_DATA_PARALLEL_SIZE_LOCAL:-1}
       
@@ -48,6 +54,9 @@ services:
       # Logging
       - VLLM_LOG_LEVEL=${VLLM_LOG_LEVEL:-INFO}
     
+      # CUDA device
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+
     # Headless mode for worker nodes (rank > 0)
     command: >
       sh -c "
@@ -63,7 +72,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: ${VLLM_GPU_COUNT:-1}
               capabilities: [gpu]
     
     volumes:
@@ -72,14 +81,11 @@ services:
       # Mount source code for hot reload (dev mode)
       - ../src:/app/src
     
-    networks:
-      - vllm-network
-    
-    restart: unless-stopped
+    ulimits:
+      memlock: -1
+      stack: 67108864
 
-networks:
-  vllm-network:
-    driver: bridge
+    restart: unless-stopped
 
 volumes:
   huggingface-cache:
