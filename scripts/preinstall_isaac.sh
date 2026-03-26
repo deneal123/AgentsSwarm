@@ -13,3 +13,5 @@ sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
+sudo apt-get update
+sudo apt-get install rsync -y
