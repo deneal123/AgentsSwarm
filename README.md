@@ -1,8 +1,5 @@
 
 
-1. Startup Mission Dispatch
-bash ./scripts/run_all.sh
+# Startup Mission Dispatch
 
-2. Startup Mission Client
-активировать isaac-ros activate
-
+bash ./scripts/start_all.sh
