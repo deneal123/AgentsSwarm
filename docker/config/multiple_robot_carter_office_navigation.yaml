@@ -1,0 +1,39 @@
+
+robots:
+  - name: "Nova_Carter_ROS_1"
+    labels: ["nova", "carter", "ros"]
+    heartbeat_timeout: 30
+  - name: "Nova_Carter_ROS_2"
+    labels: ["nova", "carter", "ros"]
+    heartbeat_timeout: 30
+  - name: "Nova_Carter_ROS_3"
+    labels: ["nova", "carter", "ros"]
+    heartbeat_timeout: 30
+
+services:
+  waypoint_graph:
+    base_url: "http://185.55.57.82:8000"
+  mission_database:
+    base_url: "http://185.55.57.82:5003"
+  mission_dispatch:
+    base_url: "http://185.55.57.82:5002"
+    default_mission_timeout: 900
+  cuopt:
+    base_url: "http://185.55.57.82:5050"
+    solve_parameters:
+      time_limit: .5
+      verbose_mode: False
+
+map:
+  map_file: "/tmp/config/map.png"
+  metadata_yaml: "/tmp/config/map.yaml"
+  push_map_on_startup: False
+  
+constants:
+  MIN_BATTERY: 0.0
+
+telemetry:
+  SEND_TELEMETRY: False
+  TELEMETRY_ID: ""
+  TELEMETRY_SECRET: ""
+  TELEMETRY_ENV: "DEV" # {DEV | TEST | PROD}

@@ -1,0 +1,41 @@
+
+version: "3.3"
+services:
+
+  wpg:
+    image: ${WPG_IMAGE}
+    network_mode: "host"
+    command: ["python", "scripts/rest_api.py"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  cuopt:
+    image: ${CUOPT_IMAGE}
+    network_mode: "host"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - CUOPT_SERVER_PORT=${CUOPT_PORT}
+
+  mission-control:
+    image: ${MISSION_CONTROL_IMAGE}
+    profiles: ["enable_mission_control"]
+    network_mode: "host"
+    depends_on:
+      - wpg
+      - cuopt
+    command: ["--config", "/tmp/config/multiple_robot_carter_office_navigation.yaml", "--verbose", "INFO"]
+    volumes:
+      - type: bind
+        source: ${CONFIG_DIR}
+        target: /tmp/config/
