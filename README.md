@@ -1,4 +1,6 @@
 
+git submodule update --init --recursive
+
 # TODO:
 
 - [] Сгенерировать карту и конфигурационный файл карты в issac

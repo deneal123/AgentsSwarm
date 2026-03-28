@@ -29,7 +29,6 @@ services:
 
   mission-control:
     image: ${MISSION_CONTROL_IMAGE}
-    profiles: ["enable_mission_control"]
     network_mode: "host"
     depends_on:
       - wpg
@@ -47,10 +46,12 @@ services:
       dockerfile: waypoint_selection_ui/Dockerfile
     network_mode: "host"
     ports:
-      - "8051:8051"
+      - "${WAYPOINT_PORT}:${WAYPOINT_PORT}"
     volumes:
-      - ./uploads/maps:/app/uploads/maps
-      - ./uploads/configs:/app/uploads/configs
+      - ../MissionControl/waypoint_selection_ui/uploads/maps:/app/uploads/maps
+      - ../MissionControl/waypoint_selection_ui/uploads/configs:/app/uploads/configs
     environment:
       - PYTHONUNBUFFERED=1
+      - WAYPOINT_HOST=${WAYPOINT_HOST}
+      - WAYPOINT_PORT=${WAYPOINT_PORT}
       - MISSION_CONTROL_API_URL=http://${MISSION_CONTROL_HOST}:${MC_PORT}/api/v1
