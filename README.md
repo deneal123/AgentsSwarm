@@ -2,4 +2,5 @@
 
 # Startup Mission Dispatch
 
-bash ./scripts/start_all.sh
+docker compose -p dispatch -f ./docker/docker-compose.yml  up --build
+
