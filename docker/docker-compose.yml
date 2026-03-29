@@ -1,4 +1,4 @@
-version: "3.3"
+
 services:
   mosquitto:
     image: ${MOSQUITTO_IMAGE}
@@ -63,9 +63,9 @@ services:
         "--mqtt_transport",
         "${MQTT_TRANSPORT}",
         "--database_url",
-        "http://localhost:${DATABASE_CONTROLLER_PORT}",
+        "http://${MISSION_DISPATCH_HOST}:${DATABASE_CONTROLLER_PORT}",
         "--mission_ctrl_url",
-        "http://localhost:${MC_PORT}",
+        "http://${MISSION_CONTROL_HOST}:${MC_PORT}",
       ]
     network_mode: "host"
     depends_on:
