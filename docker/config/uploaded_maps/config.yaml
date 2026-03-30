@@ -1,14 +1,4 @@
-
 robots:
-  - name: "carter1"
-    labels: ["nova", "carter", "ros"]
-    heartbeat_timeout: 30
-  - name: "carter2"
-    labels: ["nova", "carter", "ros"]
-    heartbeat_timeout: 30
-  - name: "carter3"
-    labels: ["nova", "carter", "ros"]
-    heartbeat_timeout: 30
 
 services:
   waypoint_graph:
@@ -25,8 +15,20 @@ services:
       verbose_mode: False
 
 map:
-  map_file: "/tmp/config/map.png"
-  metadata_yaml: "/tmp/config/map.yaml"
+  map_file: "/tmp/config/uploaded_maps/map.png"
+  metadata_yaml: ""
+
+  metadata:
+    image: "map.png"
+    map_id: "map"
+    resolution: 0.05
+    x_offset: -10.275000190734863
+    y_offset: -17.374999618530275
+    rotation: 0.0
+    negate: 0
+    occupied_thresh: 0.65
+    free_thresh: 0.196
+
   push_map_on_startup: False
   
 constants:

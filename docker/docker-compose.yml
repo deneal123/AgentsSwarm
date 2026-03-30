@@ -28,16 +28,20 @@ services:
       - CUOPT_SERVER_PORT=${CUOPT_PORT}
 
   mission-control:
-    image: ${MISSION_CONTROL_IMAGE}
+    image: ${MISSION_CONTROL_IMAGE:-isaac-mission-control}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.control
+      network: host
     network_mode: "host"
     depends_on:
       - wpg
       - cuopt
-    command: ["--config", "/tmp/config/multiple_robot_carter_office_navigation.yaml", "--verbose", "INFO"]
+    command: ["--config", "/tmp/config/uploaded_maps/config.yaml", "--verbose", "INFO"]
     volumes:
       - type: bind
         source: ${CONFIG_DIR}
-        target: /tmp/config/
+        target: /tmp/config/uploaded_maps/
 
   # Optional UI for waypoint selection, which can be used to test the mission control service. It is not required for the mission control to function.
   waypoint_ui:
