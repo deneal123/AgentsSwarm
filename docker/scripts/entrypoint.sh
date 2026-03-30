@@ -1,21 +1,61 @@
 #!/bin/bash
 
-# Настройка окружения для текущей сессии
+# Fast DDS configuration for ROS 2
+# Create Fast DDS profile for better ROS 2 communication
+cat > /tmp/fastdds_profiles.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+    <transport_descriptors>
+        <transport_descriptor>
+            <transport_id>UDPv4</transport_id>
+            <type>UDPv4</type>
+        </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="default_participant" is_default_profile="true">
+        <rtps>
+            <builtin>
+                <discovery_config>
+                    <discoveryProtocol>SERVER</discoveryProtocol>
+                    <discoveryServersList>
+                        <RemoteServer prefix="44.53.00.5f.45.50.52.4f.53.49.4d.41">
+                            <metatrafficUnicastLocatorList>
+                                <locator>
+                                    <udpv4>
+                                        <address>127.0.0.1</address>
+                                        <port>11811</port>
+                                    </udpv4>
+                                </locator>
+                            </metatrafficUnicastLocatorList>
+                        </RemoteServer>
+                    </discoveryServersList>
+                </discovery_config>
+            </builtin>
+        </rtps>
+    </participant>
+</profiles>
+EOF
+
+export FASTRTPS_DEFAULT_PROFILES_FILE=/tmp/fastdds_profiles.xml
+
+# Setup ROS 2 environment
 export PATH=/opt/ros/jazzy/bin:$PATH
 source /opt/ros/jazzy/setup.bash
 
-# Source workspace если есть
+# Source workspace if exists
 if [ -d /jazzy_ws/install ]; then
-    for f in $(find /jazzy_ws/install -name "local_setup.bash" -type f 2>/dev/null | sort); do
-        source $f 2>/dev/null
-    done
+    echo "Sourcing workspace from /jazzy_ws..."
+    source /jazzy_ws/install/setup.bash 2>/dev/null || true
+    # Also try local_setup if setup.bash fails
+    if [ $? -ne 0 ]; then
+        source /jazzy_ws/install/local_setup.bash 2>/dev/null || true
+    fi
 fi
 
 export ROS_DOMAIN_ID=0
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_DISTRO=jazzy
 
-# Создаем .bashrc для всех последующих входов
+# Create .bashrc for all subsequent logins
 cat > /root/.bashrc << 'INNEREOF'
 # ROS 2 environment
 export PATH=/opt/ros/jazzy/bin:$PATH
@@ -23,9 +63,7 @@ source /opt/ros/jazzy/setup.bash
 
 # Source workspace if exists
 if [ -d /jazzy_ws/install ]; then
-    for f in $(find /jazzy_ws/install -name "local_setup.bash" -type f 2>/dev/null | sort); do
-        source $f 2>/dev/null
-    done
+    source /jazzy_ws/install/setup.bash 2>/dev/null || source /jazzy_ws/install/local_setup.bash 2>/dev/null
 fi
 
 # ROS 2 variables
@@ -33,8 +71,10 @@ export ROS_DOMAIN_ID=0
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_DISTRO=jazzy
 
+# Fast DDS configuration
+export FASTRTPS_DEFAULT_PROFILES_FILE=/tmp/fastdds_profiles.xml
+
 # Aliases
-alias ros-launch='cd /workspace/projects && ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py init_pose_x:=-2.0 init_pose_yaw:=3.14159 mqtt_host_name:=185.55.57.82'
 alias ros-topics='ros2 topic list'
 alias ros-odom='ros2 topic echo /chassis/odom --once'
 alias ros-clock='ros2 topic echo /clock --once'
@@ -49,16 +89,27 @@ echo "ROS 2 Jazzy environment is ready"
 echo "========================================="
 echo "ROS_DOMAIN_ID: $ROS_DOMAIN_ID"
 echo "RMW_IMPLEMENTATION: $RMW_IMPLEMENTATION"
+echo "FASTRTPS_DEFAULT_PROFILES_FILE: $FASTRTPS_DEFAULT_PROFILES_FILE"
+echo ""
+echo "Workspace: /jazzy_ws"
+if [ -d /jazzy_ws/install ]; then
+    echo "✓ Workspace sourced"
+else
+    echo "⚠ Workspace not found at /jazzy_ws/install"
+fi
 echo ""
 echo "Available commands:"
 echo "  ros2 topic list    - list all topics"
 echo "  ros-topics         - alias for topic list"
 echo "  ros-odom           - show odometry data"
-echo "  ros-launch         - launch VDA5050 client"
 echo ""
 echo "To start working, just type: ros2 topic list"
 echo "========================================="
 echo ""
 
-# Запускаем bash с интерактивной оболочкой
-exec /bin/bash -l
+# Execute the command passed to docker run or start bash
+if [ $# -eq 0 ]; then
+    exec /bin/bash -l
+else
+    exec "$@"
+fi

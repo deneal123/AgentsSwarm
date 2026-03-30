@@ -1,3 +1,4 @@
+
 services:
   vda5050-client:
     image: osrf/ros:jazzy-desktop
@@ -8,11 +9,10 @@ services:
       - ROS_DOMAIN_ID=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
       - ROS_DISTRO=jazzy
-      - TERM=xterm-256color
     volumes:
       - /root/projects/workspace_isaac_simulation/IsaacSim-ros_workspaces/build_ws/jazzy/isaac_sim_ros_ws:/jazzy_ws:ro
       - /root/projects:/workspace/projects:ro
-      - ./scripts/entrypoint.sh:/entrypoint.sh:ro
+      - ./entrypoint.sh:/entrypoint.sh:ro
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
