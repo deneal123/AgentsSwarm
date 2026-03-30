@@ -1,0 +1,5 @@
+[submodule "IsaacSim-ros_workspaces"]
+	path = IsaacSim-ros_workspaces
+	url = https://github.com/deneal123/IsaacSim-ros_workspaces.git
+	branch = workspace_isaac_simulation
+
