@@ -8,58 +8,40 @@
 
 ```mermaid
 graph TB
-    subgraph Client["Client Layer"]
-        User1["User A"]
-        User2["User B"]
-        UI1["Frontend UI A<br/>Task Console"]
-        UI2["Frontend UI B<br/>Task Console"]
-    end
-
-    subgraph Gateway["Gateway / Task Manager"]
-        API["HTTP API<br/>Task Submission"]
-        RMQ["RabbitMQ<br/>Task Queue"]
-        Worker["Worker Service<br/>Task Executor"]
-        WSManager["WebSocket Manager<br/>Task Stream Router"]
-        TaskBuffer["Task Stream Buffer<br/>task_id → stream"]
-    end
-
-    subgraph Orchestrator["FastAPI Orchestrator"]
-        OrchestratorAPI["Task Processing Endpoint"]
-        StreamCollector["Stream Collector<br/>agent logs aggregation"]
-    end
-
-    subgraph Agents["Agent Layer"]
-        Router["RouterAgent"]
-        RobotInfo["RobotInfo Agent"]
-        Navigation["Navigation Agent"]
-        Swarm["SwarmCoordinator Agent"]
-    end
-
-    subgraph MCP["MCP Servers"]
-        RosMSP["RosMSP"]
-        MissionControl["MissionControl"]
-        MissionDispatch["MissionDispatch"]
-    end
-
-    subgraph Simulation["Simulation Layer"]
-        IsaacSim["Isaac Sim / VDA5050"]
-    end
-
-    User1 -->|"1. HTTP POST task"| API
-    API -->|"2. Create task_id<br/>Publish to queue"| RMQ
-    API -->|"3. Return task_id"| User1
+    User1["User A"]
+    User2["User B"]
+    UI1["Frontend UI A<br/>Task Console"]
+    UI2["Frontend UI B<br/>Task Console"]
     
-    RMQ -->|"4. Dequeue task"| Worker
-    Worker -->|"5. HTTP request with task_id"| OrchestratorAPI
+    Gateway["Gateway<br/>Task Manager"]
     
-    OrchestratorAPI -->|"6. Execute with task_id"| Router
-    Router -->|"7. Distribute with task context"| RobotInfo
-    Router -->|"7. Distribute with task context"| Navigation
-    Router -->|"7. Distribute with task context"| Swarm
+    OrchestratorAPI["Task Processing Endpoint"]
+    StreamCollector["Stream Collector<br/>agent logs aggregation"]
     
-    RobotInfo -->|"8. Stream: [task_id] logs"| StreamCollector
-    Navigation -->|"8. Stream: [task_id] logs"| StreamCollector
-    Swarm -->|"8. Stream: [task_id] logs"| StreamCollector
+    Router["RouterAgent"]
+    RobotInfo["RobotInfo Agent"]
+    Navigation["Navigation Agent"]
+    Swarm["SwarmCoordinator Agent"]
+    
+    RosMSP["RosMSP"]
+    MissionControl["MissionControl"]
+    MissionDispatch["MissionDispatch"]
+    
+    IsaacSim["Isaac Sim / VDA5050"]
+    
+    User1 -->|"1. HTTP POST task"| Gateway
+    Gateway -->|"2. Return task_id"| User1
+    
+    Gateway -->|"3. HTTP request with task_id"| OrchestratorAPI
+    
+    OrchestratorAPI -->|"4. Execute with task_id"| Router
+    Router -->|"5. Distribute with task context"| RobotInfo
+    Router -->|"5. Distribute with task context"| Navigation
+    Router -->|"5. Distribute with task context"| Swarm
+    
+    RobotInfo -->|"6. Stream: [task_id] logs"| StreamCollector
+    Navigation -->|"6. Stream: [task_id] logs"| StreamCollector
+    Swarm -->|"6. Stream: [task_id] logs"| StreamCollector
     
     RobotInfo -->|"MCP call"| RosMSP
     Navigation -->|"MCP call"| MissionControl
@@ -69,18 +51,36 @@ graph TB
     MissionControl -->|"Execute"| IsaacSim
     MissionDispatch -->|"Execute"| IsaacSim
     
-    RosMSP -->|"9. Stream: [task_id] logs"| StreamCollector
-    MissionControl -->|"9. Stream: [task_id] logs"| StreamCollector
+    RosMSP -->|"7. Stream: [task_id] logs"| StreamCollector
+    MissionControl -->|"7. Stream: [task_id] logs"| StreamCollector
     
-    StreamCollector -->|"10. Forward stream with task_id"| WSManager
+    StreamCollector -->|"8. Forward stream with task_id"| Gateway
     
-    WSManager -->|"11. Store in buffer"| TaskBuffer
-    TaskBuffer -->|"12. Retrieve stream"| WSManager
+    Gateway -->|"9. WebSocket push"| UI1
+    Gateway -->|"9. WebSocket push"| UI2
     
-    WSManager -->|"13. WebSocket push"| UI1
-    WSManager -->|"13. WebSocket push"| UI2
+    User2 -.->|"Alternative task flow"| Gateway
     
-    User2 -.->|"Alternative task flow"| API
+    style User1 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style User2 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style UI1 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style UI2 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    
+    style Gateway fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    
+    style OrchestratorAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    
+    style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style Swarm fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    
+    style RosMSP fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    style MissionControl fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    style MissionDispatch fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    
+    style IsaacSim fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
 ```
 
 ---
