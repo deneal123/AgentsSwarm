@@ -8,17 +8,17 @@
 ```mermaid
 graph LR
     subgraph Cluster["vLLM Data Parallel Cluster"]
-        C0["Node 0<br/>Coordinator<br/>rank 0<br/>Tesla V100<br/>:8000"]
-        C1["Node 1<br/>Worker<br/>rank 1<br/>Tesla V100<br/>:8000"]
+        C0["Node 0<br/>Coordinator (rank 0)<br/>Tesla V100<br/>:8000"]
+        C1["Node 1<br/>Worker (rank 1)<br/>Tesla V100<br/>:8000"]
     end
     
     Client["Client"] -->|HTTP| C0
-    C0 <-->|RPC :13345<br/>Data Parallel| C1
+    C0 <-->|RPC :13345| C1
     C1 -.->|Alternative| Client
     
-    style Cluster fill:#f5f5f5,stroke:#333,stroke-width:2px
-    style C0 fill:#bbdef5,stroke:#1976d2,stroke-width:2px
-    style C1 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style Cluster fill:#2d2d2d,stroke:#888,stroke-width:1px,color:#fff
+    style C0 fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    style C1 fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
 ```
 
 ## Быстрый старт
