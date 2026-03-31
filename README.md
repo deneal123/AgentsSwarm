@@ -8,54 +8,19 @@
 
 > Автономный рой роботов - (AgentsSwarm)
 
-
-## Технические требования для запуска полного стека проекта
-
-### 1. Машина для симуляций (Selectel)
-- **Образ**: Ubuntu 24.04 LTS 64-bit GPU driver 580 Open
-- **Конфигурация**: 4 vCPU, 16 GB RAM, RTX 4090 (24 GB VRAM)
-- **Диск**: 128 GB
-- **Стоимость**: 15 012,70 ₽/мес
-
----
-
-### 2. Машина для микросервисов (Selectel)
-- **Образ**: Ubuntu 24.04 LTS 64-bit
-- **Конфигурация**: 4 vCPU, 8 GB RAM
-- **Диск**: 128 GB
-- **Стоимость**: 1 156,09 ₽/мес
-
----
-
-### 3. Кластер для LLM (MTS)
-- **Образ**: Ubuntu 24.04 LTS 64-bit
-- **Конфигурация**: 2 ноды × Tesla V100 (48 GB VRAM)
-- **Диск**: —
-- **Стоимость**: Бесплатно
-
----
-
-### Итого
-| Параметр | Значение |
-|---------|---------|
-| **Общая стоимость** | **16 168,79 ₽/мес** |
-
-
 ## Компоненты архитектуры системы
 
-#NOTE: добавить ссылки
-
-- workspace_isaac_simulation (microservice)
-- nvidia_isaac_simulation (microservice)
-- isaac_mission_dispatch + msp_server (17 tools) (microservice)
-- isaac_mission_control + mcp_server (12 tools) (microservice)
-- ros_msp_service (? tools) (microservice)
-- vllm_service (2 node data parallel) (microservice)
-- orchestrator (microservice)
-- smolvla_tools (lib)
-- data_storage_service (microservice)
-- gateway (microservice)
-- frontend (microservice)
+- [data_storage_service](https://github.com/deneal123/AgentsSwarm/tree/data_storage_service)
+- [frontend](https://github.com/deneal123/AgentsSwarm/tree/frontend)
+- [gateway](https://github.com/deneal123/AgentsSwarm/tree/gateway)
+- [isaac_mission_control+mcp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_control)
+- [isaac_mission_dispatch+msp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_dispatch)
+- [isaac_ros_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_ros_server)
+- [nvidia_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/nvidia_isaac_simulation)
+- [orchestrator](https://github.com/deneal123/AgentsSwarm/tree/orchestrator)
+- [smolvla_tools](https://github.com/deneal123/AgentsSwarm/tree/smolvla_tools)
+- [vllm_service](https://github.com/deneal123/AgentsSwarm/tree/vllm_service)
+- [workspace_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/workspace_isaac_simulation)
 
 
 ## TODO:
@@ -125,7 +90,7 @@
 
 ---
 
-### 4. MCP Servers (Model Context Protocol)
+### 4. Isaac Ros Server (Model Context Protocol)
 
 **RosMSPServer + DispatchMCPServer + ControlMCPServer**
 
@@ -159,6 +124,8 @@ MCP — протокол, служащий посредником между LLM
 
 #### 5.3 Тестирование
 - [x] Тестирование и проверка работы модели в data parallel режиме
+
+---
 
 ### 6. Orchestrator
 
@@ -256,16 +223,59 @@ MCP — протокол, служащий посредником между LLM
 - [ ] Проверка корректности передачи task_id через цепочку
 - [ ] Тестирование стримов от Orchestrator до Frontend
 
+---
 
-### 7. SmolVLA tools
+### 7. Gateway
 
-#### 7.1 
+#### 7.1 В разработке ...
 
 ### 8. Data Storage Service
 
-### 9. Gateway
+#### 8.1 В разработке ...
 
-### 10. Frontend
+### 9. Frontend
+
+#### 9.1 В разработке ...
+
+---
+
+### 10. Доработка RosMCPServer для передачи изображений через сокеты / стримминг зрения роя (интеграция субагента реалтайм алертинга) - добавляет согласованность рою
+
+#### 10.1 В разработке ...
+
+---
+
+### 11. SmolVLA tools
+
+#### 11.1
+
+### 12. Доработка workspace, разработка VDA5050 адаптер хендлера для создания кастомного action действия для использования VLA в миссиях (интеграция SmolVLA в MissionDispatch+MissionControl через кастомные действия) - добавляет индивидуальную автономность
+
+#### 12.1 В разработке ...
+
+---
+
+## Технические требования для запуска полного стека проекта
+
+- Машина для симуляций (Selectel)
+  - **Образ**: Ubuntu 24.04 LTS 64-bit GPU driver 580 Open
+  - **Конфигурация**: 4 vCPU, 16 GB RAM, RTX 4090 (24 GB VRAM)
+  - **Диск**: 128 GB
+  - **Стоимость**: 15 012,70 ₽/мес
+- Машина для микросервисов (Selectel)
+  - **Образ**: Ubuntu 24.04 LTS 64-bit
+  - **Конфигурация**: 4 vCPU, 8 GB RAM
+  - **Диск**: 128 GB
+  - **Стоимость**: 1 156,09 ₽/мес
+- Кластер для LLM (MTS)
+  - **Образ**: Ubuntu 24.04 LTS 64-bit
+  - **Конфигурация**: 2 ноды × Tesla V100 (48 GB VRAM)
+  - **Диск**: —
+  - **Стоимость**: Бесплатно
+- Итого
+  | Параметр | Значение |
+  |---------|---------|
+  | Общая стоимость | **16 168,79 ₽/мес** |
 
 
 ## Sourses
