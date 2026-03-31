@@ -12,6 +12,7 @@ venv
 .venv
 .vscode/
 
+AGENTS.md
 
 .hydra/
 ckpt/
