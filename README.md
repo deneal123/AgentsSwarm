@@ -1,5 +1,9 @@
 # Nvidia Isaac Sim
 
+## Пример среды
+
+![Пример среды](./usd_template/Labirint_Multiple_Robots.jpg)
+
 ## Создание .env файла
 
 Перед запуском необходимо создать файл .env в директории ./IsaacSim/tools/docker/ (рядом с docker-compose.yml):
