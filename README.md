@@ -1,22 +1,76 @@
-нужно 100+ гигабайт для полного набора расширений
+# Nvidia Isaac Sim
 
-./tools/docker/prep_docker_build.sh --build --x86_64
-/tools/docker/build_docker.sh --x86_64
+## Создание .env файла
 
+Перед запуском необходимо создать файл .env в директории ./IsaacSim/tools/docker/ (рядом с docker-compose.yml):
+
+```bash
+# Перейдите в директорию с docker-compose.yml
+cd ./IsaacSim/tools/docker
+
+# Создайте .env файл
+cat > .env << 'EOF'
+# Docker образ Isaac Sim
+ISAAC_SIM_IMAGE=nvcr.io/nvidia/isaac-sim:6.0.0-dev2
+
+# Хост для WebRTC стриминга
+ISAACSIM_HOST=127.0.0.1
+
+# Порты WebRTC
+ISAACSIM_SIGNAL_PORT=49100
+ISAACSIM_STREAM_PORT=47998
+
+# Порт веб-просмотрщика
+WEB_VIEWER_PORT=8210
+
+# GPU устройство (0 - для одной GPU, all - для всех)
+GPU_DEVICE=all
+
+# Путь для хранения данных (укажите абсолютный путь)
+ISAAC_SIM_DATA=/root/docker/isaac-sim
+EOF
+```
+
+## Запуск контейнера
+
+```bash
+# Вернитесь в корневую директорию Isaac Sim
+cd ./IsaacSim
+
+# Запустите сборку и контейнер
 docker compose -p isim -f tools/docker/docker-compose.yml up --build -d
+```
 
-нужно положить .env файл в директорию рядом с docker-compose.yml
+## Проверка работы
 
-Variable	Default	Description
-ISAAC_SIM_IMAGE	isaac-sim-docker:latest	Docker image to run. Set to a prebuilt NGC image (e.g. nvcr.io/nvidia/isaac-sim:6.0.0-dev2) to skip local build steps.
-ISAACSIM_HOST	127.0.0.1	Host IP for WebRTC streaming (used by both services). See Cloud Deployment for cloud VMs.
-ISAACSIM_SIGNAL_PORT	49100	WebRTC signaling port (TCP)
-ISAACSIM_STREAM_PORT	47998	WebRTC media port (UDP)
-WEB_VIEWER_PORT	8210	Host port for the web viewer
-GPU_DEVICE	all	GPU index to pin the Isaac Sim container to (e.g. 0, 1)
-ISAAC_SIM_DATA	~/docker/isaac-sim	Host path for persistent cache, config, logs, and data. Use a full absolute path in .env files (~ is not expanded by Docker Compose).
+```bash
+# Просмотр всех логов
+docker compose -p isim logs
 
-docker compose -p isim logs              # combined logs from both containers
-docker compose -p isim logs web-viewer   # web viewer only (shows the URL)
-docker compose -p isim logs isaac-sim    # Isaac Sim only (look for "app ready")
-docker compose -p isim logs -f           # follow live logs (Ctrl+C to stop)
+# Просмотр логов веб-просмотрщика (покажет URL)
+docker compose -p isim logs web-viewer
+
+# Просмотр логов Isaac Sim (ищите "app ready")
+docker compose -p isim logs isaac-sim
+
+# Отслеживание логов в реальном времени (Ctrl+C для выхода)
+docker compose -p isim logs -f
+```
+
+## Остановка контейнера
+
+```bash
+# Остановка и удаление контейнеров с volumes
+docker compose -p isim down -v
+
+# Очистка кэша сборки и неиспользуемых данных
+docker builder prune -a -f
+docker volume prune -f
+```
+
+## Важные замечания
+
+- Размер образа: Для загрузки образа требуется 10+ ГБ свободного места
+- Абсолютные пути: В переменной ISAAC_SIM_DATA используйте полный абсолютный путь (символ ~ не раскрывается Docker Compose)
+- GPU: Убедитесь, что установлен NVIDIA Container Toolkit для работы с GPU
+- Доступ в браузере: После запуска веб-просмотрщик будет доступен по адресу: http://localhost:8210
