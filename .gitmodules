@@ -1,32 +1,50 @@
-[submodule "services/orchestrator"]
-	path = services/orchestrator
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = orchestrator
-[submodule "services/nvidia_isaac_simulation"]
-	path = services/nvidia_isaac_simulation
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = nvidia_isaac_simulation
-[submodule "services/ros_msp_service"]
-	path = services/ros_msp_service
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = ros_msp_service
-[submodule "services/vllm_service"]
-	path = services/vllm_service
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = vllm_service
-[submodule "services/smolvla_tools"]
-	path = services/smolvla_tools
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = smolvla_tools
-[submodule "services/robot_edge"]
-	path = services/robot_edge
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = robot_edge
-[submodule "services/frontend"]
-	path = services/frontend
+
+[submodule "frontend"]
+	path = frontend
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = frontend
-[submodule "services/data_storage_service"]
-	path = services/data_storage_service
+
+[submodule "gateway"]
+	path = gateway
 	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = data_storage_service
+	branch = gateway
+
+[submodule "isaac_mission_control"]
+	path = isaac_mission_control
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = isaac_mission_control
+
+[submodule "isaac_mission_dispatch"]
+	path = isaac_mission_dispatch
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = isaac_mission_dispatch
+
+[submodule "isaac_ros_server"]
+	path = isaac_ros_server
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = isaac_ros_server
+
+[submodule "nvidia_isaac_simulation"]
+	path = nvidia_isaac_simulation
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = nvidia_isaac_simulation
+
+[submodule "orchestrator"]
+	path = orchestrator
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = orchestrator
+
+[submodule "smolvla_tools"]
+	path = smolvla_tools
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = smolvla_tools
+
+[submodule "vllm_service"]
+	path = vllm_service
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = vllm_service
+
+[submodule "workspace_isaac_simulation"]
+	path = workspace_isaac_simulation
+	url = https://github.com/deneal123/AgentsSwarm.git
+	branch = workspace_isaac_simulation
