@@ -3,6 +3,24 @@
 
 Сервис для развертывания LLM моделей в режиме Data Parallel с использованием фреймворка vLLM. Поддерживает распределенный инференс на нескольких GPU-нодах.
 
+## Архитектура
+
+```mermaid
+graph LR
+    subgraph Cluster["vLLM Data Parallel Cluster"]
+        C0["Node 0<br/>Coordinator<br/>rank 0<br/>Tesla V100<br/>:8000"]
+        C1["Node 1<br/>Worker<br/>rank 1<br/>Tesla V100<br/>:8000"]
+    end
+    
+    Client["Client"] -->|HTTP| C0
+    C0 <-->|RPC :13345<br/>Data Parallel| C1
+    C1 -.->|Alternative| Client
+    
+    style Cluster fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style C0 fill:#bbdef5,stroke:#1976d2,stroke-width:2px
+    style C1 fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+```
+
 ## Быстрый старт
 
 ### 1. Настройка нод
@@ -47,29 +65,6 @@ curl http://localhost:8000/health
 | .env.node1 | Шаблон переменных окружения для воркера |
 | deploy.sh | Скрипт развертывания (Linux/macOS) |
 deploy.bat Скрипт развертывания (Windows)
-
-## Архитектура
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Data Parallel Cluster                      │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────────┐          ┌──────────────────┐         │
-│  │     Node 0       │          │     Node 1       │         │
-│  │   Coordinator    │◄────────►│     Worker       │         │
-│  │   (rank 0)       │   RPC    │   (rank 1)       │         │
-│  │                  │          │                  │         │
-│  │  Tesla V100      │          │  Tesla V100      │         │
-│  │  48GB VRAM       │          │  48GB VRAM       │         │
-│  │  Port: 8000      │          │  Port: 8000      │         │
-│  └──────────────────┘          └──────────────────┘         │
-│                                                              │
-│  Каждая нода запускается независимо через docker-compose     │
-│  Ноды взаимодействуют через RPC для координации              │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Конфигурация
 
