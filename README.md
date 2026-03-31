@@ -1,11 +1,14 @@
+# workspace_isaac_simulation
+
+## Первый запуск
+
+```bash
 git submodule update --init --recursive
 ./build_ros.sh -d jazzy -v 24.04
+```
+
 Workspace будет в: ~/projects/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy_ws
 
-
-
-
-3. Run the mission client (Launch mission client and navigation2):
 
 ## Запуск нескольких инстансов роботов
 
@@ -57,15 +60,7 @@ ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launc
 | `launch_rviz` | bool | `false` | Запускать RViz |
 
 
-## Пробный для карты с офисом
-
-ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
-  init_pose_x:=-6.0 \
-  init_pose_y:=-1.0 \
-  reconnect_period:=30 \
-  use_sim_time:=true \
-  mqtt_host_name:=185.55.57.82
-
+## Команда для ROS
 
 ```bash
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
@@ -119,58 +114,10 @@ ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launc
 ```
 
 
-### Можно добавить recorder
-
-ros_recorder:=true параметр при запуске mission client, при отправке миссии можно указать начало и остановку записи, что полезно, если данные с сенсоров нужно собрать и записать
-
-## начало записи
-
-{
-  "robot": "carter01",
-  "mission_tree": [
-    {
-      "name": "string",
-      "parent": "root",
-      "action": {
-        "action_type": "start_recording",
-        "action_parameters": {"path": "/tmp/data", "topics": "/rgb_left", "time":3}
-      }
-    }
-  ],
-  "timeout": 300,
-  "deadline": "2022-10-07T00:21:31.112Z",
-  "needs_canceled": false,
-  "name": "mission01"
-}
-
-## конец записи
-
-{
-  "robot": "carter01",
-  "mission_tree": [
-    {
-      "name": "string",
-      "parent": "root",
-      "action": {
-        "action_type": "stop_recording"
-      }
-    }
-  ],
-  "timeout": 300,
-  "deadline": "2022-10-07T00:21:31.112Z",
-  "needs_canceled": false,
-  "name": "mission02"
-}
-
-
-
-## Запуск контейнера
-
-# Остановить старый контейнер
+### Запуск контейнера
+#### Остановить старый контейнер
 docker compose -p workspace -f ./docker/docker-compose.ros2.yml down
-
-# Запустить новый
+#### Запустить новый
 docker compose -p workspace -f ./docker/docker-compose.ros2.yml up -d
-
-# Войти в контейнер (всё уже настроено)
+#### Войти в контейнер (всё уже настроено)
 docker exec -it vda5050_client /bin/bash
