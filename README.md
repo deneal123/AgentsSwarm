@@ -5,25 +5,6 @@ Workspace будет в: ~/projects/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy
 
 
 
-
-
-# Startup Mission Client
-
-
-## Installation
-
-1. Activate isaac-ros activate
-```bash
-sudo -E PYTHONPATH=./IsaacRosCLI/src ISAAC_ROS_WS=/root/workspaces/isaac_ros-dev USERNAME=root ./IsaacRosCLI/bin/isaac-ros activate
-```
-
-2. Install the prebuilt Debian package:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y ros-jazzy-isaac-ros-mission-client
-```
-
 3. Run the mission client (Launch mission client and navigation2):
 
 ## Запуск нескольких инстансов роботов
