@@ -3,6 +3,33 @@
 
 Микросервис на базе **OpenAI Agents SDK**, выступающий интеллектуальной прослойкой между пользователем и инфраструктурой управления роботами. Orchestrator принимает запросы на естественном языке, маршрутизирует их к специализированным агентам, вызывает инструменты через MCP-серверы (RosMSP, MissionControl, MissionDispatch) и возвращает результат в реальном времени.
 
+## Быстрый старт
+
+```bash
+uv sync  # или python -m pip install -e .[dev]
+uv run orchestrator  # эквивалентно: uv run uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000
+```
+
+### Docker (dev)
+
+```bash
+docker compose -f docker/docker-compose.dev.yml up --build
+```
+
+Сервисы: `orchestrator` + `redis`. Код монтируется в контейнер (`../:/app` из каталога `docker`), виртуальное окружение сохраняется в отдельный volume (`orchestrator-venv`). Hot-reload включён через `--reload`.
+
+Переменные окружения (см. `src/orchestrator/config/.env.example`):
+- `HOST`, `PORT` — адрес и порт сервера
+- `RELOAD=1` — включить hot-reload в дев-режиме
+- `REDIS_URL` — опциональный бэкенд для `SessionManager`
+
+### API (dev-скелет)
+- `POST /task` — принять задачу и создать `task_id`
+- `GET /task/{task_id}/status` — статус задачи
+- `GET /task/{task_id}/logs` — исторический лог (зеркало стрима)
+- `GET /task/{task_id}/events?after_seq=N` — получить потоковые события
+- `POST /task/{task_id}/events` — внешние агенты/воркеры могут пушить события и обновлять статус
+
 
 ## Архитектура
 
@@ -19,6 +46,7 @@ graph TB
     StreamCollector["Stream Collector<br/>agent logs aggregation"]
     
     Router["RouterAgent"]
+    Planner["MissionPlanner Agent"]
     RobotInfo["RobotInfo Agent"]
     Navigation["Navigation Agent"]
     Swarm["SwarmCoordinator Agent"]
@@ -35,9 +63,17 @@ graph TB
     Gateway -->|"3. HTTP request with task_id"| OrchestratorAPI
     
     OrchestratorAPI -->|"4. Execute with task_id"| Router
-    Router -->|"5. Distribute with task context"| RobotInfo
-    Router -->|"5. Distribute with task context"| Navigation
-    Router -->|"5. Distribute with task context"| Swarm
+    Router -->|"5a. Simple -> handoff"| RobotInfo
+    Router -->|"5a. Simple -> handoff"| Navigation
+    Router -->|"5a. Simple -> handoff"| Swarm
+    Router -->|"5b. Complex -> plan"| Planner
+
+    Planner -->|"6. Build plan (steps)"| Planner
+    Planner -->|"7. Execute step"| RobotInfo
+    Planner -->|"7. Execute step"| Navigation
+    Planner -->|"7. Execute step"| Swarm
+    Planner -->|"8. Stream step result"| StreamCollector
+    Planner -->|"loop until done/blocked"| Planner
     
     RobotInfo -->|"6. Stream: [task_id] logs"| StreamCollector
     Navigation -->|"6. Stream: [task_id] logs"| StreamCollector
@@ -111,6 +147,7 @@ graph TB
 
 ### 2. Агентный слой (Agent Layer)
 - **RouterAgent** — анализирует запрос, выполняет handoff к нужному агенту.
+- **MissionPlannerAgent** — двухфазный агент: понимает сложный запрос, строит план (список шагов/инструментов), затем в замкнутом цикле выполняет шаги, перенаправляя их в специализированных агентов; останавливается при успехе, ошибке или запросе уточнений.
 - **RobotInfoAgent** — работает с RosMSP.
 - **NavigationAgent** — работает с MissionControl и MissionDispatch.
 - **SwarmCoordinatorAgent** — работает со всеми тремя MCP-серверами.
@@ -286,10 +323,10 @@ router = Agent(
 
 ---
 
-## Однофазные vs двухфазные агенты
+### Однофазные vs двухфазные агенты
 
 - Однофазные (RobotInfoAgent, NavigationAgent, SwarmCoordinatorAgent) — подходят для задач, которые решаются за один вызов агента. Ответ генерируется сразу, но промежуточные шаги всё равно передаются потоком.
-- Двухфазные (например, MissionPlannerAgent) — полезны для сложных планов. Сначала агент возвращает структурированный план (JSON), затем каждый шаг выполняется отдельно. В Agents SDK это реализуется через потоковую обработку (Runner.run_streamed) и анализ промежуточных событий.
+- Двухфазные (MissionPlannerAgent) — строит план действий (декомпозиция сложного запроса на шаги), затем в цикле исполняет шаги через handoff к специализированным агентам, стримит результаты каждого шага и при необходимости пересчитывает план или запрашивает уточнения. Реализуется через потоковую обработку (Runner.run_streamed) и анализ промежуточных событий.
 
 ---
 

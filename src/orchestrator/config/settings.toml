@@ -1,2 +1,6 @@
 [default]
 version = 'v0.0.1'
+mission_control_url = "http://localhost:8050"
+mission_dispatch_url = "http://localhost:8051"
+ros_msp_args = "--directory /opt/ros-mcp-server run server.py"
+ros_msp_command = "uv"
