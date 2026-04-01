@@ -31,14 +31,18 @@ class PlanStep:
 
 
 def build_plan(prompt: str) -> List[PlanStep]:
-    target_agent, target_robots = _detect_agent(prompt)
+    """Two-phase plan builder: analyse -> collect context -> execute goals.
 
-    tools_for_exec = ["create_mission", "send_mission"]
-    if target_agent == "Swarm":
-        tools_for_exec = ["plan_route", "create_mission", "send_mission"]
+    - Always adds analysis (id=1) and context (id=2) steps.
+    - Splits complex запрос на подцели, каждая получает свой execution-step.
+    - Подбирает агент (Navigation/Swarm) и инструменты по каждой подцели.
+    """
 
-    # Simple deterministic plan with three phases
-    return [
+    goals = _extract_goals(prompt)
+    if not goals:
+        goals = [prompt.strip()]
+
+    steps: List[PlanStep] = [
         PlanStep(
             id=1,
             description="Анализ запроса и уточнение цели",
@@ -56,25 +60,42 @@ def build_plan(prompt: str) -> List[PlanStep]:
             agent="RobotInfo",
             meta={
                 "expected_outcome": "Контекст и данные по доступным роботам",
-                "inputs": {"from_step": 1, "target_robots": target_robots},
+                "inputs": {"from_step": 1},
                 "tools": ["get_robots", "get_robot_status"],
                 "depends_on": [1],
-                "target_robots": target_robots,
-            },
-        ),
-        PlanStep(
-            id=3,
-            description="Выполнение задачи через специализированного агента",
-            agent=target_agent,
-            meta={
-                "expected_outcome": "Выполненная команда/миссия",
-                "inputs": {"from_steps": [1, 2], "target_robots": target_robots},
-                "tools": tools_for_exec,
-                "depends_on": [1, 2],
-                "target_robots": target_robots,
+                "target_robots": [],
             },
         ),
     ]
+
+    current_id = 3
+    for goal in goals:
+        target_agent, target_robots = _detect_agent(goal)
+        tools_for_exec = ["create_mission", "send_mission"]
+        if target_agent == "Swarm":
+            tools_for_exec = ["plan_route", "create_mission", "send_mission"]
+
+        depends_on = [1, 2]
+        if current_id > 3:
+            depends_on.append(current_id - 1)
+
+        steps.append(
+            PlanStep(
+                id=current_id,
+                description=f"Выполнение цели: {goal.strip()}",
+                agent=target_agent,
+                meta={
+                    "expected_outcome": "Выполненная команда/миссия",
+                    "inputs": {"from_steps": depends_on, "target_robots": target_robots},
+                    "tools": tools_for_exec,
+                    "depends_on": depends_on,
+                    "target_robots": target_robots,
+                },
+            )
+        )
+        current_id += 1
+
+    return steps
 
 
 __all__ = ["PlanStep", "build_plan"]
@@ -106,3 +127,10 @@ def _extract_robot_ids(text: str) -> List[str]:
             seen.add(robot_id)
             unique.append(robot_id)
     return unique
+
+
+def _extract_goals(prompt: str) -> List[str]:
+    # Split by sentence-ending punctuation or sequencing words; keep non-empty trimmed chunks
+    parts = re.split(r"[.;\n]|\bзатем\b|\bпотом\b|\bthen\b", prompt, flags=re.IGNORECASE)
+    goals = [p.strip() for p in parts if p and p.strip()]
+    return goals

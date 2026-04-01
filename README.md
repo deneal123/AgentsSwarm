@@ -25,14 +25,14 @@ docker compose -f docker/docker-compose.dev.yml up --build
 
 ### API (dev-скелет)
 - `POST /task` — принять задачу и создать `task_id` (опционально `run=false` чтобы только создать)
-- `POST /task/{task_id}/run` — запустить отложенную задачу
 - `GET /task/{task_id}/status` — статус задачи
 - `GET /task/{task_id}/plan` — план действий (шаги), если построен
 - `GET /task/{task_id}/logs` — исторический лог (зеркало стрима)
 - `GET /task/{task_id}/events?after_seq=N` — получить потоковые события
+- `WS /ws/task/{task_id}` — поток событий по вебсокету (пуллинг StreamCollector)
 - `POST /task/{task_id}/events` — внешние агенты/воркеры могут пушить события и обновлять статус
-- `POST /task/{task_id}/cancel` — отменить выполнение задачи
 - `POST /task/{task_id}/run` — запустить отложенную задачу или переподнять pending
+- `POST /task/{task_id}/replan` — перестроить план и вернуть задачу в pending (можно передать run=true для автозапуска)
 
 **Отмена выполнения**
 - При `POST /task/{id}/cancel` статус задачи становится `canceled`, все шаги плана помечаются `canceled`, в стрим добавляются события: "Task canceled" и "Task canceled during execution".
@@ -169,27 +169,56 @@ graph TB
         "description": "Анализ запроса и уточнение цели",
         "agent": "Router",
         "status": "pending",
-        "meta": {}
+        "meta": {
+            "expected_outcome": "Уточненная цель и параметры задачи",
+            "inputs": {"prompt": "..."},
+            "tools": [],
+            "depends_on": [],
+            "target_robots": []
+        }
     },
     {
         "id": 2,
         "description": "Получение данных/контекст",
         "agent": "RobotInfo",
         "status": "pending",
-        "meta": {}
+        "meta": {
+            "expected_outcome": "Контекст и данные по доступным роботам",
+            "inputs": {"from_step": 1, "target_robots": ["carter01"]},
+            "tools": ["get_robots", "get_robot_status"],
+            "depends_on": [1],
+            "target_robots": ["carter01"]
+        }
     },
     {
         "id": 3,
         "description": "Выполнение задачи через специализированного агента",
-        "agent": "Auto",
+        "agent": "Navigation",
         "status": "pending",
-        "meta": {}
+        "meta": {
+            "expected_outcome": "Выполненная команда/миссия",
+            "inputs": {"from_steps": [1, 2], "target_robots": ["carter01"]},
+            "tools": ["create_mission", "send_mission"],
+            "depends_on": [1, 2],
+            "target_robots": ["carter01"]
+        }
     }
 ]
 ```
 
 - Эндпоинт `GET /task/{task_id}/plan` возвращает список шагов плана в этом формате.
 - `meta` используется для расширений (например, целевые роботы, инструменты, параметры миссий).
+
+**Выбор агента**
+- Если в запросе указаны несколько роботов или встречаются ключевые слова про рой/много роботов, третий шаг использует агент `Swarm` и добавляет `plan_route` в `tools`.
+- Иначе используется `Navigation`, `tools` ограничены навигационными действиями (`create_mission`, `send_mission`).
+
+**Поля meta (контракт шага)**
+- `expected_outcome` — что считаем успехом шага.
+- `inputs` — входы, полученные из предыдущих шагов или промпта.
+- `tools` — предполагаемые инструменты/вызовы для шага.
+- `depends_on` — зависимости по шагам.
+- `target_robots` — перечень целевых роботов (может быть пустым).
 
 ### 3. MCP-серверы
 - **RosMSP** — предоставляет инструменты для получения информации о роботах (список, статус, батарея, позиция).

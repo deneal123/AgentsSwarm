@@ -14,13 +14,15 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
+import json
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from orchestrator.config import settings
 from orchestrator.services.sessions import SessionManager, get_session_manager
 from orchestrator.services.planner import PlanStep, build_plan
+from orchestrator.services.plan_runner import PlanRunner
 from orchestrator.services.streaming import StreamCollector, StreamEvent
 from orchestrator.services.tasks import TaskInfo, TaskStatus, TaskStore, get_task_store
 from orchestrator.utils.logger import get_logger
@@ -79,6 +81,8 @@ class StreamEventIn(BaseModel):
     ts: Optional[datetime] = Field(default=None, description="Optional timestamp override")
     meta: Dict[str, Any] = Field(default_factory=dict)
     status: Optional[TaskStatus] = Field(default=None, description="Optional task status update")
+    plan_step_id: Optional[int] = Field(default=None, description="Optional plan step id to update")
+    append_log: bool = Field(default=False, description="Whether to append message to task logs")
 
 
 class StreamEventAck(BaseModel):
@@ -91,10 +95,15 @@ def create_app(
     task_store: Annotated[TaskStore, Depends(get_task_store)] | None = None,
     session_manager: Annotated[SessionManager, Depends(get_session_manager)] | None = None,
     stream_collector: StreamCollector | None = None,
+    enable_debug_routes: bool | None = None,
 ) -> FastAPI:
     ts = task_store or TaskStore()
     sm = session_manager or SessionManager()
     sc = stream_collector or StreamCollector(task_store=ts)
+
+    debug_routes = enable_debug_routes
+    if debug_routes is None:
+        debug_routes = bool(settings.get("enable_debug_routes", False)) or os.getenv("ENABLE_DEBUG_ROUTES") == "1"
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -110,6 +119,17 @@ def create_app(
         description="Agentic orchestrator for robot swarm control",
         lifespan=lifespan,
     )
+
+    def _record_user_error(task_id: str, message: str, code: str = "internal_error", detail: str | None = None):
+        sc.record(
+            StreamEvent(
+                task_id=task_id,
+                source="orchestrator",
+                message=message,
+                level="error",
+                meta={"user_facing": True, "code": code, "detail": detail},
+            )
+        )
 
     @app.get("/health")
     async def health() -> JSONResponse:
@@ -181,7 +201,7 @@ def create_app(
         updated = ts.update_status(task_id, TaskStatus.CANCELED)
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
-        ts.cancel_incomplete_steps(task_id)
+        ts.cancel_incomplete_steps(task_id, include_completed=True)
         sc.record(
             StreamEvent(
                 task_id=task_id,
@@ -229,9 +249,57 @@ def create_app(
 
         if event.status:
             ts.update_status(task_id, event.status)
+            if event.status == TaskStatus.FAILED:
+                ts.cancel_incomplete_steps(task_id, include_completed=True)
+                _record_user_error(
+                    task_id,
+                    message="В задаче произошла ошибка. Пожалуйста, повторите или обратитесь к оператору.",
+                    code="task_failed",
+                    detail=event.message,
+                )
+            elif event.status == TaskStatus.COMPLETED:
+                task_plan = ts.get_task(task_id).plan if ts.get_task(task_id) else []
+                if task_plan and all(step.get("status") == TaskStatus.COMPLETED.value for step in task_plan):
+                    ts.update_status(task_id, TaskStatus.COMPLETED)
+
+        if event.plan_step_id is not None:
+            step_status = event.status.value if event.status else "running"
+            ts.update_plan_step(task_id, event.plan_step_id, step_status)
+
+        if event.append_log:
+            ts.append_log(task_id, f"[{event.level}] {event.source}: {event.message}")
 
         updated_task = ts.get_task(task_id)
         return StreamEventAck(task_id=task_id, seq=seq, status=updated_task.status if updated_task else TaskStatus.PENDING)
+
+    @app.websocket("/ws/task/{task_id}")
+    async def task_events_ws(websocket: WebSocket, task_id: str):
+        await websocket.accept()
+        try:
+            task = ts.get_task(task_id)
+            if not task:
+                await websocket.send_json({"error": "Task not found", "task_id": task_id})
+                await websocket.close(code=4004)
+                return
+            # Send initial snapshot and advance cursor
+            initial = sc.as_payload(task_id, after_seq=0)
+            await websocket.send_json(initial)
+            last_seq = initial.get("last_seq", 0)
+
+            while True:
+                payload = sc.as_payload(task_id, after_seq=last_seq)
+                last_seq = payload.get("last_seq", last_seq)
+                if payload.get("events"):
+                    await websocket.send_text(json.dumps(payload))
+                await asyncio.sleep(0.2)
+        except WebSocketDisconnect:
+            logger.info("WebSocket disconnected for task %s", task_id)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.exception("WebSocket error for task %s", task_id, exc_info=exc)
+            try:
+                await websocket.send_json({"error": "internal", "detail": str(exc)})
+            finally:
+                await websocket.close(code=1011)
 
     @app.post("/task/{task_id}/run", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
     async def run_task(task_id: str, background_tasks: BackgroundTasks = None) -> TaskResponse:
@@ -246,9 +314,53 @@ def create_app(
         updated = ts.get_task(task_id)
         return TaskResponse(status=updated.status.value if updated else TaskStatus.PENDING.value, task_id=task_id)
 
+    @app.post("/task/{task_id}/replan", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
+    async def replan_task(task_id: str, run: bool = False, background_tasks: BackgroundTasks = None) -> TaskResponse:
+        task = ts.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        if task.status == TaskStatus.RUNNING:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task already running")
+
+        plan = build_plan(task.prompt)
+        ts.set_plan(task_id, [step.as_dict() for step in plan])
+        ts.update_status(task_id, TaskStatus.PENDING)
+        sc.record(
+            StreamEvent(
+                task_id=task_id,
+                source="planner",
+                message="Plan rebuilt",
+                level="info",
+                meta={"steps": [s.as_dict() for s in plan]},
+            )
+        )
+
+        if run and background_tasks is not None:
+            background_tasks.add_task(_run_task, task_id, task.prompt)
+        return TaskResponse(status=TaskStatus.PENDING.value, task_id=task_id)
+
+    @app.exception_handler(HTTPException)
+    async def _http_exc(request: Request, exc: HTTPException):
+        task_ctx = request.path_params.get("task_id") if hasattr(request, "path_params") else None
+        if task_ctx and ts.get_task(task_ctx):
+            _record_user_error(
+                task_ctx,
+                message="Произошла ошибка при обработке запроса. Попробуйте ещё раз.",
+                code=str(exc.status_code),
+                detail=exc.detail,
+            )
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
     @app.exception_handler(Exception)
     async def _unhandled_exc(request: Request, exc: Exception):
         task_ctx = request.path_params.get("task_id") if hasattr(request, "path_params") else None
+        if task_ctx and ts.get_task(task_ctx):
+            _record_user_error(
+                task_ctx,
+                message="Внутренняя ошибка. Мы уже разбираемся. Попробуйте повторить запрос чуть позже.",
+                code="internal_error",
+                detail=str(exc),
+            )
         logger.exception(
             "Unhandled error",
             extra={"path": request.url.path, "task_id": task_ctx},
@@ -258,125 +370,100 @@ def create_app(
             content={"detail": "Internal server error"},
         )
 
+    if debug_routes:
+
+        @app.get("/debug/crash/{task_id}")
+        async def _crash(task_id: str):
+            raise RuntimeError("Debug crash")
+
     async def _run_task(task_id: str, prompt: str) -> None:
         existing = ts.get_task(task_id)
-        if existing and existing.status == TaskStatus.CANCELED:
-            ts.cancel_incomplete_steps(task_id)
+        if existing and existing.status in {TaskStatus.CANCELED, TaskStatus.FAILED}:
+            ts.cancel_incomplete_steps(task_id, include_completed=True)
             sc.record(
                 StreamEvent(
                     task_id=task_id,
                     source="orchestrator",
-                    message="Task canceled before start",
+                    message="Task stopped before start",
                     level="warning",
-                    meta={},
+                    meta={"status": existing.status.value},
                 )
             )
             return
 
+        max_replans = int(os.getenv("PLAN_REPLAN_MAX", "1"))
+        attempt = 0
         ts.update_status(task_id, TaskStatus.RUNNING)
-        plan = build_plan(prompt)
-        ts.set_plan(task_id, [step.as_dict() for step in plan])
-        sc.record(
-            StreamEvent(
-                task_id=task_id,
-                source="planner",
-                message="Plan created",
-                level="info",
-                meta={"steps": [s.as_dict() for s in plan]},
-            )
-        )
-        sc.record(
-            StreamEvent(
-                task_id=task_id,
-                source="orchestrator",
-                message="Processing started",
-                level="info",
-                meta={"prompt": prompt[:80]},
-            )
-        )
-        try:
-            # Small delay to allow early cancellation before executing steps
-            await asyncio.sleep(0.05)
 
-            def _is_canceled() -> bool:
-                task = ts.get_task(task_id)
-                return bool(task and task.status == TaskStatus.CANCELED)
-
-            for step in plan:
-                if _is_canceled():
-                    ts.cancel_incomplete_steps(task_id)
-                    sc.record(
-                        StreamEvent(
-                            task_id=task_id,
-                            source="orchestrator",
-                            message="Task canceled during execution",
-                            level="warning",
-                            meta={},
-                        )
-                    )
-                    break
-
-                ts.update_plan_step(task_id, step.id, "running")
-                sc.record(
-                    StreamEvent(
-                        task_id=task_id,
-                        source="planner",
-                        message=f"Plan step {step.id} started: {step.description}",
-                        level="info",
-                        meta={"agent": step.agent},
-                    )
+        while True:
+            plan = build_plan(prompt)
+            ts.set_plan(task_id, [step.as_dict() for step in plan])
+            sc.record(
+                StreamEvent(
+                    task_id=task_id,
+                    source="planner",
+                    message="Plan created",
+                    level="info",
+                    meta={"steps": [s.as_dict() for s in plan], "attempt": attempt + 1},
                 )
-                await asyncio.sleep(0.1)
-
-                if _is_canceled():
-                    ts.update_plan_step(task_id, step.id, TaskStatus.CANCELED.value)
-                    ts.cancel_incomplete_steps(task_id)
-                    sc.record(
-                        StreamEvent(
-                            task_id=task_id,
-                            source="orchestrator",
-                            message="Task canceled during execution",
-                            level="warning",
-                            meta={},
-                        )
-                    )
-                    break
-
-                ts.update_plan_step(task_id, step.id, "completed")
-                sc.record(
-                    StreamEvent(
-                        task_id=task_id,
-                        source="planner",
-                        message=f"Plan step {step.id} completed",
-                        level="info",
-                        meta={"agent": step.agent},
-                    )
+            )
+            sc.record(
+                StreamEvent(
+                    task_id=task_id,
+                    source="orchestrator",
+                    message="Processing started",
+                    level="info",
+                    meta={"prompt": prompt[:80], "plan_attempt": attempt + 1},
                 )
+            )
+            try:
+                await asyncio.sleep(0.05)
+                runner = PlanRunner(task_store=ts, stream_collector=sc)
+                outcome = await runner.run(task_id, plan)
 
-            else:
                 current = ts.get_task(task_id)
-                if current and current.status != TaskStatus.CANCELED:
+                if outcome == TaskStatus.COMPLETED and current and current.status != TaskStatus.CANCELED:
                     sc.record(
                         StreamEvent(
                             task_id=task_id,
                             source="agent",
                             message="Task completed",
                             level="info",
-                            meta={"steps": len(plan)},
+                            meta={"steps": len(plan), "plan_attempt": attempt + 1},
                         )
                     )
                     ts.update_status(task_id, TaskStatus.COMPLETED)
-        except Exception as exc:  # pragma: no cover - defensive
-            ts.update_status(task_id, TaskStatus.FAILED)
-            sc.record(
-                StreamEvent(
-                    task_id=task_id,
-                    source="orchestrator",
-                    message=f"Task failed: {exc}",
-                    level="error",
-                    meta={},
+                    break
+                if outcome == TaskStatus.CANCELED:
+                    ts.update_status(task_id, TaskStatus.CANCELED)
+                    break
+
+                # Failed: maybe replan if budget remains
+                attempt += 1
+                if attempt > max_replans:
+                    ts.update_status(task_id, TaskStatus.FAILED)
+                    break
+                sc.record(
+                    StreamEvent(
+                        task_id=task_id,
+                        source="planner",
+                        message="Replanning after failure",
+                        level="warning",
+                        meta={"attempt": attempt, "max": max_replans},
+                    )
                 )
-            )
+            except Exception as exc:  # pragma: no cover - defensive
+                ts.update_status(task_id, TaskStatus.FAILED)
+                sc.record(
+                    StreamEvent(
+                        task_id=task_id,
+                        source="orchestrator",
+                        message=f"Task failed: {exc}",
+                        level="error",
+                        meta={"plan_attempt": attempt + 1},
+                    )
+                )
+                break
 
     return app
 

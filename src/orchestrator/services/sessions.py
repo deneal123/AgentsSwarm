@@ -21,7 +21,8 @@ class SessionManager:
         self._redis_url = os.getenv("REDIS_URL")
         self._redis: Optional[Redis] = None
         self._memory: dict[str, Dict[str, Any]] = {}
-        self._status: str = "disabled" if not self._redis_url else "pending"
+        # Default to disabled until connect() runs; avoids "pending" in health before lifespan
+        self._status: str = "disabled"
 
     async def connect(self) -> None:
         if self._redis_url and Redis is not None:
@@ -32,6 +33,8 @@ class SessionManager:
             except Exception:
                 self._redis = None
                 self._status = "error"
+        else:
+            self._status = "disabled"
 
     async def close(self) -> None:
         if self._redis:

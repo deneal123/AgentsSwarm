@@ -75,7 +75,7 @@ class TaskStore:
             updated.append(step)
         task.plan = updated
 
-    def cancel_incomplete_steps(self, task_id: str) -> None:
+    def cancel_incomplete_steps(self, task_id: str, include_completed: bool = False) -> None:
         """Mark any non-completed plan steps as canceled.
 
         Safe to call when no plan is present.
@@ -85,7 +85,11 @@ class TaskStore:
             return
         updated: list[Dict[str, Any]] = []
         for step in task.plan:
-            if step.get("status") != TaskStatus.CANCELED.value:
+            if include_completed or step.get("status") not in {
+                TaskStatus.CANCELED.value,
+                TaskStatus.COMPLETED.value,
+                TaskStatus.FAILED.value,
+            }:
                 step["status"] = TaskStatus.CANCELED.value
             updated.append(step)
         task.plan = updated
