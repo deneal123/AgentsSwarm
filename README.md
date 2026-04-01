@@ -27,8 +27,8 @@ graph LR
 
 **Node 0 (Coordinator)** — первая нода:
 ```bash
-cp .env.node0 .env
-# Отредактируйте .env, установите VLLM_DATA_PARALLEL_ADDRESS = IP этой ноды
+cp src/vllm_service/config/.env.node0 src/vllm_service/config/.env
+# Отредактируйте src/vllm_service/config/.env, установите VLLM_DATA_PARALLEL_ADDRESS = IP этой ноды
 ./deploy.sh build
 ./deploy.sh up
 ```
@@ -36,8 +36,8 @@ cp .env.node0 .env
 **Node 1 (Worker)** — вторая нода:
 
 ```bash
-cp .env.node1 .env
-# Отредактируйте .env, установите VLLM_DATA_PARALLEL_ADDRESS = IP ноды 0
+cp src/vllm_service/config/.env.node1 src/vllm_service/config/.env
+# Отредактируйте src/vllm_service/config/.env, установите VLLM_DATA_PARALLEL_ADDRESS = IP ноды 0
 ./deploy.sh build
 ./deploy.sh up
 ```
@@ -55,14 +55,21 @@ cp .env.node1 .env
 curl http://localhost:8000/health
 ```
 
+### Настройка использования GPU-памяти
+
+Если на узле уже работают другие процессы или GPU занят не полностью, уменьшите
+`VLLM_GPU_MEMORY_UTILIZATION` в `src/vllm_service/config/.env`, чтобы сервис
+запустился без ошибок `Free memory on device cuda:0 [...] is less than desired`.
+Например, `0.75` оставит достаточный запас памяти и предотвратит сбои при старте.
+
 ## Структура проекта
 
 | Файл | Описание |
 | --- | --- |
 | Dockerfile | Docker образ с uv и vLLM |
 | docker-compose.yml | Конфигурация для развертывания на одной ноде |
-| .env.node0 | Шаблон переменных окружения для координатора |
-| .env.node1 | Шаблон переменных окружения для воркера |
+| `src/vllm_service/config/.env.node0` | Шаблон переменных окружения для координатора |
+| `src/vllm_service/config/.env.node1` | Шаблон переменных окружения для воркера |
 | deploy.sh | Скрипт развертывания (Linux/macOS) |
 deploy.bat Скрипт развертывания (Windows)
 

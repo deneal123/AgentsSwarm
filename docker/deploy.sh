@@ -30,6 +30,8 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DOCKER_DIR="$SCRIPT_DIR"
+CONFIG_DIR="$PROJECT_ROOT/src/vllm_service/config"
+ENV_FILE="$CONFIG_DIR/.env"
 
 # Change to docker directory
 cd "$DOCKER_DIR"
@@ -58,8 +60,8 @@ print_help() {
     echo ""
     echo "Setup:"
     echo "  1. Copy environment file:"
-    echo "     cp .env.node0 .env  # For coordinator node"
-    echo "     cp .env.node1 .env  # For worker node"
+    echo "     cp src/vllm_service/config/.env.node0 src/vllm_service/config/.env  # For coordinator node"
+    echo "     cp src/vllm_service/config/.env.node1 src/vllm_service/config/.env  # For worker node"
     echo ""
     echo "  2. Edit .env with your configuration"
     echo ""
@@ -69,19 +71,19 @@ print_help() {
 }
 
 check_env() {
-    if [ ! -f .env ]; then
+    if [ ! -f "$ENV_FILE" ]; then
         echo -e "${RED}Error: .env file not found!${NC}"
         echo ""
         echo "Please copy one of the example files:"
-        echo "  cp .env.node0 .env  # For coordinator node (rank 0)"
-        echo "  cp .env.node1 .env  # For worker node (rank 1)"
+        echo "  cp src/vllm_service/config/.env.node0 src/vllm_service/config/.env  # For coordinator node (rank 0)"
+        echo "  cp src/vllm_service/config/.env.node1 src/vllm_service/config/.env  # For worker node (rank 1)"
         echo ""
         echo "Then edit .env with your configuration."
         exit 1
     fi
     
     # Check required variables
-    source .env
+    source "$ENV_FILE"
     
     if [ -z "$VLLM_DATA_PARALLEL_ADDRESS" ]; then
         echo -e "${RED}Error: VLLM_DATA_PARALLEL_ADDRESS not set in .env${NC}"
@@ -149,7 +151,7 @@ status() {
     echo ""
     
     # Try to check health endpoint
-    source .env 2>/dev/null || true
+    source "$ENV_FILE" 2>/dev/null || true
     PORT=${VLLM_PORT:-8000}
     
     if curl -s --connect-timeout 2 "http://localhost:${PORT}/health" > /dev/null 2>&1; then

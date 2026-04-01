@@ -8,16 +8,16 @@ This directory contains Docker configuration for deploying vLLM Service in Data 
 
 **Node 0 (Coordinator)** - First server:
 ```bash
-cp .env.node0 .env
-# Edit .env and set VLLM_DATA_PARALLEL_ADDRESS to this server's IP
+cp src/vllm_service/config/.env.node0 src/vllm_service/config/.env
+# Edit src/vllm_service/config/.env and set VLLM_DATA_PARALLEL_ADDRESS to this server's IP
 ./deploy.sh build
 ./deploy.sh up
 ```
 
 **Node 1 (Worker)** - Second server:
 ```bash
-cp .env.node1 .env
-# Edit .env and set VLLM_DATA_PARALLEL_ADDRESS to Node 0's IP
+cp src/vllm_service/config/.env.node1 src/vllm_service/config/.env
+# Edit src/vllm_service/config/.env and set VLLM_DATA_PARALLEL_ADDRESS to Node 0's IP
 ./deploy.sh build
 ./deploy.sh up
 ```
@@ -41,8 +41,8 @@ curl http://localhost:8000/health
 |------|-------------|
 | `Dockerfile` | Docker image with uv and vLLM |
 | `docker-compose.yml` | Universal single-node deployment |
-| `.env.node0` | Environment template for coordinator |
-| `.env.node1` | Environment template for worker |
+| `src/vllm_service/config/.env.node0` | Environment template for coordinator |
+| `src/vllm_service/config/.env.node1` | Environment template for worker |
 | `deploy.sh` | Deployment script (Linux/macOS) |
 | `deploy.bat` | Deployment script (Windows) |
 
@@ -78,6 +78,7 @@ curl http://localhost:8000/health
 | `VLLM_DATA_PARALLEL_RANK` | This node's rank | 0 | 1 |
 | `VLLM_DATA_PARALLEL_ADDRESS` | Coordinator IP | This node's IP | Node 0's IP |
 | `VLLM_DATA_PARALLEL_RPC_PORT` | RPC port | 13345 | 13345 |
+| `VLLM_GPU_MEMORY_UTILIZATION` | Fraction of GPU memory vLLM reserves | 0.75 | 0.75 |
 
 ### Network Requirements
 
@@ -147,6 +148,9 @@ docker compose down
 3. Check network connectivity between nodes
 
 ### Nodes can't communicate
+
+### GPU memory errors
+- Если при запуске появляется сообщение про недостаток свободной памяти (`Free memory on device cuda:0 [...] is less than desired GPU memory utilization`), снизьте `VLLM_GPU_MEMORY_UTILIZATION` в `src/vllm_service/config/.env` (например, 0.75) или остановите другие тяжёлые GPU-процессы, чтобы освободить пространство.
 1. Verify firewall allows RPC port (13345)
 2. Check `VLLM_DATA_PARALLEL_ADDRESS` is correct
 3. Both nodes must use the same `VLLM_DATA_PARALLEL_SIZE`
