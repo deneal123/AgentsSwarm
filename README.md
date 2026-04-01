@@ -1,5 +1,5 @@
 
-# Startup Mission Dispatch
+# Mission Dispatch
 
 docker compose -p dispatch -f ./docker/docker-compose.yml  up --build
 
