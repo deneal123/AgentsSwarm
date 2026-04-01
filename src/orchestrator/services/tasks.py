@@ -25,6 +25,7 @@ class TaskInfo:
     status: TaskStatus = TaskStatus.PENDING
     session_data: Dict[str, Any] = field(default_factory=dict)
     logs: list[str] = field(default_factory=list)
+    plan: list[Dict[str, Any]] = field(default_factory=list)
 
 
 class TaskStore:
@@ -56,6 +57,38 @@ class TaskStore:
         if not task:
             return
         task.logs.append(message)
+
+    def set_plan(self, task_id: str, plan: list[Dict[str, Any]]) -> None:
+        task = self._tasks.get(task_id)
+        if not task:
+            return
+        task.plan = plan
+
+    def update_plan_step(self, task_id: str, step_id: int, status: str) -> None:
+        task = self._tasks.get(task_id)
+        if not task or not task.plan:
+            return
+        updated: list[Dict[str, Any]] = []
+        for step in task.plan:
+            if step.get("id") == step_id:
+                step["status"] = status
+            updated.append(step)
+        task.plan = updated
+
+    def cancel_incomplete_steps(self, task_id: str) -> None:
+        """Mark any non-completed plan steps as canceled.
+
+        Safe to call when no plan is present.
+        """
+        task = self._tasks.get(task_id)
+        if not task or not task.plan:
+            return
+        updated: list[Dict[str, Any]] = []
+        for step in task.plan:
+            if step.get("status") != TaskStatus.CANCELED.value:
+                step["status"] = TaskStatus.CANCELED.value
+            updated.append(step)
+        task.plan = updated
 
 
 # Dependency providers for FastAPI DI

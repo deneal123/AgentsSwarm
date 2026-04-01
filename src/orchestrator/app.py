@@ -14,12 +14,13 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Optional
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from orchestrator.config import settings
 from orchestrator.services.sessions import SessionManager, get_session_manager
+from orchestrator.services.planner import PlanStep, build_plan
 from orchestrator.services.streaming import StreamCollector, StreamEvent
 from orchestrator.services.tasks import TaskInfo, TaskStatus, TaskStore, get_task_store
 from orchestrator.utils.logger import get_logger
@@ -44,6 +45,11 @@ class TaskResponse(BaseModel):
 
 class TaskStatusResponse(BaseModel):
     task: TaskInfo
+
+
+class TaskPlanResponse(BaseModel):
+    task_id: str
+    plan: list[dict]
 
 
 class TaskLogsResponse(BaseModel):
@@ -119,6 +125,8 @@ def create_app(
     @app.post("/task", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
     async def submit_task(
         request: TaskRequest,
+        run: bool = True,
+        background_tasks: BackgroundTasks = None,
     ) -> TaskResponse:
         task_id = request.task_id or uuid4().hex
         if ts.exists(task_id):
@@ -139,8 +147,11 @@ def create_app(
                 meta={"prompt_len": len(request.prompt)},
             )
         )
-        await _run_task(task_id, request.prompt)
-        return TaskResponse(status="processing", task_id=task_id)
+        if run:
+            background_tasks.add_task(_run_task, task_id, request.prompt)
+            current = ts.get_task(task_id)
+            return TaskResponse(status=current.status.value if current else TaskStatus.PENDING.value, task_id=task_id)
+        return TaskResponse(status=TaskStatus.PENDING.value, task_id=task_id)
 
     @app.get("/task/{task_id}/status", response_model=TaskStatusResponse)
     async def get_status(task_id: str) -> TaskStatusResponse:
@@ -148,6 +159,13 @@ def create_app(
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         return TaskStatusResponse(task=task)
+
+    @app.get("/task/{task_id}/plan", response_model=TaskPlanResponse)
+    async def get_plan(task_id: str) -> TaskPlanResponse:
+        task = ts.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        return TaskPlanResponse(task_id=task_id, plan=task.plan)
 
     @app.get("/task/{task_id}/logs", response_model=TaskLogsResponse)
     async def get_logs(task_id: str) -> TaskLogsResponse:
@@ -158,11 +176,32 @@ def create_app(
 
     @app.post("/task/{task_id}/cancel", response_model=TaskResponse)
     async def cancel(task_id: str) -> TaskResponse:
+        existing = ts.get_task(task_id)
+        prev_status = existing.status if existing else None
         updated = ts.update_status(task_id, TaskStatus.CANCELED)
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        ts.cancel_incomplete_steps(task_id)
+        sc.record(
+            StreamEvent(
+                task_id=task_id,
+                source="orchestrator",
+                message="Task canceled",
+                level="warning",
+                meta={},
+            )
+        )
+        sc.record(
+            StreamEvent(
+                task_id=task_id,
+                source="orchestrator",
+                message="Task canceled during execution",
+                level="warning",
+                meta={"prev_status": prev_status.value if prev_status else None},
+            )
+        )
         logger.info("Task %s canceled", task_id)
-        return TaskResponse(status="canceled", task_id=task_id)
+        return TaskResponse(status=TaskStatus.CANCELED.value, task_id=task_id)
 
     @app.get("/task/{task_id}/events", response_model=StreamEventsResponse)
     async def get_events(task_id: str, after_seq: int = 0) -> StreamEventsResponse:
@@ -194,6 +233,19 @@ def create_app(
         updated_task = ts.get_task(task_id)
         return StreamEventAck(task_id=task_id, seq=seq, status=updated_task.status if updated_task else TaskStatus.PENDING)
 
+    @app.post("/task/{task_id}/run", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
+    async def run_task(task_id: str, background_tasks: BackgroundTasks = None) -> TaskResponse:
+        task = ts.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        if task.status == TaskStatus.RUNNING:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task already running")
+        if task.status in {TaskStatus.CANCELED, TaskStatus.COMPLETED}:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task not runnable")
+        background_tasks.add_task(_run_task, task_id, task.prompt)
+        updated = ts.get_task(task_id)
+        return TaskResponse(status=updated.status.value if updated else TaskStatus.PENDING.value, task_id=task_id)
+
     @app.exception_handler(Exception)
     async def _unhandled_exc(request: Request, exc: Exception):
         task_ctx = request.path_params.get("task_id") if hasattr(request, "path_params") else None
@@ -207,7 +259,32 @@ def create_app(
         )
 
     async def _run_task(task_id: str, prompt: str) -> None:
+        existing = ts.get_task(task_id)
+        if existing and existing.status == TaskStatus.CANCELED:
+            ts.cancel_incomplete_steps(task_id)
+            sc.record(
+                StreamEvent(
+                    task_id=task_id,
+                    source="orchestrator",
+                    message="Task canceled before start",
+                    level="warning",
+                    meta={},
+                )
+            )
+            return
+
         ts.update_status(task_id, TaskStatus.RUNNING)
+        plan = build_plan(prompt)
+        ts.set_plan(task_id, [step.as_dict() for step in plan])
+        sc.record(
+            StreamEvent(
+                task_id=task_id,
+                source="planner",
+                message="Plan created",
+                level="info",
+                meta={"steps": [s.as_dict() for s in plan]},
+            )
+        )
         sc.record(
             StreamEvent(
                 task_id=task_id,
@@ -218,18 +295,77 @@ def create_app(
             )
         )
         try:
-            # Placeholder for agent execution. Simulate work and logging.
+            # Small delay to allow early cancellation before executing steps
             await asyncio.sleep(0.05)
-            sc.record(
-                StreamEvent(
-                    task_id=task_id,
-                    source="agent",
-                    message="Task completed",
-                    level="info",
-                    meta={},
+
+            def _is_canceled() -> bool:
+                task = ts.get_task(task_id)
+                return bool(task and task.status == TaskStatus.CANCELED)
+
+            for step in plan:
+                if _is_canceled():
+                    ts.cancel_incomplete_steps(task_id)
+                    sc.record(
+                        StreamEvent(
+                            task_id=task_id,
+                            source="orchestrator",
+                            message="Task canceled during execution",
+                            level="warning",
+                            meta={},
+                        )
+                    )
+                    break
+
+                ts.update_plan_step(task_id, step.id, "running")
+                sc.record(
+                    StreamEvent(
+                        task_id=task_id,
+                        source="planner",
+                        message=f"Plan step {step.id} started: {step.description}",
+                        level="info",
+                        meta={"agent": step.agent},
+                    )
                 )
-            )
-            ts.update_status(task_id, TaskStatus.COMPLETED)
+                await asyncio.sleep(0.1)
+
+                if _is_canceled():
+                    ts.update_plan_step(task_id, step.id, TaskStatus.CANCELED.value)
+                    ts.cancel_incomplete_steps(task_id)
+                    sc.record(
+                        StreamEvent(
+                            task_id=task_id,
+                            source="orchestrator",
+                            message="Task canceled during execution",
+                            level="warning",
+                            meta={},
+                        )
+                    )
+                    break
+
+                ts.update_plan_step(task_id, step.id, "completed")
+                sc.record(
+                    StreamEvent(
+                        task_id=task_id,
+                        source="planner",
+                        message=f"Plan step {step.id} completed",
+                        level="info",
+                        meta={"agent": step.agent},
+                    )
+                )
+
+            else:
+                current = ts.get_task(task_id)
+                if current and current.status != TaskStatus.CANCELED:
+                    sc.record(
+                        StreamEvent(
+                            task_id=task_id,
+                            source="agent",
+                            message="Task completed",
+                            level="info",
+                            meta={"steps": len(plan)},
+                        )
+                    )
+                    ts.update_status(task_id, TaskStatus.COMPLETED)
         except Exception as exc:  # pragma: no cover - defensive
             ts.update_status(task_id, TaskStatus.FAILED)
             sc.record(
