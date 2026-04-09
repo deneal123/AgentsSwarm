@@ -12,7 +12,7 @@ services:
     volumes:
       - /root/projects/workspace_isaac_simulation/IsaacSim-ros_workspaces/build_ws/jazzy/isaac_sim_ros_ws:/jazzy_ws:ro
       - /root/projects:/workspace/projects:ro
-      - ./entrypoint.sh:/entrypoint.sh:ro
+      - ./scripts/entrypoint.sh:/entrypoint.sh:ro
     stdin_open: true
     tty: true
     entrypoint: /entrypoint.sh
