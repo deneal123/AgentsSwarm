@@ -4,10 +4,10 @@ import asyncio
 from dataclasses import dataclass
 from typing import List, Protocol
 
+from orchestrator.services.agent_executor_factory import AgentExecutorFactory
 from orchestrator.services.planner import PlanStep
 from orchestrator.services.streaming import StreamCollector, StreamEvent
 from orchestrator.services.tasks import TaskStatus, TaskStore
-from orchestrator.utils.env import env_bool
 
 
 @dataclass
@@ -60,17 +60,7 @@ class PlanRunner:
         if agent_executor is not None:
             self._agent_executor = agent_executor
         else:
-            # Optional: use real Agents SDK executor when enabled via env
-            if env_bool("AGENTS_USE_SDK", default=False):
-                try:
-                    from orchestrator.services.agents_sdk import AgentsSDKExecutor
-
-                    self._agent_executor = AgentsSDKExecutor(stream_collector=self._sc)
-                except Exception:
-                    # Fallback to simulated executor if SDK wiring fails at runtime
-                    self._agent_executor = SimulatedAgentExecutor(latency=step_delay)
-            else:
-                self._agent_executor = SimulatedAgentExecutor(latency=step_delay)
+            self._agent_executor = AgentExecutorFactory.create(stream_collector=self._sc, step_delay=step_delay)
 
     def _stop_status(self, task_id: str) -> TaskStatus | None:
         task = self._ts.get_task(task_id)
