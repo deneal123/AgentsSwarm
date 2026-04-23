@@ -1,4 +1,3 @@
-
 services:
   vda5050-client:
     image: osrf/ros:jazzy-desktop
@@ -6,9 +5,11 @@ services:
     network_mode: "host"
     ipc: host
     environment:
+      - ROS_DISTRO=jazzy
       - ROS_DOMAIN_ID=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - ROS_DISTRO=jazzy
+      - ROS_LOCALHOST_ONLY=0
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/jazzy_ws/fastdds.xml
     volumes:
       - /root/projects/workspace_isaac_simulation/IsaacSim-ros_workspaces/build_ws/jazzy/isaac_sim_ros_ws:/jazzy_ws:ro
       - /root/projects:/workspace/projects:ro

@@ -129,3 +129,22 @@ ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launc
 | `nav_params_file` | string | `{path}/carter_navigation_params.yaml` | Путь к файлу параметров навигации |
 | `info_generator_params_file` | string | `{path}/json_info_generator_params.yaml` | Путь к файлу параметров JSON Info Generator |
 | `launch_rviz` | bool | `false` | Запускать RViz |
+
+## Проверка DDS/ROS окружения в контейнере
+
+После входа в контейнер проверь окружение и доступность топиков до запуска mission-клиентов:
+
+```bash
+printenv | egrep "ROS_DOMAIN_ID|RMW_IMPLEMENTATION|ROS_LOCALHOST_ONLY|FASTRTPS_DEFAULT_PROFILES_FILE"
+ros2 topic list
+ros2 topic echo /clock --once
+```
+
+Ожидаемые значения:
+
+- `ROS_DOMAIN_ID` совпадает с Isaac Sim.
+- `RMW_IMPLEMENTATION=rmw_fastrtps_cpp`.
+- `ROS_LOCALHOST_ONLY=0`.
+- `FASTRTPS_DEFAULT_PROFILES_FILE` указывает на существующий XML профиль.
+
+Если `/clock` виден, но odom-топики отсутствуют, проверь namespace и топик одометрии в графе Isaac Sim (`/odom`, `/chassis/odom` или `/<robot_ns>/chassis/odom`) и в параметрах `nav_params_file`.
