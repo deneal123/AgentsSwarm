@@ -1,6 +1,6 @@
 services:
   vda5050-client:
-    image: osrf/ros:jazzy-desktop
+    image: isaac_sim_ros:ubuntu_24_jazzy
     container_name: vda5050_client
     network_mode: "host"
     ipc: host
@@ -8,11 +8,13 @@ services:
       - ROS_DISTRO=jazzy
       - ROS_DOMAIN_ID=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-      - ROS_LOCALHOST_ONLY=0
       - FASTRTPS_DEFAULT_PROFILES_FILE=/jazzy_ws/fastdds.xml
+      - ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
     volumes:
       - /root/projects/workspace_isaac_simulation/IsaacSim-ros_workspaces/build_ws/jazzy/isaac_sim_ros_ws:/jazzy_ws:ro
       - /root/projects:/workspace/projects:ro
+      - /root/projects/isaac_mission_control/docker/config/uploaded_maps:/workspace/maps:ro
+      - /root/projects/isaac_mission_control/docker/config/nav2_params_custom.yaml:/workspace/nav2_params_custom.yaml:ro
       - ./scripts/entrypoint.sh:/entrypoint.sh:ro
     stdin_open: true
     tty: true

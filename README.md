@@ -34,7 +34,13 @@ docker exec -it vda5050_client /bin/bash
 ### Базовая команда запуска
 
 ```bash
-ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py
+ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
+  init_pose_x:=-6.0 \
+  init_pose_y:=-1.0 \
+  reconnect_period:=30 \
+  mqtt_host_name:=185.55.57.82 \
+  map:=/workspace/maps/map.yaml \
+  nav_params_file:=/workspace/nav2_params_custom.yaml
 ```
 
 ### Команда запуска для нескольких роботов
