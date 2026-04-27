@@ -1,4 +1,8 @@
 robots:
+  - name: "carter01"
+    labels: ["test", "carter", "ros"]
+    heartbeat_timeout: 30
+
 
 services:
   waypoint_graph:

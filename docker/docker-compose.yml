@@ -40,7 +40,7 @@ services:
     command: ["--config", "/tmp/config/uploaded_maps/config.yaml", "--verbose", "INFO"]
     volumes:
       - type: bind
-        source: ${CONFIG_DIR}
+        source: ${CONFIG_DIR}/uploaded_maps
         target: /tmp/config/uploaded_maps/
 
   # Optional UI for waypoint selection, which can be used to test the mission control service. It is not required for the mission control to function.
