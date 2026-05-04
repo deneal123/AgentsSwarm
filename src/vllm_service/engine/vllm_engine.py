@@ -38,45 +38,41 @@ class VLLMEngineWrapper:
 
     def _build_engine_args(self) -> AsyncEngineArgs:
         """Build engine arguments from settings."""
-        # Get all settings with defaults
         data_parallel_size = int(settings.get("DATA_PARALLEL.data_parallel_size", 1) or 1)
-        data_parallel_rank = settings.get("DATA_PARALLEL.data_parallel_rank")
-        data_parallel_address = settings.get("DATA_PARALLEL.data_parallel_address", "localhost")
-        data_parallel_rpc_port = settings.get("DATA_PARALLEL.data_parallel_rpc_port", 13345)
-        data_parallel_size_local = settings.get("DATA_PARALLEL.data_parallel_size_local", 1)
 
-        if data_parallel_size <= 1:
-            # For single-node mode, disable external load-balancing flags by
-            # leaving rank/address/rpc as None.
-            data_parallel_rank = None
-            data_parallel_address = None
-            data_parallel_rpc_port = None
-            data_parallel_size_local = None
-        else:
-            data_parallel_rank = int(data_parallel_rank or 0)
-            data_parallel_rpc_port = int(data_parallel_rpc_port or 13345)
-            data_parallel_size_local = int(data_parallel_size_local or 1)
-        
-        # Build AsyncEngineArgs for async engine
-        engine_args = AsyncEngineArgs(
-            model=self.model_name,
-            dtype=settings.get("MODEL.model_dtype", "auto"),
-            max_model_len=int(settings.get("MODEL.max_model_len", 4096)),
-            gpu_memory_utilization=float(settings.get("MODEL.gpu_memory_utilization", 0.9)),
-            tensor_parallel_size=int(settings.get("ENGINE.tensor_parallel_size", 1)),
-            max_num_seqs=int(settings.get("ENGINE.max_num_seqs", 256)),
-            max_num_batched_tokens=int(settings.get("ENGINE.max_num_batched_tokens", 8192)) if settings.get("ENGINE.max_num_batched_tokens") else None,
-            data_parallel_size=data_parallel_size,
-            data_parallel_rank=data_parallel_rank,
-            data_parallel_address=data_parallel_address,
-            data_parallel_rpc_port=data_parallel_rpc_port,
-            data_parallel_size_local=data_parallel_size_local,
-        )
-        
+        kwargs: Dict[str, Any] = {
+            "model": self.model_name,
+            "dtype": settings.get("MODEL.model_dtype", "auto"),
+            "max_model_len": int(settings.get("MODEL.max_model_len", 4096)),
+            "gpu_memory_utilization": float(settings.get("MODEL.gpu_memory_utilization", 0.9)),
+            "tensor_parallel_size": int(settings.get("ENGINE.tensor_parallel_size", 1)),
+            "max_num_seqs": int(settings.get("ENGINE.max_num_seqs", 256)),
+        }
+
+        max_batched = settings.get("ENGINE.max_num_batched_tokens")
+        if max_batched:
+            kwargs["max_num_batched_tokens"] = int(max_batched)
+
+        # data_parallel_* args were added in vllm >= 0.6.x; probe the signature
+        # before passing them so the engine starts correctly on older installs.
         if data_parallel_size > 1:
-            logger.info(f"Configuring Data Parallel: size={data_parallel_size}, rank={data_parallel_rank}")
-        
-        return engine_args
+            supported = inspect.signature(AsyncEngineArgs.__init__).parameters
+            if "data_parallel_size" in supported:
+                kwargs.update({
+                    "data_parallel_size": data_parallel_size,
+                    "data_parallel_rank": int(settings.get("DATA_PARALLEL.data_parallel_rank") or 0),
+                    "data_parallel_address": settings.get("DATA_PARALLEL.data_parallel_address", "localhost"),
+                    "data_parallel_rpc_port": int(settings.get("DATA_PARALLEL.data_parallel_rpc_port") or 13345),
+                    "data_parallel_size_local": int(settings.get("DATA_PARALLEL.data_parallel_size_local") or 1),
+                })
+                logger.info("Configuring Data Parallel: size=%d, rank=%s", data_parallel_size, kwargs["data_parallel_rank"])
+            else:
+                logger.warning(
+                    "Installed vLLM does not support data_parallel_size in AsyncEngineArgs "
+                    "(requires vllm >= 0.6.x); running in single-engine mode"
+                )
+
+        return AsyncEngineArgs(**kwargs)
 
     async def generate(
         self,
