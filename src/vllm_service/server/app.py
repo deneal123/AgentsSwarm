@@ -1,5 +1,6 @@
 """FastAPI application for OpenAI-compatible API server."""
 
+import inspect
 import json
 import logging
 import os
@@ -12,6 +13,11 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from vllm import SamplingParams
+
+# Checked once at import time; guards against API drift across vllm versions.
+_SAMPLING_PARAMS_FIELDS: frozenset[str] = frozenset(
+    inspect.signature(SamplingParams.__init__).parameters
+)
 
 from vllm_service.config import settings
 from vllm_service.engine.vllm_engine import get_engine, initialize_engine, shutdown_engine
@@ -92,31 +98,33 @@ def _create_sampling_params(
     if not stop:
         stop = ["\nuser:", "\nassistant:"]
 
-    return SamplingParams(
-        n=request.n or 1,
-        temperature=request.temperature,
-        top_p=request.top_p,
-        top_k=request.top_k if request.top_k and request.top_k > 0 else -1,
-        min_p=request.min_p,
-        repetition_penalty=request.repetition_penalty,
-        stop=stop,
-        max_tokens=(
+    candidates: dict[str, Any] = {
+        "n": request.n or 1,
+        "temperature": request.temperature,
+        "top_p": request.top_p,
+        "top_k": request.top_k if request.top_k and request.top_k > 0 else -1,
+        "min_p": request.min_p,
+        "repetition_penalty": request.repetition_penalty,
+        "stop": stop,
+        "max_tokens": (
             request.max_tokens
             or getattr(request, "max_completion_tokens", None)
             or 512
         ),
-        presence_penalty=request.presence_penalty,
-        frequency_penalty=request.frequency_penalty,
-        logprobs=request.logprobs,
-        min_tokens=getattr(request, "min_tokens", 0),
-        logit_bias=getattr(request, "logit_bias", None),
-        ignore_eos=getattr(request, "ignore_eos", False),
-        stop_token_ids=getattr(request, "stop_token_ids", None),
-        skip_special_tokens=getattr(request, "skip_special_tokens", True),
-        spaces_between_special_tokens=getattr(request, "spaces_between_special_tokens", True),
-        truncate_prompt_tokens=getattr(request, "truncate_prompt_tokens", None),
-        prompt_logprobs=getattr(request, "prompt_logprobs", None),
-    )
+        "presence_penalty": request.presence_penalty,
+        "frequency_penalty": request.frequency_penalty,
+        "logprobs": request.logprobs,
+        "min_tokens": getattr(request, "min_tokens", 0),
+        "logit_bias": getattr(request, "logit_bias", None),
+        "ignore_eos": getattr(request, "ignore_eos", False),
+        "stop_token_ids": getattr(request, "stop_token_ids", None),
+        "skip_special_tokens": getattr(request, "skip_special_tokens", True),
+        "spaces_between_special_tokens": getattr(request, "spaces_between_special_tokens", True),
+        "truncate_prompt_tokens": getattr(request, "truncate_prompt_tokens", None),
+        "prompt_logprobs": getattr(request, "prompt_logprobs", None),
+    }
+    kwargs = {k: v for k, v in candidates.items() if k in _SAMPLING_PARAMS_FIELDS}
+    return SamplingParams(**kwargs)
 
 
 def _usage(output) -> Usage:
