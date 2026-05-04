@@ -1,8 +1,10 @@
 """CLI entry point for vLLM service."""
 
 import argparse
+import asyncio
 import logging
 import os
+import socket as _socket
 import sys
 
 import uvicorn
@@ -151,17 +153,36 @@ def main() -> None:
 
     app = create_app()
 
+    # Bind the socket before lifespan starts so the port is claimed immediately,
+    # not after the ~90s model load. Without this, a Docker restart loop can
+    # re-enter while the previous process still holds the port.
     try:
-        uvicorn.run(
+        sock = _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM)
+        sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_REUSEADDR, 1)
+        sock.bind((host, port))
+        sock.set_inheritable(True)
+    except OSError as exc:
+        logger.error("Cannot bind %s:%d — %s", host, port, exc)
+        sys.exit(1)
+
+    try:
+        config = uvicorn.Config(
             app,
             host=host,
             port=port,
             log_level=args.log_level.lower(),
             lifespan="on",
         )
+        server = uvicorn.Server(config)
+        asyncio.run(server.serve(sockets=[sock]))
     except Exception as exc:
         logger.error("Server error: %s", exc)
         sys.exit(1)
+    finally:
+        try:
+            sock.close()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
