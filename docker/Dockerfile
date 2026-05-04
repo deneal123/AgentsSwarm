@@ -30,6 +30,12 @@ COPY src ./src
 COPY README.md ./
 RUN uv sync --frozen --no-dev
 
+# pyairports is sdist-only (no wheel on PyPI); install it explicitly into the venv
+# so it lands in /app/.venv regardless of uv's sdist build isolation behavior
+RUN /app/.venv/bin/pip install --no-deps "pyairports==0.0.1"
+
+RUN /app/.venv/bin/python -c "import pyairports" && echo "pyairports OK"
+
 COPY docker/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
