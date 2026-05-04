@@ -30,11 +30,14 @@ COPY src ./src
 COPY README.md ./
 RUN uv sync --frozen --no-dev
 
-# pyairports is sdist-only (no wheel on PyPI); install it explicitly into the venv.
-# VIRTUAL_ENV is required: without it uv pip may resolve to a different environment.
-RUN VIRTUAL_ENV=/app/.venv uv pip install --no-deps "pyairports==0.0.1" && \
-    ls /app/.venv/lib/python3.12/site-packages/ | grep pyair && \
-    /app/.venv/bin/python -c "import pyairports; print('pyairports OK:', pyairports.__file__)"
+# pyairports-0.0.1 on PyPI is a broken sdist: the archive ships 'sample/' instead of
+# 'pyairports/', so the dist-info is created but the actual package is never installed.
+# Create the package directly in the venv so the outlines import succeeds at startup.
+RUN mkdir -p /app/.venv/lib/python3.12/site-packages/pyairports && \
+    printf 'AIRPORT_LIST = []\n' \
+        > /app/.venv/lib/python3.12/site-packages/pyairports/airports.py && \
+    touch /app/.venv/lib/python3.12/site-packages/pyairports/__init__.py && \
+    /app/.venv/bin/python -c "from pyairports.airports import AIRPORT_LIST; print('pyairports OK')"
 
 COPY docker/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
