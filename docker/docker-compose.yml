@@ -8,10 +8,9 @@ services:
     hostname: ${VLLM_HOSTNAME:-vllm-service}
     ipc: ${VLLM_IPC_MODE:-host}
     ports:
-      - "${VLLM_PORT:-8073}:8073"  # vLLM обычно использует 8073
-    env_file: 
+      - "${VLLM_PORT:-8000}:${VLLM_PORT:-8000}"
+    env_file:
       - ../src/vllm_service/config/.env
-    entrypoint: ["./entrypoint.sh"]
     deploy:
       resources:
         reservations:
@@ -22,7 +21,6 @@ services:
     volumes:
       - huggingface-cache:/root/.cache/huggingface
       - model-cache:/root/.cache/model
-      - ../src:/app/src  # Для hot reload (опционально в dev режиме)
     ulimits:
       memlock: -1
       stack: 67108864

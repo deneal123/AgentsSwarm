@@ -33,6 +33,23 @@ DOCKER_DIR="$SCRIPT_DIR"
 CONFIG_DIR="$PROJECT_ROOT/src/vllm_service/config"
 ENV_FILE="$CONFIG_DIR/.env"
 
+# Parse --dev flag
+DEV_MODE=0
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--dev" ]; then
+        DEV_MODE=1
+    else
+        ARGS+=("$arg")
+    fi
+done
+set -- "${ARGS[@]}"
+
+COMPOSE_CMD="docker compose"
+if [ "$DEV_MODE" = "1" ]; then
+    COMPOSE_CMD="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
+fi
+
 # Change to docker directory
 cd "$DOCKER_DIR"
 
@@ -46,7 +63,7 @@ print_banner() {
 
 print_help() {
     print_banner
-    echo "Usage: $0 <command>"
+    echo "Usage: $0 <command> [--dev]"
     echo ""
     echo "Commands:"
     echo "  build     Build Docker image"
@@ -57,6 +74,9 @@ print_help() {
     echo "  ps        List containers"
     echo "  restart   Restart service"
     echo "  clean     Remove containers, volumes, and images"
+    echo ""
+    echo "Flags:"
+    echo "  --dev     Mount local src/ into container for hot reload (dev only)"
     echo ""
     echo "Setup:"
     echo "  1. Copy environment file:"
@@ -101,7 +121,7 @@ check_env() {
 build() {
     print_banner
     echo -e "${YELLOW}Building Docker image...${NC}"
-    docker compose build --no-cache
+    $COMPOSE_CMD build
     echo -e "${GREEN}Build complete!${NC}"
 }
 
@@ -117,7 +137,7 @@ up() {
         echo -e "${BLUE}Starting as Worker (rank ${VLLM_DATA_PARALLEL_RANK})${NC}"
     fi
     
-    docker compose up -d
+    $COMPOSE_CMD up -d
     
     echo ""
     echo -e "${GREEN}Service started!${NC}"
@@ -129,30 +149,30 @@ up() {
     echo "  $0 logs"
     echo ""
     echo "Test API:"
-    echo "  curl http://localhost:${VLLM_PORT:-8073}/health"
+    echo "  curl http://localhost:${VLLM_PORT:-8000}/health"
 }
 
 down() {
     print_banner
     echo -e "${YELLOW}Stopping vLLM service...${NC}"
-    docker compose down
+    $COMPOSE_CMD down
     echo -e "${GREEN}Service stopped.${NC}"
 }
 
 logs() {
-    docker compose logs -f
+    $COMPOSE_CMD logs -f
 }
 
 status() {
     print_banner
     echo -e "${YELLOW}Service Status:${NC}"
     echo ""
-    docker compose ps
+    $COMPOSE_CMD ps
     echo ""
     
     # Try to check health endpoint
     source "$ENV_FILE" 2>/dev/null || true
-    PORT=${VLLM_PORT:-8073}
+    PORT=${VLLM_PORT:-8000}
     
     if curl -s --connect-timeout 2 "http://localhost:${PORT}/health" > /dev/null 2>&1; then
         echo -e "${GREEN}Health check: OK${NC}"
@@ -162,7 +182,7 @@ status() {
 }
 
 ps() {
-    docker compose ps
+    $COMPOSE_CMD ps
 }
 
 restart() {
@@ -177,7 +197,7 @@ clean() {
     read -p "Are you sure? (y/N) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker compose down -v --rmi local
+        $COMPOSE_CMD down -v --rmi local
         echo -e "${GREEN}Cleanup complete.${NC}"
     else
         echo "Cancelled."

@@ -1,0 +1,5 @@
+services:
+  vllm-service:
+    volumes:
+      - ../src:/app/src
+    restart: "no"
