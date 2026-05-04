@@ -220,11 +220,12 @@ class VLLMEngineWrapper:
             return
         logger.info("Shutting down vLLM engine")
         try:
-            shutdown_fn = self.engine.shutdown
-            if inspect.iscoroutinefunction(shutdown_fn):
-                await shutdown_fn()
-            else:
-                shutdown_fn()
+            shutdown_fn = getattr(self.engine, "shutdown", None)
+            if shutdown_fn is not None:
+                if inspect.iscoroutinefunction(shutdown_fn):
+                    await shutdown_fn()
+                else:
+                    shutdown_fn()
         except Exception as exc:
             logger.warning("Exception during AsyncLLMEngine.shutdown: %s", exc)
         finally:

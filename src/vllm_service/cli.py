@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import socket
 import sys
 
 import uvicorn
@@ -107,20 +106,6 @@ def _apply_args_to_settings(args: argparse.Namespace) -> None:
         settings.set("ENGINE.max_num_seqs", int(args.max_num_seqs))
 
 
-def _find_available_port(host: str, start_port: int, max_tries: int = 100) -> int:
-    for port in range(start_port, start_port + max_tries):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                s.bind((host, port))
-                return port
-            except OSError:
-                continue
-    raise RuntimeError(
-        "No available ports in range %d-%d." % (start_port, start_port + max_tries - 1)
-    )
-
-
 def main() -> None:
     args = parse_args()
 
@@ -136,23 +121,7 @@ def main() -> None:
     from vllm_service.server.app import create_app
 
     host = args.host or os.environ.get("VLLM_HOST", settings.get("host", "0.0.0.0"))
-    preferred_port = int(
-        args.port or os.environ.get("VLLM_PORT", settings.get("port", 8000))
-    )
-
-    try:
-        port = _find_available_port(host, preferred_port)
-    except RuntimeError as exc:
-        logger.error("Could not find available port: %s", exc)
-        sys.exit(1)
-
-    if port != preferred_port:
-        logger.warning(
-            "Preferred port %d is unavailable, using fallback port %d.",
-            preferred_port,
-            port,
-        )
-        os.environ["VLLM_PORT"] = str(port)
+    port = int(args.port or os.environ.get("VLLM_PORT", settings.get("port", 8000)))
 
     logger.info("Starting vLLM Service v%s", __version__)
     logger.info(
