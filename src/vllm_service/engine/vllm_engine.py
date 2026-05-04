@@ -36,13 +36,26 @@ class VLLMEngineWrapper:
         self._initialized = True
         logger.info("vLLM engine initialized successfully")
 
+    def _resolve_dtype(self, dtype: str) -> str:
+        """Fall back from bfloat16 to float16 on GPUs with compute < 8.0 (pre-Ampere)."""
+        if dtype not in ("auto", "bfloat16") or not torch.cuda.is_available():
+            return dtype
+        major, minor = torch.cuda.get_device_capability()
+        if major < 8:
+            logger.warning(
+                "GPU compute capability %d.%d does not support bfloat16 "
+                "(requires >= 8.0); using float16 instead", major, minor,
+            )
+            return "float16"
+        return dtype
+
     def _build_engine_args(self) -> AsyncEngineArgs:
         """Build engine arguments from settings."""
         data_parallel_size = int(settings.get("DATA_PARALLEL.data_parallel_size", 1) or 1)
 
         kwargs: Dict[str, Any] = {
             "model": self.model_name,
-            "dtype": settings.get("MODEL.model_dtype", "auto"),
+            "dtype": self._resolve_dtype(settings.get("MODEL.model_dtype", "auto")),
             "max_model_len": int(settings.get("MODEL.max_model_len", 4096)),
             "gpu_memory_utilization": float(settings.get("MODEL.gpu_memory_utilization", 0.9)),
             "tensor_parallel_size": int(settings.get("ENGINE.tensor_parallel_size", 1)),
