@@ -189,6 +189,7 @@ frontend/.vscode/
 frontend/.vs/
 frontend/node_modules/console-control-strings
 frontend/client.esproj.user
+.pytest_cache/
 
 
 #Ignore vscode AI rules

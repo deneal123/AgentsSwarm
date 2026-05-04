@@ -129,7 +129,7 @@ up() {
     echo "  $0 logs"
     echo ""
     echo "Test API:"
-    echo "  curl http://localhost:${VLLM_PORT:-8000}/health"
+    echo "  curl http://localhost:${VLLM_PORT:-8073}/health"
 }
 
 down() {
@@ -152,7 +152,7 @@ status() {
     
     # Try to check health endpoint
     source "$ENV_FILE" 2>/dev/null || true
-    PORT=${VLLM_PORT:-8000}
+    PORT=${VLLM_PORT:-8073}
     
     if curl -s --connect-timeout 2 "http://localhost:${PORT}/health" > /dev/null 2>&1; then
         echo -e "${GREEN}Health check: OK${NC}"
