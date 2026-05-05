@@ -31,7 +31,37 @@ docker exec -it vda5050_client /bin/bash
 
 При работе с несколькими роботами необходимо запускать отдельный клиент VDA5050 для каждого экземпляра. Для этого используются параметры запуска, позволяющие настроить уникальные идентификаторы и конфигурации для каждого робота.
 
-### Базовая команда запуска
+## Запуск ros2bridge для работы ros-mcp сервера
+
+```bash
+# через комманду
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+```
+
+### Базовая команда запуска для одного робота
+
+
+*Иначе не будет работать, делать при старте*
+
+```bash
+ros2 run tf2_ros static_transform_publisher \
+  --x -6.0 --y -1.0 --z 0.0 \
+  --roll 0.0 --pitch 0.0 --yaw 0.0 \
+  --frame-id map \
+  --child-frame-id odom &
+
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.06 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 0.0 \
+  --frame-id base_link \
+  --child-frame-id front_2d_lidar &
+
+ros2 run tf2_ros static_transform_publisher \
+  --x -0.52 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 3.14159 \
+  --frame-id base_link \
+  --child-frame-id back_2d_lidar &
+```
 
 ```bash
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
@@ -40,59 +70,68 @@ ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launc
   reconnect_period:=30 \
   mqtt_host_name:=185.55.57.82 \
   map:=/workspace/maps/map.yaml \
-  nav_params_file:=/workspace/nav2_params_custom.yaml
+  nav_params_file:=/workspace/nav2_params/nav2_params_custom.yaml
 ```
 
 ### Команда запуска для нескольких роботов
 
+*Иначе не будет работать, делать при старте*
+
+```bash
+# Публикуем только TF лидаров — через namespace топик
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.06 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 0.0 \
+  --frame-id base_link \
+  --child-frame-id front_2d_lidar \
+  --ros-args --remap /tf_static:=/carter01/tf_static &
+
+ros2 run tf2_ros static_transform_publisher \
+  --x -0.52 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 3.14159 \
+  --frame-id base_link \
+  --child-frame-id back_2d_lidar \
+  --ros-args --remap /tf_static:=/carter01/tf_static &
+
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.06 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 0.0 \
+  --frame-id base_link \
+  --child-frame-id front_2d_lidar \
+  --ros-args --remap /tf_static:=/carter02/tf_static &
+
+ros2 run tf2_ros static_transform_publisher \
+  --x -0.52 --y 0.0 --z 0.38 \
+  --roll 0.0 --pitch 0.0 --yaw 3.14159 \
+  --frame-id base_link \
+  --child-frame-id back_2d_lidar \
+  --ros-args --remap /tf_static:=/carter02/tf_static &
+```
+
 ```bash
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
-  namespace:=carter1 \
-  ros_to_mqtt_name:=Carter1_RosToMqttBridge \
-  mqtt_to_ros_name:=Carter1_MqttToRosBridge \
-  init_pose_x:=-6.0 \
-  init_pose_y:=-1.0 \
-  major_version:=v2 \
-  manufacturer:=RobotCompany \
-  serial_number:=carter1 \
+  serial_number:=carter01 \
+  namespace:=carter01 \
+  ros_to_mqtt_name:=Carter01_RosToMqttBridge \
+  mqtt_to_ros_name:=Carter01_MqttToRosBridge \
+  init_pose_x:=-6.69 \
+  init_pose_y:=-9.66 \
   reconnect_period:=30 \
-  map:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/downloaded_maps/map.yaml \
-  nav_params_file:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/navigation_params.yaml \
+  map:=/workspace/maps/map.yaml \
+  nav_params_file:=/workspace/nav2_params/nav2_params_carter01.yaml \
   use_namespace:=true \
-  use_static_tf:=true \
-  use_sim_time:=true \
   mqtt_host_name:=185.55.57.82 &
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
-  namespace:=carter2 \
-  ros_to_mqtt_name:=Carter2_RosToMqttBridge \
-  mqtt_to_ros_name:=Carter2_MqttToRosBridge \
-  init_pose_x:=6.0 \
-  init_pose_y:=-3.0 \
-  major_version:=v2 \
-  manufacturer:=RobotCompany \
-  serial_number:=carter2 \
+  serial_number:=carter02 \
+  namespace:=carter02 \
+  ros_to_mqtt_name:=Carter02_RosToMqttBridge \
+  mqtt_to_ros_name:=Carter02_MqttToRosBridge \
+  init_pose_x:=7.32 \
+  init_pose_y:=-9.98 \
   reconnect_period:=30 \
-  map:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/downloaded_maps/map.yaml \
-  nav_params_file:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/navigation_params.yaml \
+  map:=/workspace/maps/map.yaml \
+  nav_params_file:=/workspace/nav2_params/nav2_params_carter02.yaml \
   use_namespace:=true \
-  use_static_tf:=true \
-  use_sim_time:=true \
-  mqtt_host_name:=185.55.57.82 &
-ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
-  namespace:=carter3 \
-  ros_to_mqtt_name:=Carter3_RosToMqttBridge \
-  mqtt_to_ros_name:=Carter3_MqttToRosBridge \
-  init_pose_x:=5.0 \
-  init_pose_y:=-5.0 \
-  major_version:=v2 \
-  manufacturer:=RobotCompany \
-  serial_number:=carter3 \
-  reconnect_period:=30 \
-  map:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/downloaded_maps/map.yaml \
-  nav_params_file:=/workspaces/isaac_ros-dev/ros_ws/src/isaac_ros_cloud_control/navigation_params.yaml \
-  use_namespace:=true \
-  use_static_tf:=true \
-  use_sim_time:=true \
   mqtt_host_name:=185.55.57.82 &
 ```
 
