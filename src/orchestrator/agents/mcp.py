@@ -3,16 +3,15 @@
 This module centralizes how we configure MCP servers for MissionControl,
 MissionDispatch, and ROS-MSP.  Two transport modes are supported:
 
-  stdio  (default, local)  — orchestrator spawns the MCP server as a
-                              subprocess and communicates via stdin/stdout.
-  sse    (Docker)          — MCP server runs in its own container and exposes
-                              an SSE/HTTP endpoint; orchestrator connects
-                              via MCPServerSse.
+  stdio            (default, local) — orchestrator spawns the MCP server as a
+                                      subprocess via stdin/stdout.
+  sse              (Docker/legacy)  — MCP server exposes an SSE/HTTP endpoint.
+  streamable-http  (Docker/FastMCP) — MCP server exposes a streamable HTTP endpoint.
 
 Transport is selected per-server via env vars:
-  MISSION_CONTROL_TRANSPORT  = stdio | sse   (default: stdio)
-  MISSION_DISPATCH_TRANSPORT = stdio | sse   (default: stdio)
-  ROS_MSP_TRANSPORT          = stdio | sse   (default: stdio)
+  MISSION_CONTROL_TRANSPORT  = stdio | sse | streamable-http   (default: stdio)
+  MISSION_DISPATCH_TRANSPORT = stdio | sse | streamable-http   (default: stdio)
+  ROS_MSP_TRANSPORT          = stdio | sse | streamable-http   (default: stdio)
 """
 
 from __future__ import annotations
@@ -25,7 +24,7 @@ from typing import Dict, List
 @dataclass
 class MCPServerConfig:
     name: str
-    transport: str = "stdio"   # "stdio" | "sse"
+    transport: str = "stdio"   # "stdio" | "sse" | "streamable-http"
 
     # --- stdio fields ---
     command: str = ""
@@ -45,10 +44,10 @@ def _server_config(
     extra_env: Dict[str, str],
 ) -> MCPServerConfig:
     transport = os.getenv(f"{env_prefix}_TRANSPORT", "stdio")
-    if transport == "sse":
+    if transport in ("sse", "streamable-http"):
         return MCPServerConfig(
             name=name,
-            transport="sse",
+            transport=transport,
             url=os.getenv(f"{env_prefix}_MCP_URL", default_sse_url),
         )
     return MCPServerConfig(
