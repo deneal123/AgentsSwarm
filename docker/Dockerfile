@@ -17,7 +17,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv package manager
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh -s -- --yes
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Copy dependency manifests
 COPY pyproject.toml uv.lock ./
