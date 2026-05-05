@@ -19,8 +19,8 @@ RUN apt-get update \
 # Install uv package manager
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Copy dependency manifests
-COPY pyproject.toml uv.lock ./
+# Copy dependency manifests (README.md required by hatchling at build time)
+COPY pyproject.toml uv.lock README.md ./
 
 # Create virtualenv and install deps
 RUN uv venv /app/.venv && \
@@ -32,7 +32,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy application code (dev compose overrides with bind mount)
 COPY src ./src
-COPY README.md ./README.md
 
 EXPOSE 8000
 
