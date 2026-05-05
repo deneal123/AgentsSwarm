@@ -86,28 +86,27 @@ services:
       dockerfile: docker/Dockerfile
     container_name: orchestrator-dev
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:${PORT:-8000}"
     environment:
       HOST: 0.0.0.0
-      PORT: "8000"
       RELOAD: "1"
       REDIS_URL: redis://redis:6379/0
-      # MCP transport: sse → connect to sidecar containers
+      # MCP transport: always sse in Docker (overrides env_file stdio defaults)
       MISSION_CONTROL_TRANSPORT: sse
       MISSION_CONTROL_MCP_URL: http://mission-control-mcp:8000/sse
       MISSION_DISPATCH_TRANSPORT: sse
       MISSION_DISPATCH_MCP_URL: http://mission-dispatch-mcp:8000/sse
       ROS_MSP_TRANSPORT: sse
       ROS_MSP_MCP_URL: http://ros-msp:8000/sse
-      # Direct upstream URLs (used by MCP containers themselves, not by orchestrator)
-      MISSION_CONTROL_URL: "http://195.225.110.91:8050"
-      MISSION_DISPATCH_URL: "http://185.55.57.82:8051"
     env_file:
+      # env_file values are overridden by the environment block above.
+      # Edit this file for: AGENTS_MODEL, AGENTS_USE_SDK, VLLM_BASE_URL,
+      # AGENTS_TEMPERATURE, PLAN_REPLAN_MAX, PORT, OPENAI_API_KEY, etc.
       - ../src/orchestrator/config/.env
     volumes:
       - ../:/app:delegated
       - orchestrator-venv:/app/.venv
-    command: uv run uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "uv run uvicorn orchestrator.app:app --host $${HOST:-0.0.0.0} --port $${PORT:-8000} --reload"
     restart: unless-stopped
     depends_on:
       redis:

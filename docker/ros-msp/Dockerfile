@@ -20,12 +20,10 @@ RUN pip install --no-cache-dir --no-deps .
 
 EXPOSE 8000
 
-# FastMCP http transport → SSE endpoint at /sse  (no /health route)
-# TCP port check is used instead of HTTP
+# FastMCP sse transport → SSE endpoint at /sse  (no /health route)
+# TCP port check is used instead of HTTP for healthcheck
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
     CMD python -c "import socket; s=socket.create_connection(('localhost',8000),2); s.close()" || exit 1
 
-# Default: run with SSE/HTTP transport for Docker networking
 # rosbridge connection is configured via ROSBRIDGE_IP / ROSBRIDGE_PORT env vars
-# (or changed at runtime via the connect_to_robot tool)
-CMD ["ros-msp", "--transport", "http", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["ros-msp", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]
