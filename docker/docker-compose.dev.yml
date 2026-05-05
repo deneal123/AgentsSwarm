@@ -1,4 +1,59 @@
 services:
+  # ─────────────────────────────────────────────────────────────
+  # Mission Control MCP  (wraps http://195.225.110.91:8050)
+  # SSE endpoint inside Docker network: http://mission-control-mcp:8000/sse
+  # Exposed on host for debugging: http://localhost:8010/sse
+  # ─────────────────────────────────────────────────────────────
+  mission-control-mcp:
+    build:
+      context: ../docs/controller/agentic-utilities/mission-control-mcp
+      dockerfile: Dockerfile
+    container_name: mission-control-mcp
+    ports:
+      - "8010:8000"
+    environment:
+      MCP_TRANSPORT: sse
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8000"
+      MISSION_CONTROL_URL: "http://195.225.110.91:8050"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # Mission Dispatch MCP  (wraps http://185.55.57.82:8051)
+  # SSE endpoint inside Docker network: http://mission-dispatch-mcp:8000/sse
+  # Exposed on host for debugging: http://localhost:8011/sse
+  # ─────────────────────────────────────────────────────────────
+  mission-dispatch-mcp:
+    build:
+      context: ../docs/dispatch/agentic-utilities/mission-dispatch-mcp
+      dockerfile: Dockerfile
+    container_name: mission-dispatch-mcp
+    ports:
+      - "8011:8000"
+    environment:
+      MCP_TRANSPORT: sse
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8000"
+      MISSION_DISPATCH_URL: "http://185.55.57.82:8051"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # Orchestrator
+  # ─────────────────────────────────────────────────────────────
   orchestrator:
     build:
       context: ..
@@ -8,20 +63,35 @@ services:
       - "8000:8000"
     environment:
       HOST: 0.0.0.0
-      PORT: 8000
+      PORT: "8000"
       RELOAD: "1"
       REDIS_URL: redis://redis:6379/0
+      # MCP transport: sse → connect to sidecar containers
+      MISSION_CONTROL_TRANSPORT: sse
+      MISSION_CONTROL_MCP_URL: http://mission-control-mcp:8000/sse
+      MISSION_DISPATCH_TRANSPORT: sse
+      MISSION_DISPATCH_MCP_URL: http://mission-dispatch-mcp:8000/sse
+      # Direct upstream URLs (used by MCP containers themselves, not by orchestrator)
+      MISSION_CONTROL_URL: "http://195.225.110.91:8050"
+      MISSION_DISPATCH_URL: "http://185.55.57.82:8051"
     env_file:
       - ../src/orchestrator/config/.env.example
     volumes:
       - ../:/app:delegated
-      # Persist the virtualenv separately so it is not overwritten by the bind mount
       - orchestrator-venv:/app/.venv
     command: uv run uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      mission-control-mcp:
+        condition: service_healthy
+      mission-dispatch-mcp:
+        condition: service_healthy
 
+  # ─────────────────────────────────────────────────────────────
+  # Redis
+  # ─────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: orchestrator-redis

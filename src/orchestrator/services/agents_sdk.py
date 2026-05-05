@@ -17,6 +17,12 @@ from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from agents.mcp import MCPServer, MCPServerStdio, MCPServerStdioParams
 from pydantic import BaseModel, Field
 
+try:
+    from agents.mcp import MCPServerSse  # openai-agents >= 0.4
+    _HAS_SSE = True
+except ImportError:
+    _HAS_SSE = False
+
 from orchestrator.agents import prompts
 from orchestrator.agents.router import get_router_config
 from orchestrator.agents.mcp import MCPServerConfig
@@ -85,12 +91,25 @@ def _agent_prompt(agent_name: str) -> str:
 def _mcp_servers(configs: Iterable[MCPServerConfig]) -> list[MCPServer]:
     servers: list[MCPServer] = []
     for cfg in configs:
-        params: MCPServerStdioParams = {
-            "command": cfg.command,
-            "args": cfg.args,
-            "env": cfg.env or {},
-        }
-        servers.append(MCPServerStdio(params=params, name=cfg.name))
+        if cfg.transport == "sse":
+            if not _HAS_SSE:
+                raise RuntimeError(
+                    "MCPServerSse is not available in the installed openai-agents version. "
+                    "Upgrade to openai-agents>=0.4 or set MISSION_*_TRANSPORT=stdio."
+                )
+            servers.append(
+                MCPServerSse(  # type: ignore[name-defined]
+                    params={"url": cfg.url},
+                    name=cfg.name,
+                )
+            )
+        else:
+            params: MCPServerStdioParams = {
+                "command": cfg.command,
+                "args": cfg.args,
+                "env": cfg.env or {},
+            }
+            servers.append(MCPServerStdio(params=params, name=cfg.name))
     return servers
 
 
