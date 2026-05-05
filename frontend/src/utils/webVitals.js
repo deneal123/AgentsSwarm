@@ -9,14 +9,6 @@ const THRESHOLDS = {
   INP: { good: 200, needsImprovement: 500 },
 };
 
-const ANALYTICS_ENDPOINT = "/api/analytics/vitals";
-const PAYLOAD_VERSION = "1.0";
-const SAMPLE_RATE = Number.parseFloat(process.env.REACT_APP_VITALS_SAMPLE_RATE || "0.3");
-const BATCH_SIZE = 5;
-const BATCH_INTERVAL_MS = 10000;
-const queue = [];
-let flushTimer = null;
-
 const getRating = (name, value) => {
   const threshold = THRESHOLDS[name];
   if (!threshold) return "unknown";
@@ -46,80 +38,10 @@ const logMetric = (metric) => {
   console.log(`%c[Web Vitals] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`, style);
 };
 
-const hashString = (input) => {
-  const value = String(input || "anonymous");
-  let hash = 5381;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = ((hash << 5) + hash) + value.charCodeAt(index);
-    hash |= 0;
-  }
-  return `anon_${Math.abs(hash).toString(16)}`;
-};
-
-const getAnonymousUserId = () => {
-  const rawId = localStorage.getItem("user_id") || localStorage.getItem("email") || "guest";
-  return hashString(rawId);
-};
-
-const sendBatch = (events) => {
-  if (!events.length) return;
-  const payload = {
-    version: PAYLOAD_VERSION,
-    sampled: true,
-    session_id: hashString(`${performance.timeOrigin || Date.now()}`),
-    user_id_hash: getAnonymousUserId(),
-    page: window.location.pathname,
-    user_agent: navigator.userAgent,
-    events,
-  };
-
-  const body = JSON.stringify(payload);
-  const blob = new Blob([body], { type: "application/json" });
-
-  if (typeof navigator.sendBeacon === "function") {
-    const sent = navigator.sendBeacon(ANALYTICS_ENDPOINT, blob);
-    if (sent) return;
-  }
-
-  fetch(ANALYTICS_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-    keepalive: true,
-  }).catch(() => null);
-};
-
-const flushQueue = () => {
-  if (!queue.length) return;
-  const batch = queue.splice(0, queue.length);
-  sendBatch(batch);
-};
-
-const scheduleFlush = () => {
-  if (flushTimer) return;
-  flushTimer = setTimeout(() => {
-    flushTimer = null;
-    flushQueue();
-  }, BATCH_INTERVAL_MS);
-};
-
-const sendToAnalytics = (metric) => {
-  if (Math.random() > SAMPLE_RATE) return;
-  queue.push(metric);
-  if (queue.length >= BATCH_SIZE) {
-    flushQueue();
-    return;
-  }
-  scheduleFlush();
-};
-
 const handleMetric = (metric, options = {}) => {
   const formatted = formatMetric(metric);
   if (process.env.NODE_ENV === "development" || options.debug) {
     logMetric(formatted);
-  }
-  if (options.sendToServer !== false) {
-    sendToAnalytics(formatted);
   }
   if (typeof options.onMetric === "function") {
     options.onMetric(formatted);
@@ -138,7 +60,7 @@ export const reportWebVitals = (options = {}) => {
 
 export const getThresholds = () => ({ ...THRESHOLDS });
 
-let metricsStore = {};
+const metricsStore = {};
 
 export const collectMetrics = () => {
   reportWebVitals({
@@ -151,9 +73,5 @@ export const collectMetrics = () => {
 };
 
 export const getCollectedMetrics = () => ({ ...metricsStore });
-
-window.addEventListener("beforeunload", () => {
-  flushQueue();
-});
 
 export default reportWebVitals;

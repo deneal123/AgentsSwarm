@@ -27,6 +27,8 @@ import {
 } from "@chakra-ui/react";
 import { ChevronRightIcon, HamburgerIcon, TriangleDownIcon } from "@chakra-ui/icons";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { APP_ROUTES } from "@routes/routeConfig";
+import { isAuthRoute } from "@routes/routeState";
 import { FaHome, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { MotionBox } from "@ui/motionPrimitives";
 import { useAuth } from "@context/AuthContext";
@@ -46,7 +48,9 @@ const HEADER_THEME = {
 };
 
 const navItems = [
-  { label: "Главная", to: "/", icon: FaHome },
+  { label: "Чат", to: APP_ROUTES.ROOT, icon: FaHome },
+  { label: "Info", to: APP_ROUTES.INFO, icon: FaUser },
+  { label: "Documents", to: APP_ROUTES.DOCUMENTS, icon: FaUser },
 ];
 
 const linkBaseStyles = {
@@ -61,7 +65,7 @@ function Header() {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage = isAuthRoute(location.pathname);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [scrolled, setScrolled] = useState(false);
   const userLabel = user?.first_name || user?.email || "Профиль";
@@ -240,7 +244,7 @@ function Header() {
 
             <Box p={2}>
               <MenuItem
-                onClick={() => navigate("/")}
+                onClick={() => navigate(APP_ROUTES.ROOT)}
                 py={3}
                 px={3}
                 fontSize="sm"
@@ -420,7 +424,7 @@ function Header() {
                   <Divider borderColor="rgba(255,255,255,0.08)" my={4} />
                   <Box
                     as="button"
-                    onClick={() => navigate("/")}
+                    onClick={() => navigate(APP_ROUTES.ROOT)}
                     display="flex"
                     alignItems="center"
                     gap={3}
