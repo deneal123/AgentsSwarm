@@ -2,6 +2,9 @@ robots:
   - name: "carter01"
     labels: ["test", "carter", "ros"]
     heartbeat_timeout: 30
+  - name: "carter02"
+    labels: ["test", "carter", "ros"]
+    heartbeat_timeout: 30
 
 
 services:
@@ -26,8 +29,8 @@ map:
     image: "map.png"
     map_id: "map"
     resolution: 0.05
-    x_offset: -10.275000190734863
-    y_offset: -17.374999618530275
+    x_offset: -10.975
+    y_offset: -20.975
     rotation: 0.0
     negate: 0
     occupied_thresh: 0.65
