@@ -98,6 +98,8 @@ services:
       MISSION_DISPATCH_MCP_URL: http://mission-dispatch-mcp:8000/sse
       ROS_MSP_TRANSPORT: streamable-http
       ROS_MSP_MCP_URL: http://ros-msp:8000/mcp
+      # Enable real Agents SDK in Docker (overrides AGENTS_USE_SDK=0 from env_file)
+      AGENTS_USE_SDK: "1"
     env_file:
       # env_file values are overridden by the environment block above.
       # Edit this file for: AGENTS_MODEL, AGENTS_USE_SDK, VLLM_BASE_URL,

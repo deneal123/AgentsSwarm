@@ -19,6 +19,7 @@ import logging
 import httpx
 from openai import AsyncOpenAI
 from agents import set_default_openai_client, set_default_openai_key, set_tracing_disabled
+from orchestrator.utils.env import env_bool
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ def _make_http_client() -> httpx.AsyncClient:
         try:
             creds = f"{proxy_user or ''}:{proxy_pass or ''}@" if proxy_user or proxy_pass else ""
             proxy_url = f"http://{creds}{proxy_host}:{proxy_port}"
-            return httpx.AsyncClient(proxies=proxy_url)
+            return httpx.AsyncClient(proxy=proxy_url)
         except Exception:
             logger.exception("Failed to build proxy client; falling back to default HTTP client")
     return httpx.AsyncClient()
@@ -41,7 +42,7 @@ def _make_http_client() -> httpx.AsyncClient:
 
 def build_openai_client() -> AsyncOpenAI:
     provider = os.getenv("AGENTS_PROVIDER", "openai").lower()
-    tracing_disabled = os.getenv("AGENTS_TRACING_DISABLED", "1") != "0"
+    tracing_disabled = env_bool("AGENTS_TRACING_DISABLED", True)
 
     if provider == "vllm":
         base_url = os.getenv("VLLM_BASE_URL")

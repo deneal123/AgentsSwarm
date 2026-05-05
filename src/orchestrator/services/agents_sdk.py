@@ -6,6 +6,7 @@ Streams user-facing events through PlanRunner via StreamCollector.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 from functools import lru_cache
@@ -164,11 +165,27 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             )
         )
 
+    @staticmethod
+    def _collect_mcp_servers(agent: object) -> list[MCPServer]:
+        servers: list[MCPServer] = list(getattr(agent, "mcp_servers", None) or [])
+        for handoff in getattr(agent, "handoffs", None) or []:
+            if isinstance(handoff, Agent):
+                servers.extend(getattr(handoff, "mcp_servers", None) or [])
+        return servers
+
     async def execute(self, task_id: str, step, attempt: int) -> HandoffResult:
         agent = _router_agent() if step.agent == "Router" else _build_agent(
             step.agent, mcp_configs=_mcp_configs_for(step.agent)
         )
         run_config = _run_config()
+
+        async with contextlib.AsyncExitStack() as stack:
+            for server in self._collect_mcp_servers(agent):
+                await stack.enter_async_context(server)
+
+            return await self._run_agent(task_id, step, attempt, agent, run_config)
+
+    async def _run_agent(self, task_id: str, step, attempt: int, agent: Agent, run_config: RunConfig) -> HandoffResult:
         try:
             run_streamed = getattr(Runner, "run_streamed", None)
             if run_streamed:

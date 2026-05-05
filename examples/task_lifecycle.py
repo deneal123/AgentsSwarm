@@ -109,12 +109,9 @@ def show_logs(host: str, task_id: str) -> None:
     if not logs:
         print("  (логов нет)")
         return
-    for entry in logs:
-        ts = entry.get("ts", "")[:19]
-        level = entry.get("level", "info").upper()[:5]
-        source = entry.get("source", "")
-        msg = entry.get("message", "")
-        print(f"  {ts}  {level:5s}  [{source}]  {msg}")
+    for i, entry in enumerate(logs, 1):
+        # logs are strings: "[level] source: message"
+        print(f"  {i:>3}. {entry}")
 
 
 def show_events(host: str, task_id: str) -> None:
