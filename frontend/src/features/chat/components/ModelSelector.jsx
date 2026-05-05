@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Box,
   Button,
   HStack,
   Menu,
@@ -10,7 +11,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
-import { colors, borderRadius, typography } from "@theme/tokens";
+import { borderRadius, chat, colors, typography } from "@theme/tokens";
 import { useResponsive } from "@hooks/useResponsive";
 import { CHAT_THEME } from "../constants/theme";
 import { AUTO_MODE_LABEL, normalizeModelList, resolveModelTriggerLabel } from "../utils/modelSelector";
@@ -33,14 +34,14 @@ function ModelSelector({ selectedModel, availableModels, onChange }) {
         borderRadius={borderRadius.md}
         borderWidth="1px"
         borderColor={isAuto ? CHAT_THEME.panelBorderStrong : CHAT_THEME.inputBorderFocus}
-        bg={isAuto ? CHAT_THEME.panelHover : CHAT_THEME.accentSoft}
-        color={isAuto ? colors.text.primary : "#fecaca"}
+        bg={isAuto ? CHAT_THEME.panelHover : chat.modelSelector.activeBg}
+        color={isAuto ? colors.text.primary : chat.modelSelector.activeText}
         fontFamily={typography.fontFamily.primary}
         fontSize="13px"
         fontWeight="600"
         px={3}
-        _hover={{ bg: isAuto ? CHAT_THEME.panelActive : "rgba(239,68,68,0.22)" }}
-        _active={{ bg: isAuto ? CHAT_THEME.panelActive : "rgba(239,68,68,0.22)" }}
+        _hover={{ bg: isAuto ? CHAT_THEME.panelActive : chat.modelSelector.activeBgHover }}
+        _active={{ bg: isAuto ? CHAT_THEME.panelActive : chat.modelSelector.activeBgHover }}
       >
         <HStack flex="1" justify="space-between" minW={0}>
           <Text noOfLines={1}>{label}</Text>
@@ -61,22 +62,27 @@ function ModelSelector({ selectedModel, availableModels, onChange }) {
             {isAuto && <FiCheck />}
           </HStack>
         </MenuItem>
-        {models.map((modelId) => (
-          <MenuItem
-            key={modelId}
-            onClick={() => onChange(modelId)}
-            bg={selectedModel === modelId ? CHAT_THEME.panelHover : "transparent"}
-            color={selectedModel === modelId ? "#fecaca" : colors.text.primary}
-            _hover={{ bg: CHAT_THEME.panelHover }}
-          >
-            <VStack align="stretch" spacing={0} w="100%">
-              <HStack justify="space-between" w="100%">
-                <Text>{modelId}</Text>
-                {selectedModel === modelId && <FiCheck />}
-              </HStack>
-            </VStack>
-          </MenuItem>
-        ))}
+        {models.map((modelId) => {
+          const isSelected = selectedModel === modelId;
+          return (
+            <MenuItem
+              key={modelId}
+              onClick={() => onChange(modelId)}
+              bg={isSelected ? CHAT_THEME.panelHover : "transparent"}
+              color={isSelected ? chat.modelSelector.activeText : colors.text.primary}
+              _hover={{ bg: CHAT_THEME.panelHover }}
+            >
+              <VStack align="stretch" spacing={0} w="100%">
+                <HStack justify="space-between" w="100%" spacing={3}>
+                  <Box minW={0}>
+                    <Text noOfLines={1}>{modelId}</Text>
+                  </Box>
+                  {isSelected && <FiCheck />}
+                </HStack>
+              </VStack>
+            </MenuItem>
+          );
+        })}
       </MenuList>
     </Menu>
   );
