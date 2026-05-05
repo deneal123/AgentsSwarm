@@ -1,5 +1,3 @@
-import React from 'react';
-
 function ChatPageLayout({ children }) {
   return children;
 }

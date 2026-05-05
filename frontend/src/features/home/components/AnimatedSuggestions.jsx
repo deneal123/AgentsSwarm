@@ -102,7 +102,6 @@ function SuggestionBubble({ suggestion, onClick }) {
       const containerRect = container?.getBoundingClientRect();
 
       if (containerRect) {
-        let newX = suggestion.position.x;
         let newTransform = suggestion.position.transform;
 
         // Проверяем границы контейнера

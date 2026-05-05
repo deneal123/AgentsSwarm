@@ -2,7 +2,7 @@
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
 
 LEGACY_GUARDRIALS_KEY = "guardrials"
@@ -63,5 +63,4 @@ class AgentEvent(BaseModel):
         payload["metadata"] = _add_legacy_guardrials_key(payload.get("metadata") or {})
         return payload
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)

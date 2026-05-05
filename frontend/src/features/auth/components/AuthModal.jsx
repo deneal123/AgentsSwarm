@@ -11,7 +11,6 @@ import {
   Text,
   useDisclosure,
   Box,
-  HStack,
   Icon
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';

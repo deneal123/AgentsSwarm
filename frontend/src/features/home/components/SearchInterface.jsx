@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { keyframes } from '@emotion/react';
 import {
-  Box,
   Input,
   InputGroup,
   InputLeftElement,
@@ -18,7 +16,7 @@ import {
   AlertDescription,
   CloseButton
 } from '@chakra-ui/react';
-import { MotionBox, MotionVStack } from '@ui/motionPrimitives';
+import { MotionBox } from '@ui/motionPrimitives';
 import { FiSearch, FiSend } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useGuestSession } from '@hooks/useGuestSession';
@@ -27,23 +25,6 @@ import { colors, borderRadius } from '@theme/tokens';
 import AnimatedSuggestions from './AnimatedSuggestions';
 import AuthModal, { useAuthModal } from '@features/auth/components/AuthModal';
 import { getChatModels } from '../../../API/chat';
-
-// Анимации для search bar
-const shimmer = keyframes`
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-`;
-
-const ripple = keyframes`
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
-  }
-`;
 
 /**
  * SearchInterface - Google-like поисковый интерфейс для общения с AI агентами
@@ -175,7 +156,7 @@ function SearchInterface() {
       const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           const r = Math.random() * 16 | 0;
-          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          const v = c === 'x' ? r : ((r & 0x3) | 0x8);
           return v.toString(16);
         });
       };
@@ -457,7 +438,6 @@ function SearchInterface() {
                 borderRadius="full"
                 bg={canSubmit ? `linear-gradient(135deg, ${colors.brand.primary}20, ${colors.brand.secondary}20)` : 'transparent'}
                 backdropFilter="blur(10px)"
-                transition={{ duration: 0.3 }}
                 animate={canSubmit ? {
                   scale: [1, 1.1, 1],
                   rotate: [0, 5, -5, 0]
@@ -466,7 +446,7 @@ function SearchInterface() {
                   duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut"
-                } : {}}
+                } : { duration: 0.3 }}
                 whileHover={canSubmit ? {
                   scale: 1.2,
                   rotate: 15,

@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Center,
-  Divider,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -38,7 +37,6 @@ import {
   FiSettings,
   FiSliders,
 } from 'react-icons/fi';
-import { FaUserPlus } from 'react-icons/fa';
 import { NavLink } from 'react-router-dom';
 import { useGuestSession } from '@hooks/useGuestSession';
 import { useAuth } from '@context/AuthContext';

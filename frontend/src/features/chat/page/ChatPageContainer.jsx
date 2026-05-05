@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
   Alert,
   AlertDescription,
   AlertIcon,
@@ -26,7 +21,6 @@ import {
   HStack,
   Icon,
   IconButton,
-  Select,
   SimpleGrid,
   Spinner,
   Switch,
@@ -46,8 +40,6 @@ import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import BrandMark from '@ui/layout/BrandMark';
 import {
-  FiAlertCircle,
-  FiCheckCircle,
   FiCopy,
   FiEye,
   FiFileText,
@@ -55,9 +47,7 @@ import {
   FiRotateCcw,
   FiSearch,
   FiZap,
-  FiGlobe,
   FiLogOut,
-  FiImage,
   FiMenu,
   FiMessageSquare,
   FiMic,
@@ -84,6 +74,7 @@ import {
 } from '../constants/limits';
 import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
 import TracePanel from '../components/trace/TracePanel';
+import ModelSelector from '../components/ModelSelector';
 
 /**
  * ChatPage - Страница чата с AI агентом
@@ -94,13 +85,6 @@ import TracePanel from '../components/trace/TracePanel';
  * - Переход из поиска с начальным сообщением
  * - Предложение регистрации при лимитах
  */
-const RECENT_CHATS = [
-  'Идеи для лендинга',
-  'План релиза на спринт',
-  'Тезисы для презентации',
-  'Сводка интервью пользователей',
-];
-
 function ChatPageContainer() {
   const { threadId: routeThreadId } = useParams();
   const [fallbackThreadId, setFallbackThreadId] = useState(() => createThreadId());
@@ -199,7 +183,6 @@ function ChatPageContainer() {
   const initialWebSearch = searchParams.get('web_search') === 'true';
   const initialDeepResearch = searchParams.get('deep_research') === 'true';
   const initialFileContext = searchParams.get('file_context') || '';
-  const initialFileName = searchParams.get('file_name') || '';
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
@@ -1126,7 +1109,7 @@ function ChatPageContainer() {
 
     setDeletingThreadId(targetThreadId);
     try {
-      const { deleteChatThread } = await import('../../API/chat');
+      const { deleteChatThread } = await import('@api/chat');
       await deleteChatThread(targetThreadId, resolveSessionUserId() || null);
 
       setRecentThreads((prev) => prev.filter((candidate) => {
@@ -1321,7 +1304,7 @@ function ChatPageContainer() {
       const foundUrls = extractUrlCandidates(trimmed, 2);
       if (foundUrls.length > 0) {
         toast({ title: foundUrls.length > 1 ? 'Читаю ссылки…' : 'Читаю ссылку…', status: 'info', duration: 2000, isClosable: true });
-        const { parseUrl: apiParseUrl } = await import('../../API/chat');
+        const { parseUrl: apiParseUrl } = await import('@api/chat');
         const results = await Promise.allSettled(foundUrls.map((u) => apiParseUrl(u)));
         const parsedBlocks = [];
         results.forEach((r, i) => {
@@ -1461,10 +1444,10 @@ function ChatPageContainer() {
     }
     memoryDisclosure.onOpen();
     try {
-      const { getUserMemory } = await import('../../API/chat');
+      const { getUserMemory } = await import('@api/chat');
       let effectiveUserId = resolveSessionUserId();
       if (!effectiveUserId) {
-        const { fetchProfile } = await import('../../API/profile');
+        const { fetchProfile } = await import('@api/profile');
         const profile = await fetchProfile();
         effectiveUserId = profile?.id ? String(profile.id) : '';
         if (effectiveUserId && typeof window !== 'undefined') {
@@ -1789,26 +1772,11 @@ function ChatPageContainer() {
 
             {/* Center: auto + manual model select */}
             <HStack spacing={2} flex="1" justify="center">
-              <Select
-                value={selectedModelOverride}
-                onChange={(e) => setSelectedModelOverride(e.target.value)}
-                maxW="280px"
-                size="sm"
-                borderRadius="10px"
-                bg={selectedModelOverride ? CHAT_THEME.accentSoft : CHAT_THEME.panelHover}
-                borderColor={selectedModelOverride ? 'rgba(239,68,68,0.4)' : CHAT_THEME.panelBorderStrong}
-                fontFamily={CHAT_FONT_FAMILY}
-                fontSize="13px"
-                fontWeight="600"
-                color={selectedModelOverride ? '#f87171' : CHAT_THEME.textPrimary}
-                _focus={{ borderColor: 'rgba(239,68,68,0.3)', boxShadow: '0 0 0 3px rgba(239,68,68,0.08)' }}
-                sx={{ option: { color: '#111', background: '#fff' } }}
-              >
-                <option value="">Автоматический режим (Auto)</option>
-                {availableModels.map((modelId) => (
-                  <option key={modelId} value={modelId}>{modelId}</option>
-                ))}
-              </Select>
+              <ModelSelector
+                selectedModel={selectedModelOverride}
+                availableModels={availableModels}
+                onChange={setSelectedModelOverride}
+              />
             </HStack>
 
             {/* Right: auth/workspace */}
@@ -1986,7 +1954,7 @@ function ChatPageContainer() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     try {
-                      const { uploadFileForChat } = await import('../../API/chat');
+                      const { uploadFileForChat } = await import('@api/chat');
                       const result = await uploadFileForChat(file);
                       setAttachedFile(result);
 
@@ -2115,7 +2083,7 @@ function ChatPageContainer() {
                           const blob = new Blob(chunks, { type: 'audio/webm' });
                           const file = new File([blob], 'voice.webm', { type: 'audio/webm' });
                           try {
-                            const { uploadFileForChat } = await import('../../API/chat');
+                            const { uploadFileForChat } = await import('@api/chat');
                             const result = await uploadFileForChat(file);
                             setAttachedFile(result);
                             appendTraceEvent({
