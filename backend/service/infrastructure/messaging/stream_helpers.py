@@ -27,28 +27,23 @@ REDIS_CONSUMER_LAG = Gauge(
 
 async def ensure_group(redis_client, stream: str, group: str, mkstream: bool = False):
     """Ensure consumer group exists. Ignores if already exists."""
-    import logging
-    logger = logging.getLogger(__name__)
     try:
-        # Support both async (aioredis) and sync redis-py clients. Run sync
-        # methods inside a thread to avoid blocking the event loop.
         fn = getattr(redis_client, "xgroup_create", None)
         if not fn:
-            logger.warning(f"ensure_group: xgroup_create method not found on redis_client")
+            logger.warning("ensure_group: xgroup_create method not found on redis_client")
             return
-        # Inspect the method on the class to reliably detect coroutine functions
-        method = getattr(type(redis_client), "xgroup_create", None)
-        if inspect.iscoroutinefunction(method):
-            logger.info(f"ensure_group: creating group {group} for stream {stream} (async, mkstream={mkstream})")
-            await fn(stream, group, id="0", mkstream=mkstream)
-            logger.info(f"ensure_group: ✅ created group {group} for stream {stream} (async)")
+        try:
+            res = fn(stream, group, id="0", mkstream=mkstream)
+        except TypeError:
+            try:
+                res = fn(stream, group, "0", mkstream=mkstream)
+            except TypeError:
+                res = fn(stream, group, "0")
+        if inspect.isawaitable(res):
+            await res
         else:
-            logger.info(f"ensure_group: creating group {group} for stream {stream} (sync, mkstream={mkstream})")
-            # For sync client, use keyword argument
             await asyncio.to_thread(lambda: fn(stream, group, "0", mkstream=mkstream))
-            logger.info(f"ensure_group: ✅ created group {group} for stream {stream} (sync)")
     except Exception as e:
-        # group may already exist or server may not support; ignore
         logger.debug(f"ensure_group: exception (likely group exists): {e}")
         return
 

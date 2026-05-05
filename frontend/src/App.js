@@ -9,6 +9,8 @@ const LoginPage = lazy(() => import(/* webpackChunkName: "login" */ "@pages/logi
 const SignUpPage = lazy(() => import(/* webpackChunkName: "signup" */ "@pages/signup"));
 const NotFoundPage = lazy(() => import(/* webpackChunkName: "notfound" */ "@pages/notFound"));
 const HomePage = lazy(() => import(/* webpackChunkName: "home" */ "@pages/home"));
+const InfoPage = lazy(() => import(/* webpackChunkName: "info" */ "@pages/info"));
+const DocumentsPage = lazy(() => import(/* webpackChunkName: "documents" */ "@features/documents/DocumentsPage"));
 const ChatPage = lazy(() => import(/* webpackChunkName: "chat" */ "@pages/chat"));
 
 const router = createBrowserRouter([
@@ -18,6 +20,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <ChatPage /> },
       { path: "home", element: <HomePage /> },
+      { path: "info", element: <InfoPage /> },
+      { path: "documents", element: <DocumentsPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <SignUpPage /> },
       { path: "chat/:threadId", element: <ChatPage /> },

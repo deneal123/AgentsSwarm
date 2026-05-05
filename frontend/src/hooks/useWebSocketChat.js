@@ -30,6 +30,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
 
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const connectRef = useRef(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = useRef(1000); // Начальная задержка 1с
@@ -555,7 +556,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
       console.error('Error processing WebSocket message:', error);
       console.error('Message data that caused error:', data);
     }
-  }, [onMessage, onComplete, onJobUpdate, onJobProgress, onError, onAgentEvent, toast, appendAgentTimeline, localizeHumanText, extractReasoningMessage, formatAgentName, onAgentComplete, callbacks, streamingMessage]);
+  }, [onMessage, onComplete, onJobUpdate, onJobProgress, onError, onAgentEvent, toast, appendAgentTimeline, localizeHumanText, extractReasoningMessage, formatAgentName, onAgentComplete, callbacks, streamingMessage, onJobCreated]);
 
   // Планирование реконнекта с exponential backoff
   const scheduleReconnect = useCallback(() => {
@@ -576,7 +577,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
 
     reconnectTimeoutRef.current = setTimeout(() => {
       reconnectDelay.current = Math.min(delay * 2, 30000); // Удваиваем задержку, max 30s
-      connect();
+      connectRef.current?.();
     }, delay);
   }, [toast]);
 
@@ -613,7 +614,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
         wsRef.current = new WebSocket(wsUrl);
 
       // Обработчик открытия соединения
-      wsRef.current.onopen = (event) => {
+      wsRef.current.onopen = () => {
         setIsConnected(true);
         setConnectionState('connected');
         reconnectAttempts.current = 0;
@@ -724,7 +725,11 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
 
     }, 50); // 50ms delay
 
-  }, [threadId, getWebSocketUrl, onConnect, onDisconnect, onError, onMessage, toast, handleIncomingMessage, scheduleReconnect]);
+  }, [threadId, getWebSocketUrl, onConnect, onDisconnect, onError, toast, handleIncomingMessage, scheduleReconnect, isAuthenticated, connectionState]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   // Очередь сообщений для отправки после подключения WebSocket
   const messageQueueRef = useRef([]);
@@ -806,7 +811,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
       connectingRef.current = false;
       setConnectionState('disconnected');
       setIsConnected(false);
-      connect();
+      connectRef.current?.();
     }
 
     prevThreadIdRef.current = threadId;
@@ -824,7 +829,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
       setAgentTimeline([]);
       setAgentStatus(null);
     };
-  }, [threadId]); // Убрали connect из зависимостей, чтобы избежать лишних cleanup
+  }, [threadId, connect]);
 
   // Мониторинг heartbeat для обнаружения разрывов соединения
   useEffect(() => {
