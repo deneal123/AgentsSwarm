@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Optional, List, Dict, Any
 
 
@@ -50,8 +50,7 @@ class UserContext(BaseModel):
         description="Метаданные о backend'е сессии (например backend type, настройки)"
     )
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RoutingDecision(BaseModel):
