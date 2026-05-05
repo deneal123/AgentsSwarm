@@ -1,0 +1,10 @@
+{
+  "env": { "browser": true, "es2022": true, "node": false },
+  "extends": ["react-app", "react-app/jest"],
+  "globals": { "process": "readonly" },
+  "rules": {
+    "no-unused-vars": ["warn", { "ignoreRestSiblings": true }],
+    "react-hooks/exhaustive-deps": "warn",
+    "react/prop-types": "off"
+  }
+}

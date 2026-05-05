@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .connecting { background: #fff3cd; color: #856404; }
+        .error { background: #f5c6cb; color: #721c24; }
+        button { margin: 5px; padding: 10px 15px; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Test Client</h1>
+
+    <div id="status" class="status disconnected">
+        Status: Disconnected
+    </div>
+
+    <div>
+        <input type="text" id="threadId" placeholder="Thread ID" value="test_thread_123">
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+
+    <div>
+        <input type="text" id="message" placeholder="Message to send">
+        <button onclick="sendMessage()">Send Message</button>
+    </div>
+
+    <div>
+        <button onclick="testUrls()">Test Multiple URLs</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <script>
+        let ws = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 3;
+
+        function log(message, type = 'info') {
+            const messages = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            messages.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            messages.scrollTop = messages.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = `Status: ${message}`;
+            log(`Status changed to: ${message}`, status === 'error' ? 'error' : 'success');
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('Already connected');
+                return;
+            }
+
+            const threadId = document.getElementById('threadId').value || 'test_thread';
+            const urls = [
+                `ws://localhost:8000/api/chats/${threadId}/ws`,
+                `ws://localhost:8000/ws`,
+                `ws://localhost:8000/api/chats/ws?thread=${threadId}`,
+                `ws://127.0.0.1:8000/api/chats/${threadId}/ws`,
+                `ws://127.0.0.1:8000/ws`
+            ];
+
+            // Try the first URL
+            const url = urls[0];
+            log(`Connecting to: ${url}`);
+
+            updateStatus('connecting', 'Connecting...');
+
+            try {
+                ws = new WebSocket(url);
+
+                ws.onopen = function(event) {
+                    log('WebSocket connected successfully!', 'success');
+                    updateStatus('connected', 'Connected');
+                    reconnectAttempts = 0;
+                };
+
+                ws.onmessage = function(event) {
+                    log(`Received: ${event.data}`, 'success');
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`Parsed message: ${JSON.stringify(data, null, 2)}`, 'success');
+                    } catch (e) {
+                        log(`Received non-JSON message: ${event.data}`, 'success');
+                    }
+                };
+
+                ws.onclose = function(event) {
+                    const reason = event.reason || 'No reason provided';
+                    log(`WebSocket closed. Code: ${event.code}, Reason: ${reason}`, 'error');
+                    updateStatus('disconnected', `Disconnected (${event.code})`);
+
+                    // Don't reconnect for 1011 (Internal Error) as it's likely a server issue
+                    if (event.code !== 1000 && event.code !== 1011 && reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        log(`Scheduling reconnect attempt ${reconnectAttempts} in 2 seconds...`);
+                        setTimeout(() => {
+                            log(`Attempting reconnect ${reconnectAttempts}/${maxReconnectAttempts}`);
+                            connect();
+                        }, 2000);
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    log(`WebSocket error: ${error}`, 'error');
+                    updateStatus('error', 'Connection Error');
+                };
+
+            } catch (error) {
+                log(`Failed to create WebSocket: ${error}`, 'error');
+                updateStatus('error', 'Creation Error');
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                log('Disconnecting...');
+                ws.close(1000, 'Manual disconnect');
+            } else {
+                log('Not connected');
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (!message) {
+                log('No message to send');
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Not connected, cannot send message', 'error');
+                return;
+            }
+
+            const messageData = {
+                type: 'chat_message',
+                content: message,
+                timestamp: new Date().toISOString()
+            };
+
+            ws.send(JSON.stringify(messageData));
+            log(`Sent: ${JSON.stringify(messageData)}`);
+            document.getElementById('message').value = '';
+        }
+
+        function testUrls() {
+            const threadId = document.getElementById('threadId').value || 'test_thread';
+            const urls = [
+                `ws://localhost:8000/api/chats/${threadId}/ws`,
+                `ws://localhost:8000/ws`,
+                `ws://localhost:8000/api/chats/ws?thread=${threadId}`,
+                `ws://127.0.0.1:8000/api/chats/${threadId}/ws`,
+                `ws://127.0.0.1:8000/ws`
+            ];
+
+            log('Testing URLs:');
+            urls.forEach((url, index) => {
+                log(`${index + 1}. ${url}`);
+
+                // Quick connection test
+                const testWs = new WebSocket(url);
+                testWs.onopen = () => {
+                    log(`✓ URL ${index + 1} connected successfully`, 'success');
+                    testWs.close();
+                };
+                testWs.onerror = () => {
+                    log(`✗ URL ${index + 1} failed to connect`, 'error');
+                };
+                testWs.onclose = (event) => {
+                    log(`URL ${index + 1} closed with code ${event.code}`);
+                };
+            });
+        }
+
+        // Auto-connect on page load for testing
+        window.onload = function() {
+            log('WebSocket Test Client loaded');
+            log('Available test URLs:');
+            log('1. ws://localhost:8000/api/chats/{threadId}/ws');
+            log('2. ws://localhost:8000/ws');
+            log('3. ws://localhost:8000/api/chats/ws?thread={threadId}');
+        };
+    </script>
+</body>
+</html>

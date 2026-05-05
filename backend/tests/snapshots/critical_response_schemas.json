@@ -1,0 +1,39 @@
+{
+  "JobResponse": {
+    "fields": [
+      "celery_task_id",
+      "job_id",
+      "result_file_url",
+      "status",
+      "wait_time_sec"
+    ],
+    "required": [
+      "job_id",
+      "status",
+      "wait_time_sec"
+    ],
+    "title": "JobResponse"
+  },
+  "MessageResponse": {
+    "fields": [
+      "metadata",
+      "reply",
+      "thread_id"
+    ],
+    "required": [
+      "reply"
+    ],
+    "title": "MessageResponse"
+  },
+  "ThreadResponse": {
+    "fields": [
+      "created_at",
+      "thread_id",
+      "title"
+    ],
+    "required": [
+      "thread_id"
+    ],
+    "title": "ThreadResponse"
+  }
+}

@@ -1,0 +1,757 @@
+{
+  "components": {
+    "HTTPValidationError": {
+      "properties": {
+        "detail": {
+          "items": {
+            "$ref": "#/components/schemas/ValidationError"
+          },
+          "title": "Detail",
+          "type": "array"
+        }
+      },
+      "title": "HTTPValidationError",
+      "type": "object"
+    },
+    "JobResponse": {
+      "properties": {
+        "celery_task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Celery task ID for async tracking",
+          "title": "Celery Task Id"
+        },
+        "job_id": {
+          "description": "Unique job identifier",
+          "format": "uuid",
+          "title": "Job Id",
+          "type": "string"
+        },
+        "result_file_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "URL to download the processed file result",
+          "title": "Result File Url"
+        },
+        "status": {
+          "$ref": "#/components/schemas/ProcessingStatus",
+          "description": "Current job processing status"
+        },
+        "wait_time_sec": {
+          "description": "Elapsed time in seconds for PROCESSING jobs, or default wait time",
+          "title": "Wait Time Sec",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job_id",
+        "status",
+        "wait_time_sec"
+      ],
+      "title": "JobResponse",
+      "type": "object"
+    },
+    "LoginRequest": {
+      "properties": {
+        "email": {
+          "description": "User email",
+          "format": "email",
+          "maxLength": 500,
+          "minLength": 5,
+          "title": "Email",
+          "type": "string"
+        },
+        "password": {
+          "description": "User password",
+          "maxLength": 100,
+          "minLength": 4,
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ],
+      "title": "LoginRequest",
+      "type": "object"
+    },
+    "LoginResponse": {
+      "properties": {
+        "jwt": {
+          "description": "JWT token with user profile",
+          "title": "Jwt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "jwt"
+      ],
+      "title": "LoginResponse",
+      "type": "object"
+    },
+    "MessageRequest": {
+      "properties": {
+        "deep_research": {
+          "default": false,
+          "title": "Deep Research",
+          "type": "boolean"
+        },
+        "file_context": {
+          "default": "",
+          "title": "File Context",
+          "type": "string"
+        },
+        "file_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "File Ids",
+          "type": "array"
+        },
+        "input_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "text",
+                "image",
+                "audio",
+                "video"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Input Type"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model"
+        },
+        "route_override": {
+          "anyOf": [
+            {
+              "enum": [
+                "general",
+                "web_search",
+                "deep_research",
+                "audio_transcribe",
+                "image_gen",
+                "pptx_gen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Route Override"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "User Id"
+        },
+        "web_search": {
+          "default": false,
+          "title": "Web Search",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "MessageRequest",
+      "type": "object"
+    },
+    "MessageResponse": {
+      "properties": {
+        "metadata": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Metadata"
+        },
+        "reply": {
+          "title": "Reply",
+          "type": "string"
+        },
+        "thread_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Thread Id"
+        }
+      },
+      "required": [
+        "reply"
+      ],
+      "title": "MessageResponse",
+      "type": "object"
+    },
+    "ProcessingStatus": {
+      "enum": [
+        "NEW",
+        "PROCESSING",
+        "SUCCESS",
+        "FAILURE"
+      ],
+      "title": "ProcessingStatus",
+      "type": "string"
+    },
+    "RegisterRequest": {
+      "properties": {
+        "email": {
+          "description": "User email",
+          "format": "email",
+          "maxLength": 500,
+          "minLength": 5,
+          "title": "Email",
+          "type": "string"
+        },
+        "fingerprint": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 10,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "User device fingerprint",
+          "title": "Fingerprint"
+        },
+        "password": {
+          "description": "User password",
+          "maxLength": 100,
+          "minLength": 8,
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ],
+      "title": "RegisterRequest",
+      "type": "object"
+    },
+    "RegisterResponse": {
+      "properties": {
+        "email": {
+          "description": "User email",
+          "format": "email",
+          "maxLength": 500,
+          "minLength": 5,
+          "title": "Email",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "User ID",
+          "format": "uuid",
+          "title": "User Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "user_id"
+      ],
+      "title": "RegisterResponse",
+      "type": "object"
+    },
+    "ServiceType": {
+      "enum": [
+        "CALENDAR",
+        "CHAT"
+      ],
+      "title": "ServiceType",
+      "type": "string"
+    },
+    "StartJobRequest": {
+      "properties": {
+        "file_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Legacy file identifier to process (dataset id)",
+          "title": "File Id"
+        },
+        "target_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional target column name for training",
+          "title": "Target Column"
+        },
+        "type": {
+          "$ref": "#/components/schemas/ServiceType",
+          "description": "Type of service to apply"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "StartJobRequest",
+      "type": "object"
+    },
+    "ThreadCreate": {
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "User Id"
+        }
+      },
+      "title": "ThreadCreate",
+      "type": "object"
+    },
+    "ThreadResponse": {
+      "properties": {
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created At"
+        },
+        "thread_id": {
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        }
+      },
+      "required": [
+        "thread_id"
+      ],
+      "title": "ThreadResponse",
+      "type": "object"
+    },
+    "ValidationError": {
+      "properties": {
+        "loc": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "title": "Location",
+          "type": "array"
+        },
+        "msg": {
+          "title": "Message",
+          "type": "string"
+        },
+        "type": {
+          "title": "Error Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "loc",
+        "msg",
+        "type"
+      ],
+      "title": "ValidationError",
+      "type": "object"
+    }
+  },
+  "paths": {
+    "GET /api/chats/{thread_id}": {
+      "operationId": "get_thread_messages_api_chats__thread_id__get",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "thread_id",
+          "required": true,
+          "schema": {
+            "title": "Thread Id",
+            "type": "string"
+          }
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "required": false,
+          "schema": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        {
+          "in": "query",
+          "name": "per_page",
+          "required": false,
+          "schema": {
+            "default": 50,
+            "title": "Per Page",
+            "type": "integer"
+          }
+        }
+      ],
+      "requestBody": null,
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "GET /api/jobs/v1/result/{job_id}": {
+      "operationId": "fetch_result_api_jobs_v1_result__job_id__get",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "job_id",
+          "required": true,
+          "schema": {
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        {
+          "in": "cookie",
+          "name": "auth_token",
+          "required": false,
+          "schema": {
+            "title": "Auth Token",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": null,
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/auth/v1/login": {
+      "operationId": "login_api_auth_v1_login_post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/auth/v1/register": {
+      "operationId": "register_api_auth_v1_register_post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RegisterRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/chats/": {
+      "operationId": "create_thread_api_chats__post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ThreadCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/chats/{thread_id}/message": {
+      "operationId": "post_message_api_chats__thread_id__message_post",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "thread_id",
+          "required": true,
+          "schema": {
+            "title": "Thread Id",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MessageRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/jobs/v1/start": {
+      "operationId": "start_processing_job_api_jobs_v1_start_post",
+      "parameters": [
+        {
+          "in": "cookie",
+          "name": "auth_token",
+          "required": false,
+          "schema": {
+            "title": "Auth Token",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StartJobRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    }
+  }
+}

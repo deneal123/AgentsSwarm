@@ -1,0 +1,196 @@
+# Rate limiting zone
+limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+
+# HTTP server - redirects to HTTPS
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name ${APP_DOMAIN} _;
+
+    # Health check endpoint for load balancers (no redirect)
+    location = /health {
+        access_log off;
+        return 200 '{"status": "ok"}';
+        add_header Content-Type application/json;
+    }
+
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS server - main application
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    http2 on;
+    server_name ${APP_DOMAIN} _;
+
+    # Use variable-based upstream to allow Docker DNS re-resolution at runtime.
+    # This prevents stale backend IPs after container re-create.
+    set $backend_upstream http://backend:8000;
+    set $frontend_upstream http://frontend:80;
+
+    # SSL configuration
+    ssl_certificate /etc/nginx/certs/certificate.pem;
+    ssl_certificate_key /etc/nginx/certs/private.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Proxy settings (optimized for WebSocket)
+    proxy_connect_timeout 7s;
+    proxy_send_timeout 86400s;  # 24 hours for WebSocket
+    proxy_read_timeout 86400s;  # 24 hours for WebSocket
+    proxy_buffering off;
+
+    # WebSocket headers
+    proxy_set_header Sec-WebSocket-Key $http_sec_websocket_key;
+    proxy_set_header Sec-WebSocket-Protocol $http_sec_websocket_protocol;
+    proxy_set_header Sec-WebSocket-Version $http_sec_websocket_version;
+
+    # Health check endpoint
+    location = /health {
+        access_log off;
+        return 200 '{"status": "ok"}';
+        add_header Content-Type application/json;
+    }
+
+    # API routes with WebSocket support
+    location ~ ^/api/chats/.+/ws$ {
+        proxy_pass $backend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        # Retry once on transient upstream refusal during reconnect storms
+        proxy_next_upstream error timeout;
+        proxy_next_upstream_tries 2;
+
+        proxy_connect_timeout 7s;
+        proxy_send_timeout 86400s;
+        proxy_read_timeout 86400s;
+    }
+
+    location /api/ {
+        proxy_pass $backend_upstream;
+        limit_req zone=api burst=20 nodelay;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support for chat, jobs, and batches
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        # Retry once on transient upstream refusal
+        proxy_next_upstream error timeout;
+        proxy_next_upstream_tries 2;
+
+        # WebSocket-specific timeouts (longer than regular API)
+        proxy_connect_timeout 7s;
+        proxy_send_timeout 86400s;  # 24 hours for long-running connections
+        proxy_read_timeout 86400s;  # 24 hours for long-running connections
+    }
+
+    # Static files for PWA and assets - available from any path
+    location ~* /(favicon\.ico|favicon\.svg|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png|manifest\.json|robots\.txt|sitemap\.xml)$ {
+        # Rewrite to root path for frontend
+        rewrite ^/chat/(.*)$ /$1 break;
+        rewrite ^/documents/(.*)$ /$1 break;
+        rewrite ^/login/(.*)$ /$1 break;
+        rewrite ^/register/(.*)$ /$1 break;
+        rewrite ^/info/(.*)$ /$1 break;
+        rewrite ^/profile/(.*)$ /$1 break;
+
+    proxy_pass $frontend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1h;
+        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+    }
+
+    # Other static files (JS, CSS, images, fonts) - available from any path
+    location ~* \.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$ {
+        # Rewrite from nested paths to root path for frontend
+        rewrite ^/chat/(.*)$ /$1 break;
+        rewrite ^/documents/(.*)$ /$1 break;
+        rewrite ^/login/(.*)$ /$1 break;
+        rewrite ^/register/(.*)$ /$1 break;
+        rewrite ^/info/(.*)$ /$1 break;
+        rewrite ^/profile/(.*)$ /$1 break;
+
+    proxy_pass $frontend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # PWA manifest and service worker
+    location ~* ^/(manifest\.json|service-worker\.js|robots\.txt|sitemap\.xml)$ {
+    proxy_pass $frontend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1h;
+        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+    }
+
+    # HTML files - prevent caching to ensure latest version
+    location ~* \.html$ {
+    proxy_pass $frontend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0, no-transform";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+        add_header Last-Modified "";
+        add_header ETag "";
+        add_header X-Accel-Expires "0";
+
+        # Add timestamp to force cache invalidation
+        add_header X-Cache-Bust $msec;
+    }
+
+    # Frontend routes (SPA fallback)
+    location / {
+    proxy_pass $frontend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+    }
+
+    # Error handling
+    error_page 500 501 502 503 504 @service_unavailable;
+    location @service_unavailable {
+        return 503 '{"error": "Service temporarily unavailable", "uri": "$request_uri"}';
+        add_header Content-Type application/json;
+        add_header Retry-After 30;
+    }
+
+    error_page 400 401 403 @client_error;
+    location @client_error {
+        return 400 '{"error": "Bad request", "status": $status, "uri": "$request_uri"}';
+        add_header Content-Type application/json;
+    }
+}

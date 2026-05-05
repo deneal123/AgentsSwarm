@@ -1,0 +1,207 @@
+name: gpthub-prod
+
+services:
+
+  frontend:
+    profiles: ["prod"]
+    build:
+      context: ../frontend
+      dockerfile: ./docker/Dockerfile
+    env_file:
+      - ./.env.prod
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_BASE_URL=${SERVICE__REACT_APP_API_BASE_URL}
+      - REACT_APP_WS_BASE_URL=${SERVICE__REACT_APP_WS_BASE_URL}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: "always"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    profiles: ["prod"]
+    build:
+        context: ../backend
+        dockerfile: ./docker/Dockerfile
+    env_file:
+      - ./.env.prod
+    environment:
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
+    command: server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../infra/storage:/var/lib/app/storage
+    stdin_open: true
+    tty: true
+    restart: "always"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+      - internal
+
+  postgres:
+    profiles: ["prod"]
+    image: postgres:17.4-alpine
+    environment:
+      POSTGRES_USER: ${PG__USER}
+      POSTGRES_PASSWORD: ${PG__PASSWORD}
+      POSTGRES_DB: ${PG__DB}
+    env_file:
+      - ./.env.prod
+    ports:
+      - ${PG__PORT:-5432}:5432
+    volumes:
+      - pg_data_volume:/var/lib/postgresql/data
+      - ../infra/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: "always"
+    networks:
+      - internal
+
+  redis:
+    profiles: ["prod"]
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning", "--requirepass", "${REDIS__PASSWORD}"]
+    volumes:
+      - redis_data_volume:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS__PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: "always"
+    networks:
+      - internal
+
+  minio:
+    profiles: ["prod"]
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO__ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO__SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data_volume:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: "always"
+
+  nginx:
+    profiles: ["prod"]
+    image: nginx:1.27-bookworm
+    environment:
+      NGINX_PORT: ${NGINX_PORT:-80}
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+    volumes:
+      - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../infra/nginx/templates:/etc/nginx/templates:ro
+      - ../infra/nginx/certs:/etc/nginx/certs:ro
+      - ../infra/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sfk https://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: "always"
+
+  # Agent workers (high concurrency for I/O-bound tasks)
+  celery-worker-agents:
+    profiles: ["prod", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile
+    command: celery -A service.infrastructure.messaging.celery_app worker --loglevel=info --concurrency=4 --queues=agents --hostname=agent-worker@%h
+    env_file:
+      - ./.env.prod
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../infra/storage:/var/lib/app/storage
+    restart: "always"
+    networks:
+      - default
+      - internal
+
+  # Maintenance workers (low concurrency for background tasks)
+  celery-worker-maintenance:
+    profiles: ["prod", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile
+    command: celery -A service.infrastructure.messaging.celery_app worker --loglevel=info --concurrency=1 --queues=maintenance --hostname=maintenance-worker@%h
+    env_file:
+      - ./.env.prod
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: "always"
+    networks:
+      - default
+      - internal
+
+  # Celery Beat (scheduler for periodic tasks)
+  celery-beat:
+    profiles: ["prod", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile
+    command: celery -A service.infrastructure.messaging.celery_app beat --loglevel=info
+    env_file:
+      - ./.env.prod
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: "always"
+    networks:
+      - default
+      - internal
+
+volumes:
+  pg_data_volume:
+  minio_data_volume:
+  redis_data_volume:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true  # Без доступа в интернет для БД
+  default:
+    driver: bridge

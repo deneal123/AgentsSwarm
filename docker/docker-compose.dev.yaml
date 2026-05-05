@@ -1,0 +1,191 @@
+name: gpthub-dev
+
+services:
+
+  frontend:
+    profiles: ["dev"]
+    build:
+      context: ../frontend
+      dockerfile: ./docker/Dockerfile
+      target: dev
+    working_dir: /app
+    env_file:
+      - ./.env.dev
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_BASE_URL=${SERVICE__REACT_APP_API_BASE_URL}
+      - REACT_APP_WS_BASE_URL=${SERVICE__REACT_APP_WS_BASE_URL}
+    ports:
+      - ${FRONTEND_PORT:-3000}:3000
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+  backend:
+    profiles: ["dev"]
+    build:
+        context: ../backend
+        dockerfile: ./docker/Dockerfile.dev
+    env_file:
+      - ./.env.dev
+    volumes:
+      - ../backend/service:/dude/service
+      - ../backend/alembic:/dude/alembic
+      - ../infra/storage:/var/lib/app/storage
+    command: server
+    ports:
+      - ${BACKEND_PORT:-8000}:8000
+    stdin_open: true
+    tty: true
+    restart: "always"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - internal
+
+  postgres:
+    profiles: ["dev"]
+    image: postgres:17.4-alpine
+    environment:
+      POSTGRES_USER: ${PG__USER}
+      POSTGRES_PASSWORD: ${PG__PASSWORD}
+      POSTGRES_DB: ${PG__DB}
+    env_file:
+      - ./.env.dev
+    ports:
+      - ${PG__PORT:-5432}:5432
+    volumes:
+      - pg_data_volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: "always"
+    networks:
+      - internal
+
+  redis:
+    profiles: ["dev"]
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning", "--requirepass", "${REDIS__PASSWORD:-changeme}"]
+    volumes:
+      - ../infra/redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS__PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: "always"
+    networks:
+      - internal
+
+  minio:
+    profiles: ["dev"]
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO__ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO__SECRET_KEY:-minioadmin}
+    volumes:
+      - ../infra/minio_data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: "always"
+
+  # Agent workers (high concurrency for I/O-bound tasks)
+  celery-worker-agents:
+    profiles: ["dev", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile.dev
+    command: celery -A service.infrastructure.messaging.celery_app worker --loglevel=info --concurrency=4 --queues=agents --hostname=agent-worker@%h
+    env_file:
+      - ./.env.dev
+    networks:
+      - default
+      - internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../backend/service:/dude/service
+      - ../backend/alembic:/dude/alembic
+      - ../infra/storage:/var/lib/app/storage
+    restart: "always"
+
+  # Maintenance workers (low concurrency for background tasks)
+  celery-worker-maintenance:
+    profiles: ["dev", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile.dev
+    command: celery -A service.infrastructure.messaging.celery_app worker --loglevel=info --concurrency=1 --queues=maintenance --hostname=maintenance-worker@%h
+    env_file:
+      - ./.env.dev
+    networks:
+      - default
+      - internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../backend/service:/dude/service
+      - ../backend/alembic:/dude/alembic
+    restart: "always"
+
+  # Celery Beat (scheduler for periodic tasks)
+  celery-beat:
+    profiles: ["dev", "celery"]
+    build:
+      context: ../backend
+      dockerfile: ./docker/Dockerfile.dev
+    command: celery -A service.infrastructure.messaging.celery_app beat --loglevel=info
+    env_file:
+      - ./.env.dev
+    networks:
+      - default
+      - internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../backend/service:/dude/service
+      - ../backend/alembic:/dude/alembic
+    restart: "always"
+
+volumes:
+  pg_data_volume:
+  minio_data_volume:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true  # Без доступа в интернет
+  default:
+    driver: bridge

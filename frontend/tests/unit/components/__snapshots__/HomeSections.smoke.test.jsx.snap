@@ -1,0 +1,318 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`home canonical sections smoke renders assistant hero variant 1`] = `
+<DocumentFragment>
+  <div
+    class="css-o6hz1j"
+  >
+    <div
+      data-testid="hero-background"
+    />
+    <div
+      class="chakra-container css-3nt0jq"
+    >
+      <div
+        data-testid="tilt-card"
+      >
+        <div
+          class="css-9a0nao"
+        >
+          <div
+            class="chakra-stack css-1kkhw75"
+            style="opacity: 0; transform: translateY(24px) translateZ(0);"
+          >
+            <div
+              class="chakra-stack css-o51fhk"
+            >
+              <h1
+                class="chakra-text css-1uiy87j"
+              >
+                <span
+                  class="chakra-text css-13o7eu2"
+                >
+                  Спросите AI
+                </span>
+                <span>
+                  о здоровье и питании
+                </span>
+              </h1>
+              <p
+                class="chakra-text css-gyx7in"
+              >
+                Получите персональные рекомендации по питанию, планам тренировок и здоровому образу жизни
+              </p>
+            </div>
+            <div
+              class="css-10wlfx"
+              style="opacity: 0; transform: scale(0.96) translateZ(0);"
+            >
+              <div
+                data-testid="search-interface"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
+</DocumentFragment>
+`;
+
+exports[`home canonical sections smoke renders benefits canonical wrapper 1`] = `
+<DocumentFragment>
+  <div
+    class="css-lrb7d7"
+  >
+    <div
+      data-testid="benefits-section"
+    />
+  </div>
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
+</DocumentFragment>
+`;
+
+exports[`home canonical sections smoke renders metrics canonical wrapper 1`] = `
+<DocumentFragment>
+  <div
+    class="css-lrb7d7"
+  >
+    <div
+      data-testid="metrics-section"
+    />
+  </div>
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
+</DocumentFragment>
+`;
+
+exports[`home canonical sections smoke renders platform hero variant 1`] = `
+<DocumentFragment>
+  <div
+    class="css-9xaase"
+  >
+    <div
+      class="chakra-container css-3nt0jq"
+    >
+      <div
+        data-testid="tilt-card"
+      >
+        <div
+          class="css-9a0nao"
+        >
+          <div
+            data-testid="floating-orbs"
+          />
+          <div
+            data-testid="particles-background"
+          />
+          <div
+            class="chakra-stack css-1kkhw75"
+            style="opacity: 0; transform: translateY(24px) translateZ(0);"
+          >
+            <div
+              class="chakra-stack css-8pmr8q"
+            >
+              <div
+                data-testid="logo"
+              />
+              <div
+                class="chakra-stack css-mw8ufx"
+              >
+                <p
+                  class="chakra-text css-q38v9e"
+                >
+                  GPTHub — AI Агенты Здоровья
+                </p>
+                <div
+                  class="css-6w905d"
+                />
+              </div>
+            </div>
+            <div
+              class="chakra-wrap css-0"
+            >
+              <ul
+                class="chakra-wrap__list css-anqjen"
+              >
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    FastAPI
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    PostgreSQL
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    React
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Chakra UI
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Docker
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Nginx
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    OpenAI GPT
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Redis
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    WebSocket
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    MinIO
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Prometheus
+                  </span>
+                </li>
+                <li
+                  class="chakra-wrap__listitem css-1yp4ln"
+                >
+                  <span
+                    class="chakra-badge css-xzwka9"
+                  >
+                    Grafana
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <div
+              class="chakra-stack css-o51fhk"
+            >
+              <h1
+                class="chakra-text css-1uiy87j"
+              >
+                <span
+                  class="chakra-text css-13o7eu2"
+                >
+                  Обработка данных
+                </span>
+                <span>
+                  вашем питании
+                </span>
+              </h1>
+              <p
+                class="chakra-text css-gyx7in"
+              >
+                GPTHub — платформа персональных AI-агентов для здоровья и питания. Общайтесь с умными ассистентами о рационе, тренировках и благополучии — без сложных настроек и медицинских знаний.
+              </p>
+            </div>
+            <div
+              class="chakra-stack css-zpb6a7"
+            >
+              <a
+                class="chakra-button css-y6owqb"
+                href="/chat"
+                type="button"
+              >
+                Начать чат
+              </a>
+              <a
+                aria-current="page"
+                class="chakra-button css-y6owqb active"
+                href="/"
+                type="button"
+              >
+                Открыть чат
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
+</DocumentFragment>
+`;
+
+exports[`home canonical sections smoke renders workspace canonical wrapper 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="workspace-section"
+  />
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
+</DocumentFragment>
+`;

@@ -1,0 +1,84 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        exclude: >
+          (?x)^(
+              \.git/.*|
+              \.venv/.*|
+              build/.*|
+              dist/.*|
+              docs/.*|
+              .*/migrations/.*|
+              .*/migration/.*|
+              .*/alembic/.*|
+              .*/tests/.*|
+              .*/package-lock\.json|
+              .*/package\.json|
+              .*/yarn\.lock|
+              .*/public/.*|
+              .*/static/.*|
+              .*/node_modules/.*|
+          )$
+      - id: check-json
+      - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.10
+    hooks:
+      - id: ruff
+        files: ^backend/.*\.py$
+        args: ["--config", "backend/pyproject.toml", "backend/service", "backend/scripts", "backend/tests"]
+      - id: ruff-format
+        files: ^backend/.*\.py$
+        args: ["--config", "backend/pyproject.toml"]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black", "--line-length=100"]
+
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3.13
+        args: ["--line-length=100"]
+
+  - repo: local
+    hooks:
+      - id: backend-complexity-guard
+        name: Backend complexity guard
+        entry: bash -lc "cd backend && python scripts/check_module_complexity.py"
+        language: system
+        pass_filenames: false
+
+      - id: backend-mypy
+        name: Backend mypy
+        entry: bash -lc "cd backend && mypy"
+        language: system
+        pass_filenames: false
+
+      - id: backend-pytest-critical
+        name: Backend pytest critical packages coverage
+        entry: bash -lc "cd backend && pytest tests/test_chat_service_facade.py tests/test_process_chat_message_core.py tests/test_chat_agent_integration.py"
+        language: system
+        pass_filenames: false
+
+      - id: frontend-eslint
+        name: Frontend ESLint
+        entry: bash -lc "cd frontend && npm run lint"
+        language: system
+        pass_filenames: false
+
+      - id: frontend-snapshots
+        name: Frontend snapshots
+        entry: bash -lc "cd frontend && npm run test -- --watchAll=false --ci --runInBand --updateSnapshot=false"
+        language: system
+        pass_filenames: false
