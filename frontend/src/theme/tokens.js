@@ -260,3 +260,12 @@ export const tokens = {
   dimensions,
   gradients,
 };
+
+
+export const chat = {
+  modelSelector: {
+    activeText: "#fecaca",
+    activeBg: "rgba(239, 68, 68, 0.16)",
+    activeBgHover: "rgba(239, 68, 68, 0.22)",
+  },
+};

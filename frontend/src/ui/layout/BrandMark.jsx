@@ -2,7 +2,7 @@ import React from "react";
 import { HStack, Text, VStack } from "@chakra-ui/react";
 import Logo from "@ui/assets/common/Logo";
 
-const BRAND_NAME = "GPTHub";
+import { PROJECT_NAME } from "@constants";
 
 function BrandMark({ size = "md", showSubtitle = true, iconOnly = false }) {
   const iconSize = size === "sm" ? "28px" : "34px";
@@ -16,7 +16,7 @@ function BrandMark({ size = "md", showSubtitle = true, iconOnly = false }) {
       <Logo boxSize={iconSize} />
       <VStack spacing={0} align="flex-start">
         <Text fontSize={size === "sm" ? "lg" : "xl"} fontWeight="600" color="white" lineHeight="1">
-          {BRAND_NAME}
+          {PROJECT_NAME}
         </Text>
         {showSubtitle && (
           <Text
