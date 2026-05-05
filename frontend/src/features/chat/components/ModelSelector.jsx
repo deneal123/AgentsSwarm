@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Button,
   HStack,
@@ -7,33 +7,40 @@ import {
   MenuItem,
   MenuList,
   Text,
-} from '@chakra-ui/react';
-import { FiChevronDown } from 'react-icons/fi';
-import { CHAT_FONT_FAMILY, CHAT_THEME } from '../constants/theme';
+  VStack,
+} from "@chakra-ui/react";
+import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { colors, borderRadius, typography } from "@theme/tokens";
+import { useResponsive } from "@hooks/useResponsive";
+import { CHAT_THEME } from "../constants/theme";
+import { AUTO_MODE_LABEL, normalizeModelList, resolveModelTriggerLabel } from "../utils/modelSelector";
 
 function ModelSelector({ selectedModel, availableModels, onChange }) {
+  const { isMobile } = useResponsive();
   const isAuto = !selectedModel;
-  const label = isAuto ? 'Автоматический режим (Auto)' : selectedModel;
+  const label = resolveModelTriggerLabel(selectedModel);
+  const models = normalizeModelList(availableModels);
 
   return (
     <Menu matchWidth>
       <MenuButton
         as={Button}
         rightIcon={<FiChevronDown />}
-        w="280px"
+        w={isMobile ? "100%" : "320px"}
+        minW={0}
         size="sm"
         justifyContent="space-between"
-        borderRadius="12px"
+        borderRadius={borderRadius.md}
         borderWidth="1px"
-        borderColor={isAuto ? CHAT_THEME.panelBorderStrong : 'rgba(239,68,68,0.45)'}
+        borderColor={isAuto ? CHAT_THEME.panelBorderStrong : CHAT_THEME.inputBorderFocus}
         bg={isAuto ? CHAT_THEME.panelHover : CHAT_THEME.accentSoft}
-        color={isAuto ? CHAT_THEME.textPrimary : '#fca5a5'}
-        fontFamily={CHAT_FONT_FAMILY}
+        color={isAuto ? colors.text.primary : "#fecaca"}
+        fontFamily={typography.fontFamily.primary}
         fontSize="13px"
         fontWeight="600"
         px={3}
-        _hover={{ bg: isAuto ? CHAT_THEME.panelActive : 'rgba(239,68,68,0.22)' }}
-        _active={{ bg: isAuto ? CHAT_THEME.panelActive : 'rgba(239,68,68,0.22)' }}
+        _hover={{ bg: isAuto ? CHAT_THEME.panelActive : "rgba(239,68,68,0.22)" }}
+        _active={{ bg: isAuto ? CHAT_THEME.panelActive : "rgba(239,68,68,0.22)" }}
       >
         <HStack flex="1" justify="space-between" minW={0}>
           <Text noOfLines={1}>{label}</Text>
@@ -43,27 +50,31 @@ function ModelSelector({ selectedModel, availableModels, onChange }) {
         bg={CHAT_THEME.panelBg}
         border="1px solid"
         borderColor={CHAT_THEME.panelBorderStrong}
-        borderRadius="12px"
+        borderRadius={borderRadius.md}
         py={1}
         maxH="320px"
         overflowY="auto"
-        sx={{
-          '&::-webkit-scrollbar': { width: '8px' },
-          '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.2)', borderRadius: '999px' },
-        }}
       >
-        <MenuItem onClick={() => onChange('')} bg="transparent" _hover={{ bg: CHAT_THEME.panelHover }}>
-          Автоматический режим (Auto)
+        <MenuItem onClick={() => onChange("")} bg="transparent" _hover={{ bg: CHAT_THEME.panelHover }}>
+          <HStack justify="space-between" w="100%">
+            <Text>{AUTO_MODE_LABEL}</Text>
+            {isAuto && <FiCheck />}
+          </HStack>
         </MenuItem>
-        {availableModels.map((modelId) => (
+        {models.map((modelId) => (
           <MenuItem
             key={modelId}
             onClick={() => onChange(modelId)}
-            bg={selectedModel === modelId ? CHAT_THEME.panelHover : 'transparent'}
-            color={selectedModel === modelId ? '#fca5a5' : CHAT_THEME.textPrimary}
+            bg={selectedModel === modelId ? CHAT_THEME.panelHover : "transparent"}
+            color={selectedModel === modelId ? "#fecaca" : colors.text.primary}
             _hover={{ bg: CHAT_THEME.panelHover }}
           >
-            {modelId}
+            <VStack align="stretch" spacing={0} w="100%">
+              <HStack justify="space-between" w="100%">
+                <Text>{modelId}</Text>
+                {selectedModel === modelId && <FiCheck />}
+              </HStack>
+            </VStack>
           </MenuItem>
         ))}
       </MenuList>

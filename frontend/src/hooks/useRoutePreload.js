@@ -1,12 +1,11 @@
-import { useCallback } from "react";
+import { APP_ROUTES, ROUTE_LOADERS } from "../routes/routeConfig";
 
 const preloadMap = {
-  "/": () => import(/* webpackChunkName: "chat" */ "@pages/chat"),
-  "/home": () => import(/* webpackChunkName: "home" */ "@pages/home"),
-  "/info": () => import(/* webpackChunkName: "info" */ "@pages/info"),
-  "/documents": () => import(/* webpackChunkName: "documents" */ "@features/documents/DocumentsPage"),
-  "/login": () => import(/* webpackChunkName: "login" */ "@pages/login"),
-  "/register": () => import(/* webpackChunkName: "signup" */ "@pages/signup"),
+  [APP_ROUTES.ROOT]: ROUTE_LOADERS[APP_ROUTES.ROOT],
+  [APP_ROUTES.INFO]: ROUTE_LOADERS[APP_ROUTES.INFO],
+  [APP_ROUTES.DOCUMENTS]: ROUTE_LOADERS[APP_ROUTES.DOCUMENTS],
+  [APP_ROUTES.LOGIN]: ROUTE_LOADERS[APP_ROUTES.LOGIN],
+  [APP_ROUTES.REGISTER]: ROUTE_LOADERS[APP_ROUTES.REGISTER],
 };
 
 const loadedRoutes = new Set();
@@ -20,21 +19,10 @@ export const preloadRoute = (path) => {
     .catch(() => undefined);
 };
 
-export function useRoutePreload() {
-  return useCallback((path) => {
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      window.requestIdleCallback(() => preloadRoute(path), { timeout: 2000 });
-      return;
-    }
-    setTimeout(() => preloadRoute(path), 100);
-  }, []);
-}
-
 export const preloadCriticalRoutes = () => {
   if (typeof window === "undefined") return;
   const preloader = () => {
-    preloadRoute("/");
-    preloadRoute("/home");
+    preloadRoute(APP_ROUTES.ROOT);
   };
   if ("requestIdleCallback" in window) {
     window.requestIdleCallback(preloader, { timeout: 5000 });
@@ -43,4 +31,3 @@ export const preloadCriticalRoutes = () => {
   setTimeout(preloader, 2000);
 };
 
-export default useRoutePreload;

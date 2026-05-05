@@ -5,6 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { colors, spacing } from "@theme/tokens";
 import ScrollToTop from "@ui/atoms/ScrollToTop";
+import { isChatRoute, shouldUseFullWidthLayout } from "@routes/routeState";
 
 // CSS animation for page transitions - works on iOS Safari
 const fadeIn = keyframes`
@@ -14,14 +15,8 @@ const fadeIn = keyframes`
 
 function PublicLayout() {
   const location = useLocation();
-  const isHomePage = location.pathname === "/";
-  const isWorkspacePage = location.pathname.startsWith("/chat/");
-  // Auth pages have their own full-screen layout, no container needed
-  const isFullWidthPage =
-    isHomePage ||
-    isWorkspacePage ||
-    location.pathname === "/login" ||
-    location.pathname === "/register";
+  const isWorkspacePage = isChatRoute(location.pathname);
+  const isFullWidthPage = shouldUseFullWidthLayout(location.pathname);
 
   return (
     <Box position="relative" bg={colors.background.darkPrimary} w="100%">
@@ -40,7 +35,7 @@ function PublicLayout() {
         zIndex={0}
       />
 
-      {!isWorkspacePage && !isHomePage && (
+      {!isWorkspacePage && (
         <Box position="sticky" top={0} zIndex={100}>
           <Header />
         </Box>
@@ -69,7 +64,7 @@ function PublicLayout() {
         )}
       </Box>
 
-      {!isWorkspacePage && !isHomePage && (
+      {!isWorkspacePage && (
         <Box position="relative" zIndex={1}>
           <Footer />
         </Box>
