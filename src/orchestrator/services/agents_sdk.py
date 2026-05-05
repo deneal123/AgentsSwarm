@@ -59,9 +59,19 @@ def _model_name() -> str:
     return os.getenv("AGENTS_MODEL", "gpt-4o-mini")
 
 
+def _model_instance() -> OpenAIChatCompletionsModel:
+    """Return a model instance so RunConfig never sees a slash-prefixed string.
+
+    The Agents SDK multi-provider resolver breaks on names like 'google/gemini-...'
+    because it treats the part before '/' as a provider prefix.  Passing an explicit
+    OpenAIChatCompletionsModel instance bypasses that resolver entirely.
+    """
+    return OpenAIChatCompletionsModel(model=_model_name(), openai_client=_client())
+
+
 def _run_config() -> RunConfig:
     return RunConfig(
-        model=_model_name(),
+        model=_model_instance(),
         model_settings=_model_settings(),
         nest_handoff_history=env_bool("AGENTS_NEST_HANDOFF_HISTORY", False),
         tracing_disabled=env_bool("AGENTS_TRACING_DISABLED", True),
