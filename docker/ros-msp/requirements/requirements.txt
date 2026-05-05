@@ -2,6 +2,8 @@
 fastmcp>=2.0.0
 # Async WebSocket client for rosbridge connection
 websockets>=12.0
+# Sync WebSocket client (websocket module used internally by ros_mcp)
+websocket-client>=1.7.0
 # Image processing for camera topics
 Pillow>=10.0.0
 opencv-python-headless>=4.8.0
