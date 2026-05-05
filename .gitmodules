@@ -1,12 +1,4 @@
 
-[submodule "frontend"]
-	path = frontend
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = frontend
-[submodule "gateway"]
-	path = gateway
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = gateway
 [submodule "isaac_mission_control"]
 	path = isaac_mission_control
 	url = https://github.com/deneal123/AgentsSwarm.git
@@ -15,10 +7,6 @@
 	path = isaac_mission_dispatch
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = isaac_mission_dispatch
-[submodule "isaac_ros_server"]
-	path = isaac_ros_server
-	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = isaac_ros_server
 [submodule "nvidia_isaac_simulation"]
 	path = nvidia_isaac_simulation
 	url = https://github.com/deneal123/AgentsSwarm.git
@@ -39,7 +27,7 @@
 	path = workspace_isaac_simulation
 	url = https://github.com/deneal123/AgentsSwarm.git
 	branch = workspace_isaac_simulation
-[submodule "data_storage_service"]
-	path = data_storage_service
+[submodule "interface"]
+	path = interface
 	url = https://github.com/deneal123/AgentsSwarm.git
-	branch = data_storage_service
+	branch = interface

@@ -10,12 +10,9 @@
 
 ## Компоненты архитектуры системы
 
-- [data_storage_service](https://github.com/deneal123/AgentsSwarm/tree/data_storage_service)
-- [frontend](https://github.com/deneal123/AgentsSwarm/tree/frontend)
-- [gateway](https://github.com/deneal123/AgentsSwarm/tree/gateway)
+- [interface](https://github.com/deneal123/AgentsSwarm/tree/interface)
 - [isaac_mission_control+mcp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_control)
 - [isaac_mission_dispatch+msp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_dispatch)
-- [isaac_ros_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_ros_server)
 - [nvidia_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/nvidia_isaac_simulation)
 - [orchestrator](https://github.com/deneal123/AgentsSwarm/tree/orchestrator)
 - [smolvla_tools](https://github.com/deneal123/AgentsSwarm/tree/smolvla_tools)
@@ -90,15 +87,15 @@
 
 ---
 
-### 4. Isaac Ros Server (Model Context Protocol)
+### 4. MCP Server (Model Context Protocol)
 
 **RosMSPServer + DispatchMCPServer + ControlMCPServer**
 
 MCP — протокол, служащий посредником между LLM и внешними данными/инструментами.
 
 #### 4.1 Развертывание
-- [?] Подготовка Docker Compose конфигурации с контейнерами для использования MCP протоколов
-- [?] Обеспечение взаимодействия между MissionDispatch, MissionControl, ROS 2 и агентом для передачи управления роботами LLM
+- [x] Подготовка Docker Compose конфигурации с контейнерами для использования MCP протоколов
+- [x] Обеспечение взаимодействия между MissionDispatch, MissionControl, ROS 2 и агентом для передачи управления роботами LLM
 
 #### 4.2 Доработка
 - [?] Доработка существующих MCP протоколов для MissionDispatch и MissionControl
@@ -106,7 +103,7 @@ MCP — протокол, служащий посредником между LLM
 - [?] Добавление кастомных инструментов для специфичных задач
 
 #### 4.3 Интеграция
-- [?] Проверка подключения LLM к разработанным MCP протоколам
+- [x] Проверка подключения LLM к разработанным MCP протоколам
 
 ---
 
@@ -141,6 +138,11 @@ MCP — протокол, служащий посредником между LLM
 - [x] Подключение RosMSP MCP сервера (конфигурация + env)
 - [x] Подключение MissionControl MCP сервера (конфигурация + env)
 - [x] Подключение MissionDispatch MCP сервера (конфигурация + env)
+- [x] Контейнеризация ros-msp: Dockerfile, pyproject.toml, requirements/, переименование docker/ros_mcp → docker/ros-msp
+- [x] SSE-транспорт для всех трёх MCP-серверов (docker-compose dev: порты 8010/8011/8012)
+- [x] Переменные среды: ROSBRIDGE_IP, ROSBRIDGE_PORT, ROS_MSP_TRANSPORT, ROS_MSP_MCP_URL
+- [x] Динамический выбор транспорта stdio/sse через env vars (`mcp.py` → `_server_config()`)
+- [x] RobotInfo: добавлен mission_dispatch_server() (без него агент не имел доступа к fleet summary / battery)
 
 #### 6.3 Агентная архитектура
 
@@ -156,7 +158,9 @@ MCP — протокол, служащий посредником между LLM
 - [x] Замкнутый цикл: выполнение шагов через handoff к специализированным агентам до успеха/остановки/ошибки
 - [x] Стриминг шагов и повторное планирование при проблемах
 - [x] Контракты шагов плана (meta: expected_outcome, tools, depends_on, inputs)
-- [x] Хьюристика выбора агента: Navigation для одиночных задач, Swarm при упоминании нескольких роботов/ключевых слов, прокидывание target_robots в meta
+- [x] Хьюристика выбора агента: Navigation для одиночных задач, SwarmCoordinator при упоминании нескольких роботов/ключевых слов, прокидывание target_robots в meta
+- [x] Исправление инструментов в meta шагов плана: реальные имена MCP-инструментов (submit_navigation_mission, dispatch_mission, get_mission_status, get_idle_robots, check_robot_health)
+- [x] `POST /task/{task_id}/replan` — пересборка плана с опциональным немедленным запуском (`?run=true`)
 
 ###### Интеграция с OpenAI Agents SDK (по примерам из docs/open-agents-sdk и docs/example)
 - [x] Подключить реальный Agents SDK Runner вместо симулятора (streamed run + handoff) для плановых шагов
@@ -165,32 +169,34 @@ MCP — протокол, служащий посредником между LLM
 - [x] Добавить guardrails/validators на вход/выход (см. `docs/example/guardrail.py`, `guide.md`)
 - [x] Применить pydantic output_type для структурированных ответов (e.g. `RoutingDecision`, `UserContext`)
 - [x] Прокинуть ModelSettings/RunConfig в раннеры (temperature/top_p, nest_handoff_history) и чтение моделей из env
-- [ ] Подключить tools/модели через MCP/Agents SDK registry (см. `tools.md`, `msp.md`) для реальных вызовов MissionControl/MissionDispatch
+- [x] Подключить tools/модели через MCP/Agents SDK registry (см. `tools.md`, `msp.md`) для реальных вызовов MissionControl/MissionDispatch
 
 ##### RobotInfoAgent
-- [x] Реализация агента с подключением RosMSP MCP (конфигурация)
-- [x] Разработка system prompt с инструкциями по работе с роботами
-- [x] Добавление логики обработки запросов о состоянии роботов
-- [x] Реализация batch запросов для получения информации о всех роботах
+
+- [x] Реализация агента с подключением RosMSP MCP + MissionDispatch MCP (оба необходимы)
+- [x] Разработка system prompt с инструкциями по работе с роботами (два блока: Mission Dispatch + ros-msp)
+- [x] Добавление логики обработки запросов о состоянии роботов (get_fleet_summary, get_robot_status, check_robot_health)
+- [x] Реализация batch запросов для получения информации о всех роботах (get_idle_robots, get_mission_status)
 - [x] Обработка edge cases: робот не найден, недоступен
 
 ##### NavigationAgent
 - [x] Реализация агента с подключением MissionControl и MissionDispatch MCP (конфигурация)
-- [x] Разработка system prompt для навигационных задач
-- [ ] Реализация логики создания и отправки миссий
-- [ ] Добавление подтверждения выполнения миссии
+- [x] Разработка system prompt для навигационных задач (обязательный 3-шаговый алгоритм)
+- [x] Реализация логики создания и отправки миссий (submit_navigation_mission, dispatch_mission)
+- [x] Закрыта дыра мониторинга: обязательный polling get_mission_status до COMPLETED/FAILED (до 8 проверок)
+- [x] Сценарии: зарядка (submit_charging_mission), отстыковка (submit_undock_mission), прямое управление (dispatch_mission)
 
 ##### SwarmCoordinatorAgent
 - [x] Реализация агента с подключением всех трех MCP-серверов (конфигурация)
-- [x] Разработка system prompt для координации нескольких роботов
-- [ ] Реализация логики распределения задач между роботами
-- [ ] Добавление алгоритмов для точки встречи (rendezvous)
-- [ ] Реализация балансировки нагрузки между роботами
+- [x] Разработка system prompt для координации нескольких роботов (обязательный 4-шаговый алгоритм)
+- [x] Реализация логики распределения задач: поиск свободных роботов, health-check, параллельная отправка миссий
+- [x] Мониторинг роя: поочерёдный polling get_mission_status для каждого робота (до 6 раундов)
+- [?] Добавление алгоритмов для точки встречи (rendezvous) на стороне агента (инструкции есть, LLM вычисляет)
+- [?] Реализация балансировки нагрузки между роботами
 
 #### 6.4 Потоковая обработка (Streaming)
 
 - [x] Реализация StreamCollector для агрегации логов и событий (скелет)
-- [ ] Интеграция с WebSocket Manager Gateway для передачи потоков
 - [x] Форматирование стримов с указанием task_id и source (payload с ts/meta/level)
 - [x] Добавление метаданных в стримы: timestamp, уровень логирования, тип события
 - [x] Реализация буферизации для поздних подключений (seq + get_since, cap)
@@ -231,71 +237,89 @@ MCP — протокол, служащий посредником между LLM
 - [x] `GET /health` — healthcheck эндпоинт
 - [x] `POST /task/{task_id}/run` — запуск отложенной задачи (Router/Planner) с построением плана и стримингом шагов
 - [x] `POST /task/{task_id}/cancel` — прерывает исполнение, помечает шаги плана `canceled`, стримит события отмены
+- [x] `POST /task/{task_id}/replan` — пересборка плана; `?run=true` — сразу запустить
+
+#### 6.8 Качество кода и рефакторинг
+
+- [x] Фикс `BackgroundTasks | None` → `BackgroundTasks = BackgroundTasks()` (FastAPI DI несовместим с union-типом)
+- [x] Фикс `Iterable` → `tuple` для exceptions в `retry.py`
+- [x] Предкомпиляция regex в `planner.py` (`_ROBOT_ID_RE`, `_GOAL_SPLIT_RE`) — вынос из hot path
+- [x] Упрощение `_extract_robot_ids()` через `dict.fromkeys()` вместо ручной дедупликации
+- [x] Замена `os.getenv("AGENTS_TRACING_DISABLED", "1") != "0"` на `env_bool()` в `agents_sdk.py`
+- [x] Консолидация трёх дублирующихся MCP-фабрик в единый `_server_config()` в `mcp.py`
 
 #### 6.9 Тестирование
 
-- [ ] Unit тесты для каждого агента
-- [ ] Интеграционные тесты с моковыми MCP-серверами
-- [ ] E2E тесты полного цикла обработки задачи
-- [ ] Тесты потоковой передачи данных через WebSocket
-- [ ] Нагрузочное тестирование (локал 100+ параллельных задач)
 - [x] Юнит-тесты для базовых сервисов (health, sessions, streaming, retry, события, заглушечный раннер)
+- [x] Контрактные тесты планировщика (агент, инструменты, target_robots, зависимости шагов)
+- [x] Тесты guardrails (input/output валидация, категории роутера, silent fallback)
+- [x] Интеграционные тесты HTTP API (run, cancel, replan, events, WebSocket) — 43/43 ✅
+- [?] Интеграционные тесты с реальными MCP-серверами (требуют Docker-окружения)
+- [?] E2E тесты полного цикла с LLM (требуют работающей модели)
+- [?] Тесты потоковой передачи данных через WebSocket (async client)
+- [?] Нагрузочное тестирование (100+ параллельных задач)
 
-#### 6.11 Интеграция с Gateway
+#### 6.10 Документация
 
-- [ ] Согласование формата сообщений между Orchestrator и Gateway
-- [ ] Тестирование эндпоинта `/task` с реальным Worker
-- [ ] Проверка корректности передачи task_id через цепочку
-- [ ] Тестирование стримов от Orchestrator до Frontend
+- [x] README полностью переписан: удалён Gateway, актуальная архитектура с Interface-сервисом
+- [x] Архитектурная диаграмма Mermaid — актуальная топология (5 сервисов + rosbridge + Isaac Sim)
+- [x] Таблица fallback-ов и устойчивости
+- [x] Инвентарь MCP-инструментов по каждому серверу
+- [x] Примечание об ограничении: оркестратор не поллирует миссии автоматически (это задача агента)
 
----
+#### 6.11 Интеграция с Interface
 
-### 7. Gateway
-
-#### 7.1 В разработке ...
-
-### 8. Data Storage Service
-
-#### 8.1 В разработке ...
-
-### 9. Frontend
-
-#### 9.1 В разработке ...
-
----
-
-### 10. Доработка RosMCPServer для передачи изображений через сокеты / стримминг зрения роя (интеграция субагента реалтайм алертинга) - добавляет согласованность рою
-
-#### 10.1 В разработке ...
+- [?] Тестирование эндпоинта `/task` с реальным интерфейсом
+- [?] Тестирование стримов от Orchestrator до Frontend
 
 ---
 
-### 11. SmolVLA Tools
+### 7. Interface
+
+#### 7.1 Базовая настрока и окружение
+
+- ...
+
+### 7.2 Агентная архитектура для сбора мутимодального контекста
+
+- ...
+
+### 7.3 Реализованные ендпоинты бекенда
+
+- ...
+
+### 7.4 Реализация фронтенда
+
+- ...
+
+---
+
+### 8. SmolVLA Tools
 
 Фреймворк для оптимизации моделей SmolVLA (Vision‑Language‑Action) для робототехнических приложений. Реализует полный пайплайн сжатия: дистилляция знаний → FP16 pruning → анализ квантизации. Итоговая модель сохраняет >90% точности при сжатии в 443 раза (1.7 ГБ → <0.5 ГБ VRAM) и ускорении инференса 20–25×, что позволяет развертывать её на борту робота (Jetson Orin Nano).
 
-#### 11.1 Подготовка окружения и инструментов
+#### 8.1 Подготовка окружения и инструментов
 
 - [x] Настройка проекта с uv и pyproject.toml
 - [x] Интеграция с HuggingFace (lerobot/smolvla_base, lerobot/pusht, lerobot/libero)
 - [x] Подготовка .env.example и конфигурации переменных окружения
 - [x] Создание шаблонов скриптов: train.py, export_onnx.py
 
-#### 11.2 Архитектура и модели
+#### 8.2 Архитектура и модели
 
 - [x] Реализация TeacherModel с загрузкой предобученных весов
 - [x] Реализация StudentModel с настраиваемым коэффициентом сжатия (student_ratio)
 - [x] Разработка многокомпонентной функции потерь дистилляции (MSE + KL + attention transfer)
  Поддержка mixed precision (FP16) через torch.cuda.amp
 
-#### 11.3 Пайплайн оптимизации
+#### 8.3 Пайплайн оптимизации
 
 - [x] Stage 1: Knowledge distillation (10 эпох, температура 3.0, alpha 0.7)
 - [x] Stage 2: Mixed precision inference (FP16) для ускорения на тензорных ядрах
 - [x] Stage 3: Structured pruning (30% весов в Linear слоях)
 - [x] Stage 4: Анализ квантизации (INT8) с выявлением критических слоёв
 
-#### 11.4 Эксперименты и валидация
+#### 8.4 Эксперименты и валидация
 
 - [x] Валидация Teacher‑модели на lerobot/libero: MSE 0.1782, R² 0.8412
 - [x] Запуск полного пайплайна на 10 эпохах
@@ -303,27 +327,27 @@ MCP — протокол, служащий посредником между LLM
 - [x] Измерение сжатия: 443× по параметрам, 12× по VRAM
 - [x] Оценка per‑action MAE (7 действий манипулятора) — разница в третьем знаке
 
-#### 11.5 Профилирование и бенчмарки
+#### 8.5 Профилирование и бенчмарки
 
 - [x] Профилирование времени инференса (batch=1) на RTX 4090
 - [x] Сравнение latency: Teacher → 450 ms, Student → 18 ms (25× ускорение)
 - [x] Анализ потребления памяти: Teacher (FP32) → 6 GB, Student (FP16) → <0.5 GB
 
-### 11.6 Экспорт и развертывание
+### 8.6 Экспорт и развертывание
 
 - [x] Экспорт Student‑модели в ONNX (фиксированный вход 224×224)
 - [x] Проверка совместимости с NVIDIA TensorRT (рекомендован FP16 режим)
 - [x] Подготовка примеров инференса для встраиваемых платформ
 
-#### 11.7 Документация и отчёты
+#### 8.7 Документация и отчёты
 
 - [x] Оформление отчётов №1–3 (docs/report_1.md, report_2.md, report_3.md)
 - [x] Написание README с примерами использования и результатами
 - [x] Фиксация инженерных выводов для интеграции в рой (Jetson‑совместимость)
 
-### 12. Доработка workspace, разработка VDA5050 адаптер хендлера для создания кастомного action действия для использования VLA в миссиях (интеграция SmolVLA в MissionDispatch+MissionControl через кастомные действия) - добавляет индивидуальную автономность
+### 9. Доработка workspace, разработка VDA5050 адаптер хендлера для создания кастомного action действия для использования VLA в миссиях (интеграция SmolVLA в MissionDispatch+MissionControl через кастомные действия) - добавляет индивидуальную автономность
 
-#### 12.1 В разработке ...
+#### 9.1 В разработке ...
 
 ---
 
