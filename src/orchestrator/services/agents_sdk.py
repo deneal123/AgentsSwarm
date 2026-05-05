@@ -12,7 +12,7 @@ from functools import lru_cache
 from typing import Iterable, Optional
 
 from agents import Agent, ModelSettings, RunConfig, Runner
-from agents.mcp import MCPServer, MCPServerSse, MCPServerStdio, MCPServerStdioParams
+from agents.mcp import MCPServer, MCPServerSse, MCPServerStdio, MCPServerStdioParams, MCPServerStreamableHttp
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from pydantic import BaseModel, Field
 
@@ -86,6 +86,8 @@ def _mcp_servers(configs: Iterable[MCPServerConfig]) -> list[MCPServer]:
     for cfg in configs:
         if cfg.transport == "sse":
             servers.append(MCPServerSse(params={"url": cfg.url}, name=cfg.name))
+        elif cfg.transport == "streamable-http":
+            servers.append(MCPServerStreamableHttp(params={"url": cfg.url}, name=cfg.name))
         else:
             params: MCPServerStdioParams = {
                 "command": cfg.command,

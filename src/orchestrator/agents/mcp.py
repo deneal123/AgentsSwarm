@@ -64,7 +64,7 @@ def ros_msp_server() -> MCPServerConfig:
     return _server_config(
         name="ros-msp",
         env_prefix="ROS_MSP",
-        default_sse_url="http://ros-msp:8000/sse",
+        default_sse_url="http://ros-msp:8000/mcp",
         default_command="uv",
         default_args="--directory /opt/ros-mcp-server run server.py",
         extra_env={

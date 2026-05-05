@@ -26,4 +26,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
     CMD python -c "import socket; s=socket.create_connection(('localhost',8000),2); s.close()" || exit 1
 
 # rosbridge connection is configured via ROSBRIDGE_IP / ROSBRIDGE_PORT env vars
-CMD ["ros-msp", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["ros-msp", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
