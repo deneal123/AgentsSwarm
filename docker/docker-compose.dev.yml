@@ -125,8 +125,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: orchestrator-redis
-    ports:
-      - "6379:6379"
+    # Port not exposed to host — Redis on the host likely uses 6379 already.
+    # Inside Docker network orchestrator connects via redis:6379.
     volumes:
       - redis-data:/data
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
