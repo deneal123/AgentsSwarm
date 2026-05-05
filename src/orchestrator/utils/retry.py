@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import random
 import time
-from typing import Any, Awaitable, Callable, Iterable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 T = TypeVar("T")
 
@@ -27,7 +27,7 @@ def retry_sync(
     base_delay: float = 0.1,
     factor: float = 2.0,
     jitter: float = 0.05,
-    exceptions: Iterable[type[BaseException]] = (Exception,),
+    exceptions: tuple[type[BaseException], ...] = (Exception,),
     **kwargs: Any,
 ) -> T:
     for attempt in range(1, retries + 1):
@@ -48,7 +48,7 @@ async def retry_async(
     base_delay: float = 0.1,
     factor: float = 2.0,
     jitter: float = 0.05,
-    exceptions: Iterable[type[BaseException]] = (Exception,),
+    exceptions: tuple[type[BaseException], ...] = (Exception,),
     **kwargs: Any,
 ) -> T:
     for attempt in range(1, retries + 1):

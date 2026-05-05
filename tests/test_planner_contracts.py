@@ -9,7 +9,7 @@ def test_build_plan_single_robot_prefers_navigation():
     last = plan[-1]
     assert last.agent == "Navigation"
     assert last.meta["target_robots"] == ["carter01"]
-    assert "create_mission" in last.meta["tools"]
+    assert "submit_navigation_mission" in last.meta["tools"]
     assert "plan_route" not in last.meta["tools"]
 
 
@@ -17,18 +17,18 @@ def test_build_plan_multi_robot_prefers_swarm_and_routes():
     plan = build_plan("Организуй встречу carter01 и carter02")
     assert len(plan) >= 3
     last = plan[-1]
-    assert last.agent == "Swarm"
+    assert last.agent == "SwarmCoordinator"
     assert set(last.meta["target_robots"]) == {"carter01", "carter02"}
-    assert "plan_route" in last.meta["tools"]
-    assert "send_mission" in last.meta["tools"]
+    assert "dispatch_mission" in last.meta["tools"]
+    assert "get_mission_status" in last.meta["tools"]
 
 
 def test_build_plan_swarm_keyword_without_ids():
     plan = build_plan("Скоординируй рой роботов для осмотра склада")
     last = plan[-1]
-    assert last.agent == "Swarm"
+    assert last.agent == "SwarmCoordinator"
     assert last.meta["target_robots"] == []
-    assert "plan_route" in last.meta["tools"]
+    assert "dispatch_mission" in last.meta["tools"]
 
 
 def test_build_plan_splits_multiple_goals():

@@ -1,7 +1,4 @@
-"""Lightweight in-memory task tracker used by the HTTP surface.
-
-This is a placeholder until the agent runner and streaming pipeline are wired in.
-"""
+"""Lightweight in-memory task tracker used by the HTTP surface."""
 
 from __future__ import annotations
 
@@ -16,6 +13,13 @@ class TaskStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELED = "canceled"
+
+
+_TERMINAL_STATUSES = {
+    TaskStatus.CANCELED.value,
+    TaskStatus.COMPLETED.value,
+    TaskStatus.FAILED.value,
+}
 
 
 @dataclass
@@ -54,49 +58,32 @@ class TaskStore:
 
     def append_log(self, task_id: str, message: str) -> None:
         task = self._tasks.get(task_id)
-        if not task:
-            return
-        task.logs.append(message)
+        if task:
+            task.logs.append(message)
 
     def set_plan(self, task_id: str, plan: list[Dict[str, Any]]) -> None:
         task = self._tasks.get(task_id)
-        if not task:
-            return
-        task.plan = plan
+        if task:
+            task.plan = plan
 
     def update_plan_step(self, task_id: str, step_id: int, status: str) -> None:
         task = self._tasks.get(task_id)
-        if not task or not task.plan:
+        if not task:
             return
-        updated: list[Dict[str, Any]] = []
         for step in task.plan:
             if step.get("id") == step_id:
                 step["status"] = status
-            updated.append(step)
-        task.plan = updated
+                return
 
     def cancel_incomplete_steps(self, task_id: str, include_completed: bool = False) -> None:
-        """Mark any non-completed plan steps as canceled.
+        """Mark non-terminal plan steps as canceled.
 
+        When include_completed=True, overwrites even already-terminal steps.
         Safe to call when no plan is present.
         """
         task = self._tasks.get(task_id)
         if not task or not task.plan:
             return
-        updated: list[Dict[str, Any]] = []
         for step in task.plan:
-            if include_completed or step.get("status") not in {
-                TaskStatus.CANCELED.value,
-                TaskStatus.COMPLETED.value,
-                TaskStatus.FAILED.value,
-            }:
+            if include_completed or step.get("status") not in _TERMINAL_STATUSES:
                 step["status"] = TaskStatus.CANCELED.value
-            updated.append(step)
-        task.plan = updated
-
-
-# Dependency providers for FastAPI DI
-
-
-def get_task_store() -> TaskStore:
-    return TaskStore()

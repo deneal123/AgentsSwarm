@@ -14,7 +14,7 @@ from orchestrator.api.schemas import (
 from orchestrator.services.orchestrator_runtime import OrchestratorRuntime
 from orchestrator.services.streaming import StreamCollector
 from orchestrator.services.task_application_service import IngestEventCommand, TaskApplicationService
-from orchestrator.services.tasks import TaskStatus, TaskStore
+from orchestrator.services.tasks import TaskStore
 from orchestrator.services.websocket_stream import WebSocketTaskStreamService
 from orchestrator.utils.logger import get_logger
 
@@ -83,14 +83,13 @@ def register_task_routes(
         task_app_service.ensure_runnable_task(task_id)
         task = runtime.get_task_or_404(task_id)
         task_app_service.schedule_run(task_id, task.prompt, background_tasks)
-        updated = task_store.get_task(task_id)
-        return TaskResponse(status=updated.status.value if updated else TaskStatus.PENDING.value, task_id=task_id)
+        return TaskResponse(status=task.status.value, task_id=task_id)
 
     @app.post("/task/{task_id}/replan", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
-    async def replan_task(task_id: str, run: bool = False, background_tasks: BackgroundTasks | None = None) -> TaskResponse:
+    async def replan_task(task_id: str, run: bool = False, background_tasks: BackgroundTasks = BackgroundTasks()) -> TaskResponse:
         task_status = task_app_service.replan_task(task_id)
 
-        if run and background_tasks is not None:
+        if run:
             task = runtime.get_task_or_404(task_id)
             task_app_service.schedule_run(task_id, task.prompt, background_tasks)
         return TaskResponse(status=task_status, task_id=task_id)

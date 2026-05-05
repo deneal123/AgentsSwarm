@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import Any, Callable, Dict
 
 from fastapi import HTTPException, status
@@ -10,6 +9,7 @@ from orchestrator.services.plan_runner import PlanRunner
 from orchestrator.services.planner import PlanStep, build_plan
 from orchestrator.services.streaming import StreamCollector, StreamEvent
 from orchestrator.services.tasks import TaskInfo, TaskStatus, TaskStore
+from orchestrator.utils.env import env_int
 
 
 class OrchestratorRuntime:
@@ -73,7 +73,7 @@ class OrchestratorRuntime:
             )
             return
 
-        max_replans = int(os.getenv("PLAN_REPLAN_MAX", "1"))
+        max_replans = env_int("PLAN_REPLAN_MAX", 1)
         attempt = 0
         self._task_store.update_status(task_id, TaskStatus.RUNNING)
 

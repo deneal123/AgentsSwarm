@@ -42,13 +42,11 @@ async def router_output_guardrail(ctx, agent, output):  # pragma: no cover - thi
 
     normalized = (category or "").lower()
     if normalized not in ALLOWED_ROUTER_CATEGORIES:
-        # Force safe fallback
-        corrected = "general"
-        msg = {
-            "category": corrected,
-            "reason": "fallback guardrail",
-        }
-        return GuardrailFunctionOutput(msg, tripwire_triggered=True)
+        # Silently correct to safe fallback — tripwire_triggered=False so the
+        # agent run continues with the corrected category rather than raising
+        # GuardrailTripwireTriggered.
+        corrected = {"category": "general", "reason": "fallback guardrail"}
+        return GuardrailFunctionOutput(corrected, tripwire_triggered=False)
 
     return GuardrailFunctionOutput(output, tripwire_triggered=False)
 

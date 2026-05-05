@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
-from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, FastAPI, status
+from fastapi import BackgroundTasks, FastAPI, status
 from fastapi.responses import JSONResponse
 
 from orchestrator.api.error_handlers import register_exception_handlers
@@ -21,18 +20,18 @@ from orchestrator.api.schemas import (
 )
 from orchestrator.api.routes import register_task_routes
 from orchestrator.config import settings
-from orchestrator.services.sessions import SessionManager, get_session_manager
+from orchestrator.services.sessions import SessionManager
 from orchestrator.services.service_container import ServiceContainerFactory
 from orchestrator.services.streaming import StreamCollector
-from orchestrator.services.tasks import TaskStore, get_task_store
+from orchestrator.services.tasks import TaskStore
 from orchestrator.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def create_app(
-    task_store: Annotated[TaskStore, Depends(get_task_store)] | None = None,
-    session_manager: Annotated[SessionManager, Depends(get_session_manager)] | None = None,
+    task_store: TaskStore | None = None,
+    session_manager: SessionManager | None = None,
     stream_collector: StreamCollector | None = None,
     enable_debug_routes: bool | None = None,
 ) -> FastAPI:
@@ -51,6 +50,8 @@ def create_app(
     if debug_routes is None:
         debug_routes = bool(settings.get("enable_debug_routes", False)) or os.getenv("ENABLE_DEBUG_ROUTES") == "1"
 
+    _version = str(settings.get("version", "0.0.1"))
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         logger.info("Starting Orchestrator service")
@@ -61,7 +62,7 @@ def create_app(
 
     app = FastAPI(
         title="Orchestrator",
-        version=str(settings.get("version", "0.0.1")),
+        version=_version,
         description="Agentic orchestrator for robot swarm control",
         lifespan=lifespan,
     )
@@ -71,7 +72,7 @@ def create_app(
         return JSONResponse(
             {
                 "status": "ok",
-                "version": str(settings.get("version", "0.0.1")),
+                "version": _version,
                 "env": os.getenv("ENV", "dev"),
                 "redis": {"status": sm.status},
             }

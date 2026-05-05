@@ -71,7 +71,7 @@ class TaskApplicationService:
 
     def cancel_task(self, task_id: str) -> str:
         existing = self._task_store.get_task(task_id)
-        prev_status = existing.status if existing else None
+        was_running = existing is not None and existing.status == TaskStatus.RUNNING
         updated = self._task_store.update_status(task_id, TaskStatus.CANCELED)
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
@@ -85,15 +85,16 @@ class TaskApplicationService:
                 meta={},
             )
         )
-        self._stream_collector.record(
-            StreamEvent(
-                task_id=task_id,
-                source="orchestrator",
-                message="Task canceled during execution",
-                level="warning",
-                meta={"prev_status": prev_status.value if prev_status else None},
+        if was_running:
+            self._stream_collector.record(
+                StreamEvent(
+                    task_id=task_id,
+                    source="orchestrator",
+                    message="Task canceled during execution",
+                    level="warning",
+                    meta={},
+                )
             )
-        )
         return TaskStatus.CANCELED.value
 
     def ingest_event(self, command: IngestEventCommand) -> IngestEventResult:

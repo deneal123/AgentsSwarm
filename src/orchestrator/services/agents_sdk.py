@@ -1,8 +1,7 @@
 """Adapter for OpenAI Agents SDK execution of plan steps.
 
 Uses build_openai_client() to support OpenAI or vLLM providers via env.
-Falls back to simple agent-per-step execution (no MCP tools yet); still
-streams user-facing errors through PlanRunner.
+Streams user-facing events through PlanRunner via StreamCollector.
 """
 
 from __future__ import annotations
@@ -13,24 +12,18 @@ from functools import lru_cache
 from typing import Iterable, Optional
 
 from agents import Agent, ModelSettings, RunConfig, Runner
+from agents.mcp import MCPServer, MCPServerSse, MCPServerStdio, MCPServerStdioParams
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
-from agents.mcp import MCPServer, MCPServerStdio, MCPServerStdioParams
 from pydantic import BaseModel, Field
 
-try:
-    from agents.mcp import MCPServerSse  # openai-agents >= 0.4
-    _HAS_SSE = True
-except ImportError:
-    _HAS_SSE = False
-
 from orchestrator.agents import prompts
-from orchestrator.agents.router import get_router_config
 from orchestrator.agents.mcp import MCPServerConfig
+from orchestrator.agents.router import get_router_config
+from orchestrator.services.guardrails import prompt_input_guardrail, router_output_guardrail
 from orchestrator.services.openai_client import build_openai_client
 from orchestrator.services.plan_runner import AgentHandoffExecutor, HandoffResult
 from orchestrator.services.streaming import StreamCollector, StreamEvent
-from orchestrator.services.guardrails import prompt_input_guardrail, router_output_guardrail
-from orchestrator.utils import env_bool, env_float
+from orchestrator.utils.env import env_bool, env_float
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +34,7 @@ def _client():
 
 
 class RoutingDecision(BaseModel):
-    """Структурированный ответ роутера.
-
-    category маппится на handoff-агента, reason — для логов пользователя.
-    """
+    """Структурированный ответ роутера."""
 
     category: str = Field(description="router label: robot_info|navigation|swarm_coord|general")
     reason: str | None = Field(default=None, description="why the route was chosen")
@@ -56,7 +46,7 @@ def _model_settings() -> ModelSettings:
     temp = env_float("AGENTS_TEMPERATURE", 0.3)
     top_p = env_float("AGENTS_TOP_P", None)
     max_tokens = env_float("AGENTS_MAX_OUTPUT_TOKENS", None)
-    kwargs = {"temperature": temp}
+    kwargs: dict = {"temperature": temp}
     if top_p is not None:
         kwargs["top_p"] = top_p
     if max_tokens is not None:
@@ -73,36 +63,29 @@ def _run_config() -> RunConfig:
         model=_model_name(),
         model_settings=_model_settings(),
         nest_handoff_history=env_bool("AGENTS_NEST_HANDOFF_HISTORY", False),
-        tracing_disabled=os.getenv("AGENTS_TRACING_DISABLED", "1") != "0",
+        tracing_disabled=env_bool("AGENTS_TRACING_DISABLED", True),
     )
 
 
+# Mapping from agent name to its system prompt.
+_AGENT_PROMPTS: dict[str, str] = {
+    "Router": prompts.ROUTER_PROMPT,
+    "RobotInfo": prompts.ROBOT_INFO_PROMPT,
+    "Navigation": prompts.NAVIGATION_PROMPT,
+    "SwarmCoordinator": prompts.SWARM_PROMPT,
+    "General": prompts.GENERAL_FALLBACK_PROMPT,
+}
+
+
 def _agent_prompt(agent_name: str) -> str:
-    mapping = {
-        "Router": prompts.ROUTER_PROMPT,
-        "RobotInfo": prompts.ROBOT_INFO_PROMPT,
-        "Navigation": prompts.NAVIGATION_PROMPT,
-        "Swarm": prompts.SWARM_PROMPT,
-        "General": prompts.GENERAL_FALLBACK_PROMPT,
-    }
-    return mapping.get(agent_name, prompts.GENERAL_FALLBACK_PROMPT)
+    return _AGENT_PROMPTS.get(agent_name, prompts.GENERAL_FALLBACK_PROMPT)
 
 
 def _mcp_servers(configs: Iterable[MCPServerConfig]) -> list[MCPServer]:
     servers: list[MCPServer] = []
     for cfg in configs:
         if cfg.transport == "sse":
-            if not _HAS_SSE:
-                raise RuntimeError(
-                    "MCPServerSse is not available in the installed openai-agents version. "
-                    "Upgrade to openai-agents>=0.4 or set MISSION_*_TRANSPORT=stdio."
-                )
-            servers.append(
-                MCPServerSse(  # type: ignore[name-defined]
-                    params={"url": cfg.url},
-                    name=cfg.name,
-                )
-            )
+            servers.append(MCPServerSse(params={"url": cfg.url}, name=cfg.name))
         else:
             params: MCPServerStdioParams = {
                 "command": cfg.command,
@@ -125,15 +108,13 @@ def _build_agent(agent_name: str, mcp_configs: Iterable[MCPServerConfig] | None 
 
 def _router_agent() -> Agent:
     cfg = get_router_config()
-    handoff_agents: list[Agent] = []
-    for handoff in cfg.get("handoffs", []):
-        handoff_agents.append(
-            _build_agent(
-                agent_name=handoff.get("name"),
-                mcp_configs=handoff.get("mcp_servers", []),
-            )
+    handoff_agents: list[Agent] = [
+        _build_agent(
+            agent_name=handoff["name"],
+            mcp_configs=handoff.get("mcp_servers", []),
         )
-
+        for handoff in cfg.get("handoffs", [])
+    ]
     return Agent(
         name="Router",
         instructions=cfg.get("instructions", prompts.ROUTER_PROMPT),
@@ -147,19 +128,28 @@ def _router_agent() -> Agent:
 
 
 def _mcp_configs_for(agent_name: str) -> list[MCPServerConfig]:
-    cfg = get_router_config()
-    for handoff in cfg.get("handoffs", []):
+    for handoff in get_router_config().get("handoffs", []):
         if handoff.get("name") == agent_name:
             return handoff.get("mcp_servers", [])
     return []
 
 
 class AgentsSDKExecutor(AgentHandoffExecutor):
-    def __init__(self, stream_collector: Optional[StreamCollector] = None, step_delay: float = 0.05) -> None:
+    def __init__(
+        self,
+        stream_collector: Optional[StreamCollector] = None,
+        step_delay: float = 0.05,
+    ) -> None:
         self._step_delay = step_delay
         self._sc = stream_collector
 
-    async def _record_stream(self, task_id: str, event_type: str, meta: Optional[dict] = None, message: str = ""):
+    async def _record_stream(
+        self,
+        task_id: str,
+        event_type: str,
+        meta: Optional[dict] = None,
+        message: str = "",
+    ) -> None:
         if not self._sc:
             return
         self._sc.record(
@@ -173,13 +163,11 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         )
 
     async def execute(self, task_id: str, step, attempt: int) -> HandoffResult:
-        if step.agent == "Router":
-            agent = _router_agent()
-        else:
-            agent = _build_agent(step.agent, mcp_configs=_mcp_configs_for(step.agent))
+        agent = _router_agent() if step.agent == "Router" else _build_agent(
+            step.agent, mcp_configs=_mcp_configs_for(step.agent)
+        )
         run_config = _run_config()
         try:
-            # Prefer streaming to mirror events to StreamCollector
             run_streamed = getattr(Runner, "run_streamed", None)
             if run_streamed:
                 result = run_streamed(agent, input=step.description, run_config=run_config)
@@ -187,11 +175,9 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                     async for ev in result.stream_events():  # type: ignore[attr-defined]
                         etype = getattr(ev, "type", "event")
                         item = getattr(ev, "item", None)
-                        payload = None
-                        if getattr(ev, "name", None):
-                            payload = getattr(ev, "name")
+                        payload = getattr(ev, "name", None)
                         if item is not None and getattr(item, "output", None):
-                            payload = str(getattr(item, "output"))
+                            payload = str(item.output)
                         await self._record_stream(
                             task_id,
                             event_type=etype,
@@ -201,7 +187,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                 except Exception:
                     logger.exception("Failed to consume streaming events", extra={"task_id": task_id})
 
-                output = getattr(result, "final_output", None) or getattr(result, "output", None) or None
+                output = getattr(result, "final_output", None) or getattr(result, "output", None)
                 message = str(output) if output is not None else ""
                 try:
                     parsed = result.final_output_as(RoutingDecision)
@@ -211,13 +197,15 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                     pass
                 return HandoffResult(success=True, message=message)
 
-            # Fallback to non-streaming run
             result = await Runner.run(agent, step.description, run_config=run_config)
             output = getattr(result, "final_output", None) or result
-            message = str(output) if output is not None else ""
-            return HandoffResult(success=True, message=message)
+            return HandoffResult(success=True, message=str(output) if output is not None else "")
+
         except Exception as exc:
-            logger.exception("Agents SDK execution failed", extra={"task_id": task_id, "step_id": step.id})
+            logger.exception(
+                "Agents SDK execution failed",
+                extra={"task_id": task_id, "step_id": step.id},
+            )
             return HandoffResult(
                 success=False,
                 message=str(exc),

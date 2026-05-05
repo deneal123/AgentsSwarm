@@ -11,7 +11,7 @@ def env_bool(name: str, default: bool = False) -> bool:
 
 def env_float(name: str, default: Optional[float] = None) -> Optional[float]:
     val = os.getenv(name)
-    if val is None:
+    if val is None or val == "":
         return default
     try:
         return float(val)
@@ -21,7 +21,7 @@ def env_float(name: str, default: Optional[float] = None) -> Optional[float]:
 
 def env_int(name: str, default: Optional[int] = None) -> Optional[int]:
     val = os.getenv(name)
-    if val is None:
+    if val is None or val == "":
         return default
     try:
         return int(val)
@@ -30,12 +30,3 @@ def env_int(name: str, default: Optional[int] = None) -> Optional[int]:
 
 
 __all__ = ["env_bool", "env_float", "env_int"]
-import os
-
-def env_bool(name: str, default: bool = False) -> bool:
-    val = os.getenv(name)
-    if val is None:
-        return default
-    return str(val).lower() in {"1", "true", "yes", "on"}
-
-__all__ = ["env_bool"]

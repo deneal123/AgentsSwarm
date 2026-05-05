@@ -20,7 +20,7 @@ async def test_prompt_input_guardrail_blocks_empty_and_passes_valid():
 @pytest.mark.asyncio
 async def test_router_output_guardrail_corrects_invalid_category():
     invalid = await router_output_guardrail.guardrail_function(None, None, {"category": "unknown"})
-    assert invalid.tripwire_triggered is True
+    assert invalid.tripwire_triggered is False  # silent fallback — run continues with corrected category
     assert invalid.output_info["category"] == "general"
 
     for cat in ALLOWED_ROUTER_CATEGORIES:

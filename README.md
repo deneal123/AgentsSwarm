@@ -1,13 +1,15 @@
 
 # Orchestrator — агентная оркестрация для роя роботов
 
-Микросервис на базе **OpenAI Agents SDK**, выступающий интеллектуальной прослойкой между пользователем и инфраструктурой управления роботами. Orchestrator принимает запросы на естественном языке, маршрутизирует их к специализированным агентам, вызывает инструменты через MCP-серверы (RosMSP, MissionControl, MissionDispatch) и возвращает результат в реальном времени.
+Микросервис на базе **OpenAI Agents SDK**, выступающий интеллектуальной прослойкой между пользователем и инфраструктурой управления роботами. Принимает запросы на естественном языке, строит план, маршрутизирует шаги к специализированным агентам, вызывает инструменты через MCP-серверы и транслирует результат в реальном времени через WebSocket.
+
+---
 
 ## Быстрый старт
 
 ```bash
-uv sync  # или python -m pip install -e .[dev]
-uv run orchestrator  # эквивалентно: uv run uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000
+uv sync
+uv run uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000
 ```
 
 ### Docker (dev)
@@ -16,402 +18,288 @@ uv run orchestrator  # эквивалентно: uv run uvicorn orchestrator.app
 docker compose -f docker/docker-compose.dev.yml up --build
 ```
 
-Сервисы: `orchestrator` + `redis`. Код монтируется в контейнер (`../:/app` из каталога `docker`), виртуальное окружение сохраняется в отдельный volume (`orchestrator-venv`). Hot-reload включён через `--reload`.
+Поднимает 5 сервисов:
 
-Переменные окружения (см. `src/orchestrator/config/.env.example`):
-- `HOST`, `PORT` — адрес и порт сервера
-- `RELOAD=1` — включить hot-reload в дев-режиме
-- `REDIS_URL` — опциональный бэкенд для `SessionManager`
+| Сервис | Порт | Описание |
+| --- | --- | --- |
+| `orchestrator` | 8000 | FastAPI + Agents SDK |
+| `mission-control-mcp` | 8010 | MCP-сервер Mission Control API (SSE) |
+| `mission-dispatch-mcp` | 8011 | MCP-сервер Mission Dispatch API (SSE) |
+| `ros-msp` | 8012 | MCP-сервер ROS2 через rosbridge WebSocket (FastMCP SSE) |
+| `redis` | 6379 | Хранилище сессий |
 
-### API (dev-скелет)
-- `POST /task` — принять задачу и создать `task_id` (опционально `run=false` чтобы только создать)
-- `GET /task/{task_id}/status` — статус задачи
-- `GET /task/{task_id}/plan` — план действий (шаги), если построен
-- `GET /task/{task_id}/logs` — исторический лог (зеркало стрима)
-- `GET /task/{task_id}/events?after_seq=N` — получить потоковые события
-- `WS /ws/task/{task_id}` — поток событий по вебсокету (пуллинг StreamCollector)
-- `POST /task/{task_id}/events` — внешние агенты/воркеры могут пушить события и обновлять статус
-- `POST /task/{task_id}/run` — запустить отложенную задачу или переподнять pending
-- `POST /task/{task_id}/replan` — перестроить план и вернуть задачу в pending (можно передать run=true для автозапуска)
+Код оркестратора монтируется в контейнер через volume с hot-reload.
 
-**Отмена выполнения**
-- При `POST /task/{id}/cancel` статус задачи становится `canceled`, все шаги плана помечаются `canceled`, в стрим добавляются события: "Task canceled" и "Task canceled during execution".
-- Если отмена пришла до старта раннера, выполнение не начинается. Если отмена пришла в ходе шагов, раннер прекращает цикл и не выставляет `completed`.
+---
+
+## Конфигурация
+
+Переменные окружения задаются в `src/orchestrator/config/.env` (см. `.env.example`):
+
+```
+# Транспорт MCP-серверов (sse = контейнеры, stdio = локальный subprocess)
+MISSION_CONTROL_TRANSPORT=sse
+MISSION_CONTROL_MCP_URL=http://mission-control-mcp:8000/sse
+
+MISSION_DISPATCH_TRANSPORT=sse
+MISSION_DISPATCH_MCP_URL=http://mission-dispatch-mcp:8000/sse
+
+ROS_MSP_TRANSPORT=sse
+ROS_MSP_MCP_URL=http://ros-msp:8000/sse
+
+# rosbridge (машина с ROS2 workspace)
+ROSBRIDGE_IP=195.225.110.91
+ROSBRIDGE_PORT=9090
+
+# Внешние API
+MISSION_CONTROL_URL=http://195.225.110.91:8050
+MISSION_DISPATCH_URL=http://185.55.57.82:8051
+
+# Модель
+AGENTS_PROVIDER=vllm           # openai | vllm
+AGENTS_MODEL=Qwen/Qwen2.5-7B-Instruct
+AGENTS_TEMPERATURE=1.0
+
+# Поведение планировщика
+PLAN_REPLAN_MAX=1              # макс. повторных планирований при сбое
+```
+
+---
+
+## HTTP API
+
+| Метод | Путь | Описание |
+| --- | --- | --- |
+| `POST` | `/task` | Принять задачу; `?run=false` — только создать без запуска |
+| `GET` | `/task/{id}/status` | Текущий статус задачи |
+| `GET` | `/task/{id}/plan` | Список шагов плана с их статусами |
+| `GET` | `/task/{id}/logs` | Исторический лог |
+| `GET` | `/task/{id}/events?after_seq=N` | Потоковые события начиная с порядкового номера N |
+| `POST` | `/task/{id}/events` | Внешний push события (воркеры, MCP-серверы) |
+| `POST` | `/task/{id}/run` | Запустить отложенную или pending задачу |
+| `POST` | `/task/{id}/cancel` | Отменить задачу (чистая остановка всех шагов) |
+| `POST` | `/task/{id}/replan` | Пересобрать план; `?run=true` — сразу запустить |
+| `WS` | `/ws/task/{id}` | WebSocket-стрим событий задачи |
+
+Interface-сервис (backend + frontend) обращается напрямую к этим эндпоинтам и WebSocket без промежуточного gateway.
+
+---
 
 ## Архитектура
 
 ```mermaid
 graph TB
-    User1["User A"]
-    User2["User B"]
-    UI1["Frontend UI A<br/>Task Console"]
-    UI2["Frontend UI B<br/>Task Console"]
-    
-    Gateway["Gateway<br/>Task Manager"]
-    
-    OrchestratorAPI["Task Processing Endpoint"]
-    StreamCollector["Stream Collector<br/>agent logs aggregation"]
-    
-    Router["RouterAgent"]
-    Planner["MissionPlanner Agent"]
+    User["Пользователь"]
+    Interface["Interface Service\n(backend + frontend)"]
+
+    OrchestratorAPI["Orchestrator API\nPOST /task"]
+    StreamCollector["StreamCollector\nбуфер событий"]
+    WebSocket["WS /ws/task/{id}"]
+
+    Planner["Planner\nэвристический\nbuilder плана"]
+    PlanRunner["PlanRunner\nпошаговый исполнитель"]
+    Router["Router Agent\nклассификация + handoff"]
+
     RobotInfo["RobotInfo Agent"]
     Navigation["Navigation Agent"]
     Swarm["SwarmCoordinator Agent"]
-    
-    RosMSP["RosMSP"]
-    MissionControl["MissionControl"]
-    MissionDispatch["MissionDispatch"]
-    
-    IsaacSim["Isaac Sim / VDA5050"]
-    
-    User1 -->|"1. HTTP POST task"| Gateway
-    Gateway -->|"2. Return task_id"| User1
-    
-    Gateway -->|"3. HTTP request with task_id"| OrchestratorAPI
-    
-    OrchestratorAPI -->|"4. Execute with task_id"| Router
-    Router -->|"5a. Simple -> handoff"| RobotInfo
-    Router -->|"5a. Simple -> handoff"| Navigation
-    Router -->|"5a. Simple -> handoff"| Swarm
-    Router -->|"5b. Complex -> plan"| Planner
+    General["General Agent"]
 
-    Planner -->|"6. Build plan (steps)"| Planner
-    Planner -->|"7. Execute step"| RobotInfo
-    Planner -->|"7. Execute step"| Navigation
-    Planner -->|"7. Execute step"| Swarm
-    Planner -->|"8. Stream step result"| StreamCollector
-    Planner -->|"loop until done/blocked"| Planner
-    
-    RobotInfo -->|"6. Stream: [task_id] logs"| StreamCollector
-    Navigation -->|"6. Stream: [task_id] logs"| StreamCollector
-    Swarm -->|"6. Stream: [task_id] logs"| StreamCollector
-    
-    RobotInfo -->|"MCP call"| RosMSP
-    Navigation -->|"MCP call"| MissionControl
-    Swarm -->|"MCP call"| MissionDispatch
-    
-    RosMSP -->|"Execute"| IsaacSim
-    MissionControl -->|"Execute"| IsaacSim
-    MissionDispatch -->|"Execute"| IsaacSim
-    
-    RosMSP -->|"7. Stream: [task_id] logs"| StreamCollector
-    MissionControl -->|"7. Stream: [task_id] logs"| StreamCollector
-    
-    StreamCollector -->|"8. Forward stream with task_id"| Gateway
-    
-    Gateway -->|"9. WebSocket push"| UI1
-    Gateway -->|"9. WebSocket push"| UI2
-    
-    User2 -.->|"Alternative task flow"| Gateway
-    
-    style User1 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    style User2 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    style UI1 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    style UI2 fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    
-    style Gateway fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
-    
+    RosMSP["ros-msp\nFastMCP SSE\n:8012"]
+    MissionControl["mission-control-mcp\nSSE :8010"]
+    MissionDispatch["mission-dispatch-mcp\nSSE :8011"]
+
+    IsaacSim["Isaac Sim / VDA5050\n(roботы)"]
+    Rosbridge["rosbridge_server\n195.225.110.91:9090"]
+
+    User -->|"HTTP POST /task\nprompt"| Interface
+    Interface -->|"POST /task"| OrchestratorAPI
+    Interface -->|"WS /ws/task/{id}"| WebSocket
+
+    OrchestratorAPI --> Planner
+    Planner -->|"список PlanStep"| PlanRunner
+    PlanRunner -->|"шаг за шагом"| Router
+
+    Router -->|"robot_info"| RobotInfo
+    Router -->|"navigation"| Navigation
+    Router -->|"swarm_coord"| Swarm
+    Router -->|"general"| General
+
+    RobotInfo -->|"MCP"| RosMSP
+    Navigation -->|"MCP"| MissionControl
+    Navigation -->|"MCP"| MissionDispatch
+    Swarm -->|"MCP"| RosMSP
+    Swarm -->|"MCP"| MissionControl
+    Swarm -->|"MCP"| MissionDispatch
+
+    RosMSP -->|"WebSocket ws://"| Rosbridge
+    Rosbridge -->|"ROS2 topics"| IsaacSim
+    MissionControl -->|"HTTP"| IsaacSim
+    MissionDispatch -->|"HTTP"| IsaacSim
+
+    PlanRunner -->|"события"| StreamCollector
+    Router -->|"события"| StreamCollector
+    StreamCollector --> WebSocket
+    WebSocket -->|"push"| Interface
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
     style OrchestratorAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    
+    style WebSocket fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style Planner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style PlanRunner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style Swarm fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    
+    style General fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style RosMSP fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
     style MissionControl fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
     style MissionDispatch fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
-    
     style IsaacSim fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+    style Rosbridge fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
 ```
 
 ---
 
-## Поток обработки задачи
+## Поток выполнения задачи
 
-1. **Пользователь отправляет задачу** через HTTP POST на API Gateway. Задача содержит текстовое описание (например, *"Отправь carter01 на склад А"*).
-2. **Gateway** создаёт уникальный `task_id`, публикует задачу в очередь RabbitMQ и немедленно возвращает `task_id` пользователю.
-3. **Worker Service** забирает задачу из очереди и отправляет HTTP-запрос в Orchestrator, передавая `task_id` и текст задачи.
-4. **Orchestrator** (FastAPI) принимает запрос и запускает агентскую цепочку, передавая `task_id` в контекст выполнения.
-5. **RouterAgent** анализирует задачу: простые запросы сразу хэндятся специализированным агентам, сложные передаются в **MissionPlanner**.
-    - `RobotInfoAgent` — для запросов о состоянии роботов (батарея, позиция, список).
-    - `NavigationAgent` — для навигационных задач с одним роботом.
-    - `SwarmCoordinatorAgent` — для координации нескольких роботов.
-6. **MissionPlannerAgent** для сложных задач строит план (шаги) и в цикле исполняет их через хенд-офф к специализированным агентам; при необходимости пересчитывает план.
-7. **Специализированный агент** выполняет необходимые вызовы MCP-серверов (RosMSP, MissionControl, MissionDispatch).
-8. **Все логи и промежуточные результаты** (включая вызовы инструментов, мысли агента, статусы) передаются в StreamCollector с привязкой к `task_id`.
-8. **StreamCollector** агрегирует потоковые данные и отправляет их в WebSocket Manager.
-9. **WebSocket Manager** сохраняет поток в буфер (`Task Stream Buffer`) и транслирует его всем клиентам, подписанным на данный `task_id` (пользователь, создавший задачу, может делиться ссылкой на выполнение с другими).
-10. **Пользователь** получает потоковую выдачу через WebSocket в реальном времени: сначала видны мысли агента, затем вызовы инструментов, затем финальный ответ.
+1. **Interface** отправляет `POST /task` с промптом → получает `task_id`, открывает `WS /ws/task/{id}`.
+2. **Orchestrator** создаёт запись задачи в `TaskStore`, публикует событие `"Task accepted"`.
+3. **Planner** (эвристический) декомпозирует промпт на шаги: шаг анализа (Router), шаг сбора контекста (RobotInfo), один или несколько шагов выполнения (Navigation / SwarmCoordinator).
+4. **PlanRunner** исполняет шаги последовательно:
+   - Перед каждым шагом проверяет статус задачи (если `canceled` или `failed` — прекращает).
+   - Передаёт шаг **Router Agent**, который классифицирует его и выполняет handoff к специализированному агенту.
+   - Специализированный агент вызывает инструменты через MCP (создание миссии, опрос статуса и т.д.).
+5. Все события (старт шага, вызов инструмента, результат, ошибка) пишутся в **StreamCollector** и сразу транслируются через WebSocket.
+6. После завершения всех шагов задача переходит в `completed`.
 
 ---
 
-## Архитектурные компоненты
+## Fallback-ы и устойчивость
 
-### 1. Orchestrator (FastAPI)
-- **Task Processing Endpoint** — принимает задачу от Worker, запускает агента.
-- **Stream Collector** — собирает логи и события от агентов и MCP-серверов, передаёт в WebSocket Manager.
+| Уровень | Поведение |
+| --- | --- |
+| **Шаг плана** | До `max_attempts=2` попыток на шаг. При неустранимой ошибке шаг помечается `failed`. |
+| **Весь план** | При провале плана строится новый план и запускается повторно (до `PLAN_REPLAN_MAX=1`). |
+| **Превышение лимита** | Задача переходит в `failed`, все незавершённые шаги — в `canceled`. |
+| **Отмена** | `POST /task/{id}/cancel` — немедленная остановка, шаги помечаются `canceled`. Если раннер уже запущен — он завершает текущий шаг и выходит без старта следующих. |
+| **Ручной перезапуск** | `POST /task/{id}/replan?run=true` — пересобрать план и запустить заново. |
+| **Внешние события** | `POST /task/{id}/events` — внешние агенты или воркеры могут напрямую пушить статус `failed`/`completed`, обновлять шаги плана и писать в лог. |
 
-### 2. Агентный слой (Agent Layer)
-- **RouterAgent** — анализирует запрос, выполняет handoff к нужному агенту.
-- **MissionPlannerAgent** — двухфазный агент: понимает сложный запрос, строит план (список шагов/инструментов), затем в замкнутом цикле выполняет шаги, перенаправляя их в специализированных агентов; останавливается при успехе, ошибке или запросе уточнений.
-- **RobotInfoAgent** — работает с RosMSP.
-- **NavigationAgent** — работает с MissionControl и MissionDispatch.
-- **SwarmCoordinatorAgent** — работает со всеми тремя MCP-серверами.
-
-#### Формат плана (черновик)
-
-```json
-[
-    {
-        "id": 1,
-        "description": "Анализ запроса и уточнение цели",
-        "agent": "Router",
-        "status": "pending",
-        "meta": {
-            "expected_outcome": "Уточненная цель и параметры задачи",
-            "inputs": {"prompt": "..."},
-            "tools": [],
-            "depends_on": [],
-            "target_robots": []
-        }
-    },
-    {
-        "id": 2,
-        "description": "Получение данных/контекст",
-        "agent": "RobotInfo",
-        "status": "pending",
-        "meta": {
-            "expected_outcome": "Контекст и данные по доступным роботам",
-            "inputs": {"from_step": 1, "target_robots": ["carter01"]},
-            "tools": ["get_robots", "get_robot_status"],
-            "depends_on": [1],
-            "target_robots": ["carter01"]
-        }
-    },
-    {
-        "id": 3,
-        "description": "Выполнение задачи через специализированного агента",
-        "agent": "Navigation",
-        "status": "pending",
-        "meta": {
-            "expected_outcome": "Выполненная команда/миссия",
-            "inputs": {"from_steps": [1, 2], "target_robots": ["carter01"]},
-            "tools": ["create_mission", "send_mission"],
-            "depends_on": [1, 2],
-            "target_robots": ["carter01"]
-        }
-    }
-]
-```
-
-- Эндпоинт `GET /task/{task_id}/plan` возвращает список шагов плана в этом формате.
-- `meta` используется для расширений (например, целевые роботы, инструменты, параметры миссий).
-
-**Выбор агента**
-- Если в запросе указаны несколько роботов или встречаются ключевые слова про рой/много роботов, третий шаг использует агент `Swarm` и добавляет `plan_route` в `tools`.
-- Иначе используется `Navigation`, `tools` ограничены навигационными действиями (`create_mission`, `send_mission`).
-
-**Поля meta (контракт шага)**
-- `expected_outcome` — что считаем успехом шага.
-- `inputs` — входы, полученные из предыдущих шагов или промпта.
-- `tools` — предполагаемые инструменты/вызовы для шага.
-- `depends_on` — зависимости по шагам.
-- `target_robots` — перечень целевых роботов (может быть пустым).
-
-### 3. MCP-серверы
-- **RosMSP** — предоставляет инструменты для получения информации о роботах (список, статус, батарея, позиция).
-- **MissionControl** — управление миссиями (создание, планирование, отмена).
-- **MissionDispatch** — отправка миссий роботам и отслеживание их выполнения.
+> **Ограничение:** оркестратор **не поллирует** выполнение миссии роботом автоматически. После отправки `send_mission()` агент считает шаг завершённым по ответу API. Для отслеживания фактического выполнения промпт агента должен явно инструктировать вызов `get_mission_status()` в цикле до перехода в `COMPLETED`/`FAILED`.
 
 ---
 
-## Подключение MCP к агентам
+## Поддерживаемые сценарии
 
-```python
-from agents import Agent
-from agents.mcp import MCPServerStdio
-
-# RosMSP MCP
-ros_server = MCPServerStdio(
-    name="ros-msp",
-    params={
-        "command": "uv",
-        "args": ["--directory", "/path/to/ros-mcp-server", "run", "server.py"],
-    },
-)
-
-# MissionControl MCP
-control_server = MCPServerStdio(
-    name="mission-control",
-    params={
-        "command": "python",
-        "args": ["-m", "mission_control_mcp.server"],
-        "env": {"MISSION_CONTROL_URL": "http://localhost:8050"},
-    },
-)
-
-# MissionDispatch MCP
-dispatch_server = MCPServerStdio(
-    name="mission-dispatch",
-    params={
-        "command": "python",
-        "args": ["-m", "mission_dispatch_mcp.server"],
-        "env": {"MISSION_DISPATCH_URL": "http://localhost:8051"},
-    },
-)
-
-# Специализированные агенты
-robot_info_agent = Agent(
-    name="RobotInfo",
-    instructions=ROBOT_INFO_PROMPT,
-    mcp_servers=[ros_server],
-)
-
-navigation_agent = Agent(
-    name="Navigation",
-    instructions=NAVIGATION_PROMPT,
-    mcp_servers=[control_server, dispatch_server],
-)
-
-swarm_agent = Agent(
-    name="SwarmCoordinator",
-    instructions=SWARM_PROMPT,
-    mcp_servers=[ros_server, control_server, dispatch_server],
-)
-
-# Роутер (без инструментов)
-router = Agent(
-    name="Router",
-    instructions=ROUTER_PROMPT,
-    handoffs=[robot_info_agent, navigation_agent, swarm_agent],
-)
-```
+| Сценарий | Агент | MCP-инструменты |
+| --- | --- | --- |
+| Статус роботов (батарея, позиция) | RobotInfo | `get_robot_status`, `get_topics` (ros-msp) |
+| Навигация одного робота в точку | Navigation | `submit_navigation_mission` (MissionControl) |
+| Отправка робота на зарядку | Navigation | `submit_charging_mission`, `submit_undock_mission` |
+| Опрос очереди и статуса миссий | Navigation | `get_mission_status`, `get_fleet_summary` (MissionDispatch) |
+| Координация нескольких роботов | SwarmCoordinator | `plan_route`, `create_mission`, `send_mission` |
+| ROS2-топики и ноды | RobotInfo / Swarm | `get_topics`, `get_nodes`, `subscribe_topic` (ros-msp) |
+| Общий вопрос без инструментов | General | — |
 
 ---
 
-## System prompt для агентов (пример)
+## Планировщик
 
-### RouterAgent
+`Planner` — это **эвристическая** функция (не LLM-агент), которая строит детерминированный план из промпта:
 
-```markdown
-Ты маршрутизатор. Классифицируй запрос пользователя в одну из категорий:
-- robot_info: вопросы о статусе робота, позиции, батарее, списке доступных роботов.
-- navigation: перемещение одного робота в точку.
-- swarm_coord: координация нескольких роботов (например, "встретиться в точке А", "вместе осмотреть зону").
-- general: простые приветствия или вопросы, не требующие вызова инструментов.
+1. **Шаг 1** — `Router`: анализ запроса.
+2. **Шаг 2** — `RobotInfo`: сбор контекста (список роботов, статусы).
+3. **Шаг 3+** — `Navigation` или `SwarmCoordinator`: выполнение целей.
 
-Если запрос содержит ID робота (например, carter01) и касается перемещения — направь к navigation.
-Если упоминаются несколько роботов или рой — направь к swarm_coord.
-Если спрашивают о состоянии робота — направь к robot_info.
-В остальных случаях — к general.
-
-Твой вывод — это handoff соответствующему агенту.
-```
-
-### RobotInfoAgent
-
-```markdown
-Ты агент для получения информации о роботах через RosMSP.
-
-Доступные инструменты (через MCP):
-- get_robots(): возвращает список активных namespace роботов.
-- get_robot_status(robot_id): возвращает заряд батареи, позицию, состояние и т.д.
-
-Всегда уточняй ID робота, если он не указан. Если пользователь спрашивает "всех роботов", сначала получи список через get_robots(), затем запроси статус каждого.
-Представляй информацию чётко и структурированно.
-```
-
-### NavigationAgent
-
-```markdown
-Ты навигационный агент. Можешь создавать и отправлять миссии для одного робота.
-
-Инструменты:
-- create_mission(robot_id, waypoints) -> mission_id
-- send_mission(robot_id, mission) -> status
-
-Всегда запрашивай ID робота, если он не указан. После отправки подтверждай статус миссии.
-```
-
-### SwarmCoordinatorAgent
-
-```markdown
-Ты координатор роя. Ты можешь:
-- Получить список всех роботов (get_robots)
-- Получить детальный статус (get_robot_status)
-- Спланировать маршруты (plan_route) — требует cuOpt.
-- Создать и отправить миссии для нескольких роботов.
-
-Для задач с несколькими роботами:
-1. Определи целевых роботов (если не указаны — спроси пользователя).
-2. Для каждого робота определи waypoints/цели.
-3. Используй create_mission и send_mission для каждого.
-
-Если задача требует сложной координации (например, точка встречи), вычисли единую точку и назначь маршруты каждому.
-```
+Выбор агента для исполнительного шага:
+- Два и более robot\_id в промпте или ключевые слова «рой / swarm / group» → `SwarmCoordinator` (добавляет `plan_route` в tools).
+- Иначе → `Navigation`.
 
 ---
 
-## Примеры потока запросов
+## MCP-серверы
 
-### Навигация одного робота
+### mission-control-mcp
+Обёртка над HTTP API Mission Control (`http://195.225.110.91:8050`).
+- Отправка навигационной миссии с маршрутными точками
+- Зарядка / отстыковка
+- Работа с картами
 
-Пользователь: "Отправь carter01 на склад А."
+### mission-dispatch-mcp
+Обёртка над HTTP API Mission Dispatch (`http://185.55.57.82:8051`).
+- Список роботов и их состояние (IDLE, ON\_TASK, CHARGING…)
+- Статус миссий (PENDING, RUNNING, COMPLETED, FAILED…)
+- Диспетчеризация миссий
+- Сводка по флоту
 
-1. Gateway создаёт task_id = abc-123, публикует в очередь, возвращает ID пользователю.
-2. Worker забирает задачу, вызывает Orchestrator с task_id=abc-123.
-3. RouterAgent → NavigationAgent.
-4. NavigationAgent проверяет robot_id = carter01, вызывает create_mission() и send_mission().
-5. Все логи: "Начинаю обработку задачи abc-123", "Вызываю create_mission", "Миссия создана", "Отправляю миссию" — передаются в Stream Collector и через WebSocket — пользователю.
-6. Финальный ответ: "Миссия для carter01 создана и отправлена. Статус: running."
+### ros-msp
+FastMCP-сервер, подключающийся к **rosbridge WebSocket** (`ws://195.225.110.91:9090`).
+Не требует ROS2 на машине с оркестратором — только сетевой доступ к rosbridge.
 
-### Координация роя
+Инструменты (через rosbridge):
+- Топики: `get_topics`, `get_topic_type`, `subscribe_topic`
+- Ноды: `get_nodes`, `get_node_details`
+- Сервисы и экшены ROS2
+- Параметры (`get_parameter`, `set_parameter`)
+- Подключение к роботу: `connect_to_robot(ip, port)`
 
-Пользователь: "Организуй встречу трёх роботов (carter01, carter02, carter03) в центре карты."
+**Требование:** на машине `195.225.110.91` в контейнере `vda5050_client` должен быть запущен `rosbridge_server` с открытым портом 9090:
+```bash
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+```
 
-1. Gateway создаёт task_id = def-456, возвращает ID.
-2. RouterAgent → SwarmCoordinatorAgent.
-3. SwarmCoordinatorAgent вызывает get_robot_status для каждого, проверяет доступность.
-4. Вычисляет центральную точку, для каждого создаёт миссию.
-5. Отправляет миссии.
-6. Пользователь видит поток: "Проверяю статус carter01... доступен", "Создаю миссию для carter01", "Создаю миссию для carter02", "Отправляю миссии", "Все миссии отправлены успешно".
+### Транспорт MCP
 
----
-
-## Управление роботами (namespaces)
-
-- Список активных роботов получается через инструмент get_robots() (RosMSP MCP).
-- Каждый инструмент MissionControl и MissionDispatch принимает параметр robot_id, который соответствует namespace робота (например, carter01).
-- Если пользователь не указал robot_id, агент может:
-  - Запросить уточнение через потоковый ответ (WebSocket).
-  - Использовать первого доступного (для простых команд).
-  - Для роя — взять всех активных.
-
----
-
-### Однофазные vs двухфазные агенты
-
-- Однофазные (RobotInfoAgent, NavigationAgent, SwarmCoordinatorAgent) — подходят для задач, которые решаются за один вызов агента. Ответ генерируется сразу, но промежуточные шаги всё равно передаются потоком.
-- Двухфазные (MissionPlannerAgent) — строит план действий (декомпозиция сложного запроса на шаги), затем в цикле исполняет шаги через handoff к специализированным агентам, стримит результаты каждого шага и при необходимости пересчитывает план или запрашивает уточнения. Реализуется через потоковую обработку (Runner.run_streamed) и анализ промежуточных событий.
+| Режим | Когда | Конфигурация |
+| --- | --- | --- |
+| `sse` (Docker) | Все три MCP работают как контейнеры | `*_TRANSPORT=sse`, `*_MCP_URL=http://<service>:8000/sse` |
+| `stdio` (local) | Локальная разработка без Docker | `*_TRANSPORT=stdio`, `*_COMMAND`, `*_ARGS` |
 
 ---
 
 ## Управление сессиями
 
-Для поддержки диалога (уточнения робота, запоминания контекста) используется Redis (или in-memory хранилище для разработки). В начале каждой сессии создаётся ключ, где хранятся:
-
-- последний использованный robot_id
+Redis (или in-memory при отсутствии) хранит контекст сессии для поддержки диалога:
+- последний использованный `robot_id`
 - история запросов
-- текущая активная цель
+- произвольные данные из `session_data` запроса
 
-При каждом запросе контекст извлекается и передаётся в RunContextWrapper.
+`POST /task` принимает опциональное поле `session_data` для передачи начального контекста.
 
 ---
 
-## Дальнейшее развитие
+## Структура проекта
 
-- Поддержка сложных деревьев поведения через двухфазного MissionPlannerAgent.
-- Интеграция с VLLM_service для выбора оптимальной модели.
-- Механизм шаринга выполнения задачи: пользователь может отправить ссылку на task_id коллеге для совместного наблюдения.
+```
+orchestrator/
+├── docker/
+│   ├── docker-compose.dev.yml
+│   ├── Dockerfile                  # образ оркестратора
+│   ├── mission-control-mcp/        # MCP Mission Control (mcp + SSE)
+│   ├── mission-dispatch-mcp/       # MCP Mission Dispatch (mcp + SSE)
+│   └── ros-msp/                    # MCP ROS2 (fastmcp + rosbridge)
+└── src/orchestrator/
+    ├── agents/
+    │   ├── mcp.py                  # конфигурация MCP-серверов
+    │   ├── prompts.py              # системные промпты агентов
+    │   └── router.py               # handoff-конфигурация роутера
+    ├── api/
+    │   ├── routes/task_routes.py   # HTTP + WebSocket эндпоинты
+    │   └── schemas.py
+    ├── config/
+    │   ├── settings.toml
+    │   ├── .env                    # рабочая конфигурация
+    │   └── .env.example
+    └── services/
+        ├── agents_sdk.py           # AgentsSDKExecutor
+        ├── orchestrator_runtime.py # build_plan + run_task
+        ├── plan_runner.py          # пошаговый исполнитель
+        ├── planner.py              # эвристический builder плана
+        ├── streaming.py            # StreamCollector
+        ├── task_application_service.py
+        ├── task_event_ingestion_service.py
+        └── tasks.py                # TaskStore + TaskInfo
+```

@@ -31,7 +31,9 @@ def get_router_config() -> dict:
             {
                 "name": HANDOFF_LABELS["robot_info"],
                 "instructions": prompts.ROBOT_INFO_PROMPT,
-                "mcp_servers": [ros_msp_server()],
+                # ros-msp: ROS2 topics / nodes / parameters via rosbridge
+                # mission-dispatch: fleet status, battery, mission history
+                "mcp_servers": [ros_msp_server(), mission_dispatch_server()],
             },
             {
                 "name": HANDOFF_LABELS["navigation"],

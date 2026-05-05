@@ -1,8 +1,8 @@
-"""Minimal planner scaffold for MissionPlanner-like behavior.
+"""Planner: builds a deterministic execution plan from a user prompt.
 
-Given a user prompt, build a deterministic list of plan steps
-that can be executed by specialized agents. This is a placeholder
-until Agent SDK integration.
+Given a natural-language instruction, produces a list of PlanSteps that the
+PlanRunner hands off to specialised agents (Router → RobotInfo / Navigation /
+SwarmCoordinator).
 """
 
 from __future__ import annotations
@@ -10,6 +10,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from typing import List, Tuple
+
+_ROBOT_ID_RE = re.compile(r"[a-zA-Z]+\d+")
+_GOAL_SPLIT_RE = re.compile(r"[.;\n]|\bзатем\b|\bпотом\b|\bthen\b", re.IGNORECASE)
 
 
 @dataclass
@@ -31,16 +34,13 @@ class PlanStep:
 
 
 def build_plan(prompt: str) -> List[PlanStep]:
-    """Two-phase plan builder: analyse -> collect context -> execute goals.
+    """Two-phase plan builder: analyse → collect context → execute goals.
 
-    - Always adds analysis (id=1) and context (id=2) steps.
-    - Splits complex запрос на подцели, каждая получает свой execution-step.
-    - Подбирает агент (Navigation/Swarm) и инструменты по каждой подцели.
+    Always adds analysis (id=1) and context (id=2) steps, then one execution
+    step per extracted goal. Agent type (Navigation/SwarmCoordinator) and tool
+    list are chosen by heuristic per goal.
     """
-
-    goals = _extract_goals(prompt)
-    if not goals:
-        goals = [prompt.strip()]
+    goals = _extract_goals(prompt) or [prompt.strip()]
 
     steps: List[PlanStep] = [
         PlanStep(
@@ -61,24 +61,23 @@ def build_plan(prompt: str) -> List[PlanStep]:
             meta={
                 "expected_outcome": "Контекст и данные по доступным роботам",
                 "inputs": {"from_step": 1},
-                "tools": ["get_robots", "get_robot_status"],
+                "tools": ["get_fleet_summary", "get_robot_status", "check_robot_health"],
                 "depends_on": [1],
                 "target_robots": [],
             },
         ),
     ]
 
-    current_id = 3
-    for goal in goals:
+    for current_id, goal in enumerate(goals, start=3):
         target_agent, target_robots = _detect_agent(goal)
-        tools_for_exec = ["create_mission", "send_mission"]
-        if target_agent == "Swarm":
-            tools_for_exec = ["plan_route", "create_mission", "send_mission"]
-
-        depends_on = [1, 2]
-        if current_id > 3:
-            depends_on.append(current_id - 1)
-
+        tools_for_exec = (
+            ["get_idle_robots", "check_robot_health", "submit_navigation_mission",
+             "dispatch_mission", "get_mission_status"]
+            if target_agent == "SwarmCoordinator"
+            else ["get_robot_status", "submit_navigation_mission",
+                  "dispatch_mission", "get_mission_status"]
+        )
+        depends_on = [1, 2] + ([current_id - 1] if current_id > 3 else [])
         steps.append(
             PlanStep(
                 id=current_id,
@@ -93,44 +92,26 @@ def build_plan(prompt: str) -> List[PlanStep]:
                 },
             )
         )
-        current_id += 1
 
     return steps
 
 
-__all__ = ["PlanStep", "build_plan"]
-
-
 def _detect_agent(prompt: str) -> Tuple[str, List[str]]:
-    """Heuristic to pick target agent and extract robot ids.
-
-    Returns (agent_name, robot_ids).
-    """
-
+    """Heuristic: pick agent and extract robot ids from a single goal string."""
     lower = prompt.lower()
     robots = _extract_robot_ids(lower)
-
-    swarm_keywords = ["swarm", "несколь", "many", "multi", "group", "team", "ро""й"]
+    swarm_keywords = ["swarm", "несколь", "many", "multi", "group", "team", "рой"]
     is_swarm = len(robots) >= 2 or any(k in lower for k in swarm_keywords)
-
-    target_agent = "Swarm" if is_swarm else "Navigation"
-    return target_agent, robots
+    return ("SwarmCoordinator" if is_swarm else "Navigation"), robots
 
 
 def _extract_robot_ids(text: str) -> List[str]:
-    # naive extraction: words with letters + digits (e.g., carter01)
-    ids = re.findall(r"[a-zA-Z]+\d+", text)
-    seen = set()
-    unique = []
-    for robot_id in ids:
-        if robot_id not in seen:
-            seen.add(robot_id)
-            unique.append(robot_id)
-    return unique
+    return list(dict.fromkeys(_ROBOT_ID_RE.findall(text)))
 
 
 def _extract_goals(prompt: str) -> List[str]:
-    # Split by sentence-ending punctuation or sequencing words; keep non-empty trimmed chunks
-    parts = re.split(r"[.;\n]|\bзатем\b|\bпотом\b|\bthen\b", prompt, flags=re.IGNORECASE)
-    goals = [p.strip() for p in parts if p and p.strip()]
-    return goals
+    parts = _GOAL_SPLIT_RE.split(prompt)
+    return [p.strip() for p in parts if p and p.strip()]
+
+
+__all__ = ["PlanStep", "build_plan"]

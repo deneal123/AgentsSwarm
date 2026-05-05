@@ -6,7 +6,7 @@ services:
   # ─────────────────────────────────────────────────────────────
   mission-control-mcp:
     build:
-      context: ../docs/controller/agentic-utilities/mission-control-mcp
+      context: ./mission-control-mcp
       dockerfile: Dockerfile
     container_name: mission-control-mcp
     ports:
@@ -32,7 +32,7 @@ services:
   # ─────────────────────────────────────────────────────────────
   mission-dispatch-mcp:
     build:
-      context: ../docs/dispatch/agentic-utilities/mission-dispatch-mcp
+      context: ./mission-dispatch-mcp
       dockerfile: Dockerfile
     container_name: mission-dispatch-mcp
     ports:
@@ -49,6 +49,32 @@ services:
       interval: 10s
       timeout: 5s
       start_period: 20s
+      retries: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # ROS MSP  (rosbridge WebSocket → MCP via FastMCP http/SSE transport)
+  # SSE endpoint inside Docker network: http://ros-msp:8000/sse
+  # Exposed on host for debugging: http://localhost:8012
+  # Set ROSBRIDGE_IP to the actual robot/simulator IP at deploy time.
+  # ─────────────────────────────────────────────────────────────
+  ros-msp:
+    build:
+      context: ./ros-msp
+      dockerfile: Dockerfile
+    container_name: ros-msp
+    ports:
+      - "8012:8000"
+    environment:
+      ROSBRIDGE_IP: "195.225.110.91"
+      ROSBRIDGE_PORT: "9090"
+      ROS_DEFAULT_TIMEOUT: "5.0"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import socket; s=socket.create_connection(('localhost',8000),2); s.close()"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
       retries: 3
 
   # ─────────────────────────────────────────────────────────────
@@ -71,11 +97,13 @@ services:
       MISSION_CONTROL_MCP_URL: http://mission-control-mcp:8000/sse
       MISSION_DISPATCH_TRANSPORT: sse
       MISSION_DISPATCH_MCP_URL: http://mission-dispatch-mcp:8000/sse
+      ROS_MSP_TRANSPORT: sse
+      ROS_MSP_MCP_URL: http://ros-msp:8000/sse
       # Direct upstream URLs (used by MCP containers themselves, not by orchestrator)
       MISSION_CONTROL_URL: "http://195.225.110.91:8050"
       MISSION_DISPATCH_URL: "http://185.55.57.82:8051"
     env_file:
-      - ../src/orchestrator/config/.env.example
+      - ../src/orchestrator/config/.env
     volumes:
       - ../:/app:delegated
       - orchestrator-venv:/app/.venv
@@ -87,6 +115,8 @@ services:
       mission-control-mcp:
         condition: service_healthy
       mission-dispatch-mcp:
+        condition: service_healthy
+      ros-msp:
         condition: service_healthy
 
   # ─────────────────────────────────────────────────────────────
