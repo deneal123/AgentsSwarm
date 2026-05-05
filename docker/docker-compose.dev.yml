@@ -26,7 +26,7 @@ services:
       retries: 3
 
   # ─────────────────────────────────────────────────────────────
-  # Mission Dispatch MCP  (wraps http://185.55.57.82:8051)
+  # Mission Dispatch MCP  (wraps http://185.55.57.82:5003)
   # SSE endpoint inside Docker network: http://mission-dispatch-mcp:8000/sse
   # Exposed on host for debugging: http://localhost:8011/sse
   # ─────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ services:
       MCP_TRANSPORT: sse
       MCP_HOST: 0.0.0.0
       MCP_PORT: "8000"
-      MISSION_DISPATCH_URL: "http://185.55.57.82:8051"
+      MISSION_DISPATCH_URL: "http://185.55.57.82:5003"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c",
