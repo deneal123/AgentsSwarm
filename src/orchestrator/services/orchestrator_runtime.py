@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, Dict
+from typing import Any, Awaitable, Callable, Dict
 
 from fastapi import HTTPException, status
 
@@ -17,7 +17,7 @@ class OrchestratorRuntime:
         self,
         task_store: TaskStore,
         stream_collector: StreamCollector,
-        plan_builder: Callable[[str], list[PlanStep]] = build_plan,
+        plan_builder: Callable[[str], Awaitable[list[PlanStep]]] = build_plan,
     ) -> None:
         self._task_store = task_store
         self._stream_collector = stream_collector
@@ -40,8 +40,8 @@ class OrchestratorRuntime:
             )
         )
 
-    def build_and_store_plan(self, task_id: str, prompt: str, message: str, attempt: int | None = None) -> list[PlanStep]:
-        plan = self._plan_builder(prompt)
+    async def build_and_store_plan(self, task_id: str, prompt: str, message: str, attempt: int | None = None) -> list[PlanStep]:
+        plan = await self._plan_builder(prompt)
         payload = [step.as_dict() for step in plan]
         self._task_store.set_plan(task_id, payload)
         meta: Dict[str, Any] = {"steps": payload}
@@ -78,7 +78,7 @@ class OrchestratorRuntime:
         self._task_store.update_status(task_id, TaskStatus.RUNNING)
 
         while True:
-            plan = self.build_and_store_plan(task_id, prompt, message="Plan created", attempt=attempt + 1)
+            plan = await self.build_and_store_plan(task_id, prompt, message="Plan created", attempt=attempt + 1)
             self._stream_collector.record(
                 StreamEvent(
                     task_id=task_id,

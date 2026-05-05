@@ -1,18 +1,43 @@
-"""Planner: builds a deterministic execution plan from a user prompt.
+"""Planner: builds an execution plan from a user prompt via LLM.
 
-Given a natural-language instruction, produces a list of PlanSteps that the
-PlanRunner hands off to specialised agents (Router → RobotInfo / Navigation /
-SwarmCoordinator).
+Primary path: calls the configured LLM with a structured JSON schema to extract
+goals, agent assignments, and target robots from the prompt.
+Fallback: regex heuristics if the LLM call fails or returns nothing.
 """
 
 from __future__ import annotations
 
+import logging
+import os
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import List, Tuple
 
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
 _ROBOT_ID_RE = re.compile(r"[a-zA-Z]+\d+")
-_GOAL_SPLIT_RE = re.compile(r"[.;\n]|\bзатем\b|\bпотом\b|\bthen\b", re.IGNORECASE)
+_GOAL_SPLIT_RE = re.compile(r"(?<!\d)\.(?!\d)|;|\n|\bзатем\b|\bпотом\b|\bthen\b", re.IGNORECASE)
+
+_PLANNER_SYSTEM_PROMPT = """\
+You are a robot fleet planner. Given a user request, extract the list of execution goals.
+
+Return JSON only (no markdown) matching this schema:
+{"goals": [{"description": "...", "agent": "...", "target_robots": ["robotId"]}]}
+
+Agent selection rules:
+- "Navigation"       — single-robot movement, navigation, or positioning
+- "SwarmCoordinator" — multi-robot or swarm tasks
+- "RobotInfo"        — status queries, health checks, fleet summaries
+- "General"          — anything else
+
+Important:
+- Do NOT split coordinates, IDs, or values across multiple goals.
+- One goal = one distinct user action.
+- target_robots: robot IDs explicitly mentioned (e.g. "carter01"), else [].
+"""
 
 
 @dataclass
@@ -33,14 +58,61 @@ class PlanStep:
         }
 
 
-def build_plan(prompt: str) -> List[PlanStep]:
-    """Two-phase plan builder: analyse → collect context → execute goals.
+class _GoalItem(BaseModel):
+    description: str
+    agent: str
+    target_robots: list[str] = []
 
-    Always adds analysis (id=1) and context (id=2) steps, then one execution
-    step per extracted goal. Agent type (Navigation/SwarmCoordinator) and tool
-    list are chosen by heuristic per goal.
-    """
+
+class _LLMPlan(BaseModel):
+    goals: list[_GoalItem]
+
+
+@lru_cache(maxsize=1)
+def _get_openai_client():
+    from orchestrator.services.openai_client import build_openai_client
+    return build_openai_client()
+
+
+async def _build_plan_llm(prompt: str) -> list[_GoalItem] | None:
+    try:
+        client = _get_openai_client()
+        model = os.getenv("AGENTS_MODEL", "gpt-4o-mini")
+        resp = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": _PLANNER_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+        )
+        raw = (resp.choices[0].message.content or "").strip()
+        # strip possible markdown code fences
+        if raw.startswith("```"):
+            raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
+        plan = _LLMPlan.model_validate_json(raw)
+        if plan.goals:
+            return plan.goals
+    except Exception:
+        logger.exception("LLM planner failed, falling back to heuristic")
+    return None
+
+
+def _build_plan_heuristic(prompt: str) -> list[tuple[str, str, list[str]]]:
     goals = _extract_goals(prompt) or [prompt.strip()]
+    return [(g.strip(), *_detect_agent(g)) for g in goals]
+
+
+async def build_plan(prompt: str) -> List[PlanStep]:
+    """Build execution plan: LLM-primary, heuristic fallback."""
+    llm_goals = await _build_plan_llm(prompt)
+
+    if llm_goals:
+        goal_tuples: list[tuple[str, str, list[str]]] = [
+            (g.description, g.agent, g.target_robots) for g in llm_goals
+        ]
+    else:
+        goal_tuples = _build_plan_heuristic(prompt)
 
     steps: List[PlanStep] = [
         PlanStep(
@@ -68,12 +140,11 @@ def build_plan(prompt: str) -> List[PlanStep]:
         ),
     ]
 
-    for current_id, goal in enumerate(goals, start=3):
-        target_agent, target_robots = _detect_agent(goal)
+    for current_id, (description, agent, target_robots) in enumerate(goal_tuples, start=3):
         tools_for_exec = (
             ["get_idle_robots", "check_robot_health", "submit_navigation_mission",
              "dispatch_mission", "get_mission_status"]
-            if target_agent == "SwarmCoordinator"
+            if agent == "SwarmCoordinator"
             else ["get_robot_status", "submit_navigation_mission",
                   "dispatch_mission", "get_mission_status"]
         )
@@ -81,8 +152,8 @@ def build_plan(prompt: str) -> List[PlanStep]:
         steps.append(
             PlanStep(
                 id=current_id,
-                description=f"Выполнение цели: {goal.strip()}",
-                agent=target_agent,
+                description=f"Выполнение цели: {description}",
+                agent=agent,
                 meta={
                     "expected_outcome": "Выполненная команда/миссия",
                     "inputs": {"from_steps": depends_on, "target_robots": target_robots},
@@ -97,7 +168,6 @@ def build_plan(prompt: str) -> List[PlanStep]:
 
 
 def _detect_agent(prompt: str) -> Tuple[str, List[str]]:
-    """Heuristic: pick agent and extract robot ids from a single goal string."""
     lower = prompt.lower()
     robots = _extract_robot_ids(lower)
     swarm_keywords = ["swarm", "несколь", "many", "multi", "group", "team", "рой"]
