@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================================
-# MLservice Run Script
+# Run Script
 # ============================================================================
 #
 # Использование:
@@ -164,11 +164,11 @@ detect_active_mode() {
     local dev_running=false
     local prod_running=false
 
-    if docker compose --env-file .env.dev -p gpthub-dev -f docker-compose.dev.yaml --profile dev --profile celery ps --status running -q 2>/dev/null | grep -q .; then
+    if docker compose --env-file .env.dev -p agents-swarm-dev -f docker-compose.dev.yaml --profile dev --profile celery ps --status running -q 2>/dev/null | grep -q .; then
         dev_running=true
     fi
 
-    if docker compose --env-file .env.prod -p gpthub-prod -f docker-compose.yaml --profile prod --profile celery ps --status running -q 2>/dev/null | grep -q .; then
+    if docker compose --env-file .env.prod -p agents-swarm-prod -f docker-compose.yaml --profile prod --profile celery ps --status running -q 2>/dev/null | grep -q .; then
         prod_running=true
     fi
 
@@ -188,10 +188,10 @@ fi
 # Определение compose файла
 if [ "$MODE" = "dev" ]; then
     COMPOSE_FILE="docker-compose.dev.yaml"
-    PROJECT_NAME="gpthub-dev"
+    PROJECT_NAME="agents-swarm-dev"
 else
     COMPOSE_FILE="docker-compose.yaml"
-    PROJECT_NAME="gpthub-prod"
+    PROJECT_NAME="agents-swarm-prod"
 fi
 ENV_FILE=".env.${MODE}"
 APP_DOMAIN=${APP_DOMAIN:-${APP__DOMAIN:-${SERVICE__APP_DOMAIN:-""}}}

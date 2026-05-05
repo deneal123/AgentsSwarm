@@ -97,10 +97,10 @@ done
 # Определение compose файла
 if [ "$MODE" = "dev" ]; then
     COMPOSE_FILE="docker-compose.dev.yaml"
-    PROJECT_NAME="gpthub-dev"
+    PROJECT_NAME="agents-swarm-dev"
 else
     COMPOSE_FILE="docker-compose.yaml"
-    PROJECT_NAME="gpthub-prod"
+    PROJECT_NAME="agents-swarm-prod"
 fi
 ENV_FILE=".env.${MODE}"
 

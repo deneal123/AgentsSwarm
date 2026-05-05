@@ -68,22 +68,6 @@ class ChatService:
                 file_context=context.file_context,
                 route_override=route_decision.route_override,
             )
-<<<<<<< HEAD
-            # Auto-activate route/tool from LLM router when user hasn't set them explicitly
-            if not web_search and not deep_research and not route_override:
-                auto_tool = routing_meta.get("tool", "none")
-                if auto_tool == "web_search":
-                    web_search = True
-                    logger.info("Router auto-activated web_search")
-                elif auto_tool == "deep_research":
-                    deep_research = True
-                    logger.info("Router auto-activated deep_research")
-                elif auto_tool in {"audio_transcribe", "image_gen", "pptx_gen", "general"}:
-                    route_override = auto_tool
-                    logger.info("Router auto-selected route_override=%s", auto_tool)
-        except Exception:
-            logger.exception("Failed to resolve routed model, continuing with provided model")
-=======
         except JobOrchestrationError as exc:
             logger.warning("Job orchestration failed, fallback to direct agent path: %s", exc)
             result = await self.fallback_service.execute(
@@ -101,7 +85,6 @@ class ChatService:
 
         if route_decision.routing_metadata:
             result.metadata = result.metadata.merged({"model_routing": route_decision.routing_metadata})
->>>>>>> 3673cd22f63efeba7dd6dbba3c163d7e24f27f58
 
         try:
             await self.persistence_service.persist_messages(context.thread_id, context.text, result.reply, context.user_id)
