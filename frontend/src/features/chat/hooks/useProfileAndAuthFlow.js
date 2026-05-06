@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAuth } from '@context/AuthContext';
 import { AuthModal, useAuthModal } from '@features/auth';
-import { useGuestSession } from '@hooks/useGuestSession';
+import { useGuestSession } from '@features/chat';
 import { useProfileDrawer } from './useProfileDrawer';
 
 export function useProfileAndAuthFlow() {
