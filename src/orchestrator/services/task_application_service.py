@@ -80,21 +80,11 @@ class TaskApplicationService:
             StreamEvent(
                 task_id=task_id,
                 source="orchestrator",
-                message="Task canceled",
+                message="Task canceled" + (" during execution" if was_running else ""),
                 level="warning",
-                meta={},
+                meta={"was_running": was_running},
             )
         )
-        if was_running:
-            self._stream_collector.record(
-                StreamEvent(
-                    task_id=task_id,
-                    source="orchestrator",
-                    message="Task canceled during execution",
-                    level="warning",
-                    meta={},
-                )
-            )
         return TaskStatus.CANCELED.value
 
     def ingest_event(self, command: IngestEventCommand) -> IngestEventResult:

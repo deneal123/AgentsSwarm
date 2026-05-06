@@ -71,7 +71,8 @@ class PlanRunner:
         return None
 
     async def _stream_stop(self, task_id: str, stop_status: TaskStatus) -> None:
-        self._ts.cancel_incomplete_steps(task_id, include_completed=stop_status == TaskStatus.FAILED)
+        # Never overwrite already-completed steps — preserve execution history.
+        self._ts.cancel_incomplete_steps(task_id, include_completed=False)
         self._sc.record(
             StreamEvent(
                 task_id=task_id,

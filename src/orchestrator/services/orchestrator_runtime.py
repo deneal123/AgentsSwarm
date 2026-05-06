@@ -76,6 +76,8 @@ class OrchestratorRuntime:
         max_replans = env_int("PLAN_REPLAN_MAX", 1)
         attempt = 0
         self._task_store.update_status(task_id, TaskStatus.RUNNING)
+        # Single runner instance shared across retries — preserves configuration.
+        runner = PlanRunner(task_store=self._task_store, stream_collector=self._stream_collector)
 
         while True:
             plan = await self.build_and_store_plan(task_id, prompt, message="Plan created", attempt=attempt + 1)
@@ -85,12 +87,11 @@ class OrchestratorRuntime:
                     source="orchestrator",
                     message="Processing started",
                     level="info",
-                    meta={"prompt": prompt[:80], "plan_attempt": attempt + 1},
+                    meta={"prompt": prompt, "plan_attempt": attempt + 1},
                 )
             )
             try:
                 await asyncio.sleep(0.05)
-                runner = PlanRunner(task_store=self._task_store, stream_collector=self._stream_collector)
                 outcome = await runner.run(task_id, plan)
 
                 current = self._task_store.get_task(task_id)

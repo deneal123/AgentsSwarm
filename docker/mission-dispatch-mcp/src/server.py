@@ -33,7 +33,7 @@ from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
 
-from .queries import MissionDispatchClient
+from .queries import MissionDispatchClient, _DEFAULT_MISSION_TIMEOUT
 
 # Set up logging
 logging.basicConfig(
@@ -62,6 +62,8 @@ TOOL_GET_RECENT_FAILURES = "get_recent_failures"
 TOOL_TEST_CONNECTION = "test_mission_dispatch_connection"
 TOOL_CREATE_ROBOT = "create_robot"
 TOOL_DISPATCH_MISSION = "dispatch_mission"
+TOOL_CANCEL_MISSION = "cancel_mission"
+TOOL_CANCEL_ACTIVE_MISSIONS = "cancel_active_missions"
 
 
 def _text_result(text: str, *, is_error: bool = False) -> CallToolResult:
@@ -246,6 +248,40 @@ async def list_tools() -> ListToolsResult:
                 },
             ),
             Tool(
+                name=TOOL_CANCEL_MISSION,
+                description=(
+                    "Cancel a specific mission by its UUID/name. "
+                    "Use before submitting a new mission if the robot has a stuck RUNNING mission."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "mission_name": {
+                            "type": "string",
+                            "description": "UUID/name of the mission to cancel (required)",
+                        }
+                    },
+                    "required": ["mission_name"],
+                },
+            ),
+            Tool(
+                name=TOOL_CANCEL_ACTIVE_MISSIONS,
+                description=(
+                    "Cancel ALL running and pending missions for a robot. "
+                    "Call this before sending a new mission to avoid the robot executing stale missions."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "robot": {
+                            "type": "string",
+                            "description": "Robot name to cancel all active missions for (required)",
+                        }
+                    },
+                    "required": ["robot"],
+                },
+            ),
+            Tool(
                 name=TOOL_DISPATCH_MISSION,
                 description="Dispatch a mission to send a robot to a location (x, y coordinates)",
                 inputSchema={
@@ -264,6 +300,14 @@ async def list_tools() -> ListToolsResult:
                         "mission_name": {
                             "type": "string",
                             "description": "Optional name for the mission",
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "description": (
+                                f"Mission timeout in seconds "
+                                f"(optional, default from MISSION_DISPATCH_TIMEOUT env var, "
+                                f"currently {_DEFAULT_MISSION_TIMEOUT}s)"
+                            ),
                         },
                     },
                     "required": ["robot", "x", "y"],
@@ -586,6 +630,27 @@ def _handle_get_recent_failures(_: dict) -> CallToolResult:
     return _text_result(result)
 
 
+def _handle_cancel_mission(arguments: dict) -> CallToolResult:
+    mission_name = _require(arguments, "mission_name")
+    try:
+        result_data = md_client.cancel_mission(mission_name)
+        result = f"**Mission Canceled**\n\n- Mission: {mission_name}\n- Response: {result_data}\n"
+        return _text_result(result)
+    except Exception as e:
+        return _text_result(f"Error canceling mission {mission_name}: {e}\n", is_error=True)
+
+
+def _handle_cancel_active_missions(arguments: dict) -> CallToolResult:
+    robot = _require(arguments, "robot")
+    canceled = md_client.cancel_active_missions(robot)
+    if not canceled:
+        return _text_result(f"**No active missions found for {robot}** — nothing to cancel.\n")
+    result = f"**Canceled {len(canceled)} mission(s) for {robot}**\n\n"
+    for name in canceled:
+        result += f"- {name}\n"
+    return _text_result(result)
+
+
 def _handle_create_robot(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "name")
     labels = arguments.get("labels")
@@ -602,7 +667,8 @@ def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
     theta = float(arguments.get("theta", 0.0))
     mission_name = arguments.get("mission_name")
 
-    mission = md_client.dispatch_move_mission(robot_name, x, y, theta, mission_name)
+    timeout = int(arguments.get("timeout") or _DEFAULT_MISSION_TIMEOUT)
+    mission = md_client.dispatch_move_mission(robot_name, x, y, theta, mission_name, timeout=timeout)
     result = "**Mission Dispatched Successfully**\n\n"
     result += format_mission_info(mission)
     result += f"\nTarget: ({float(x):.2f}, {float(y):.2f}) @ {theta:.2f} rad\n"
@@ -626,6 +692,8 @@ _TOOL_HANDLERS: Dict[str, ToolHandler] = {
     TOOL_GET_RECENT_FAILURES: _handle_get_recent_failures,
     TOOL_CREATE_ROBOT: _handle_create_robot,
     TOOL_DISPATCH_MISSION: _handle_dispatch_mission,
+    TOOL_CANCEL_MISSION: _handle_cancel_mission,
+    TOOL_CANCEL_ACTIVE_MISSIONS: _handle_cancel_active_missions,
 }
 
 

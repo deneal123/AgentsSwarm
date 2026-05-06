@@ -1,2 +1,6 @@
 [default]
 version = 'v0.0.1'
+
+# Timeout in seconds for a single dispatch_mission sent to a robot.
+# Increase if the robot needs more time to reach distant waypoints.
+mission_dispatch_timeout = 600

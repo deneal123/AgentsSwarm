@@ -45,6 +45,18 @@ async def get_map_context() -> MapContext | None:
         logger.warning("Mission Control returned empty map image")
         return None
 
+    # Inject image dimensions into metadata if the API didn't provide them.
+    # PNG header: bytes 16-24 contain width and height as big-endian uint32.
+    if "width" not in metadata and "height" not in metadata and len(image_bytes) >= 24:
+        import struct
+        try:
+            if image_bytes[:4] == b"\x89PNG":
+                w = struct.unpack(">I", image_bytes[16:20])[0]
+                h = struct.unpack(">I", image_bytes[20:24])[0]
+                metadata = {**metadata, "width": w, "height": h}
+        except Exception:
+            pass
+
     return MapContext(image_bytes=image_bytes, metadata=metadata)
 
 

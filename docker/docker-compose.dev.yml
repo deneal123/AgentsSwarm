@@ -42,6 +42,7 @@ services:
       MCP_HOST: 0.0.0.0
       MCP_PORT: "8000"
       MISSION_DISPATCH_URL: "${MISSION_DISPATCH_URL:-http://localhost:8051}"
+      MISSION_DISPATCH_TIMEOUT: "${MISSION_DISPATCH_TIMEOUT:-600}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c",

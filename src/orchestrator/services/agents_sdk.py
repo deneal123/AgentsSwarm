@@ -306,7 +306,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             best = candidates[0]
             return HandoffResult(
                 success=True,
-                message=self._format_map_result(candidates_json, best, reason="visualization unavailable"),
+                message=self._format_map_result(candidates_json, best, reason="visualization unavailable", metadata=meta),
             )
 
         await self._record_stream(
@@ -350,7 +350,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
 
         return HandoffResult(
             success=True,
-            message=self._format_map_result(candidates_json, best_candidate, reason),
+            message=self._format_map_result(candidates_json, best_candidate, reason, metadata=meta),
         )
 
     async def _compare_routes(
@@ -412,14 +412,36 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         return candidates[0], "fallback to first candidate"
 
     @staticmethod
-    def _format_map_result(candidates_json: dict, best: dict, reason: str) -> str:
+    def _format_map_result(
+        candidates_json: dict,
+        best: dict,
+        reason: str,
+        metadata: dict | None = None,
+    ) -> str:
         target = candidates_json.get("target", {})
         warnings = candidates_json.get("warnings", [])
         waypoints = best.get("waypoints", [])
         wp_str = ", ".join(f"({w['x']:.2f}, {w['y']:.2f})" for w in waypoints)
 
-        lines = [
-            "=== MAP ANALYSIS RESULT ===",
+        lines = ["=== MAP ANALYSIS RESULT ==="]
+
+        # Include map bounds so Navigation agent can sanity-check coordinates.
+        if metadata:
+            res = metadata.get("resolution")
+            x_off = metadata.get("x_offset", 0.0)
+            y_off = metadata.get("y_offset", 0.0)
+            width_px = metadata.get("width")
+            height_px = metadata.get("height")
+            bounds_parts = [f"resolution={res} m/px", f"origin=({x_off}, {y_off})"]
+            if res and width_px and height_px:
+                x_max = x_off + width_px * res
+                y_max = y_off + height_px * res
+                bounds_parts.append(
+                    f"bounds x=[{x_off:.2f}, {x_max:.2f}] y=[{y_off:.2f}, {y_max:.2f}]"
+                )
+            lines.append(f"MAP BOUNDS: {', '.join(bounds_parts)}")
+
+        lines += [
             f"TARGET: x={target.get('x', '?')}, y={target.get('y', '?')}",
             f"BEST ROUTE: {best.get('name')} — {reason}",
             # Waypoints are intermediate + destination only (NOT robot start position).
@@ -430,10 +452,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         if warnings:
             lines.append(f"WARNINGS: {'; '.join(warnings)}")
 
-        lines += [
-            "",
-            "OTHER CANDIDATES:",
-        ]
+        lines += ["", "OTHER CANDIDATES:"]
         for c in candidates_json.get("candidates", []):
             if c.get("name") != best.get("name"):
                 wp = ", ".join(f"({w['x']:.2f}, {w['y']:.2f})" for w in c.get("waypoints", []))

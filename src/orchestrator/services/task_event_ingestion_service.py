@@ -87,10 +87,13 @@ class TaskEventIngestionService:
             )
         elif event_status == TaskStatus.COMPLETED:
             # Only mark completed when the full plan is done; ignore premature signals.
+            # Both "completed" and "canceled" count as terminal for individual steps —
+            # a skipped/gracefully-failed step should not block task completion.
+            _STEP_DONE = {TaskStatus.COMPLETED.value, TaskStatus.CANCELED.value}
             task = self._task_store.get_task(task_id)
             task_plan = task.plan if task else []
             if not task_plan or all(
-                step.get("status") == TaskStatus.COMPLETED.value for step in task_plan
+                step.get("status") in _STEP_DONE for step in task_plan
             ):
                 self._task_store.update_status(task_id, TaskStatus.COMPLETED)
         else:

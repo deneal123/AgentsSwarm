@@ -24,10 +24,13 @@ robot and mission status information.
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import requests
+
+_DEFAULT_MISSION_TIMEOUT: int = int(os.getenv("MISSION_DISPATCH_TIMEOUT", "600"))
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +234,42 @@ class MissionDispatchClient:
         }
         return self._post_request("mission", data)
 
+    def cancel_mission(self, mission_name: str) -> Dict:
+        """Cancel a running or pending mission by its name/UUID."""
+        try:
+            response = requests.patch(
+                f"{self.base_url}/mission/{mission_name}",
+                json={"needs_canceled": True},
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            raise MissionDispatchClientError(
+                f"HTTP error {response.status_code}: {response.text}"
+            ) from e
+        except requests.exceptions.RequestException as e:
+            raise MissionDispatchClientError(f"Request failed: {e}") from e
+
+    def cancel_active_missions(self, robot_name: str) -> List[str]:
+        """Cancel all RUNNING and PENDING missions for a robot. Returns list of canceled names."""
+        missions = self.get_missions_by_robot(robot_name, limit=None)
+        active = [
+            m for m in missions
+            if m.get("status", {}).get("state") in ("RUNNING", "PENDING")
+        ]
+        canceled = []
+        for m in active:
+            name = m.get("name", "")
+            if not name:
+                continue
+            try:
+                self.cancel_mission(name)
+                canceled.append(name)
+            except MissionDispatchClientError:
+                pass
+        return canceled
+
     def dispatch_move_mission(
         self,
         robot: str,
@@ -238,7 +277,7 @@ class MissionDispatchClient:
         y: float,
         theta: float = 0.0,
         name: Optional[str] = None,
-        timeout: int = 300,
+        timeout: int = _DEFAULT_MISSION_TIMEOUT,
         allowed_deviation_xy: float = 0.1,
         allowed_deviation_theta: float = 0.0,
     ) -> Dict:
