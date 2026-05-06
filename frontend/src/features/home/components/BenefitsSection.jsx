@@ -1,12 +1,11 @@
 import React, { useRef } from "react";
 import { Box, SimpleGrid, Stack, Icon, usePrefersReducedMotion } from "@chakra-ui/react";
-import { MotionBox } from "@ui/motionPrimitives";
-import { Subtitle, Body, Footnote } from "@ui/atoms/Typography";
-import { GradientText } from "@ui/atoms/AnimatedText";
+import { MotionBox, motionKeyframes, motionVariants } from "@ui/motionPrimitives";
+import { Subtitle, Body, Footnote } from "@ui/atoms";
+import { GradientText } from "@ui/atoms";
 import { colors, borderRadius, spacing } from "@theme/tokens";
 import { CheckCircleIcon, TimeIcon, LockIcon, RepeatIcon } from "@chakra-ui/icons";
 import { BENEFITS_CONTENT } from "@constants";
-import { keyframes } from "@emotion/react";
 
 const iconMap = {
   CheckCircleIcon,
@@ -22,45 +21,6 @@ const resolveColor = (colorKey) => {
   if (colorKey.startsWith("#")) return colorKey;
   const parts = colorKey.split(".");
   return parts.reduce((acc, part) => (acc ? acc[part] : undefined), colors) || colorKey;
-};
-
-const float = keyframes`
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(2deg); }
-`;
-
-const pulse = keyframes`
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
-`;
-
-const shimmer = keyframes`
-  0% { left: -100%; }
-  100% { left: 200%; }
-`;
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  },
 };
 
 /**
@@ -101,7 +61,7 @@ function BenefitCard({ benefit, index }) {
   return (
     <MotionBox
       ref={cardRef}
-      variants={itemVariants}
+      variants={motionVariants.riseInItem}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ transform, transformStyle: "preserve-3d" }}
@@ -146,7 +106,7 @@ function BenefitCard({ benefit, index }) {
           h="100%"
           bg="linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)"
           transform="skewX(-20deg)"
-          animation={glowOpacity ? `${shimmer} 1.5s ease-in-out` : "none"}
+          animation={glowOpacity ? `${motionKeyframes.shimmer} 1.5s ease-in-out` : "none"}
           pointerEvents="none"
         />
 
@@ -169,7 +129,7 @@ function BenefitCard({ benefit, index }) {
               inset={-2}
               bg={`radial-gradient(circle, ${benefitColor}30 0%, transparent 70%)`}
               filter="blur(10px)"
-              animation={prefersReducedMotion ? "none" : `${pulse} 3s ease-in-out infinite`}
+              animation={prefersReducedMotion ? "none" : `${motionKeyframes.pulse} 3s ease-in-out infinite`}
               style={{ animationDelay: `${index * 0.5}s` }}
             />
             <Box
@@ -178,7 +138,7 @@ function BenefitCard({ benefit, index }) {
               p={4}
               position="relative"
               border={`1px solid ${benefitColor}30`}
-              animation={prefersReducedMotion ? "none" : `${float} 4s ease-in-out infinite`}
+              animation={prefersReducedMotion ? "none" : `${motionKeyframes.float} 4s ease-in-out infinite`}
               style={{ animationDelay: `${index * 0.3}s` }}
             >
               <Icon
@@ -333,7 +293,7 @@ function BenefitsSection() {
         {/* Benefits Grid */}
         <MotionBox
           w="full"
-          variants={containerVariants}
+          variants={motionVariants.staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
