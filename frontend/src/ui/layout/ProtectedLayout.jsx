@@ -5,7 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import LayoutContext from "@context/LayoutContext";
 import { gradients, colors, spacing } from "@theme/tokens";
-import ScrollToTop from "@ui/atoms/ScrollToTop";
+import { ScrollToTop } from "@ui/atoms";
 
 // CSS animation for page transitions - works on iOS Safari
 const fadeIn = keyframes`

@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from "react";
 import { Box, Flex, HStack, Text } from "@chakra-ui/react";
-import SummaryPanel from "@ui/molecules/SummaryPanel";
-import { Title, Body } from "@ui/atoms/Typography";
+import { SummaryPanel } from "@ui/molecules";
+import { Title, Body } from "@ui/atoms";
 import { colors, borderRadius, gradients, spacing } from "@theme/tokens";
 
 const PageHeader = memo(function PageHeader({

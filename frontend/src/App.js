@@ -1,9 +1,8 @@
 import React, { Suspense, useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } from "react-router-dom";
 import { Center, Spinner } from "@chakra-ui/react";
-import PublicLayout from "./ui/layout/PublicLayout";
-import ProtectedLayout from "./ui/layout/ProtectedLayout";
-import ErrorBoundary from "./ui/molecules/ErrorBoundary";
+import { PublicLayout } from "./ui/layout";
+import { ErrorBoundary } from "./ui/molecules";
 import { preloadCriticalRoutes } from "./hooks/useRoutePreload";
 import { ROUTE_CONFIG, ROUTE_GUARDS, ROUTE_LAYOUTS, RoutePages } from "./routes/routeConfig";
 import { useAuth } from "./context/AuthContext";
