@@ -1,12 +1,11 @@
 import React from "react";
-import { Box, Center, Spinner, Text, VStack, keyframes } from "@chakra-ui/react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Box, keyframes } from "@chakra-ui/react";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
-import { useAuth } from "@context/AuthContext";
 import LayoutContext from "@context/LayoutContext";
 import { gradients, colors, spacing } from "@theme/tokens";
-import ScrollToTop from "@ui/atoms/ScrollToTop";
+import { ScrollToTop } from "@ui/atoms";
 
 // CSS animation for page transitions - works on iOS Safari
 const fadeIn = keyframes`
@@ -15,7 +14,6 @@ const fadeIn = keyframes`
 `;
 
 function ProtectedLayout() {
-  const { isAuthenticated, isSessionLoading } = useAuth();
   const location = useLocation();
   const [layoutVariant, setLayoutVariant] = React.useState("container");
   const [isFooterVisible, setFooterVisible] = React.useState(true);
@@ -35,22 +33,6 @@ function ProtectedLayout() {
     [layoutVariant, isFooterVisible],
   );
 
-  if (isSessionLoading) {
-    return (
-      <Center minH="100vh" bg={colors.background.darkPrimary} color={colors.text.primary}>
-        <VStack spacing={4} align="center">
-          <Spinner size="lg" thickness="4px" color={colors.brand.primary} />
-          <Text fontSize="md" opacity={0.8}>
-            Проверяем вашу сессию...
-          </Text>
-        </VStack>
-      </Center>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
-  }
 
   return (
     <LayoutContext.Provider value={layoutContextValue}>

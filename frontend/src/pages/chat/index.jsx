@@ -1,3 +1,3 @@
-import ChatPageContainer from '@features/chat/page/ChatPageContainer';
+import { ChatPageContainer } from "@features/chat";
 
 export default ChatPageContainer;
