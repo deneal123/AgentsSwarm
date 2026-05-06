@@ -204,7 +204,7 @@ def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
 
         for ev in events:
             _render_event(ev)
-            after_seq = max(after_seq, ev.get("seq", after_seq))
+        after_seq = resp.get("last_seq", after_seq)
 
         # Check task status
         status_resp = _req("GET", f"{host}/task/{task_id}/status")

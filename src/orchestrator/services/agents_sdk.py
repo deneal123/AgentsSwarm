@@ -400,7 +400,9 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             "=== MAP ANALYSIS RESULT ===",
             f"TARGET: x={target.get('x', '?')}, y={target.get('y', '?')}",
             f"BEST ROUTE: {best.get('name')} — {reason}",
-            f"WAYPOINTS: [{wp_str}]",
+            # Waypoints are intermediate + destination only (NOT robot start position).
+            # Navigation agent prepends robot's actual current position from get_robot_status.
+            f"WAYPOINTS (intermediate + destination, excluding robot start): [{wp_str}]",
             f"RATIONALE: {best.get('rationale', '')}",
         ]
         if warnings:
