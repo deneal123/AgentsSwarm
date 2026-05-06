@@ -31,11 +31,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { useChatWebSocketModel } from '../model/useChatWebSocketModel';
-import { useGuestSession } from '@hooks/useGuestSession';
-import { useAuth } from '@context/AuthContext';
 import { getChatModels, sendChatMessage } from '@api/chat';
-import { AuthModal, useAuthModal } from '@features/auth';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import BrandMark from '@shared/ui/layout';
@@ -61,10 +57,9 @@ import {
 import MessageRenderer from '@features/chat/components/MessageRenderer';
 import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
-import { SIDEBAR_COLLAPSE_STORAGE_KEY } from '../constants/localStorageKeys';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
-import { useComposerAutosize } from '../hooks/useComposerAutosize';
-import { useProfileDrawer } from '../hooks/useProfileDrawer';
+import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { ChatPageView, ChatSidebar, ChatHeaderControls, ChatComposer, TracePanel } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
@@ -72,7 +67,6 @@ import { createThreadId } from '../utils/chatThread';
 import { clampTraceDetail } from '../utils/trace';
 import { COMPOSER_MAX_HEIGHT_PX, COMPOSER_MIN_HEIGHT_PX } from '../constants/limits';
 import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
-import TracePanel from '../components/trace/TracePanel';
 import ModelSelector from '../components/ModelSelector';
 import { PROSE_SX } from './proseStyles';
 
@@ -92,39 +86,24 @@ function ChatPageContainer() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const sideEffects = useChatSideEffects({ toast, navigate });
   const sidebarDisclosure = useDisclosure();
   const memoryDisclosure = useDisclosure();
   const settingsDisclosure = useDisclosure();
   const [memoryFacts, setMemoryFacts] = useState([]);
-  const [sidebarSearch, setSidebarSearch] = useState('');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return window.localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY) === '1';
-  });
-
-  const { checkLimits, incrementRequests, remainingRequests } = useGuestSession();
-  const { isAuthenticated, user, logout } = useAuth();
   const {
-    profileDisclosure,
-    profileData,
-    profileQuota,
-    profileMemoryCount,
-    isProfileLoading,
-    resolveSessionUserId,
-  } = useProfileDrawer({ isAuthenticated, user });
-  const { isOpen: isAuthModalOpen, onClose: onAuthModalClose, showAuthModal, modalData } = useAuthModal();
+    isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileQuota, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
+  } = useProfileAndAuthFlow();
 
-  const inputRef = useRef(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
   const [selectedModelOverride, setSelectedModelOverride] = useState(() => searchParams.get('model') || '');
+  const composer = useComposerState({ onSubmit: () => {} });
+  const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
 
   const initialMessage = searchParams.get('initial');
   const initialManualModel = searchParams.get('model') || '';
@@ -135,9 +114,6 @@ function ChatPageContainer() {
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
-  const [attachedFile, setAttachedFile] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesScrollRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -145,7 +121,6 @@ function ChatPageContainer() {
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
   const isCompactTrace = useBreakpointValue({ base: true, md: false }) ?? false;
-  const { composerHeightPx } = useComposerAutosize({ inputRef, value: inputValue });
   const {
     traceSessions,
     tracePanelsExpanded,
@@ -164,13 +139,7 @@ function ChatPageContainer() {
     upsertRecentThread,
     handleDeleteThread,
   } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages, toast });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    window.localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, isSidebarCollapsed ? '1' : '0');
-  }, [isSidebarCollapsed]);
+  const { sidebarSearch, setSidebarSearch, isSidebarCollapsed, setIsSidebarCollapsed, filteredRecentThreads } = useSidebarState({ recentThreads });
 
 
   useEffect(() => {
@@ -478,9 +447,8 @@ function ChatPageContainer() {
     currentJob,
     agentStatus,
     sendMessage: wsSendMessage,
-  } = useChatWebSocketModel({ threadId, callbacks: wsCallbacks, isAuthenticated });
-
-  const useWebSocket = isConnected && connectionState === 'connected';
+    useWebSocket,
+  } = useChatTransport({ threadId, callbacks: wsCallbacks, isAuthenticated });
 
   useEffect(() => {
     const container = messagesScrollRef.current;
@@ -926,7 +894,7 @@ function ChatPageContainer() {
     }
 
     if (trimmed.length > 10000) {
-      toast({
+      sideEffects.notify({
         title: 'Сообщение слишком длинное',
         description: 'Максимум 10000 символов.',
         status: 'warning',
@@ -951,16 +919,8 @@ function ChatPageContainer() {
     const inputTypeForRequest = attachedInputType || initialInputType || 'text';
     const routeOverrideForRequest = attachedFile?.file_type === 'audio' ? 'audio_transcribe' : null;
 
-    if (!isAuthenticated) {
-      const limitsCheck = checkLimits();
-      if (!limitsCheck.allowed) {
-        showAuthModal(
-          'Превышен лимит запросов',
-          'Бесплатные запросы закончились. Войдите, чтобы продолжить.',
-          'request_limit'
-        );
-        return;
-      }
+    if (!ensureGuestLimit()) {
+      return;
     }
 
     setIsLoading(true);
@@ -994,7 +954,7 @@ function ChatPageContainer() {
     try {
       const foundUrls = extractUrlCandidates(trimmed, 2);
       if (foundUrls.length > 0) {
-        toast({ title: foundUrls.length > 1 ? 'Читаю ссылки…' : 'Читаю ссылку…', status: 'info', duration: 2000, isClosable: true });
+        sideEffects.notify({ title: foundUrls.length > 1 ? 'Читаю ссылки…' : 'Читаю ссылку…', status: 'info', duration: 2000, isClosable: true });
         const { parseUrl: apiParseUrl } = await import('@api/chat');
         const results = await Promise.allSettled(foundUrls.map((u) => apiParseUrl(u)));
         const parsedBlocks = [];
@@ -1018,9 +978,9 @@ function ChatPageContainer() {
             detail: `Обработано URL: ${okCount}/${foundUrls.length} (${foundUrls.join(', ')})`,
           }, traceSessionId);
           if (okCount > 0) {
-            toast({ title: okCount > 1 ? 'Ссылки прочитаны' : 'Ссылка прочитана', status: 'success', duration: 2000 });
+            sideEffects.notify({ title: okCount > 1 ? 'Ссылки прочитаны' : 'Ссылка прочитана', status: 'success', duration: 2000 });
           } else {
-            toast({ title: 'Не удалось прочитать ссылку', status: 'warning', duration: 2500 });
+            sideEffects.notify({ title: 'Не удалось прочитать ссылку', status: 'warning', duration: 2500 });
           }
         }
       }
@@ -1080,7 +1040,7 @@ function ChatPageContainer() {
       finalizeTraceSession('error', traceSessionId);
       setIsLoading(false);
     }
-  }, [appendTraceEvent, attachedFile, checkLimits, connectionState, deepResearchEnabled, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel, isAuthenticated, selectedModelOverride, sendViaRest, showAuthModal, startTraceSession, threadId, toast, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
+  }, [appendTraceEvent, attachedFile, connectionState, deepResearchEnabled, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel, isAuthenticated, selectedModelOverride, sendViaRest, showAuthModal, startTraceSession, threadId, sideEffects, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
 
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
@@ -1092,7 +1052,7 @@ function ChatPageContainer() {
     }
 
     handleSendMessage(initialMessage);
-    navigate(`/chat/${threadId}`, { replace: true });
+    sideEffects.goToThread(threadId, { replace: true });
     setHasInitialized(true);
   }, [
     connectionState,
@@ -1153,7 +1113,7 @@ function ChatPageContainer() {
       setProfileMemoryCount(Array.isArray(facts) ? facts.length : 0);
     } catch (e) {
       console.warn('Failed to load memory:', e);
-      toast({
+      sideEffects.notify({
         title: 'Не удалось загрузить факты памяти',
         description: 'Проверьте, что сессия активна, и повторите попытку.',
         status: 'warning',
@@ -1164,7 +1124,7 @@ function ChatPageContainer() {
 
   const resetUiSettings = useCallback(() => {
     resetPersistedUiSettings();
-    toast({
+    sideEffects.notify({
       title: 'Настройки сброшены',
       status: 'success',
       duration: 1600,
@@ -1246,13 +1206,7 @@ function ChatPageContainer() {
               Нет чатов
             </Text>
           )}
-          {recentThreads
-            .filter((thread) => {
-              if (!sidebarSearch.trim()) return true;
-              const label = thread.title || thread.last_message || '';
-              return label.toLowerCase().includes(sidebarSearch.toLowerCase());
-            })
-            .map((thread) => {
+          {filteredRecentThreads.map((thread) => {
             const tid = thread.thread_id || thread.id || thread;
             const label = thread.title || thread.last_message || `Чат ${String(tid).slice(0, 8)}`;
             const isActive = tid === threadId;
@@ -1268,7 +1222,7 @@ function ChatPageContainer() {
                   border={`1.5px solid ${isActive ? 'rgba(239,68,68,0.3)' : 'transparent'}`}
                   cursor="pointer"
                   _hover={{ bg: isActive ? CHAT_THEME.accentSoft : CHAT_THEME.panelHover }}
-                  onClick={() => navigate(`/chat/${tid}`)}
+                  onClick={() => sideEffects.goToThread(tid)}
                   transition="all 0.15s"
                   role="button"
                 >
@@ -1351,6 +1305,7 @@ function ChatPageContainer() {
 
   return (
     <ChatPageLayout>
+    <ChatPageView>
     <Box
       h="100vh"
       position="relative"
@@ -1668,7 +1623,7 @@ function ChatPageContainer() {
                         });
                       }
 
-                      toast({
+                      sideEffects.notify({
                         title: `Файл: ${result.filename}`,
                         description: result.file_type === 'image'
                           ? 'Изображение готово для анализа'
@@ -1679,7 +1634,7 @@ function ChatPageContainer() {
                         duration: 3000,
                       });
                     } catch (err) {
-                      toast({ title: 'Ошибка загрузки', description: String(err), status: 'error', duration: 4000 });
+                      sideEffects.notify({ title: 'Ошибка загрузки', description: String(err), status: 'error', duration: 4000 });
                     }
                     e.target.value = '';
                   }}
@@ -1781,17 +1736,17 @@ function ChatPageContainer() {
                               title: 'Аудио прикреплено',
                               detail: 'Файл будет отправлен модели как вложение',
                             });
-                            toast({ title: 'Аудио прикреплено', description: 'Нажмите отправить', status: 'success', duration: 2000 });
+                            sideEffects.notify({ title: 'Аудио прикреплено', description: 'Нажмите отправить', status: 'success', duration: 2000 });
                           } catch {
-                            toast({ title: 'Ошибка распознавания', status: 'error', duration: 3000 });
+                            sideEffects.notify({ title: 'Ошибка распознавания', status: 'error', duration: 3000 });
                           }
                         };
                         mediaRecorder.start();
                         mediaRecorderRef.current = mediaRecorder;
                         setIsRecording(true);
-                        toast({ title: 'Запись...', description: 'Нажмите для остановки', status: 'info', duration: 2000 });
+                        sideEffects.notify({ title: 'Запись...', description: 'Нажмите для остановки', status: 'info', duration: 2000 });
                       } catch {
-                        toast({ title: 'Микрофон недоступен', status: 'error', duration: 3000 });
+                        sideEffects.notify({ title: 'Микрофон недоступен', status: 'error', duration: 3000 });
                       }
                     }}
                   />
@@ -2421,6 +2376,7 @@ function ChatPageContainer() {
         </DrawerContent>
       </Drawer>
     </Box>
+    </ChatPageView>
     </ChatPageLayout>
   );
 }
