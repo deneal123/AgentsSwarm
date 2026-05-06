@@ -31,7 +31,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { useWebSocketChat } from '@hooks/useWebSocketChat';
+import { useChatWebSocketModel } from '../model/useChatWebSocketModel';
 import { useGuestSession } from '@hooks/useGuestSession';
 import { useAuth } from '@context/AuthContext';
 import { getChatModels, sendChatMessage } from '@api/chat';
@@ -478,7 +478,7 @@ function ChatPageContainer() {
     currentJob,
     agentStatus,
     sendMessage: wsSendMessage,
-  } = useWebSocketChat(threadId, wsCallbacks, isAuthenticated);
+  } = useChatWebSocketModel({ threadId, callbacks: wsCallbacks, isAuthenticated });
 
   const useWebSocket = isConnected && connectionState === 'connected';
 

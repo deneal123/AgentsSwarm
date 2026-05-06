@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { uploadChatFile } from '@API/chat';
-import { useWebSocketChat } from '@hooks/useWebSocketChat';
+import { useChatWebSocketModel } from '../model/useChatWebSocketModel';
 
 export const useChatSideEffects = ({ threadId, sessionState, messagesState, uiState }) => {
   const wsCallbacks = useMemo(() => ({
@@ -22,7 +22,7 @@ export const useChatSideEffects = ({ threadId, sessionState, messagesState, uiSt
     onDisconnect: () => uiState.actions.setConnectionState('disconnected'),
   }), [messagesState.actions, uiState.actions]);
 
-  const { isConnected, sendMessage: wsSendMessage } = useWebSocketChat(threadId, wsCallbacks);
+  const { isConnected, sendMessage: wsSendMessage } = useChatWebSocketModel({ threadId, callbacks: wsCallbacks, isAuthenticated: false });
 
   useEffect(() => {
     uiState.actions.setConnectionState(isConnected ? 'connected' : 'disconnected');

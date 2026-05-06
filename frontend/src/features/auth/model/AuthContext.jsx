@@ -6,16 +6,8 @@ import extractErrorInfo from "@utils/errorHandler";
 import { registerUnauthorizedHandler } from "@api/client";
 import { APP_ROUTES } from "@routes/routeConfig";
 
-const AuthContext = createContext({
-  isAuthenticated: false,
-  isSessionLoading: true,
-  user: null,
-  error: null,
-  setAuthenticated: () => {},
-  refreshSession: async () => {},
-  logout: () => {},
-  resolveGuardRedirect: () => null,
-});
+const AuthSessionContext = createContext(null);
+const AuthActionsContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [storedAuth, setStoredAuth] = useLocalStorage("telerag:isAuthenticated", false);
@@ -93,23 +85,33 @@ export function AuthProvider({ children }) {
     };
   }, [logout]);
 
-  const value = useMemo(
-    () => ({
-      isAuthenticated,
-      isSessionLoading,
-      user,
-      error,
-      setAuthenticated,
-      refreshSession,
-      logout,
-      resolveGuardRedirect,
-    }),
-    [error, isAuthenticated, isSessionLoading, logout, refreshSession, resolveGuardRedirect, setAuthenticated, user],
+  const sessionValue = useMemo(
+    () => ({ isAuthenticated, isSessionLoading, user, error }),
+    [error, isAuthenticated, isSessionLoading, user],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const actionsValue = useMemo(
+    () => ({ setAuthenticated, refreshSession, logout, resolveGuardRedirect }),
+    [logout, refreshSession, resolveGuardRedirect, setAuthenticated],
+  );
+
+  return (
+    <AuthSessionContext.Provider value={sessionValue}>
+      <AuthActionsContext.Provider value={actionsValue}>{children}</AuthActionsContext.Provider>
+    </AuthSessionContext.Provider>
+  );
+}
+
+export function useAuthSession() {
+  return useContext(AuthSessionContext);
+}
+
+export function useAuthActions() {
+  return useContext(AuthActionsContext);
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const session = useAuthSession();
+  const actions = useAuthActions();
+  return useMemo(() => ({ ...session, ...actions }), [actions, session]);
 }
