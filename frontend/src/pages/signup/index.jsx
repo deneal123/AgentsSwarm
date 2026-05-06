@@ -4,10 +4,10 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { EmailIcon } from "@chakra-ui/icons";
 import { FaExclamationCircle, FaUser, FaUserPlus } from "react-icons/fa";
 import { registerUser } from "@api";
-import { AuthFormCard, AuthInput, AuthPageHeader, AuthPageShell, PasswordInput, PasswordStrength } from "@features/auth/components";
-import { AUTH_PRIMARY_BUTTON_SX } from "@features/auth/components/authButtonStyles";
+import { AuthFormCard, AuthInput, AuthPageHeader, AuthPageShell, PasswordInput, PasswordStrength } from "@features/auth";
+import { AUTH_PRIMARY_BUTTON_SX } from "@features/auth";
 import { borderRadius } from "@theme/tokens";
-import { AUTH_THEME } from "@features/auth/constants";
+import { AUTH_THEME } from "@features/auth";
 import extractErrorInfo from "@utils/errorHandler";
 
 function SignUpPage() {

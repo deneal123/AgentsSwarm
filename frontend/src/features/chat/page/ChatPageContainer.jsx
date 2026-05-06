@@ -35,7 +35,7 @@ import { useWebSocketChat } from '@hooks/useWebSocketChat';
 import { useGuestSession } from '@hooks/useGuestSession';
 import { useAuth } from '@context/AuthContext';
 import { getChatModels, sendChatMessage } from '@api/chat';
-import AuthModal, { useAuthModal } from '@features/auth/components/AuthModal';
+import { AuthModal, useAuthModal } from '@features/auth';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import BrandMark from '@ui/layout/BrandMark';
