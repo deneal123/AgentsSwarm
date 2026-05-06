@@ -447,8 +447,19 @@ function ChatPageContainer() {
     currentJob,
     agentStatus,
     sendMessage: wsSendMessage,
+    cancelJob,
     useWebSocket,
   } = useChatTransport({ threadId, callbacks: wsCallbacks, isAuthenticated });
+
+  const handleCancelJob = useCallback(async (jobId) => {
+    try {
+      await cancelJob(jobId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось отменить задачу';
+      setError(message);
+      sideEffects.notify({ title: 'Ошибка отмены', description: message, status: 'error', duration: 4000 });
+    }
+  }, [cancelJob, sideEffects]);
 
   useEffect(() => {
     const container = messagesScrollRef.current;
@@ -1568,6 +1579,9 @@ function ChatPageContainer() {
                   <HStack spacing={3} color={colors.text.tertiary}>
                     <Spinner size="sm" />
                     <Text fontSize="sm">Агент обрабатывает задачу...</Text>
+                    <Button size="xs" variant="ghost" onClick={() => handleCancelJob(currentJob?.id)}>
+                      Отменить
+                    </Button>
                   </HStack>
                 )}
                 <Box ref={messagesEndRef} />

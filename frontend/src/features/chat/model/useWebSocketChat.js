@@ -778,6 +778,36 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
     }
   }, [onError]);
 
+  const cancelJob = useCallback(async (jobId) => {
+    const targetJobId = jobId || currentJob?.id;
+    const targetTaskId = currentJob?.celeryTaskId;
+
+    if (!targetJobId && !targetTaskId) {
+      const cancelError = new Error('Не удалось определить задачу для отмены');
+      if (onError) onError(cancelError);
+      toast({ title: 'Ошибка отмены', description: cancelError.message, status: 'error', duration: 4000, isClosable: true });
+      throw cancelError;
+    }
+
+    try {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && targetJobId) {
+        wsRef.current.send(JSON.stringify({ type: 'cancel_job', job_id: targetJobId }));
+      }
+
+      if (targetTaskId) {
+        const { cancelTask } = await import('@api/jobs');
+        await cancelTask(targetTaskId);
+      }
+
+      setCurrentJob((prev) => (prev ? { ...prev, status: 'cancelled' } : prev));
+    } catch (error) {
+      const cancelError = error instanceof Error ? error : new Error('Не удалось отменить задачу');
+      if (onError) onError(cancelError);
+      toast({ title: 'Ошибка отмены', description: cancelError.message, status: 'error', duration: 4000, isClosable: true });
+      throw cancelError;
+    }
+  }, [currentJob, onError, toast]);
+
   // Принудительное переподключение
   const reconnect = useCallback(() => {
     if (wsRef.current) {
@@ -871,6 +901,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
 
     // Методы
     sendMessage,
+    cancelJob,
     reconnect,
 
     // Утилиты

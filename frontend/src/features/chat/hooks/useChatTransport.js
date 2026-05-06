@@ -13,6 +13,7 @@ export function useChatTransport({ threadId, callbacks, isAuthenticated }) {
     currentJob,
     agentStatus,
     sendMessage,
+    cancelJob,
   } = useChatWebSocketModel({ threadId, callbacks: wsCallbacks, isAuthenticated });
 
   return {
@@ -21,6 +22,7 @@ export function useChatTransport({ threadId, callbacks, isAuthenticated }) {
     currentJob,
     agentStatus,
     sendMessage,
+    cancelJob,
     useWebSocket: isConnected && connectionState === 'connected',
   };
 }
