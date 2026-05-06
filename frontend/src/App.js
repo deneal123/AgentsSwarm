@@ -1,24 +1,88 @@
 import React, { Suspense, useEffect } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } from "react-router-dom";
 import { Center, Spinner } from "@chakra-ui/react";
 import PublicLayout from "./ui/layout/PublicLayout";
+import ProtectedLayout from "./ui/layout/ProtectedLayout";
 import ErrorBoundary from "./ui/molecules/ErrorBoundary";
 import { preloadCriticalRoutes } from "./hooks/useRoutePreload";
+import { ROUTE_CONFIG, ROUTE_GUARDS, ROUTE_LAYOUTS, RoutePages } from "./routes/routeConfig";
+import { useAuth } from "./context/AuthContext";
 
-import { APP_ROUTE_SEGMENTS, RoutePages } from "./routes/routeConfig";
+function RouteSuspenseBoundary({ children }) {
+  return (
+    <Suspense
+      fallback={
+        <Center h="100vh">
+          <Spinner size="lg" />
+        </Center>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
+
+function GuardedRoute({ guard, children }) {
+  const { isSessionLoading, resolveGuardRedirect } = useAuth();
+  const location = useLocation();
+
+  if (isSessionLoading && guard === ROUTE_GUARDS.AUTH_ONLY) {
+    return (
+      <Center h="100vh">
+        <Spinner size="lg" />
+      </Center>
+    );
+  }
+
+  const redirect = resolveGuardRedirect(guard, location);
+  if (redirect) {
+    return <Navigate to={redirect.to} replace state={redirect.state} />;
+  }
+
+  return children;
+}
+
+const layoutMap = {
+  [ROUTE_LAYOUTS.PUBLIC]: <PublicLayout />,
+  [ROUTE_LAYOUTS.PROTECTED]: <ProtectedLayout />,
+};
+
+const childRoutesByLayout = ROUTE_CONFIG.filter((route) => route.path !== "*").reduce((acc, route) => {
+  const PageComponent = RoutePages[route.page];
+  const path = route.path === "/" ? undefined : route.path.replace(/^\//, "");
+  const childRoute = {
+    ...(route.path === "/" ? { index: true } : { path }),
+    element: (
+      <GuardedRoute guard={route.guard}>
+        <RouteSuspenseBoundary>
+          <PageComponent />
+        </RouteSuspenseBoundary>
+      </GuardedRoute>
+    ),
+  };
+  acc[route.layout].push(childRoute);
+  return acc;
+}, { [ROUTE_LAYOUTS.PUBLIC]: [], [ROUTE_LAYOUTS.PROTECTED]: [] });
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <PublicLayout />,
-    children: [
-      { index: true, element: <RoutePages.ChatPage /> },
-      { path: APP_ROUTE_SEGMENTS.LOGIN, element: <RoutePages.LoginPage /> },
-      { path: APP_ROUTE_SEGMENTS.REGISTER, element: <RoutePages.SignUpPage /> },
-      { path: APP_ROUTE_SEGMENTS.CHAT_THREAD, element: <RoutePages.ChatPage /> },
-    ],
+    element: layoutMap[ROUTE_LAYOUTS.PUBLIC],
+    children: childRoutesByLayout[ROUTE_LAYOUTS.PUBLIC],
   },
-  { path: "*", element: <RoutePages.NotFoundPage /> },
+  {
+    path: "/",
+    element: layoutMap[ROUTE_LAYOUTS.PROTECTED],
+    children: childRoutesByLayout[ROUTE_LAYOUTS.PROTECTED],
+  },
+  {
+    path: "*",
+    element: (
+      <RouteSuspenseBoundary>
+        <RoutePages.NotFoundPage />
+      </RouteSuspenseBoundary>
+    ),
+  },
 ]);
 
 function App() {
@@ -28,15 +92,7 @@ function App() {
 
   return (
     <ErrorBoundary level="page">
-      <Suspense
-        fallback={
-          <Center h="100vh">
-            <Spinner size="lg" />
-          </Center>
-        }
-      >
-        <RouterProvider router={router} />
-      </Suspense>
+      <RouterProvider router={router} />
     </ErrorBoundary>
   );
 }
