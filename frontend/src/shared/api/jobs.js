@@ -1,4 +1,5 @@
 import { request } from './request';
+import { mapJobDto } from './dtoMappers';
 
 export const startJob = ({ datasetId, fileId, mode = 'TRAINING', type = 'TRAIN', targetColumn, useAi = false, taskType = 'classification' } = {}, options = {}) => {
   const datasetIdentifier = datasetId ?? fileId;
@@ -15,9 +16,9 @@ export const startJob = ({ datasetId, fileId, mode = 'TRAINING', type = 'TRAIN',
       task_type: taskType,
     },
     ...options,
-  });
+  }, mapJobDto);
 };
 
-export const fetchJobResult = (jobId, { signal } = {}) => request({ method: 'get', url: `/api/jobs/v1/result/${jobId}`, signal });
-export const getTaskStatus = (taskId, { signal } = {}) => request({ method: 'get', url: `/api/jobs/v1/task/${taskId}/status`, signal });
-export const cancelTask = (taskId, { signal } = {}) => request({ method: 'post', url: `/api/jobs/v1/task/${taskId}/cancel`, data: null, signal });
+export const fetchJobResult = (jobId, { signal } = {}) => request({ method: 'get', url: `/api/jobs/v1/result/${jobId}`, signal }, mapJobDto);
+export const getTaskStatus = (taskId, { signal } = {}) => request({ method: 'get', url: `/api/jobs/v1/task/${taskId}/status`, signal }, mapJobDto);
+export const cancelTask = (taskId, { signal } = {}) => request({ method: 'post', url: `/api/jobs/v1/task/${taskId}/cancel`, data: null, signal }, mapJobDto);

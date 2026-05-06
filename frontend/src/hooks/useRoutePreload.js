@@ -1,32 +1,42 @@
-import { APP_ROUTES, ROUTE_CONFIG, ROUTE_LOADERS } from "../routes/routeConfig";
+import { useEffect } from 'react';
+import { APP_ROUTES } from '../app/router';
+import { ROUTE_CONFIG, ROUTE_LOADERS } from '../routes/routeConfig';
 
-const preloadMap = ROUTE_CONFIG.filter((route) => route.preload).reduce((acc, route) => {
-  const loader = ROUTE_LOADERS[route.path];
-  if (loader) {
-    acc[route.path] = loader;
-  }
-  return acc;
-}, {});
+const loaded = new Set();
 
-const loadedRoutes = new Set();
+const intentPreloadByPath = {
+  [APP_ROUTES.LOGIN]: ROUTE_LOADERS.login,
+  [APP_ROUTES.REGISTER]: ROUTE_LOADERS.signup,
+};
+
+const idleRoutes = ROUTE_CONFIG.filter((item) => item.preload === 'idle').map((item) => item.path);
 
 export const preloadRoute = (path) => {
-  if (loadedRoutes.has(path)) return;
-  const preloader = preloadMap[path];
-  if (!preloader) return;
-  preloader()
-    .then(() => loadedRoutes.add(path))
-    .catch(() => undefined);
+  const loader = intentPreloadByPath[path];
+  if (!loader || loaded.has(path)) return;
+  loader().then(() => loaded.add(path)).catch(() => undefined);
 };
 
 export const preloadCriticalRoutes = () => {
-  if (typeof window === "undefined") return;
-  const preloader = () => {
-    preloadRoute(APP_ROUTES.ROOT);
+  if (typeof window === 'undefined') return;
+  const runner = () => {
+    idleRoutes.forEach((path) => {
+      const loader = path === APP_ROUTES.ROOT ? ROUTE_LOADERS.chat : null;
+      if (!loader || loaded.has(path)) return;
+      loader().then(() => loaded.add(path)).catch(() => undefined);
+    });
   };
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(preloader, { timeout: 5000 });
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(runner, { timeout: 3000 });
     return;
   }
-  setTimeout(preloader, 2000);
+  setTimeout(runner, 1200);
+};
+
+export const useRoutePreload = () => {
+  useEffect(() => {
+    preloadCriticalRoutes();
+  }, []);
+
+  return { preloadRoute };
 };
