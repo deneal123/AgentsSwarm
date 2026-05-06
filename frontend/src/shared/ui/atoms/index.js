@@ -8,3 +8,5 @@ export { default as ParticlesBackground } from './ParticlesBackground';
 export { default as FloatingOrbs } from './FloatingOrbs';
 export { GradientText, GlowText, TypewriterText, RevealText } from './AnimatedText';
 export { Title, Subtitle, Body, Footnote } from './Typography';
+
+export { buttonSizeMap } from "./buttonSizeMap";
