@@ -1,10 +1,12 @@
-import { APP_ROUTES, ROUTE_LOADERS } from "../routes/routeConfig";
+import { APP_ROUTES, ROUTE_CONFIG, ROUTE_LOADERS } from "../routes/routeConfig";
 
-const preloadMap = {
-  [APP_ROUTES.ROOT]: ROUTE_LOADERS[APP_ROUTES.ROOT],
-  [APP_ROUTES.LOGIN]: ROUTE_LOADERS[APP_ROUTES.LOGIN],
-  [APP_ROUTES.REGISTER]: ROUTE_LOADERS[APP_ROUTES.REGISTER],
-};
+const preloadMap = ROUTE_CONFIG.filter((route) => route.preload).reduce((acc, route) => {
+  const loader = ROUTE_LOADERS[route.path];
+  if (loader) {
+    acc[route.path] = loader;
+  }
+  return acc;
+}, {});
 
 const loadedRoutes = new Set();
 
