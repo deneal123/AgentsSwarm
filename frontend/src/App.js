@@ -13,8 +13,6 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <RoutePages.ChatPage /> },
-      { path: APP_ROUTE_SEGMENTS.INFO, element: <RoutePages.InfoPage /> },
-      { path: APP_ROUTE_SEGMENTS.DOCUMENTS, element: <RoutePages.DocumentsPage /> },
       { path: APP_ROUTE_SEGMENTS.LOGIN, element: <RoutePages.LoginPage /> },
       { path: APP_ROUTE_SEGMENTS.REGISTER, element: <RoutePages.SignUpPage /> },
       { path: APP_ROUTE_SEGMENTS.CHAT_THREAD, element: <RoutePages.ChatPage /> },

@@ -49,8 +49,6 @@ const HEADER_THEME = {
 
 const navItems = [
   { label: "Чат", to: APP_ROUTES.ROOT, icon: FaHome },
-  { label: "О платформе", to: APP_ROUTES.INFO, icon: FaUser },
-  { label: "Документы", to: APP_ROUTES.DOCUMENTS, icon: FaUser },
 ];
 
 const linkBaseStyles = {

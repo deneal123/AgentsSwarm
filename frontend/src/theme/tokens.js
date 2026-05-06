@@ -264,8 +264,17 @@ export const tokens = {
 
 export const chat = {
   modelSelector: {
+    triggerBg: "rgba(255, 255, 255, 0.04)",
+    triggerBgHover: "rgba(255, 255, 255, 0.08)",
+    triggerBorder: "rgba(255, 255, 255, 0.14)",
+    triggerBorderActive: "rgba(239, 68, 68, 0.46)",
+    triggerText: "rgba(255, 255, 255, 0.94)",
     activeText: "#fecaca",
     activeBg: "rgba(239, 68, 68, 0.16)",
     activeBgHover: "rgba(239, 68, 68, 0.22)",
+    menuBg: "rgba(9, 9, 9, 0.96)",
+    menuBorder: "rgba(255, 255, 255, 0.14)",
+    itemHover: "rgba(255, 255, 255, 0.06)",
+    itemSelectedBg: "rgba(239, 68, 68, 0.16)",
   },
 };

@@ -25,6 +25,7 @@ import { colors, borderRadius } from '@theme/tokens';
 import AnimatedSuggestions from './AnimatedSuggestions';
 import AuthModal, { useAuthModal } from '@features/auth/components/AuthModal';
 import { getChatModels } from '../../../API/chat';
+import { SEARCH_THEME } from '@features/home/theme';
 
 /**
  * SearchInterface - Google-like поисковый интерфейс для общения с AI агентами
@@ -282,8 +283,8 @@ function SearchInterface() {
         w="full"
         p={3}
         borderRadius={borderRadius.lg}
-        bg="rgba(255,255,255,0.06)"
-        border="1px solid rgba(255,255,255,0.12)"
+        bg={SEARCH_THEME.cardBg}
+        border={`1px solid ${SEARCH_THEME.cardBorder}`}
       >
         <VStack spacing={2} align="stretch">
           <HStack spacing={3}>
@@ -292,9 +293,9 @@ function SearchInterface() {
               size="sm"
               value={modelMode}
               onChange={(e) => setModelMode(e.target.value)}
-              bg="rgba(255,255,255,0.12)"
-              borderColor="rgba(255,255,255,0.2)"
-              sx={{ option: { color: '#111', background: '#fff' } }}
+              bg={SEARCH_THEME.controlBg}
+              borderColor={SEARCH_THEME.controlBorder}
+              sx={{ option: SEARCH_THEME.nativeOption }}
             >
               <option value="auto">Auto (рекомендуется)</option>
               <option value="manual">Manual (выбрать модель)</option>
@@ -310,9 +311,9 @@ function SearchInterface() {
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                   isDisabled={isModelsLoading}
-                  bg="rgba(255,255,255,0.12)"
-                  borderColor="rgba(255,255,255,0.2)"
-                  sx={{ option: { color: '#111', background: '#fff' } }}
+                  bg={SEARCH_THEME.controlBg}
+                  borderColor={SEARCH_THEME.controlBorder}
+                  sx={{ option: SEARCH_THEME.nativeOption }}
                 >
                   {availableModels.map((modelId) => (
                     <option key={modelId} value={modelId}>{modelId}</option>
@@ -325,8 +326,8 @@ function SearchInterface() {
                   value={customModelId}
                   onChange={(e) => setCustomModelId(e.target.value)}
                   placeholder="Например: mws-gpt-alpha"
-                  bg="rgba(255,255,255,0.12)"
-                  borderColor="rgba(255,255,255,0.2)"
+                  bg={SEARCH_THEME.controlBg}
+                  borderColor={SEARCH_THEME.controlBorder}
                 />
               )}
             </HStack>
@@ -338,8 +339,8 @@ function SearchInterface() {
               value={customModelId}
               onChange={(e) => setCustomModelId(e.target.value)}
               placeholder="Введите model id вручную"
-              bg="rgba(255,255,255,0.12)"
-              borderColor="rgba(255,255,255,0.2)"
+              bg={SEARCH_THEME.controlBg}
+              borderColor={SEARCH_THEME.controlBorder}
             />
           )}
 
@@ -401,7 +402,7 @@ function SearchInterface() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Спросите что-нибудь..."
-              bg="rgba(255,255,255,0.05)"
+              bg={SEARCH_THEME.inputBg}
               border="none"
               borderRadius="full"
               backdropFilter="blur(15px)"
@@ -413,11 +414,11 @@ function SearchInterface() {
                 transition: "color 0.3s ease"
               }}
               _focus={{
-                bg: "rgba(255,255,255,0.08)",
+                bg: SEARCH_THEME.inputBgFocus,
                 boxShadow: "none"
               }}
               _hover={{
-                bg: "rgba(255,255,255,0.07)",
+                bg: SEARCH_THEME.inputBgHover,
                 _placeholder: { color: colors.text.secondary }
               }}
               disabled={isLoading}
@@ -436,7 +437,7 @@ function SearchInterface() {
                 w={8}
                 h={8}
                 borderRadius="full"
-                bg={canSubmit ? `linear-gradient(135deg, ${colors.brand.primary}20, ${colors.brand.secondary}20)` : 'transparent'}
+                bg={canSubmit ? SEARCH_THEME.actionGradientMuted : 'transparent'}
                 backdropFilter="blur(10px)"
                 animate={canSubmit ? {
                   scale: [1, 1.1, 1],
@@ -450,7 +451,7 @@ function SearchInterface() {
                 whileHover={canSubmit ? {
                   scale: 1.2,
                   rotate: 15,
-                  bg: `linear-gradient(135deg, ${colors.brand.primary}30, ${colors.brand.secondary}30)`,
+                  bg: SEARCH_THEME.actionGradientSoft,
                   boxShadow: `0 0 15px ${colors.brand.primary}50`,
                   transition: { duration: 0.2 }
                 } : {}}
@@ -498,14 +499,14 @@ function SearchInterface() {
             bottom={0}
             borderRadius="full"
             border="2px solid transparent"
-            bg={`linear-gradient(135deg, ${colors.brand.primary}, ${colors.brand.secondary}, ${colors.brand.tertiary})`}
+            bg={SEARCH_THEME.actionGradient}
             opacity={0}
             transform="scale(0.98)"
             transition={{ duration: 0.3 }}
             pointerEvents="none"
             sx={{
               backgroundClip: 'padding-box',
-              mask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
+              mask: SEARCH_THEME.focusMask,
               maskComposite: 'exclude',
             }}
           />
