@@ -1,4 +1,4 @@
-import httpClient, { registerUnauthorizedHandler } from '../shared/api/httpClient';
+import { httpClient, registerUnauthorizedHandler } from '../shared/api';
 
 export { registerUnauthorizedHandler };
 

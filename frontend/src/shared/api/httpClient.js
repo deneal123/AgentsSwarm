@@ -21,16 +21,37 @@ export const registerUnauthorizedHandler = (handler) => {
   };
 };
 
+const RETRY_CONFIG = { retries: 2, retryDelayMs: 400 };
+
 const httpClient = axios.create({
   baseURL: resolveApiBaseUrl(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
+httpClient.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
+  if (token && !config.headers?.Authorization) {
+    config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
+  }
+  return config;
+});
+
 httpClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const config = error.config || {};
+    const status = error.response?.status;
+    const isRetryable = !status || status >= 500;
+    config.__retryCount = config.__retryCount || 0;
+
+    if (isRetryable && config.__retryCount < RETRY_CONFIG.retries) {
+      config.__retryCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, RETRY_CONFIG.retryDelayMs * config.__retryCount));
+      return httpClient.request(config);
+    }
+
+    if (status === 401) {
       const requestUrl = error.config?.url || '';
       const isPublicEndpoint = PUBLIC_ENDPOINTS.some((endpoint) => requestUrl.includes(endpoint));
       if (!isPublicEndpoint && typeof unauthorizedHandler === 'function') {

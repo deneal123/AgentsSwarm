@@ -1,7 +1,2 @@
-export * from "./auth";
-export { default as client } from "./client";
-export * from "./files";
-export * from "./jobs";
-export * from "./profile";
-export * from "./platform";
-export * from "./chat";
+export * from '../shared/api';
+export { httpClient as client } from '../shared/api';
