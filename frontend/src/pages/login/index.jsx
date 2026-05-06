@@ -5,9 +5,9 @@ import { EmailIcon } from "@chakra-ui/icons";
 import { FaExclamationCircle, FaSignInAlt } from "react-icons/fa";
 import { login } from "@api";
 import { useAuth } from "@context/AuthContext";
-import { AuthFormCard, AuthInput, AuthPageHeader, AuthPageShell, PasswordInput } from "@features/auth/components";
+import { AuthFormCard, AuthInput, AuthPageHeader, AuthPageShell, PasswordInput } from "@features/auth";
 import { borderRadius } from "@theme/tokens";
-import { AUTH_THEME } from "@features/auth/constants";
+import { AUTH_THEME } from "@features/auth";
 import extractErrorInfo from "@utils/errorHandler";
 
 function LoginPage() {

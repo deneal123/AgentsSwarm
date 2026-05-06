@@ -1,31 +1,34 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
-export function useMessageActions({ messages, setMessages, handleSendMessageRef }) {
-  const handleCopyMessage = useCallback((text) => {
+export function useMessageActions({ messages, actions, handleSendMessageRef }) {
+  const copyMessage = useCallback((text) => {
     if (!text) return;
-    try {
-      navigator.clipboard?.writeText(text);
-    } catch {
-      // noop
-    }
+    navigator.clipboard?.writeText(text).catch(() => {});
   }, []);
 
-  const handleRegenerate = useCallback((messageId) => {
-    const idx = messages.findIndex((m) => m.id === messageId);
+  const regenerateMessage = useCallback((messageId) => {
+    const idx = messages.findIndex((message) => message.id === messageId);
     if (idx === -1) return;
+
     let userIdx = -1;
     for (let i = idx - 1; i >= 0; i -= 1) {
-      if (messages[i]?.type === "user" && messages[i]?.content) {
+      if (messages[i]?.type === 'user' && messages[i]?.content) {
         userIdx = i;
         break;
       }
     }
     if (userIdx === -1) return;
-    const userContent = messages[userIdx].content;
-    const anchorMessageId = messages[userIdx].id;
-    setMessages((prev) => prev.slice(0, userIdx + 1));
-    handleSendMessageRef.current?.(userContent, { skipUserAppend: true, anchorMessageId });
-  }, [handleSendMessageRef, messages, setMessages]);
 
-  return { handleCopyMessage, handleRegenerate };
+    const userMessage = messages[userIdx];
+    actions.truncateAfter(userIdx + 1);
+    handleSendMessageRef.current?.(userMessage.content, {
+      skipUserAppend: true,
+      anchorMessageId: userMessage.id,
+    });
+  }, [actions, handleSendMessageRef, messages]);
+
+  return {
+    copyMessage,
+    regenerateMessage,
+  };
 }

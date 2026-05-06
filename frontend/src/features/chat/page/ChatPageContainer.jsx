@@ -35,7 +35,7 @@ import { useWebSocketChat } from '@hooks/useWebSocketChat';
 import { useGuestSession } from '@hooks/useGuestSession';
 import { useAuth } from '@context/AuthContext';
 import { getChatModels, sendChatMessage } from '@api/chat';
-import AuthModal, { useAuthModal } from '@features/auth/components/AuthModal';
+import { AuthModal, useAuthModal } from '@features/auth';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import BrandMark from '@ui/layout';
@@ -620,7 +620,7 @@ function ChatPageContainer() {
   }, [activeOrLatestTraceSession, showTracePanel, traceSessions.length]);
 
   const handleSendMessageRef = useRef(null);
-  const { handleCopyMessage, handleRegenerate } = useMessageActions({ messages, setMessages, handleSendMessageRef });
+  const { copyMessage, regenerateMessage } = useMessageActions({ messages, actions: { truncateAfter: (count) => setMessages((prev) => prev.slice(0, count)) }, handleSendMessageRef });
 
   const renderedMessages = useMemo(() => {
     return visibleMessages.map((message, idx) => {
@@ -753,7 +753,7 @@ function ChatPageContainer() {
                     color={CHAT_THEME.textSecondary}
                     borderRadius="8px"
                     _hover={{ bg: CHAT_THEME.panelHover, color: CHAT_THEME.textPrimary }}
-                    onClick={() => handleCopyMessage(message.content)}
+                    onClick={() => copyMessage(message.content)}
                   />
                   <Text
                     position="absolute"
@@ -788,7 +788,7 @@ function ChatPageContainer() {
                       color={CHAT_THEME.textSecondary}
                       borderRadius="8px"
                       _hover={{ bg: CHAT_THEME.panelHover, color: CHAT_THEME.textPrimary }}
-                      onClick={() => handleRegenerate(message.id)}
+                      onClick={() => regenerateMessage(message.id)}
                       isDisabled={isLoading}
                     />
                     <Text
@@ -821,7 +821,7 @@ function ChatPageContainer() {
         </Box>
       );
     });
-  }, [visibleMessages, lastUsedModel, handleCopyMessage, handleRegenerate, isLoading]);
+  }, [visibleMessages, lastUsedModel, copyMessage, regenerateMessage, isLoading]);
 
   const sendViaRest = useCallback(async (message, modelForRequest, inputTypeForRequest, options = {}) => {
     appendTraceEvent({
@@ -1063,7 +1063,7 @@ function ChatPageContainer() {
         });
       }
     } catch (sendError) {
-      if (sendError?.response?.status === 429) {
+      if (sendError?.status === 429) {
         showAuthModal(
           'Превышен лимит запросов',
           'Бесплатные запросы закончились. Войдите, чтобы продолжить.',

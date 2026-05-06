@@ -79,4 +79,23 @@ module.exports = [
       ],
     },
   },
+
+  {
+    files: ["src/features/auth/**/*.{js,jsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: ["@features/chat/*", "@features/home/*"] }],
+    },
+  },
+  {
+    files: ["src/features/chat/**/*.{js,jsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: ["@features/auth/*", "@features/home/*"] }],
+    },
+  },
+  {
+    files: ["src/features/home/**/*.{js,jsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: ["@features/auth/*", "@features/chat/*"] }],
+    },
+  },
 ];

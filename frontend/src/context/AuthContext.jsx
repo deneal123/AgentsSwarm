@@ -4,6 +4,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import { fetchProfile, logoutLocal } from "@api";
 import extractErrorInfo from "@utils/errorHandler";
 import { registerUnauthorizedHandler } from "@api/client";
+import { APP_ROUTES } from "@routes/routeConfig";
 
 const AuthContext = createContext({
   isAuthenticated: false,
@@ -13,6 +14,7 @@ const AuthContext = createContext({
   setAuthenticated: () => {},
   refreshSession: async () => {},
   logout: () => {},
+  resolveGuardRedirect: () => null,
 });
 
 export function AuthProvider({ children }) {
@@ -68,6 +70,22 @@ export function AuthProvider({ children }) {
     clearSession();
   }, [clearSession]);
 
+  const resolveGuardRedirect = useCallback(
+    (guardType, location) => {
+      if (isSessionLoading) {
+        return null;
+      }
+      if (guardType === "auth-only" && !isAuthenticated) {
+        return {
+          to: APP_ROUTES.LOGIN,
+          state: { from: location },
+        };
+      }
+      return null;
+    },
+    [isAuthenticated, isSessionLoading],
+  );
+
   useEffect(() => {
     const unregister = registerUnauthorizedHandler(logout);
     return () => {
@@ -84,8 +102,9 @@ export function AuthProvider({ children }) {
       setAuthenticated,
       refreshSession,
       logout,
+      resolveGuardRedirect,
     }),
-    [error, isAuthenticated, isSessionLoading, logout, refreshSession, setAuthenticated, user],
+    [error, isAuthenticated, isSessionLoading, logout, refreshSession, resolveGuardRedirect, setAuthenticated, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
