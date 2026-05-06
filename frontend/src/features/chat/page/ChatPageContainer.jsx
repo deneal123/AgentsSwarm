@@ -1063,7 +1063,7 @@ function ChatPageContainer() {
         });
       }
     } catch (sendError) {
-      if (sendError?.response?.status === 429) {
+      if (sendError?.status === 429) {
         showAuthModal(
           'Превышен лимит запросов',
           'Бесплатные запросы закончились. Войдите, чтобы продолжить.',
