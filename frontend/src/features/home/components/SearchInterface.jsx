@@ -24,7 +24,7 @@ import { useAuth } from '@context/AuthContext';
 import { colors, borderRadius } from '@theme/tokens';
 import AnimatedSuggestions from './AnimatedSuggestions';
 import { AuthModal, useAuthModal } from '@features/auth';
-import { getChatModels } from '../../../API/chat';
+import { getChatModels } from '../../../shared/api/chat';
 import { SEARCH_THEME } from '@features/home/theme';
 
 /**
