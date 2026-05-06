@@ -6,7 +6,7 @@ import { sendChatMessage, uploadChatFile } from '@API/chat';
 const ChatContext = createContext(null);
 
 // Типы действий для reducer
-const CHAT_ACTIONS = {
+export const CHAT_ACTIONS = {
   // Сообщения
   ADD_MESSAGE: 'ADD_MESSAGE',
   UPDATE_MESSAGE: 'UPDATE_MESSAGE',
@@ -37,7 +37,7 @@ const CHAT_ACTIONS = {
 };
 
 // Начальное состояние
-const initialState = {
+export const initialState = {
   messages: [],
   attachments: [],
   typingUsers: new Set(),
@@ -48,7 +48,7 @@ const initialState = {
 };
 
 // Reducer для управления состоянием
-function chatReducer(state, action) {
+export function chatReducer(state, action) {
   switch (action.type) {
     case CHAT_ACTIONS.ADD_MESSAGE:
       return {
