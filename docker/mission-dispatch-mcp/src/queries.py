@@ -156,10 +156,25 @@ class MissionDispatchClient:
         params = {"state": state}
         return self._make_request("mission", params=params)
 
-    def get_missions_by_robot(self, robot_name: str) -> List[Dict]:
-        """Get missions for a specific robot"""
-        params = {"robot": robot_name}
-        return self._make_request("mission", params=params)
+    def get_missions_by_robot(self, robot_name: str, limit: Optional[int] = None) -> List[Dict]:
+        """Get missions for a specific robot, optionally limited to most recent N."""
+        params: Dict[str, Any] = {"robot": robot_name}
+        missions = self._make_request("mission", params=params)
+        if limit is not None and len(missions) > limit:
+            missions = missions[-limit:]
+        return missions
+
+    def get_mission_by_id(self, mission_id: str) -> Optional[Dict]:
+        """Get a specific mission by its name/UUID."""
+        missions = self._make_request("mission", params={"name": mission_id})
+        if missions:
+            return missions[0]
+        # Fallback: search all missions (some APIs don't support name filter)
+        all_missions = self._make_request("mission")
+        for m in all_missions:
+            if m.get("name") == mission_id:
+                return m
+        return None
 
     def get_active_missions(self) -> List[Dict]:
         """Get all currently active missions (RUNNING and PENDING)"""

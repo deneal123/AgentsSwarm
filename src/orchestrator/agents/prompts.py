@@ -38,9 +38,9 @@ ROBOT_INFO_PROMPT = """
     Роботы в состоянии IDLE, готовые к новым задачам.
 - get_robots_on_missions()
     Роботы сейчас на задании (ON_TASK) с деталями миссий.
-- get_mission_status(state?, robot?)
-    Статус миссий. Фильтры по состоянию (RUNNING / COMPLETED / FAILED / PENDING)
-    или по имени робота.
+- get_mission_status(state?, robot?, mission_id?, limit?)
+    Статус миссий. Фильтры по состоянию (RUNNING / COMPLETED / FAILED / PENDING),
+    по имени робота, или по mission_id (UUID) для точного отслеживания одной миссии.
 - get_mission_queue()
     Очередь ожидающих миссий (PENDING).
 - get_recent_failures()
@@ -94,8 +94,10 @@ NAVIGATION_PROMPT = """
     Свободные роботы, готовые принять миссию.
 - dispatch_mission(robot, x, y, theta?)
     Альтернативный способ отправки в точку напрямую через Dispatch (без маршрутных точек).
-- get_mission_status(state?, robot?)
-    Статус миссий. Используй robot=robot_name для мониторинга конкретного робота.
+    Возвращает mission name (UUID) — сохрани для мониторинга.
+- get_mission_status(state?, robot?, mission_id?, limit?)
+    Статус миссий. ВСЕГДА используй mission_id=<uuid> после отправки чтобы следить
+    именно за текущей миссией, а не за историческими (которые могут быть FAILED из прошлых сессий).
     Состояния: PENDING → RUNNING → COMPLETED / FAILED / CANCELED
 - get_recent_failures()
     Последние сбои с причинами failure_reason и failure_category.
@@ -111,33 +113,43 @@ NAVIGATION_PROMPT = """
 
 **Шаг 2 — Формирование маршрута и отправка миссии**
 Если в описании задачи есть раздел "MAP ANALYSIS RESULT" (контекст карты):
-  • TARGET содержит целевые координаты — используй их как финальную точку.
+  • TARGET содержит целевые координаты.
   • WAYPOINTS — промежуточные точки + финальная цель (стартовая позиция НЕ включена).
-  • Формируй итоговый маршрут: [текущая_позиция_робота] + WAYPOINTS из контекста карты.
-    Текущую позицию берёшь из get_robot_status(robot_name) → поле position {x, y}.
-  • Если waypoints из контекста пустые — используй dispatch_mission(robot, x=TARGET.x, y=TARGET.y).
+  • Возьми текущую позицию робота из get_robot_status(robot_name) → поле position {x, y}.
+  • ПРОВЕРКА БЛИЗОСТИ: если расстояние от position до TARGET < 0.15м → робот уже у цели.
+    Сообщи «Робот уже находится у цели» и завершай без отправки миссии.
+  • Если расстояние 0.15–0.5м → используй dispatch_mission(robot, x=TARGET.x, y=TARGET.y),
+    промежуточные waypoints не нужны — они создадут лишнее движение.
+  • Иначе → формируй маршрут: [текущая_позиция_робота] + WAYPOINTS из контекста карты.
+    Вызывай submit_navigation_mission(waypoints=[...], robot_name=<имя>).
+  • Если WAYPOINTS из контекста пустые — используй dispatch_mission(robot, x=TARGET.x, y=TARGET.y).
 
 Если контекста карты нет:
   • Используй dispatch_mission(robot, x, y) для простых координат.
   • Используй submit_navigation_mission(waypoints) если указаны явные промежуточные точки.
 
-После отправки сообщи: «Миссия отправлена, sub_mission_uuids: ...».
+После отправки:
+  • Из ответа dispatch_mission извлеки поле name (UUID миссии) — запомни как <mission_uuid>.
+  • Из ответа submit_navigation_mission извлеки sub_mission_uuids[0] — это <mission_uuid>.
+  • Сообщи: «Миссия отправлена, UUID: <mission_uuid>».
 
 **Шаг 3 — Мониторинг выполнения (ОБЯЗАТЕЛЬНО)**
-После отправки вызывай get_mission_status(robot=robot_name) циклически:
-• PENDING/RUNNING → сообщи статус и вызови снова (до 8 проверок).
+Используй get_mission_status(mission_id=<mission_uuid>) для отслеживания ТОЛЬКО текущей миссии.
+НЕ используй robot= фильтр — он возвращает все исторические миссии включая старые FAILED.
+
+• PENDING/RUNNING → сообщи статус и вызови снова (до 20 проверок с паузой ~3с).
 • COMPLETED       → сообщи об успехе, укажи время выполнения если доступно.
 • FAILED          → вызови get_recent_failures() для деталей, сообщи причину сбоя.
 • CANCELED        → сообщи об отмене.
 
-Если после 8 проверок миссия всё ещё RUNNING — сообщи «миссия выполняется» и финальный статус.
-Пользователь получает live-обновления через WebSocket.
+Если после 20 проверок миссия всё ещё RUNNING — сообщи «миссия выполняется, требует больше времени»
+и finalize шаг как выполненный (пользователь получает live-обновления через WebSocket).
 
 ━━━ СЦЕНАРИИ ━━━
 • Отстыковка: submit_undock_mission → проверить get_robot_status что state = IDLE.
 • Нет маршрутных точек, только координата: используй dispatch_mission(robot, x, y).
-• Если есть КОНТЕКСТ КАРТЫ (map_context): используй предложенные waypoints из него,
-  но замени первую точку реальной позицией робота из get_robot_status (поле position).
+• Если есть КОНТЕКСТ КАРТЫ (map_context): сначала проверь близость робота к TARGET.
+  Если близко (<0.5м) → dispatch_mission напрямую. Иначе → waypoints из контекста.
 """.strip()
 
 
@@ -153,8 +165,8 @@ SWARM_PROMPT = """
     Диагностика перед назначением (батарея, ошибки, online).
 - dispatch_mission(robot, x, y, theta?)
     Отправить робота в координату напрямую.
-- get_mission_status(state?, robot?)
-    Мониторинг миссии конкретного робота. Вызывай поочерёдно для каждого робота.
+- get_mission_status(state?, robot?, mission_id?, limit?)
+    Мониторинг миссии. Используй mission_id=<uuid> для точного отслеживания конкретной миссии.
 - get_fleet_summary()
     Общая сводка флота.
 - get_recent_failures()
@@ -191,7 +203,8 @@ SWARM_PROMPT = """
 Сообщи пользователю о каждой отправленной миссии.
 
 **Шаг 4 — Мониторинг роя (ОБЯЗАТЕЛЬНО)**
-Поочерёдно вызывай get_mission_status(robot=<имя>) для каждого робота:
+Для каждого робота запомни mission UUID из ответа отправки.
+Поочерёдно вызывай get_mission_status(mission_id=<uuid>) — НЕ по robot= (исторические миссии замешают):
 • Записывай статус каждого: PENDING / RUNNING / COMPLETED / FAILED.
 • Повторяй цикл (до 6 раундов по всем роботам).
 • При FAILED → get_recent_failures() для деталей, фиксируй сбой.

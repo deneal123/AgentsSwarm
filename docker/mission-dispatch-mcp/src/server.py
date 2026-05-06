@@ -145,7 +145,11 @@ async def list_tools() -> ListToolsResult:
             ),
             Tool(
                 name=TOOL_GET_MISSION_STATUS,
-                description="Get missions and their status (optionally filter by state or robot)",
+                description=(
+                    "Get missions and their status. Filter by state, robot, or specific mission_id. "
+                    "Use mission_id (the UUID returned by submit_navigation_mission / dispatch_mission) "
+                    "to track exactly one mission. Use limit to avoid seeing old historical missions."
+                ),
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -157,6 +161,21 @@ async def list_tools() -> ListToolsResult:
                         "robot": {
                             "type": "string",
                             "description": "Filter missions for specific robot (optional)",
+                        },
+                        "mission_id": {
+                            "type": "string",
+                            "description": (
+                                "Return only the mission with this UUID/name. "
+                                "Preferred for post-submit monitoring."
+                            ),
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": (
+                                "Return only the N most recent missions for the robot "
+                                "(default 5 when filtering by robot without mission_id). "
+                                "Prevents old historical failures from confusing the agent."
+                            ),
                         },
                     },
                 },
@@ -307,10 +326,22 @@ def _handle_get_robot_status(arguments: dict) -> CallToolResult:
 def _handle_get_mission_status(arguments: dict) -> CallToolResult:
     state = arguments.get("state")
     robot = arguments.get("robot")
+    mission_id = arguments.get("mission_id")
+    limit = arguments.get("limit")
+
+    if mission_id:
+        mission = md_client.get_mission_by_id(mission_id)
+        result = f"**Mission {mission_id}**\n\n"
+        if mission is None:
+            result += "Mission not found.\n"
+        else:
+            result += format_mission_info(mission) + "\n"
+        return _text_result(result)
 
     if robot:
-        missions = md_client.get_missions_by_robot(robot)
-        result = f"**Missions for robot {robot}**\n\n"
+        effective_limit = int(limit) if limit is not None else 5
+        missions = md_client.get_missions_by_robot(robot, limit=effective_limit)
+        result = f"**Recent missions for robot {robot}** (last {effective_limit})\n\n"
     elif state:
         missions = md_client.get_missions_by_state(state)
         result = f"**Missions in {state} state**\n\n"
@@ -575,6 +606,9 @@ def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
     result = "**Mission Dispatched Successfully**\n\n"
     result += format_mission_info(mission)
     result += f"\nTarget: ({float(x):.2f}, {float(y):.2f}) @ {theta:.2f} rad\n"
+    mission_uuid = mission.get("name", "")
+    if mission_uuid:
+        result += f"\nMission UUID (use for get_mission_status mission_id): {mission_uuid}\n"
     return _text_result(result)
 
 
