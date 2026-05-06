@@ -3,7 +3,7 @@ import { Box, keyframes } from "@chakra-ui/react";
 import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
-import LayoutContext from "@context/LayoutContext";
+import { LayoutProvider } from "@context/LayoutContext";
 import { gradients, colors, spacing } from "@theme/tokens";
 import { ScrollToTop } from "@shared/ui/atoms";
 
@@ -23,19 +23,9 @@ function ProtectedLayout() {
     setFooterVisible(true);
   }, [location.pathname]);
 
-  const layoutContextValue = React.useMemo(
-    () => ({
-      variant: layoutVariant,
-      setVariant: setLayoutVariant,
-      isFooterVisible,
-      setFooterVisible,
-    }),
-    [layoutVariant, isFooterVisible],
-  );
-
 
   return (
-    <LayoutContext.Provider value={layoutContextValue}>
+    <LayoutProvider state={{ variant: layoutVariant, isFooterVisible }} actions={{ setVariant: setLayoutVariant, setFooterVisible }}>
       <Box position="relative" bg={colors.background.darkPrimary} w="100%">
         <ScrollToTop />
 
@@ -97,7 +87,7 @@ function ProtectedLayout() {
           </Box>
         )}
       </Box>
-    </LayoutContext.Provider>
+    </LayoutProvider>
   );
 }
 
