@@ -1,14 +1,13 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { Box, VStack, Text, Spinner, Center } from '@chakra-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { format, isToday, isYesterday, isThisWeek } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { colors } from '@theme/tokens';
 import { useChat } from '../context/ChatContext';
-import MessageBubble from './MessageBubble';
 import MessageGroup from './MessageGroup';
 import TypingIndicator from './TypingIndicator';
 import JobProgress from './JobProgress';
+import { getDateLabel, groupMessagesBySender } from '../utils/messageGrouping';
 
 /**
  * ChatMessages - Компонент для отображения списка сообщений в чате
@@ -45,43 +44,10 @@ function ChatMessages({ onRetryMessage, onDeleteMessage }) {
 
       currentGroup.messages.push(message);
     });
+    return groups;
+  }, [messages]);
 
-  return groups;
-}
 
-/**
- * Группирует сообщения по отправителю
- */
-function groupMessagesBySender(messages) {
-  if (!messages || messages.length === 0) return [];
-
-  const groups = [];
-  let currentGroup = {
-    sender: messages[0].type,
-    messages: [messages[0]]
-  };
-
-  for (let i = 1; i < messages.length; i++) {
-    const message = messages[i];
-
-    if (message.type === currentGroup.sender) {
-      // Добавляем в текущую группу
-      currentGroup.messages.push(message);
-    } else {
-      // Создаем новую группу
-      groups.push(currentGroup);
-      currentGroup = {
-        sender: message.type,
-        messages: [message]
-      };
-    }
-  }
-
-  // Добавляем последнюю группу
-  groups.push(currentGroup);
-
-  return groups;
-}, [messages]);
 
   // Виртуализация для производительности
   const virtualizer = useVirtualizer({
@@ -266,21 +232,6 @@ function MessageDateSeparator({ date }) {
   );
 }
 
-// Вспомогательная функция для получения метки даты
-function getDateLabel(date) {
-  if (isToday(date)) {
-    return 'Сегодня';
-  }
 
-  if (isYesterday(date)) {
-    return 'Вчера';
-  }
-
-  if (isThisWeek(date)) {
-    return format(date, 'EEEE', { locale: ru });
-  }
-
-  return format(date, 'd MMMM yyyy', { locale: ru });
-}
 
 export default ChatMessages;
