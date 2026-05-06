@@ -4,8 +4,11 @@ import { defaultChatUiSettings } from '../constants/chatUiSettings';
 import { normalizeChatUiSettings } from '../schema/chatUiSettingsSchema';
 
 export const useChatUiSettings = ({ initialWebSearch = false, initialDeepResearch = false } = {}) => {
+  const [isStorageWriteFailed, setIsStorageWriteFailed] = useState(false);
   const [settings, setSettings] = useState(() => {
-    const persisted = normalizeChatUiSettings(readChatUiSettings());
+    const { settings: storedSettings } = readChatUiSettings();
+    const persisted = normalizeChatUiSettings(storedSettings);
+
     return {
       ...persisted,
       webSearchEnabled: initialWebSearch || persisted.webSearchEnabled,
@@ -14,7 +17,8 @@ export const useChatUiSettings = ({ initialWebSearch = false, initialDeepResearc
   });
 
   useEffect(() => {
-    writeChatUiSettings(settings);
+    const { ok } = writeChatUiSettings(settings);
+    setIsStorageWriteFailed(!ok);
   }, [settings]);
 
   const resetUiSettings = () => {
@@ -25,5 +29,6 @@ export const useChatUiSettings = ({ initialWebSearch = false, initialDeepResearc
     settings,
     setSettings,
     resetUiSettings,
+    isStorageWriteFailed,
   };
 };
