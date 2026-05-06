@@ -1,6 +1,6 @@
 import React from "react";
 import { SimpleGrid } from "@chakra-ui/react";
-import { StatCard } from "@ui/atoms";
+import { StatCard } from "@shared/ui/atoms";
 
 /**
  * SummaryPanel - lightweight panel to show several stat cards in a responsive grid

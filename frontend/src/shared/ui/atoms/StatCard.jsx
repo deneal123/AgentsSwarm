@@ -10,7 +10,7 @@ import {
   Tooltip,
   Badge,
 } from "@chakra-ui/react";
-import { MotionBox } from "@ui/motionPrimitives";
+import { MotionBox } from "@shared/ui/lib/motionPrimitives";
 import { colors, spacing } from "@theme/tokens";
 
 /**

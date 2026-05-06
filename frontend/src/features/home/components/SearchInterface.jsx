@@ -16,7 +16,7 @@ import {
   AlertDescription,
   CloseButton
 } from '@chakra-ui/react';
-import { MotionBox } from '@ui/motionPrimitives';
+import { MotionBox } from '@shared/ui/lib/motionPrimitives';
 import { FiSearch, FiSend } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useGuestSession } from '@hooks/useGuestSession';

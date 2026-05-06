@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, HStack, Text, VStack } from '@chakra-ui/react';
-import { MotionBox } from '@ui/motionPrimitives';
+import { MotionBox } from '@shared/ui/lib/motionPrimitives';
 import { colors, borderRadius } from '@theme/tokens';
 
 /**

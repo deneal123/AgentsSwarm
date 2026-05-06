@@ -3,8 +3,11 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": "src",
     "paths": {
-      "@ui/*": [
-        "ui/*"
+      "@shared/ui/*": [
+        "shared/ui/*"
+      ],
+      "@shared/ui": [
+        "shared/ui"
       ],
       "@features/*": [
         "features/*"

@@ -27,7 +27,7 @@ import {
   FiAlertCircle,
   FiInfo
 } from 'react-icons/fi';
-import { MotionBox } from '@ui/motionPrimitives';
+import { MotionBox } from '@shared/ui/lib/motionPrimitives';
 import { colors, borderRadius } from '@theme/tokens';
 
 /**

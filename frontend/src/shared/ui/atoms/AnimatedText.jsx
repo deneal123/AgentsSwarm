@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "@chakra-ui/react";
-import { MotionBox } from "@ui/motionPrimitives";
+import { MotionBox } from "@shared/ui/lib/motionPrimitives";
 import { colors } from "@theme/tokens";
 import { keyframes } from "@emotion/react";
 

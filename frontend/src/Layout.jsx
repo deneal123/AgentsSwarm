@@ -1,1 +1,1 @@
-export { default } from "./ui/layout/ProtectedLayout";
+export { default } from "@shared/ui/layout/ProtectedLayout";

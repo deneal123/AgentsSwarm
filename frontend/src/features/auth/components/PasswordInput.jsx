@@ -9,7 +9,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon, LockIcon } from "@chakra-ui/icons";
-import { MotionBox } from "@ui/motionPrimitives";
+import { MotionBox } from "@shared/ui/lib/motionPrimitives";
 import { tokens } from "@theme/tokens";
 
 const AUTH_ACCENT = "#ef4444";

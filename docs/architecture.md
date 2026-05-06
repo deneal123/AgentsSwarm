@@ -144,3 +144,7 @@ sequenceDiagram
     A-->>R: DTO
     Note over A,M: Any domain exception<br/>mapped in map_chat_exception_to_http
 ```
+
+## UI boundaries (enforced)
+- All reusable UI components are located only in `frontend/src/shared/ui`.
+- Feature modules must not import components from other features directly; shared UI is consumed via `@shared/ui/*` public API only.

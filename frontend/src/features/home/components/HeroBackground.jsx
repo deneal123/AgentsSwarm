@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
-import { ParticlesBackground } from '@ui/atoms';
-import { FloatingOrbs } from '@ui/atoms';
+import { ParticlesBackground } from '@shared/ui/atoms';
+import { FloatingOrbs } from '@shared/ui/atoms';
 import { colors, gradients } from '@theme/tokens';
 import { keyframes } from '@emotion/react';
 
