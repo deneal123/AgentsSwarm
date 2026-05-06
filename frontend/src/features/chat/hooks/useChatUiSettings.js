@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import {
-  defaultChatUiSettings,
-  loadChatUiSettings,
-  saveChatUiSettings,
-} from '../adapters/chatUiSettingsStorage';
+import { readChatUiSettings, writeChatUiSettings } from '../adapters/chatUiSettingsStorage';
+import { defaultChatUiSettings } from '../constants/chatUiSettings';
+import { normalizeChatUiSettings } from '../schema/chatUiSettingsSchema';
 
 export const useChatUiSettings = ({ initialWebSearch = false, initialDeepResearch = false } = {}) => {
   const [settings, setSettings] = useState(() => {
-    const persisted = loadChatUiSettings();
+    const persisted = normalizeChatUiSettings(readChatUiSettings());
     return {
       ...persisted,
       webSearchEnabled: initialWebSearch || persisted.webSearchEnabled,
@@ -16,7 +14,7 @@ export const useChatUiSettings = ({ initialWebSearch = false, initialDeepResearc
   });
 
   useEffect(() => {
-    saveChatUiSettings(settings);
+    writeChatUiSettings(settings);
   }, [settings]);
 
   const resetUiSettings = () => {
