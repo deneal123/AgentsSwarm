@@ -40,7 +40,7 @@ import {
 import { NavLink } from 'react-router-dom';
 import { useGuestSession } from '@hooks/useGuestSession';
 import { useAuth } from '@context/AuthContext';
-import AuthModal, { useAuthModal } from '@features/auth/components/AuthModal';
+import { AuthModal, useAuthModal } from '@features/auth';
 import BrandMark from '@shared/ui/layout';
 import {
   createChatThread,
