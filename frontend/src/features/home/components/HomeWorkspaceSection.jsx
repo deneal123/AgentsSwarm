@@ -50,7 +50,7 @@ import {
   getUserChats,
   sendChatMessage,
   uploadFileForChat,
-} from '../../../API/chat';
+} from '../../../shared/api/chat';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import { HOME_AUTH_THEME, HOME_SIDEBAR_COLLAPSE_STORAGE_KEY, HOME_THEME } from '@features/home/theme';
@@ -350,7 +350,7 @@ function HomeWorkspaceSection() {
         const foundUrls = extractUrlCandidates(trimmed, 2);
         if (foundUrls.length > 0) {
           toast({ title: 'Читаю ссылку…', status: 'info', duration: 2000 });
-          const { parseUrl: apiParseUrl } = await import('../../../API/chat');
+          const { parseUrl: apiParseUrl } = await import('../../../shared/api/chat');
           const results = await Promise.allSettled(foundUrls.map((u) => apiParseUrl(u)));
           const parsed = results
             .filter((r) => r.status === 'fulfilled' && r.value?.content)

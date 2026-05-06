@@ -11,8 +11,12 @@
   - `lib`
   - `config`
 
+## API namespace
+- Target public API namespace: `src/shared/api`
+- Allowed API imports: `src/shared/api` or `src/shared/api/*`
+- Deprecated compatibility entrypoint: `src/API/index.js`
+
 ## Mapping for current structure
-- `src/API/*` → `shared/api`
 - `src/ui/*` → `shared/ui`
 - `src/features/*` remains feature-oriented modules
 
