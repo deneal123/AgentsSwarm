@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
 import { Box, SimpleGrid, Stack, Icon, usePrefersReducedMotion } from "@chakra-ui/react";
-import { MotionBox, motionKeyframes, motionVariants } from "@ui/motionPrimitives";
-import { Subtitle, Body, Footnote } from "@ui/atoms";
-import { GradientText } from "@ui/atoms";
+import { MotionBox, motionKeyframes, motionVariants } from "@shared/ui/lib/motionPrimitives";
+import { Subtitle, Body, Footnote } from "@shared/ui/atoms";
+import { GradientText } from "@shared/ui/atoms";
 import { colors, borderRadius, spacing } from "@theme/tokens";
 import { CheckCircleIcon, TimeIcon, LockIcon, RepeatIcon } from "@chakra-ui/icons";
 import { BENEFITS_CONTENT } from "@constants";

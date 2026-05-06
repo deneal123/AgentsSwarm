@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, HStack, Icon, Text, VStack } from "@chakra-ui/react";
-import Logo from "@ui/assets/common/Logo";
+import Logo from "@shared/ui/assets/common/Logo";
 import { borderRadius } from "@theme/tokens";
 import { AUTH_BRAND_LABEL, AUTH_THEME } from "@features/auth/constants";
 

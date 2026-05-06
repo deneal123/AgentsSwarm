@@ -4,7 +4,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import { colors, spacing } from "@theme/tokens";
-import { ScrollToTop } from "@ui/atoms";
+import { ScrollToTop } from "@shared/ui/atoms";
 import { isChatRoute, shouldUseFullWidthLayout } from "@routes/routeState";
 
 // CSS animation for page transitions - works on iOS Safari

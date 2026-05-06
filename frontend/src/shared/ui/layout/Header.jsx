@@ -30,7 +30,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { APP_ROUTES } from "@routes/routeConfig";
 import { isAuthRoute } from "@routes/routeState";
 import { FaHome, FaSignOutAlt, FaUser } from "react-icons/fa";
-import { MotionBox } from "@ui/motionPrimitives";
+import { MotionBox } from "@shared/ui/lib/motionPrimitives";
 import { useAuth } from "@context/AuthContext";
 import { borderRadius, colors } from "@theme/tokens";
 import { preloadRoute } from "@hooks/useRoutePreload";

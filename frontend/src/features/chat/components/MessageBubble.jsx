@@ -15,7 +15,7 @@ import {
   Image,
   Link
 } from '@chakra-ui/react';
-import { MotionBox } from '@ui/motionPrimitives';
+import { MotionBox } from '@shared/ui/lib/motionPrimitives';
 import {
   FiCopy,
   FiMoreVertical,

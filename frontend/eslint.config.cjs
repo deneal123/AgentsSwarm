@@ -98,4 +98,16 @@ module.exports = [
       "no-restricted-imports": ["error", { patterns: ["@features/auth/*", "@features/chat/*"] }],
     },
   },
+
+  {
+    files: ["src/features/**/*.{js,jsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: ["@features/*/*", "@ui/*", "**/ui/**"],
+        },
+      ],
+    },
+  },
 ];

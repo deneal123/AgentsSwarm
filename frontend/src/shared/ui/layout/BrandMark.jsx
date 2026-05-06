@@ -1,6 +1,6 @@
 import React from "react";
 import { HStack, Text, VStack } from "@chakra-ui/react";
-import Logo from "@ui/assets/common/Logo";
+import Logo from "@shared/ui/assets/common/Logo";
 
 import { PROJECT_NAME } from "@constants";
 
