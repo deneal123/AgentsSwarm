@@ -19,7 +19,7 @@ import { getDateLabel, groupMessagesBySender } from '../utils/messageGrouping';
  * - Loading состояния
  * - Пустое состояние
  */
-function ChatMessages({ onRetryMessage, onDeleteMessage }) {
+function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
   const { messages, loading, error, currentJob, isTyping } = useChat();
   const scrollRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -183,7 +183,7 @@ function ChatMessages({ onRetryMessage, onDeleteMessage }) {
             <Box px={4} py={2}>
               <JobProgress
                 job={currentJob}
-                onCancel={(jobId) => console.log('Cancel job:', jobId)}
+                onCancel={onCancelJob}
                 onDownload={(url) => window.open(url, '_blank')}
               />
             </Box>
