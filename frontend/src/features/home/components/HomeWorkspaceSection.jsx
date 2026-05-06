@@ -38,7 +38,7 @@ import {
   FiSliders,
 } from 'react-icons/fi';
 import { NavLink } from 'react-router-dom';
-import { useGuestSession } from '@hooks/useGuestSession';
+import { useGuestSession } from '@features/chat';
 import { useAuth } from '@context/AuthContext';
 import { AuthModal, useAuthModal } from '@features/auth';
 import BrandMark from '@shared/ui/layout';
