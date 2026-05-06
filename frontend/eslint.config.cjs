@@ -105,7 +105,7 @@ module.exports = [
       "no-restricted-imports": [
         "error",
         {
-          patterns: ["@features/*/*", "@ui/*", "**/ui/**"],
+          patterns: ["@features/*/*", "@ui/*", "**/ui/**", "@features/auth/*", "@features/chat/*", "@features/home/*", "@features/profile/*", "@features/files/*"],
         },
       ],
     },
