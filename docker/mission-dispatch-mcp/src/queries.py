@@ -248,11 +248,6 @@ class MissionDispatchClient:
             "timeout": timeout,
             "deadline": deadline,
             "needs_canceled": False,
-            "update_nodes": {
-                "additionalProp1": {"waypoints": [waypoint]},
-                "additionalProp2": {"waypoints": [waypoint]},
-                "additionalProp3": {"waypoints": [waypoint]},
-            },
             "name": mission_name,
         }
         return self._post_request("mission", data)

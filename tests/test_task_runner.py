@@ -38,7 +38,7 @@ def test_task_runs_and_completes_with_events():
     assert status_after.status_code == 200
     plan = status_after.json()["task"].get("plan")
     assert plan
-    assert len(plan) == 3
+    assert len(plan) >= 3
     assert all(step.get("status") == "completed" for step in plan)
 
 
@@ -82,7 +82,7 @@ def test_task_can_be_created_without_auto_run_and_started_later():
     plan_resp = client.get(f"/task/{task_id}/plan")
     assert plan_resp.status_code == 200
     plan = plan_resp.json()["plan"]
-    assert len(plan) == 3
+    assert len(plan) >= 3
     assert all(step.get("status") == "completed" for step in plan)
 
 

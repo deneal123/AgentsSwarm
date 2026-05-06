@@ -4,6 +4,7 @@ This module provides the FastMCP server instance and main() function.
 """
 
 import argparse
+import os
 import sys
 
 from fastmcp import FastMCP
@@ -13,17 +14,16 @@ from ros_mcp.resources import register_all_resources
 from ros_mcp.tools import register_all_tools
 from ros_mcp.utils.websocket import WebSocketManager
 
-# ROS bridge connection settings
-ROSBRIDGE_IP = "127.0.0.1"  # Default is localhost. Replace with your local IP or set using the LLM.
-ROSBRIDGE_PORT = (
-    9090  # Rosbridge default is 9090. Replace with your rosbridge port or set using the LLM.
-)
+# ROS bridge connection settings — read from env vars, fall back to localhost defaults
+ROSBRIDGE_IP = os.getenv("ROSBRIDGE_IP", "127.0.0.1")
+ROSBRIDGE_PORT = int(os.getenv("ROSBRIDGE_PORT", "9090"))
+ROS_DEFAULT_TIMEOUT = float(os.getenv("ROS_DEFAULT_TIMEOUT", "5.0"))
 
 # Initialize MCP server
 mcp = FastMCP("ros-mcp-server")
 
 # Initialize WebSocket manager
-ws_manager = WebSocketManager(ROSBRIDGE_IP, ROSBRIDGE_PORT, default_timeout=5.0)
+ws_manager = WebSocketManager(ROSBRIDGE_IP, ROSBRIDGE_PORT, default_timeout=ROS_DEFAULT_TIMEOUT)
 
 # Register all tools
 register_all_tools(mcp, ws_manager, rosbridge_ip=ROSBRIDGE_IP, rosbridge_port=ROSBRIDGE_PORT)

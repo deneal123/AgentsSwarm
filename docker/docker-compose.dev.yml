@@ -100,6 +100,8 @@ services:
       ROS_MSP_MCP_URL: http://ros-msp:8000/mcp
       # Enable real Agents SDK in Docker (overrides AGENTS_USE_SDK=0 from env_file)
       AGENTS_USE_SDK: "1"
+      # Direct Mission Control URL for map image fetching (MapAnalyst)
+      MISSION_CONTROL_URL: "${MISSION_CONTROL_URL:-http://localhost:8050}"
     env_file:
       # env_file values are overridden by the environment block above.
       # Edit this file for: AGENTS_MODEL, AGENTS_PROVIDER, OPENAI_API_KEY,

@@ -452,43 +452,101 @@ def _handle_submit_undock(arguments: dict) -> CallToolResult:
 
 
 def _handle_detected_objects(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_GET_DETECTED_OBJECTS)
+    robot_name = _require(arguments, "robot_name")
+    objects = mc_client.get_available_objects(robot_name)
+    if not objects:
+        return _text_result(f"No objects detected by {robot_name}.\n")
+    lines = [f"**Detected Objects — {robot_name}**", ""]
+    for obj in objects if isinstance(objects, list) else [objects]:
+        lines.append(f"- {obj}")
+    return _text_result("\n".join(lines) + "\n")
 
 
 def _handle_detected_apriltags(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_GET_DETECTED_APRILTAGS)
+    robot_name = _require(arguments, "robot_name")
+    tags = mc_client.get_available_apriltags(robot_name)
+    if not tags:
+        return _text_result(f"No AprilTags detected by {robot_name}.\n")
+    lines = [f"**Detected AprilTags — {robot_name}**", ""]
+    for tag in tags if isinstance(tags, list) else [tags]:
+        lines.append(f"- {tag}")
+    return _text_result("\n".join(lines) + "\n")
 
 
 def _handle_visualize_route(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_VISUALIZE_ROUTE)
+    waypoints = arguments.get("waypoints") or []
+    if not isinstance(waypoints, list) or len(waypoints) < 1:
+        return _text_result("Error: at least one waypoint is required.\n", is_error=True)
+    image_bytes = mc_client.visualize_route(waypoints, solver=arguments.get("solver", "NVIDIA_CUOPT"))
+    if not image_bytes:
+        return _text_result("No visualization returned from Mission Control.\n", is_error=True)
+    import base64
+    encoded = base64.b64encode(image_bytes).decode()
+    return _text_result(f"Route visualization (base64 PNG):\n{encoded}\n")
 
 
 def _handle_get_map_info(_: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_GET_MAP_INFO)
+    meta = mc_client.get_map_metadata()
+    if not isinstance(meta, dict):
+        return _text_result(f"Map info: {meta}\n")
+    lines = ["**Current Map Info**", ""]
+    for key, value in meta.items():
+        lines.append(f"- {key}: {value}")
+    return _text_result("\n".join(lines) + "\n")
 
 
 def _handle_list_maps(_: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_LIST_AVAILABLE_MAPS)
+    maps = mc_client.list_maps()
+    if not maps:
+        return _text_result("No maps uploaded to Mission Control.\n")
+    if isinstance(maps, list):
+        lines = ["**Available Maps**", ""] + [f"- {m}" for m in maps]
+        return _text_result("\n".join(lines) + "\n")
+    return _text_result(f"Maps: {maps}\n")
 
 
 def _handle_select_map(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_SELECT_MAP)
+    map_id = _require(arguments, "map_id")
+    response = mc_client.select_map(map_id)
+    return _text_result(f"**Map Selected**\n\n- Map ID: {map_id}\n- Response: {response}\n")
 
 
 def _handle_deploy_map(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_DEPLOY_MAP_TO_ROBOT)
+    robot_name = _require(arguments, "robot_name")
+    map_id = _require(arguments, "map_id")
+    response = mc_client.update_robot_map(robot_name, map_id)
+    return _text_result(f"**Map Deployed**\n\n- Robot: {robot_name}\n- Map ID: {map_id}\n- Response: {response}\n")
 
 
 def _handle_submit_objective(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_SUBMIT_OBJECTIVE)
+    objective = arguments.get("objective")
+    if not objective:
+        return _text_result("Error: objective is required.\n", is_error=True)
+    response = mc_client.submit_objective(objective)
+    return _text_result(f"**Objective Submitted**\n\n- Response: {response}\n")
 
 
 def _handle_cancel_objective(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_CANCEL_OBJECTIVE)
+    objective_name = _require(arguments, "objective_name")
+    mc_client.cancel_objective(objective_name)
+    return _text_result(f"**Objective Cancelled**\n\n- Name: {objective_name}\n")
 
 
 def _handle_pick_and_place(arguments: dict) -> CallToolResult:
-    return _unsupported_feature(TOOL_SUBMIT_PICK_AND_PLACE)
+    robot_name = _require(arguments, "robot_name")
+    response = mc_client.submit_pick_and_place(
+        robot_name=robot_name,
+        object_id=_require(arguments, "object_id"),
+        class_id=_require(arguments, "class_id"),
+        pos_x=_require(arguments, "pos_x"),
+        pos_y=_require(arguments, "pos_y"),
+        pos_z=_require(arguments, "pos_z"),
+        quat_x=_require(arguments, "quat_x"),
+        quat_y=_require(arguments, "quat_y"),
+        quat_z=_require(arguments, "quat_z"),
+        quat_w=_require(arguments, "quat_w"),
+    )
+    return _text_result(f"**Pick and Place Mission Submitted**\n\n- Robot: {robot_name}\n- Response: {response}\n")
 
 
 ToolHandler = Callable[[dict], CallToolResult]

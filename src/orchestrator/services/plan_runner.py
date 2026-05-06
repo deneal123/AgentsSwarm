@@ -86,7 +86,7 @@ class PlanRunner:
             )
         )
 
-    async def _execute_step(self, task_id: str, step: PlanStep) -> TaskStatus | None:
+    async def _execute_step(self, task_id: str, step: PlanStep) -> tuple[TaskStatus | None, str | None]:
         attempts = 0
         while attempts < self._max_attempts:
             attempts += 1
@@ -94,7 +94,7 @@ class PlanRunner:
             stop_status = self._stop_status(task_id)
             if stop_status:
                 await self._stream_stop(task_id, stop_status)
-                return stop_status
+                return stop_status, None
 
             self._ts.update_plan_step(task_id, step.id, "running")
             self._sc.record(
@@ -122,7 +122,7 @@ class PlanRunner:
             if stop_status:
                 self._ts.update_plan_step(task_id, step.id, TaskStatus.CANCELED.value)
                 await self._stream_stop(task_id, stop_status)
-                return stop_status
+                return stop_status, None
 
             if result.success:
                 self._ts.update_plan_step(task_id, step.id, TaskStatus.COMPLETED.value)
@@ -135,7 +135,7 @@ class PlanRunner:
                         meta={"agent": step.agent, "attempt": attempts},
                     )
                 )
-                return None
+                return None, result.message
 
             # failure path
             self._ts.update_plan_step(task_id, step.id, TaskStatus.FAILED.value)
@@ -161,7 +161,7 @@ class PlanRunner:
                         meta={"user_facing": True, "code": "step_failed", "step_id": step.id},
                     )
                 )
-                return TaskStatus.FAILED
+                return TaskStatus.FAILED, None
 
             self._sc.record(
                 StreamEvent(
@@ -174,18 +174,27 @@ class PlanRunner:
             )
             await asyncio.sleep(self._retry_delay)
 
-        return TaskStatus.FAILED
+        return TaskStatus.FAILED, None
 
     async def run(self, task_id: str, plan: List[PlanStep]) -> TaskStatus:
+        map_context: str | None = None
+
         for step in plan:
             stop_status = self._stop_status(task_id)
             if stop_status:
                 await self._stream_stop(task_id, stop_status)
                 return stop_status
 
-            outcome = await self._execute_step(task_id, step)
+            if map_context and step.agent in {"Navigation", "SwarmCoordinator"}:
+                step.meta["map_context"] = map_context
+                step.description = f"{step.description}\n\nКонтекст карты:\n{map_context}"
+
+            outcome, result_msg = await self._execute_step(task_id, step)
             if outcome in {TaskStatus.CANCELED, TaskStatus.FAILED}:
                 return outcome
+
+            if step.agent == "MapAnalyst" and result_msg:
+                map_context = result_msg
 
         return TaskStatus.COMPLETED
 

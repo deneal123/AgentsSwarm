@@ -103,12 +103,12 @@ class TaskApplicationService:
     def schedule_run(self, task_id: str, prompt: str, background_tasks: BackgroundTasks) -> None:
         background_tasks.add_task(self._runtime.run_task, task_id, prompt)
 
-    def replan_task(self, task_id: str) -> str:
+    async def replan_task(self, task_id: str) -> str:
         task = self._runtime.get_task_or_404(task_id)
         if task.status == TaskStatus.RUNNING:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Task already running")
 
-        self._runtime.build_and_store_plan(task_id, task.prompt, message="Plan rebuilt")
+        await self._runtime.build_and_store_plan(task_id, task.prompt, message="Plan rebuilt")
         self._task_store.update_status(task_id, TaskStatus.PENDING)
         return TaskStatus.PENDING.value
 

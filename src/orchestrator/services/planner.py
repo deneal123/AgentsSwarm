@@ -114,6 +114,10 @@ async def build_plan(prompt: str) -> List[PlanStep]:
     else:
         goal_tuples = _build_plan_heuristic(prompt)
 
+    needs_map = any(
+        agent in {"Navigation", "SwarmCoordinator"} for _, agent, _ in goal_tuples
+    )
+
     steps: List[PlanStep] = [
         PlanStep(
             id=1,
@@ -140,7 +144,27 @@ async def build_plan(prompt: str) -> List[PlanStep]:
         ),
     ]
 
-    for current_id, (description, agent, target_robots) in enumerate(goal_tuples, start=3):
+    if needs_map:
+        nav_goals = [desc for desc, agent, _ in goal_tuples if agent in {"Navigation", "SwarmCoordinator"}]
+        steps.append(
+            PlanStep(
+                id=3,
+                description="Анализ карты окружения для навигации",
+                agent="MapAnalyst",
+                meta={
+                    "expected_outcome": "Целевые координаты, рекомендуемые waypoints, препятствия на пути",
+                    "inputs": {"from_step": 1},
+                    "tools": [],
+                    "depends_on": [1],
+                    "task_description": " | ".join(nav_goals),
+                },
+            )
+        )
+
+    exec_start_id = 4 if needs_map else 3
+    map_depends = [1, 2, 3] if needs_map else [1, 2]
+
+    for current_id, (description, agent, target_robots) in enumerate(goal_tuples, start=exec_start_id):
         tools_for_exec = (
             ["get_idle_robots", "check_robot_health", "submit_navigation_mission",
              "dispatch_mission", "get_mission_status"]
@@ -148,7 +172,7 @@ async def build_plan(prompt: str) -> List[PlanStep]:
             else ["get_robot_status", "submit_navigation_mission",
                   "dispatch_mission", "get_mission_status"]
         )
-        depends_on = [1, 2] + ([current_id - 1] if current_id > 3 else [])
+        depends_on = map_depends + ([current_id - 1] if current_id > exec_start_id else [])
         steps.append(
             PlanStep(
                 id=current_id,

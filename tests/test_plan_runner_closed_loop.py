@@ -1,9 +1,16 @@
 import pytest
+from unittest.mock import AsyncMock, patch
 
 from orchestrator.services.plan_runner import AgentHandoffExecutor, HandoffResult, PlanRunner
 from orchestrator.services.planner import build_plan
 from orchestrator.services.streaming import StreamCollector
 from orchestrator.services.tasks import TaskStatus, TaskStore
+from orchestrator.services import planner as planner_mod
+
+
+def _make_goal(description: str, agent: str, robots: list[str] = []):
+    from orchestrator.services.planner import _GoalItem
+    return _GoalItem(description=description, agent=agent, target_robots=robots)
 
 
 class ControlledExecutor(AgentHandoffExecutor):
@@ -33,13 +40,17 @@ async def test_runner_retries_until_success_with_handoff_stream():
     task_store = TaskStore()
     sc = StreamCollector(task_store)
     task_id = "task-retry"
-    plan = build_plan("Отправь робота к точке")
+    goals = [_make_goal("Отправь робота к точке", "Navigation", [])]
+    with patch.object(planner_mod, "_build_plan_llm", AsyncMock(return_value=goals)):
+        plan = await build_plan("Отправь робота к точке")
 
     task_store.create_task(task_id, "Отправь робота к точке", {})
     task_store.set_plan(task_id, [s.as_dict() for s in plan])
     task_store.update_status(task_id, TaskStatus.RUNNING)
 
-    executor = ControlledExecutor({3: [False, True]})
+    # Step 3 is MapAnalyst, step 4 is Navigation — retry step 4
+    nav_step_id = next(s.id for s in plan if s.agent == "Navigation")
+    executor = ControlledExecutor({nav_step_id: [False, True]})
     runner = PlanRunner(task_store, sc, agent_executor=executor, max_attempts=3, retry_delay=0)
 
     outcome = await runner.run(task_id, plan)
@@ -51,7 +62,7 @@ async def test_runner_retries_until_success_with_handoff_stream():
 
     messages = [ev.message for ev in sc.get_events(task_id)]
     assert any("Повтор шага" in msg for msg in messages)
-    assert any("Plan step 3 completed" in msg for msg in messages)
+    assert any(f"Plan step {nav_step_id} completed" in msg for msg in messages)
     assert any("Handoff to" in msg for msg in messages)
 
 
@@ -60,13 +71,16 @@ async def test_runner_marks_task_failed_after_exhausting_retries():
     task_store = TaskStore()
     sc = StreamCollector(task_store)
     task_id = "task-fail"
-    plan = build_plan("Выполни сложную миссию")
+    goals = [_make_goal("Выполни сложную миссию", "Navigation", [])]
+    with patch.object(planner_mod, "_build_plan_llm", AsyncMock(return_value=goals)):
+        plan = await build_plan("Выполни сложную миссию")
 
     task_store.create_task(task_id, "Выполни сложную миссию", {})
     task_store.set_plan(task_id, [s.as_dict() for s in plan])
     task_store.update_status(task_id, TaskStatus.RUNNING)
 
-    executor = ControlledExecutor({3: [False, False]})
+    nav_step_id = next(s.id for s in plan if s.agent == "Navigation")
+    executor = ControlledExecutor({nav_step_id: [False, False]})
     runner = PlanRunner(task_store, sc, agent_executor=executor, max_attempts=2, retry_delay=0)
 
     outcome = await runner.run(task_id, plan)
@@ -77,7 +91,7 @@ async def test_runner_marks_task_failed_after_exhausting_retries():
     assert task.status == TaskStatus.FAILED
 
     status_by_id = {step["id"]: step["status"] for step in task.plan}
-    assert status_by_id[3] == TaskStatus.FAILED.value
+    assert status_by_id[nav_step_id] == TaskStatus.FAILED.value
 
     events = sc.get_events(task_id)
     user_events = [ev for ev in events if ev.meta.get("user_facing")]

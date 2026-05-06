@@ -87,7 +87,7 @@ def register_task_routes(
 
     @app.post("/task/{task_id}/replan", response_model=TaskResponse, status_code=status.HTTP_202_ACCEPTED)
     async def replan_task(task_id: str, run: bool = False, background_tasks: BackgroundTasks = BackgroundTasks()) -> TaskResponse:
-        task_status = task_app_service.replan_task(task_id)
+        task_status = await task_app_service.replan_task(task_id)
 
         if run:
             task = runtime.get_task_or_404(task_id)

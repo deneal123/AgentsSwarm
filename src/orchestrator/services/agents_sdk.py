@@ -21,6 +21,7 @@ from orchestrator.agents import prompts
 from orchestrator.agents.mcp import MCPServerConfig
 from orchestrator.agents.router import get_router_config
 from orchestrator.services.guardrails import prompt_input_guardrail, router_output_guardrail
+from orchestrator.services.map_analyst import get_map_context
 from orchestrator.services.openai_client import build_openai_client
 from orchestrator.services.plan_runner import AgentHandoffExecutor, HandoffResult
 from orchestrator.services.streaming import StreamCollector, StreamEvent
@@ -84,6 +85,7 @@ _AGENT_PROMPTS: dict[str, str] = {
     "RobotInfo": prompts.ROBOT_INFO_PROMPT,
     "Navigation": prompts.NAVIGATION_PROMPT,
     "SwarmCoordinator": prompts.SWARM_PROMPT,
+    "MapAnalyst": prompts.MAP_ANALYST_PROMPT,
     "General": prompts.GENERAL_FALLBACK_PROMPT,
 }
 
@@ -184,6 +186,9 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         return servers
 
     async def execute(self, task_id: str, step, attempt: int) -> HandoffResult:
+        if step.agent == "MapAnalyst":
+            return await self._run_map_analyst(task_id, step)
+
         agent = _router_agent() if step.agent == "Router" else _build_agent(
             step.agent, mcp_configs=_mcp_configs_for(step.agent)
         )
@@ -194,6 +199,224 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                 await stack.enter_async_context(server)
 
             return await self._run_agent(task_id, step, attempt, agent, run_config)
+
+    async def _run_map_analyst(self, task_id: str, step) -> HandoffResult:
+        import base64
+        import json
+
+        await self._record_stream(task_id, "map_analyst_start", message="Fetching map...")
+        try:
+            map_ctx = await get_map_context()
+        except Exception:
+            logger.exception("Failed to fetch map", extra={"task_id": task_id})
+            return HandoffResult(success=True, message="")
+
+        if map_ctx is None:
+            return HandoffResult(success=True, message="")
+
+        meta = map_ctx.metadata
+        mime = "image/png" if map_ctx.image_bytes[:4] == b"\x89PNG" else "image/jpeg"
+        b64_map = base64.b64encode(map_ctx.image_bytes).decode()
+
+        await self._record_stream(
+            task_id, "map_analyst_candidates",
+            meta={"map_id": meta.get("map_id"), "resolution": meta.get("resolution")},
+            message="Map fetched, generating route candidates...",
+        )
+
+        # ── Phase 1: Agent proposes 3 route candidates ──────────────────────
+        candidates_json: dict | None = None
+        try:
+            mcp_configs = _mcp_configs_for("Navigation")
+            agent = _build_agent("MapAnalyst", mcp_configs=mcp_configs)
+
+            agent_input = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                f"ЗАДАЧА: {step.meta.get('task_description', step.description)}\n\n"
+                                f"МЕТАДАТА КАРТЫ:\n"
+                                f"- map_id: {meta.get('map_id', 'unknown')}\n"
+                                f"- resolution: {meta.get('resolution', '?')} m/px\n"
+                                f"- x_offset: {meta.get('x_offset', '?')} m\n"
+                                f"- y_offset: {meta.get('y_offset', '?')} m\n"
+                                f"- safety_distance: {meta.get('safety_distance', 0.45)} m\n\n"
+                                "Проанализируй карту и предложи 3 варианта маршрута согласно инструкции."
+                            ),
+                        },
+                        {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64_map}"}},
+                    ],
+                }
+            ]
+
+            async with contextlib.AsyncExitStack() as stack:
+                for server in self._collect_mcp_servers(agent):
+                    await stack.enter_async_context(server)
+                result = await Runner.run(agent, agent_input, run_config=_run_config())
+
+            raw = str(getattr(result, "final_output", None) or result)
+            # Strip possible markdown fences
+            import re as _re
+            raw = _re.sub(r"^```[a-z]*\n?", "", raw.strip()).rstrip("`").strip()
+            candidates_json = json.loads(raw)
+        except Exception:
+            logger.exception("MapAnalyst candidate generation failed", extra={"task_id": task_id})
+            return HandoffResult(success=True, message="")
+
+        candidates = candidates_json.get("candidates", [])
+        if not candidates:
+            return HandoffResult(success=True, message="")
+
+        await self._record_stream(
+            task_id, "map_analyst_visualize",
+            meta={"num_candidates": len(candidates)},
+            message=f"Visualizing {len(candidates)} route candidates...",
+        )
+
+        # ── Phase 2: Visualize each candidate via Mission Control API ────────
+        import os
+        import httpx
+
+        base_url = os.getenv("MISSION_CONTROL_URL", "http://localhost:8050").rstrip("/")
+        visualizations: list[tuple[str, bytes]] = []  # (candidate_name, png_bytes)
+
+        async with httpx.AsyncClient(timeout=20.0) as http:
+            for candidate in candidates:
+                waypoints = candidate.get("waypoints", [])
+                if not waypoints:
+                    continue
+                try:
+                    resp = await http.post(
+                        f"{base_url}/api/v1/visualize_route",
+                        json={"route": waypoints, "solver": "CPU_DIJKSTRA"},
+                    )
+                    resp.raise_for_status()
+                    if resp.content:
+                        visualizations.append((candidate["name"], resp.content))
+                except Exception:
+                    logger.warning(
+                        "visualize_route failed for candidate %s", candidate.get("name"),
+                        extra={"task_id": task_id},
+                    )
+
+        if not visualizations:
+            best = candidates[0]
+            return HandoffResult(
+                success=True,
+                message=self._format_map_result(candidates_json, best, reason="visualization unavailable"),
+            )
+
+        await self._record_stream(
+            task_id, "map_analyst_compare",
+            meta={"num_visualized": len(visualizations)},
+            message=f"Comparing {len(visualizations)} route visualizations...",
+        )
+
+        # ── Phase 3: Vision LLM compares all route images ────────────────────
+        best_candidate, reason = await self._compare_routes(
+            visualizations, candidates, candidates_json.get("target", {})
+        )
+
+        await self._record_stream(
+            task_id, "map_analyst_done",
+            meta={"winner": best_candidate.get("name"), "reason": reason},
+            message=f"Best route selected: '{best_candidate.get('name')}' — {reason}",
+        )
+
+        return HandoffResult(
+            success=True,
+            message=self._format_map_result(candidates_json, best_candidate, reason),
+        )
+
+    async def _compare_routes(
+        self,
+        visualizations: list[tuple[str, bytes]],
+        candidates: list[dict],
+        target: dict,
+    ) -> tuple[dict, str]:
+        import base64
+
+        client = _client()
+        model = _model_name()
+
+        # Build vision message with all route images
+        content: list[dict] = [
+            {
+                "type": "text",
+                "text": (
+                    "You are evaluating robot navigation routes. "
+                    f"Target destination: x={target.get('x', '?')}, y={target.get('y', '?')}.\n\n"
+                    "The following images show different route visualizations on the same map. "
+                    "Each image shows waypoints and the planned path.\n\n"
+                    "Evaluate each route for:\n"
+                    "1. Path efficiency (shorter is better)\n"
+                    "2. Safety margin from walls and obstacles\n"
+                    "3. Smoothness (fewer sharp turns)\n"
+                    "4. Risk of getting stuck in narrow passages\n\n"
+                    f"Routes being compared: {', '.join(name for name, _ in visualizations)}\n\n"
+                    "Reply with JSON only: "
+                    '{"winner": "<route_name>", "reason": "<one sentence why>"}'
+                ),
+            }
+        ]
+
+        for name, png_bytes in visualizations:
+            b64 = base64.b64encode(png_bytes).decode()
+            content.append({"type": "text", "text": f"Route: {name}"})
+            content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
+
+        try:
+            resp = await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": content}],
+                max_tokens=200,
+                temperature=0,
+            )
+            import json, re as _re
+            raw = (resp.choices[0].message.content or "").strip()
+            raw = _re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
+            decision = json.loads(raw)
+            winner_name = decision.get("winner", "")
+            reason = decision.get("reason", "")
+            for c in candidates:
+                if c.get("name") == winner_name:
+                    return c, reason
+        except Exception:
+            logger.exception("Route comparison vision call failed")
+
+        return candidates[0], "fallback to first candidate"
+
+    @staticmethod
+    def _format_map_result(candidates_json: dict, best: dict, reason: str) -> str:
+        target = candidates_json.get("target", {})
+        warnings = candidates_json.get("warnings", [])
+        waypoints = best.get("waypoints", [])
+        wp_str = ", ".join(f"({w['x']:.2f}, {w['y']:.2f})" for w in waypoints)
+
+        lines = [
+            "=== MAP ANALYSIS RESULT ===",
+            f"TARGET: x={target.get('x', '?')}, y={target.get('y', '?')}",
+            f"BEST ROUTE: {best.get('name')} — {reason}",
+            f"WAYPOINTS: [{wp_str}]",
+            f"RATIONALE: {best.get('rationale', '')}",
+        ]
+        if warnings:
+            lines.append(f"WARNINGS: {'; '.join(warnings)}")
+
+        lines += [
+            "",
+            "OTHER CANDIDATES:",
+        ]
+        for c in candidates_json.get("candidates", []):
+            if c.get("name") != best.get("name"):
+                wp = ", ".join(f"({w['x']:.2f}, {w['y']:.2f})" for w in c.get("waypoints", []))
+                lines.append(f"  • {c['name']}: [{wp}] — {c.get('rationale', '')}")
+
+        lines.append("===========================")
+        return "\n".join(lines)
 
     async def _run_agent(self, task_id: str, step, attempt: int, agent: Agent, run_config: RunConfig) -> HandoffResult:
         try:
