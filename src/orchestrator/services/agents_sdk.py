@@ -320,6 +320,28 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             visualizations, candidates, candidates_json.get("target", {})
         )
 
+        # Emit all route images over the stream so the UI can display them.
+        # Each image is base64-encoded PNG; is_best flags the selected route.
+        import base64 as _b64
+        route_images = [
+            {
+                "name": name,
+                "image_b64": _b64.b64encode(png_bytes).decode(),
+                "mime": "image/png",
+                "is_best": name == best_candidate.get("name"),
+            }
+            for name, png_bytes in visualizations
+        ]
+        await self._record_stream(
+            task_id, "route_visualizations",
+            meta={
+                "type": "route_images",
+                "winner": best_candidate.get("name"),
+                "images": route_images,
+            },
+            message=f"Route visualizations ready ({len(route_images)} images)",
+        )
+
         await self._record_stream(
             task_id, "map_analyst_done",
             meta={"winner": best_candidate.get("name"), "reason": reason},
