@@ -6,6 +6,8 @@
     python examples/task_lifecycle.py
     python examples/task_lifecycle.py --host http://185.55.57.82:8009
     python examples/task_lifecycle.py --prompt "Покажи статус carter01"
+    python examples/task_lifecycle.py --log run.log          # сохранить в файл
+    python examples/task_lifecycle.py --log auto             # авто-имя по времени
 """
 
 import argparse
@@ -14,6 +16,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
 
 DEFAULT_HOST = "http://185.55.57.82:8009"
 DEFAULT_PROMPT = "Покажи статус всех роботов и сводку по флоту"
@@ -63,6 +67,30 @@ def _color(text: str, code: str) -> str:
     return f"{code}{text}{_RESET}"
 
 
+# ─── log file ─────────────────────────────────────────────────────────────────
+
+_log_file: Path | None = None
+
+
+def _log(line: str) -> None:
+    """Write a plain (no ANSI) line to the log file if configured."""
+    if _log_file is None:
+        return
+    with _log_file.open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+def _strip_ansi(text: str) -> str:
+    import re
+    return re.sub(r"\033\[[0-9;]*m", "", text)
+
+
+def _out(line: str) -> None:
+    """Print to stdout and mirror (stripped) to log file."""
+    print(line)
+    _log(_strip_ansi(line))
+
+
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
 def _req(method: str, url: str, body: dict | None = None) -> dict:
@@ -83,13 +111,9 @@ def _req(method: str, url: str, body: dict | None = None) -> dict:
 
 
 def _section(title: str) -> None:
-    print(f"\n{_color('─' * 60, _DIM)}")
-    print(f"  {_color(title, _BOLD)}")
-    print(f"{_color('─' * 60, _DIM)}")
-
-
-def _pretty(data: dict) -> None:
-    print(json.dumps(data, ensure_ascii=False, indent=2))
+    _out(f"\n{_color('─' * 60, _DIM)}")
+    _out(f"  {_color(title, _BOLD)}")
+    _out(f"{_color('─' * 60, _DIM)}")
 
 
 def _render_event(ev: dict) -> None:
@@ -116,40 +140,40 @@ def _render_event(ev: dict) -> None:
     if "step" in event_type and "start" in event_type:
         agent = meta.get("agent", "")
         step_id = meta.get("step_id", "")
-        print(f"\n  {prefix} {_color(f'► Step {step_id} — {agent}', _BOLD + _CYAN)}")
+        _out(f"\n  {prefix} {_color(f'► Step {step_id} — {agent}', _BOLD + _CYAN)}")
         return
     if "step" in event_type and "complet" in event_type:
         agent = meta.get("agent", "")
         step_id = meta.get("step_id", "")
-        print(f"  {prefix} {_color(f'✓ Step {step_id} — {agent} завершён', _GREEN)}")
+        _out(f"  {prefix} {_color(f'✓ Step {step_id} — {agent} завершён', _GREEN)}")
         return
     if "task_complet" in event_type or msg == "Task completed":
-        print(f"\n  {_color('✓ ЗАДАЧА ЗАВЕРШЕНА', _BOLD + _GREEN)}")
+        _out(f"\n  {_color('✓ ЗАДАЧА ЗАВЕРШЕНА', _BOLD + _GREEN)}")
         return
     if "task_fail" in event_type or msg == "Task failed":
-        print(f"\n  {_color('✗ ЗАДАЧА ПРОВАЛЕНА', _BOLD + _RED)}")
+        _out(f"\n  {_color('✗ ЗАДАЧА ПРОВАЛЕНА', _BOLD + _RED)}")
         return
 
     # Show handoff info distinctly
     if "Handoff to" in msg:
-        print(f"  {prefix} {_color(msg, _CYAN)}")
+        _out(f"  {prefix} {_color(msg, _CYAN)}")
         return
 
     # Show retry distinctly
     if "Повтор шага" in msg:
-        print(f"  {prefix} {_color(msg, _YELLOW)}")
+        _out(f"  {prefix} {_color(msg, _YELLOW)}")
         return
 
     # Long agent messages (actual output) — show with indent
     if source in _AGENT_SOURCES and len(msg) > 80:
-        print(f"  {prefix}")
+        _out(f"  {prefix}")
         for line in msg.splitlines():
-            print(f"           {line}")
+            _out(f"           {line}")
         return
 
     # Default: single line
     if msg and msg not in {"Task accepted", "Plan created"}:
-        print(f"  {prefix} {msg}")
+        _out(f"  {prefix} {msg}")
 
 
 # ─── steps ────────────────────────────────────────────────────────────────────
@@ -158,8 +182,8 @@ def create_and_run(host: str, prompt: str) -> str:
     _section("1. Создание и запуск задачи")
     resp = _req("POST", f"{host}/task", {"prompt": prompt})
     task_id = resp["task_id"]
-    print(f"  task_id = {_color(task_id, _BOLD)}")
-    print(f"  status  = {resp.get('status', '?')}")
+    _out(f"  task_id = {_color(task_id, _BOLD)}")
+    _out(f"  status  = {resp.get('status', '?')}")
     return task_id
 
 
@@ -195,7 +219,7 @@ def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
 
         time.sleep(poll_interval)
     else:
-        print(f"\n  {_color(f'✗ Таймаут {timeout}с — последний статус: {status}', _RED)}")
+        _out(f"\n  {_color(f'✗ Таймаут {timeout}с — последний статус: {status}', _RED)}")
 
     return status
 
@@ -205,7 +229,7 @@ def show_plan(host: str, task_id: str) -> None:
     resp = _req("GET", f"{host}/task/{task_id}/plan")
     plan = resp.get("plan") or []
     if not plan:
-        print("  (план пуст)")
+        _out("  (план пуст)")
         return
     for step in plan:
         st = step.get("status", "pending")
@@ -216,13 +240,13 @@ def show_plan(host: str, task_id: str) -> None:
         # Truncate long descriptions (map context etc.)
         if len(desc) > 80:
             desc = desc[:77] + "..."
-        print(
+        _out(
             f"  {_color(icon, icon_color)} [{step['id']}] "
             f"{_color(agent, _BOLD):<28} "
             f"{_color(st, icon_color):<12}  "
             f"{_color(desc, _DIM)}"
         )
-    print()
+    _out("")
 
 
 def show_logs(host: str, task_id: str) -> None:
@@ -230,24 +254,48 @@ def show_logs(host: str, task_id: str) -> None:
     resp = _req("GET", f"{host}/task/{task_id}/logs")
     logs = resp.get("logs") or []
     if not logs:
-        print("  (логов нет)")
+        _out("  (логов нет)")
         return
     for i, entry in enumerate(logs, 1):
-        print(f"  {_color(str(i).rjust(3), _DIM)}. {entry}")
+        _out(f"  {_color(str(i).rjust(3), _DIM)}. {entry}")
 
 
 # ─── main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    global _log_file
+
     parser = argparse.ArgumentParser(description="Orchestrator task lifecycle demo")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Base URL of orchestrator")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT, help="Task prompt")
     parser.add_argument("--timeout", type=int, default=120, help="Wait timeout in seconds")
+    parser.add_argument(
+        "--log",
+        metavar="FILE",
+        help="Write full output + raw events JSON to FILE (e.g. run.log). "
+             "Omit to disable. Pass 'auto' to auto-name by timestamp.",
+    )
     args = parser.parse_args()
 
     host = args.host.rstrip("/")
-    print(f"\n{_color('Оркестратор:', _BOLD)} {host}")
-    print(f"{_color('Промпт:     ', _BOLD)} {args.prompt}")
+
+    # Configure log file
+    if args.log:
+        log_path = args.log
+        if log_path == "auto":
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            log_path = f"orchestrator_{ts}.log"
+        _log_file = Path(log_path)
+        _log_file.write_text(
+            f"# Orchestrator run — {datetime.now(timezone.utc).isoformat()}\n"
+            f"# host:   {host}\n"
+            f"# prompt: {args.prompt}\n\n",
+            encoding="utf-8",
+        )
+        print(f"  {_color(f'Лог: {_log_file.resolve()}', _DIM)}")
+
+    _out(f"\n{_color('Оркестратор:', _BOLD)} {host}")
+    _out(f"{_color('Промпт:     ', _BOLD)} {args.prompt}")
 
     task_id = create_and_run(host, args.prompt)
     final_status = stream_until_done(host, task_id, timeout=args.timeout)
@@ -255,11 +303,26 @@ def main() -> None:
     show_logs(host, task_id)
 
     color = _GREEN if final_status == "completed" else _RED
-    print(f"\n{_color('─' * 60, _DIM)}")
-    print(f"  Статус:  {_color(final_status.upper(), _BOLD + color)}")
-    print(f"  task_id: {task_id}")
-    print(f"  Swagger: {host}/docs")
-    print(f"{_color('─' * 60, _DIM)}\n")
+    _out(f"\n{_color('─' * 60, _DIM)}")
+    _out(f"  Статус:  {_color(final_status.upper(), _BOLD + color)}")
+    _out(f"  task_id: {task_id}")
+    _out(f"  Swagger: {host}/docs")
+    _out(f"{_color('─' * 60, _DIM)}\n")
+
+    # Append full raw events dump to log for debugging
+    if _log_file:
+        all_events = _req("GET", f"{host}/task/{task_id}/events?after_seq=0")
+        raw_plan = _req("GET", f"{host}/task/{task_id}/plan")
+        raw_logs = _req("GET", f"{host}/task/{task_id}/logs")
+        with _log_file.open("a", encoding="utf-8") as f:
+            f.write("\n\n# ── RAW PLAN ──────────────────────────────────────\n")
+            f.write(json.dumps(raw_plan, ensure_ascii=False, indent=2))
+            f.write("\n\n# ── RAW LOGS ──────────────────────────────────────\n")
+            f.write(json.dumps(raw_logs, ensure_ascii=False, indent=2))
+            f.write("\n\n# ── RAW EVENTS ────────────────────────────────────\n")
+            f.write(json.dumps(all_events, ensure_ascii=False, indent=2))
+            f.write("\n")
+        print(f"  {_color(f'Лог сохранён: {_log_file.resolve()}', _GREEN)}")
 
 
 if __name__ == "__main__":
