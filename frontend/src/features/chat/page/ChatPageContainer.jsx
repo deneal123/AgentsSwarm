@@ -64,17 +64,17 @@ import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/th
 import { SIDEBAR_COLLAPSE_STORAGE_KEY } from '../constants/localStorageKeys';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useComposerAutosize } from '../hooks/useComposerAutosize';
+import { useProfileDrawer } from '../hooks/useProfileDrawer';
+import { useTraceSessions } from '../hooks/useTraceSessions';
+import { useMessageActions } from '../hooks/useMessageActions';
+import { useRecentThreads } from '../hooks/useRecentThreads';
 import { createThreadId } from '../utils/chatThread';
 import { clampTraceDetail } from '../utils/trace';
-import {
-  COMPOSER_MAX_HEIGHT_PX,
-  COMPOSER_MIN_HEIGHT_PX,
-  TRACE_MAX_ITEMS,
-  TRACE_MAX_SESSIONS,
-} from '../constants/limits';
+import { COMPOSER_MAX_HEIGHT_PX, COMPOSER_MIN_HEIGHT_PX } from '../constants/limits';
 import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
 import TracePanel from '../components/trace/TracePanel';
 import ModelSelector from '../components/ModelSelector';
+import { PROSE_SX } from './proseStyles';
 
 /**
  * ChatPage - Страница чата с AI агентом
@@ -96,7 +96,6 @@ function ChatPageContainer() {
   const memoryDisclosure = useDisclosure();
   const settingsDisclosure = useDisclosure();
   const [memoryFacts, setMemoryFacts] = useState([]);
-  const [recentThreads, setRecentThreads] = useState([]);
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
@@ -107,64 +106,14 @@ function ChatPageContainer() {
 
   const { checkLimits, incrementRequests, remainingRequests } = useGuestSession();
   const { isAuthenticated, user, logout } = useAuth();
-  const authenticatedUserId = useMemo(() => {
-    const candidate = user?.id;
-    return candidate ? String(candidate) : '';
-  }, [user?.id]);
-  const resolveSessionUserId = useCallback(() => {
-    if (authenticatedUserId) {
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('user_id', authenticatedUserId);
-      }
-      return authenticatedUserId;
-    }
-    const fromStorage = typeof window !== 'undefined' ? window.sessionStorage.getItem('user_id') : '';
-    if (fromStorage) {
-      return fromStorage;
-    }
-    if (typeof document !== 'undefined') {
-      return document.cookie.split('; ').find((r) => r.startsWith('user_id='))?.split('=')[1] || '';
-    }
-    return '';
-  }, [authenticatedUserId]);
-  const profileDisclosure = useDisclosure();
-  const [profileData, setProfileData] = useState(null);
-  const [profileQuota, setProfileQuota] = useState(null);
-  const [profileMemoryCount, setProfileMemoryCount] = useState(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !profileDisclosure.isOpen) return;
-    let cancelled = false;
-    setIsProfileLoading(true);
-    (async () => {
-      try {
-        const { fetchProfile, getUserQuota } = await import('@api/profile');
-        const { getUserMemory } = await import('@api/chat');
-        const [prof, quota] = await Promise.all([
-          fetchProfile().catch(() => null),
-          getUserQuota().catch(() => null),
-        ]);
-        if (cancelled) return;
-        setProfileData(prof);
-        setProfileQuota(quota);
-
-        const effectiveUserId = String(prof?.id || resolveSessionUserId() || '').trim();
-        if (effectiveUserId) {
-          const memoryPayload = await getUserMemory(effectiveUserId).catch(() => null);
-          if (!cancelled) {
-            const count = Array.isArray(memoryPayload?.facts) ? memoryPayload.facts.length : 0;
-            setProfileMemoryCount(count);
-          }
-        } else if (!cancelled) {
-          setProfileMemoryCount(0);
-        }
-      } finally {
-        if (!cancelled) setIsProfileLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isAuthenticated, profileDisclosure.isOpen, resolveSessionUserId]);
+  const {
+    profileDisclosure,
+    profileData,
+    profileQuota,
+    profileMemoryCount,
+    isProfileLoading,
+    resolveSessionUserId,
+  } = useProfileDrawer({ isAuthenticated, user });
   const { isOpen: isAuthModalOpen, onClose: onAuthModalClose, showAuthModal, modalData } = useAuthModal();
 
   const inputRef = useRef(null);
@@ -188,21 +137,33 @@ function ChatPageContainer() {
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
   const [attachedFile, setAttachedFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [traceSessions, setTraceSessions] = useState([]);
-  const [activeTraceSessionId, setActiveTraceSessionId] = useState(null);
-  const [tracePanelsExpanded, setTracePanelsExpanded] = useState({});
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const messagesScrollRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const traceSessionsRef = useRef([]);
-  const activeTraceSessionIdRef = useRef(null);
   const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
   const isCompactTrace = useBreakpointValue({ base: true, md: false }) ?? false;
   const { composerHeightPx } = useComposerAutosize({ inputRef, value: inputValue });
-  const [deletingThreadId, setDeletingThreadId] = useState(null);
+  const {
+    traceSessions,
+    tracePanelsExpanded,
+    setTracePanelsExpanded,
+    traceSessionByAnchor,
+    activeOrLatestTraceSession,
+    startTraceSession,
+    appendTraceEvent,
+    finalizeTraceSession,
+    resetTraceSessions,
+  } = useTraceSessions({ showTracePanel });
+  const {
+    recentThreads,
+    setRecentThreads,
+    deletingThreadId,
+    upsertRecentThread,
+    handleDeleteThread,
+  } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages, toast });
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -211,14 +172,6 @@ function ChatPageContainer() {
     window.localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, isSidebarCollapsed ? '1' : '0');
   }, [isSidebarCollapsed]);
 
-
-  useEffect(() => {
-    traceSessionsRef.current = traceSessions;
-  }, [traceSessions]);
-
-  useEffect(() => {
-    activeTraceSessionIdRef.current = activeTraceSessionId;
-  }, [activeTraceSessionId]);
 
   useEffect(() => {
     isLoadingRef.current = isLoading;
@@ -243,98 +196,6 @@ function ChatPageContainer() {
     return activeJobId !== incomingJobId;
   }, [resolveWsEventJobId]);
 
-  const createTraceSession = useCallback((title = 'Подготовка запроса', anchorMessageId = null) => {
-    const sessionId = `trace_session_${Date.now()}_${Math.random()}`;
-    const session = {
-      id: sessionId,
-      title: clampTraceDetail(title, 96),
-      anchorMessageId,
-      status: 'running',
-      startedAt: new Date().toISOString(),
-      finishedAt: null,
-      events: [],
-    };
-
-    setTraceSessions((prev) => [...prev, session].slice(-TRACE_MAX_SESSIONS));
-    setTracePanelsExpanded((prev) => ({ ...prev, [sessionId]: true }));
-    activeTraceSessionIdRef.current = sessionId;
-    setActiveTraceSessionId(sessionId);
-    return sessionId;
-  }, []);
-
-  const ensureTraceSession = useCallback((fallbackTitle = 'Подготовка запроса', anchorMessageId = null) => {
-    const activeId = activeTraceSessionIdRef.current;
-    const activeSession = traceSessionsRef.current.find((session) => session.id === activeId);
-    if (activeSession && activeSession.status === 'running') {
-      return activeSession.id;
-    }
-    return createTraceSession(fallbackTitle, anchorMessageId);
-  }, [createTraceSession]);
-
-  const startTraceSession = useCallback((queryText, anchorMessageId = null) => {
-    const sessionId = ensureTraceSession('Подготовка запроса', anchorMessageId);
-    setTraceSessions((prev) => prev.map((session) => (
-      session.id === sessionId
-        ? {
-            ...session,
-            title: clampTraceDetail(queryText, 96),
-            anchorMessageId: anchorMessageId || session.anchorMessageId || null,
-            status: 'running',
-            finishedAt: null,
-          }
-        : session
-    )));
-    activeTraceSessionIdRef.current = sessionId;
-    setActiveTraceSessionId(sessionId);
-    setTracePanelsExpanded((prev) => ({ ...prev, [sessionId]: true }));
-    return sessionId;
-  }, [ensureTraceSession]);
-
-  const appendTraceEvent = useCallback((event, sessionIdOverride = null) => {
-    if (!event?.title) {
-      return;
-    }
-
-    const sessionId = sessionIdOverride || ensureTraceSession('Подготовка запроса');
-    const normalizedEvent = {
-      id: `trace_${Date.now()}_${Math.random()}`,
-      title: String(event.title),
-      detail: clampTraceDetail(event.detail),
-      kind: event.kind || 'info',
-      timestamp: event.timestamp || new Date().toISOString(),
-    };
-
-    setTraceSessions((prev) => prev.map((session) => {
-      if (session.id !== sessionId) {
-        return session;
-      }
-      const nextStatus = normalizedEvent.kind === 'error' ? 'error' : session.status;
-      return {
-        ...session,
-        status: nextStatus,
-        events: [...session.events, normalizedEvent].slice(-TRACE_MAX_ITEMS),
-      };
-    }));
-  }, [ensureTraceSession]);
-
-  const finalizeTraceSession = useCallback((status = 'done', sessionIdOverride = null) => {
-    const sessionId = sessionIdOverride || activeTraceSessionIdRef.current;
-    if (!sessionId) {
-      return;
-    }
-    const finalizedAt = new Date().toISOString();
-    setTraceSessions((prev) => prev.map((session) => {
-      if (session.id !== sessionId) {
-        return session;
-      }
-      const nextStatus = status === 'error' ? 'error' : (session.status === 'error' ? 'error' : 'done');
-      return {
-        ...session,
-        status: nextStatus,
-        finishedAt: session.finishedAt || finalizedAt,
-      };
-    }));
-  }, []);
 
   const onJobCreated = useCallback((data) => {
     const incomingJobId = resolveWsEventJobId(data);
@@ -734,35 +595,16 @@ function ChatPageContainer() {
     return { unavailable: false, error: '' };
   }, [messages]);
 
-  const traceSessionByAnchor = useMemo(() => {
-    const grouped = new Map();
-    traceSessions.forEach((session) => {
-      const key = session?.anchorMessageId;
-      if (!key) {
-        return;
-      }
-
-      const prev = grouped.get(key);
-      if (!prev) {
-        grouped.set(key, session);
-        return;
-      }
-
-      const prevTs = new Date(prev.startedAt || 0).getTime();
-      const curTs = new Date(session.startedAt || 0).getTime();
-      if (curTs >= prevTs) {
-        grouped.set(key, session);
-      }
-    });
-    return grouped;
-  }, [traceSessions]);
-
   useEffect(() => {
     if (!showTracePanel || !traceSessions.length) {
       return;
     }
 
-    const latestSession = traceSessions[traceSessions.length - 1];
+    const latestSession = activeOrLatestTraceSession;
+
+    if (!latestSession) {
+      return;
+    }
 
     if (latestSession.status === 'running') {
       return;
@@ -775,99 +617,10 @@ function ChatPageContainer() {
     return () => {
       window.clearTimeout(collapseTimer);
     };
-  }, [traceSessions, showTracePanel]);
-
-  const PROSE_SX = {
-    maxWidth: '100%',
-    overflowWrap: 'anywhere',
-    wordBreak: 'break-word',
-    '& > *': { background: 'transparent', maxWidth: '100%' },
-    '& p, & li, & span, & strong, & em, & del, & h1, & h2, & h3, & h4, & h5, & h6': {
-      background: 'transparent',
-      backgroundColor: 'transparent',
-      overflowWrap: 'anywhere',
-      wordBreak: 'break-word',
-    },
-    '& p': { margin: '0 0 0.8em 0', background: 'transparent', overflowWrap: 'anywhere' },
-    '& p:last-child': { marginBottom: 0 },
-    '& h1, & h2, & h3, & h4': {
-      fontWeight: 700,
-      letterSpacing: '-0.015em',
-      lineHeight: 1.3,
-      margin: '1.2em 0 0.5em',
-      color: CHAT_THEME.textPrimary,
-    },
-    '& h1:first-child, & h2:first-child, & h3:first-child': { marginTop: 0 },
-    '& h1': { fontSize: '1.45em' },
-    '& h2': { fontSize: '1.25em' },
-    '& h3': { fontSize: '1.1em' },
-    '& ul, & ol': { paddingLeft: '1.4em', margin: '0.4em 0 0.8em' },
-    '& li': { marginBottom: '0.3em', lineHeight: 1.65 },
-    '& li > p': { margin: '0.2em 0' },
-    '& strong': { fontWeight: 700, color: CHAT_THEME.textPrimary },
-    '& em': { color: 'rgba(255,255,255,0.75)', fontStyle: 'italic' },
-    '& code': {
-      fontFamily: "'JetBrains Mono', 'SF Mono', Menlo, monospace",
-      fontSize: '0.86em',
-      background: 'rgba(239,68,68,0.08)',
-      border: '1px solid rgba(239,68,68,0.18)',
-      borderRadius: '6px',
-      padding: '0.1em 0.42em',
-      color: 'rgba(252,165,165,0.95)',
-      fontWeight: 500,
-    },
-    '& pre code': {
-      background: 'transparent',
-      border: 'none',
-      padding: 0,
-      color: 'inherit',
-      fontSize: 'inherit',
-    },
-    '& a': { color: '#f87171', textDecoration: 'underline', textUnderlineOffset: '3px', transition: 'opacity 0.15s' },
-    '& a:hover': { opacity: 0.8 },
-    '& blockquote': {
-      borderLeft: '3px solid rgba(239,68,68,0.5)',
-      paddingLeft: '1em',
-      color: 'rgba(255,255,255,0.65)',
-      margin: '0.6em 0',
-      fontStyle: 'italic',
-    },
-    '& hr': { border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1em 0' },
-    '& table': { width: '100%', borderCollapse: 'collapse', margin: '0.8em 0' },
-    '& th, & td': {
-      padding: '0.5em 0.75em',
-      border: '1px solid rgba(255,255,255,0.12)',
-      textAlign: 'left',
-    },
-    '& th': { background: 'rgba(255,255,255,0.06)', fontWeight: 600 },
-  };
-
-  const handleCopyMessage = useCallback((text) => {
-    if (!text) return;
-    try {
-      navigator.clipboard?.writeText(text);
-    } catch {
-      /* noop */
-    }
-  }, []);
+  }, [activeOrLatestTraceSession, showTracePanel, traceSessions.length]);
 
   const handleSendMessageRef = useRef(null);
-  const handleRegenerate = useCallback((messageId) => {
-    const idx = messages.findIndex((m) => m.id === messageId);
-    if (idx === -1) return;
-    let userIdx = -1;
-    for (let i = idx - 1; i >= 0; i -= 1) {
-      if (messages[i]?.type === 'user' && messages[i]?.content) {
-        userIdx = i;
-        break;
-      }
-    }
-    if (userIdx === -1) return;
-    const userContent = messages[userIdx].content;
-    const anchorMessageId = messages[userIdx].id;
-    setMessages((prev) => prev.slice(0, userIdx + 1));
-    handleSendMessageRef.current?.(userContent, { skipUserAppend: true, anchorMessageId });
-  }, [messages]);
+  const { handleCopyMessage, handleRegenerate } = useMessageActions({ messages, setMessages, handleSendMessageRef });
 
   const renderedMessages = useMemo(() => {
     return visibleMessages.map((message, idx) => {
@@ -1069,68 +822,6 @@ function ChatPageContainer() {
       );
     });
   }, [visibleMessages, lastUsedModel, handleCopyMessage, handleRegenerate, isLoading]);
-
-  const upsertRecentThread = useCallback((targetThreadId, titleCandidate) => {
-    const tid = String(targetThreadId || '').trim();
-    if (!tid) {
-      return;
-    }
-
-    const nextTitle = (String(titleCandidate || '').trim() || `Чат ${tid.slice(0, 8)}`).slice(0, 72);
-
-    setRecentThreads((prev) => {
-      const normalized = Array.isArray(prev) ? prev : [];
-      const existing = normalized.find((thread) => {
-        const candidateId = thread?.thread_id || thread?.id || thread;
-        return String(candidateId) === tid;
-      });
-
-      const nextItem = existing
-        ? { ...existing, title: nextTitle }
-        : { thread_id: tid, title: nextTitle };
-
-      const rest = normalized.filter((thread) => {
-        const candidateId = thread?.thread_id || thread?.id || thread;
-        return String(candidateId) !== tid;
-      });
-
-      return [nextItem, ...rest].slice(0, 18);
-    });
-  }, []);
-
-  const handleDeleteThread = useCallback(async (thread, event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const targetThreadId = thread?.thread_id || thread?.id || thread;
-    if (!targetThreadId || deletingThreadId === targetThreadId) {
-      return;
-    }
-
-    setDeletingThreadId(targetThreadId);
-    try {
-      const { deleteChatThread } = await import('@api/chat');
-      await deleteChatThread(targetThreadId, resolveSessionUserId() || null);
-
-      setRecentThreads((prev) => prev.filter((candidate) => {
-        const candidateId = candidate?.thread_id || candidate?.id || candidate;
-        return candidateId !== targetThreadId;
-      }));
-
-      if (targetThreadId === threadId) {
-        setMessages([]);
-        navigate('/');
-      }
-    } catch {
-      toast({
-        title: 'Не удалось удалить чат',
-        status: 'error',
-        duration: 2200,
-      });
-    } finally {
-      setDeletingThreadId(null);
-    }
-  }, [deletingThreadId, navigate, resolveSessionUserId, threadId, toast]);
 
   const sendViaRest = useCallback(async (message, modelForRequest, inputTypeForRequest, options = {}) => {
     appendTraceEvent({
@@ -1427,8 +1118,7 @@ function ChatPageContainer() {
     setSidebarSearch('');
     setAttachedFile(null);
     setError(null);
-    setTraceSessions([]);
-    setActiveTraceSessionId(null);
+    resetTraceSessions();
     setTracePanelsExpanded({});
     navigate('/');
   }, [navigate]);

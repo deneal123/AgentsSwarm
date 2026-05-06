@@ -2,8 +2,6 @@ import { APP_ROUTES, ROUTE_LOADERS } from "../routes/routeConfig";
 
 const preloadMap = {
   [APP_ROUTES.ROOT]: ROUTE_LOADERS[APP_ROUTES.ROOT],
-  [APP_ROUTES.INFO]: ROUTE_LOADERS[APP_ROUTES.INFO],
-  [APP_ROUTES.DOCUMENTS]: ROUTE_LOADERS[APP_ROUTES.DOCUMENTS],
   [APP_ROUTES.LOGIN]: ROUTE_LOADERS[APP_ROUTES.LOGIN],
   [APP_ROUTES.REGISTER]: ROUTE_LOADERS[APP_ROUTES.REGISTER],
 };
@@ -30,4 +28,3 @@ export const preloadCriticalRoutes = () => {
   }
   setTimeout(preloader, 2000);
 };
-

@@ -53,6 +53,7 @@ import {
 } from '../../../API/chat';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
+import { HOME_AUTH_THEME, HOME_SIDEBAR_COLLAPSE_STORAGE_KEY, HOME_THEME } from '@features/home/theme';
 
 const ASSISTANT_OPTIONS = [
   { value: 'auto', label: 'Универсальный ассистент (Auto)' },
@@ -92,22 +93,6 @@ const QUICK_ACTIONS = [
     prompt: 'Создай концепт иллюстрации для текущего проекта.',
   },
 ];
-
-const AUTH_ACCENT = '#ef4444';
-const AUTH_ACCENT_HOVER = '#dc2626';
-const HOME_SIDEBAR_COLLAPSE_STORAGE_KEY = 'gpthub.home.sidebar.collapsed';
-
-const AUTH_OUTLINE_BUTTON_SX = {
-  variant: 'outline',
-  borderColor: 'rgba(255, 255, 255, 0.22)',
-  color: colors.text.secondary,
-  bg: 'rgba(255, 255, 255, 0.03)',
-  _hover: {
-    color: colors.text.primary,
-    bg: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(239, 68, 68, 0.32)',
-  },
-};
 
 const TRACE_PREPARATION_STEPS = [
   'Анализирую запрос',
@@ -564,7 +549,7 @@ function HomeWorkspaceSection() {
         leftIcon={<FiPlus />}
         borderRadius="xl"
         onClick={handleNewChat}
-        {...AUTH_OUTLINE_BUTTON_SX}
+        {...HOME_AUTH_THEME.outlineButton}
       >
         Новый чат
       </Button>
@@ -602,8 +587,8 @@ function HomeWorkspaceSection() {
                 pr={10}
                 h="auto"
                 borderRadius="lg"
-                bg={item.isDraft || item.id === activeThreadId ? 'rgba(239,68,68,0.14)' : 'rgba(255,255,255,0.04)'}
-                border={`1px solid ${(item.isDraft || item.id === activeThreadId) ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`}
+                bg={item.isDraft || item.id === activeThreadId ? HOME_THEME.selectedBg : HOME_THEME.panelBg}
+                border={`1px solid ${(item.isDraft || item.id === activeThreadId) ? HOME_THEME.selectedBorder : HOME_THEME.panelHover}`}
                 fontSize="xs"
                 fontWeight="400"
                 color={item.isDraft || item.id === activeThreadId ? 'red.200' : colors.text.secondary}
@@ -650,10 +635,10 @@ function HomeWorkspaceSection() {
             justifyContent="flex-start"
             leftIcon={<Text fontSize="sm">🧠</Text>}
             variant="outline"
-            borderColor="rgba(255,255,255,0.18)"
+            borderColor={HOME_THEME.panelBorderStrong}
             color={colors.text.secondary}
             bg="rgba(255,255,255,0.04)"
-            _hover={{ bg: 'rgba(255,255,255,0.09)', borderColor: 'rgba(239,68,68,0.45)', color: colors.text.primary }}
+            _hover={{ bg: HOME_THEME.panelHoverStrong, borderColor: HOME_THEME.selectedBorder, color: colors.text.primary }}
             onClick={memoryDisclosure.onOpen}
           >
             Память и контекст
@@ -664,10 +649,10 @@ function HomeWorkspaceSection() {
             justifyContent="flex-start"
             leftIcon={<FiSettings />}
             variant="outline"
-            borderColor="rgba(255,255,255,0.18)"
+            borderColor={HOME_THEME.panelBorderStrong}
             color={colors.text.secondary}
             bg="rgba(255,255,255,0.04)"
-            _hover={{ bg: 'rgba(255,255,255,0.09)', borderColor: 'rgba(239,68,68,0.45)', color: colors.text.primary }}
+            _hover={{ bg: HOME_THEME.panelHoverStrong, borderColor: HOME_THEME.selectedBorder, color: colors.text.primary }}
             onClick={settingsDisclosure.onOpen}
           >
             Настройки системы
@@ -678,7 +663,7 @@ function HomeWorkspaceSection() {
   );
 
   return (
-    <Box minH="100vh" bg="#060606" color={colors.text.primary} position="relative" overflow="hidden">
+    <Box minH="100vh" bg={HOME_THEME.pageBg} color={colors.text.primary} position="relative" overflow="hidden">
       <Box
         position="absolute"
         top="-20%"
@@ -705,7 +690,7 @@ function HomeWorkspaceSection() {
           display={{ base: 'none', lg: 'block' }}
           w={isSidebarCollapsed ? '0' : '290px'}
           p={isSidebarCollapsed ? 0 : 5}
-          borderRight={isSidebarCollapsed ? 'none' : '1px solid rgba(255,255,255,0.08)'}
+          borderRight={isSidebarCollapsed ? 'none' : `1px solid ${HOME_THEME.panelBorder}`}
           bg="rgba(12,12,12,0.78)"
           backdropFilter="blur(14px)"
           overflow="hidden"
@@ -721,7 +706,7 @@ function HomeWorkspaceSection() {
             justify="space-between"
             px={{ base: 3, md: 6 }}
             py={3}
-            borderBottom="1px solid rgba(255,255,255,0.08)"
+            borderBottom={`1px solid ${HOME_THEME.panelBorder}`}
             bg="rgba(12,12,12,0.74)"
             backdropFilter="blur(12px)"
           >
@@ -741,7 +726,7 @@ function HomeWorkspaceSection() {
                   display={{ base: 'none', lg: 'inline-flex' }}
                   onClick={() => setIsSidebarCollapsed((prev) => !prev)}
                   color={colors.text.secondary}
-                  _hover={{ bg: 'rgba(255,255,255,0.08)', color: colors.text.primary }}
+                  _hover={{ bg: HOME_THEME.panelHover, color: colors.text.primary }}
                 >
                   {isSidebarCollapsed ? 'Показать чаты' : 'Скрыть чаты'}
                 </Button>
@@ -754,11 +739,11 @@ function HomeWorkspaceSection() {
                 onChange={(e) => { setAssistantProfile(e.target.value); setManualModelOverride(''); }}
                 maxW="280px"
                 borderRadius="full"
-                bg="rgba(255,255,255,0.08)"
-                borderColor="rgba(255,255,255,0.15)"
+                bg={HOME_THEME.formControlBg}
+                borderColor={HOME_THEME.formControlBorder}
                 fontSize="xs"
                 fontWeight="600"
-                sx={{ option: { color: '#111', background: '#fff' } }}
+                sx={{ option: HOME_THEME.nativeOption }}
               >
                 {ASSISTANT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -770,11 +755,11 @@ function HomeWorkspaceSection() {
                 onChange={(e) => setManualModelOverride(e.target.value)}
                 maxW="280px"
                 borderRadius="full"
-                bg={manualModelOverride ? 'rgba(239,68,68,0.18)' : 'rgba(255,255,255,0.08)'}
-                borderColor={manualModelOverride ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.15)'}
+                bg={manualModelOverride ? HOME_THEME.selectedBg : HOME_THEME.panelHover}
+                borderColor={manualModelOverride ? HOME_THEME.selectedBorder : HOME_THEME.panelBorderStrong}
                 fontSize="xs"
                 fontWeight="600"
-                sx={{ option: { color: '#111', background: '#fff' } }}
+                sx={{ option: HOME_THEME.nativeOption }}
                 isDisabled={availableModels.length === 0}
                 title={availableModels.length === 0 ? 'Модели недоступны — проверьте API ключ' : 'Выбрать модель вручную'}
               >
@@ -793,7 +778,7 @@ function HomeWorkspaceSection() {
                     to="/login"
                     size="sm"
                     display={{ base: 'none', md: 'flex' }}
-                    {...AUTH_OUTLINE_BUTTON_SX}
+                    {...HOME_AUTH_THEME.outlineButton}
                   >
                     Войти
                   </Button>
@@ -804,10 +789,10 @@ function HomeWorkspaceSection() {
                     display={{ base: 'none', md: 'flex' }}
                     borderRadius="10px"
                     fontSize="13px"
-                    bg={AUTH_ACCENT}
+                    bg={HOME_AUTH_THEME.accent}
                     color="white"
-                    _hover={{ bg: AUTH_ACCENT_HOVER }}
-                    _active={{ bg: AUTH_ACCENT_HOVER }}
+                    _hover={{ bg: HOME_AUTH_THEME.accentHover }}
+                    _active={{ bg: HOME_AUTH_THEME.accentHover }}
                   >
                     Регистрация
                   </Button>
@@ -820,9 +805,9 @@ function HomeWorkspaceSection() {
                     onChange={(e) => setWorkspaceContext(e.target.value)}
                     maxW="180px"
                     size="sm"
-                    bg="rgba(255,255,255,0.08)"
-                    borderColor="rgba(255,255,255,0.15)"
-                    sx={{ option: { color: '#111', background: '#fff' } }}
+                    bg={HOME_THEME.formControlBg}
+                    borderColor={HOME_THEME.formControlBorder}
+                    sx={{ option: HOME_THEME.nativeOption }}
                     display={{ base: 'none', md: 'block' }}
                   >
                     {CONTEXT_OPTIONS.map((option) => (
@@ -926,7 +911,7 @@ function HomeWorkspaceSection() {
             bottom={0}
             px={{ base: 3, md: 6 }}
             py={4}
-            borderTop="1px solid rgba(255,255,255,0.08)"
+            borderTop={`1px solid ${HOME_THEME.panelBorder}`}
             bg="linear-gradient(180deg, rgba(11,11,11,0.72) 0%, rgba(11,11,11,0.96) 45%)"
             backdropFilter="blur(12px)"
           >
@@ -989,7 +974,7 @@ function HomeWorkspaceSection() {
                   py={4}
                   fontSize="sm"
                   borderRadius="2xl"
-                  bg="rgba(255,255,255,0.08)"
+                  bg={HOME_THEME.formControlBg}
                   border="1px solid rgba(255,255,255,0.14)"
                   color={colors.text.primary}
                   _placeholder={{ color: colors.text.tertiary, fontSize: 'xs' }}
@@ -1173,9 +1158,9 @@ function HomeWorkspaceSection() {
             mr={2}
             borderRadius="10px"
             color={colors.text.secondary}
-            _hover={{ bg: 'rgba(255,255,255,0.08)', color: colors.text.primary }}
+            _hover={{ bg: HOME_THEME.panelHover, color: colors.text.primary }}
           />
-          <DrawerHeader borderBottomWidth="1px" borderColor="rgba(255,255,255,0.09)" py={5}>
+          <DrawerHeader borderBottomWidth="1px" borderColor={HOME_THEME.panelBorderSubtle} py={5}>
             <VStack align="start" spacing={1} pr={10}>
               <Text fontWeight="700" letterSpacing="0.01em" fontSize="lg">Настройки системы</Text>
               <Text fontSize="12px" color={colors.text.secondary} fontWeight="500">
@@ -1189,7 +1174,7 @@ function HomeWorkspaceSection() {
                 <Text fontSize="11px" fontWeight="700" color={colors.text.secondary} textTransform="uppercase" letterSpacing="0.08em" mb={2}>
                   Интерфейс
                 </Text>
-                <HStack justify="space-between" p={3} borderRadius="lg" bg="rgba(255,255,255,0.04)" border="1px solid rgba(255,255,255,0.08)">
+                <HStack justify="space-between" p={3} borderRadius="lg" bg={HOME_THEME.panelBg} border={`1px solid ${HOME_THEME.panelBorder}`}>
                   <VStack align="start" spacing={0}>
                     <Text fontSize="13px" fontWeight="600">Пошаговый режим</Text>
                     <Text fontSize="11px" fontWeight="500" color={colors.text.secondary}>Показывать этапы подготовки перед ответом</Text>
@@ -1212,7 +1197,7 @@ function HomeWorkspaceSection() {
                   Инструменты По Умолчанию
                 </Text>
                 <VStack align="stretch" spacing={2}>
-                  <HStack justify="space-between" p={3} borderRadius="lg" bg="rgba(255,255,255,0.04)" border="1px solid rgba(255,255,255,0.08)">
+                  <HStack justify="space-between" p={3} borderRadius="lg" bg={HOME_THEME.panelBg} border={`1px solid ${HOME_THEME.panelBorder}`}>
                     <VStack align="start" spacing={0}>
                       <Text fontSize="13px" fontWeight="600">Веб-поиск</Text>
                       <Text fontSize="11px" fontWeight="500" color={colors.text.secondary}>Подмешивать внешние источники в ответ</Text>
@@ -1229,7 +1214,7 @@ function HomeWorkspaceSection() {
                     </Button>
                   </HStack>
 
-                  <HStack justify="space-between" p={3} borderRadius="lg" bg="rgba(255,255,255,0.04)" border="1px solid rgba(255,255,255,0.08)">
+                  <HStack justify="space-between" p={3} borderRadius="lg" bg={HOME_THEME.panelBg} border={`1px solid ${HOME_THEME.panelBorder}`}>
                     <VStack align="start" spacing={0}>
                       <Text fontSize="13px" fontWeight="600">Deep Research</Text>
                       <Text fontSize="11px" fontWeight="500" color={colors.text.secondary}>Углубленный аналитический сценарий</Text>
@@ -1252,10 +1237,10 @@ function HomeWorkspaceSection() {
                 size="md"
                 variant="outline"
                 fontWeight="600"
-                borderColor="rgba(255,255,255,0.22)"
+                borderColor={HOME_THEME.panelBorderStrong}
                 color={colors.text.secondary}
-                bg="rgba(255,255,255,0.02)"
-                _hover={{ bg: 'rgba(255,255,255,0.08)', color: colors.text.primary, borderColor: 'rgba(239,68,68,0.36)' }}
+                bg={HOME_THEME.pageBg}
+                _hover={{ bg: HOME_THEME.panelHover, color: colors.text.primary, borderColor: HOME_THEME.selectedBorder }}
                 onClick={() => {
                   setShowTracePanel(true);
                   setWebSearchEnabled(false);

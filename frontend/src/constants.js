@@ -1,9 +1,6 @@
 export const PROJECT_NAME = "GPTHub";
 export const PROJECT_VERSION = "1.0.0";
 export const COMPANY_NAME = "InCellCorp";
-export const PROJECT_AUTHOR = "Команда InCellCorp";
-export const CURRENT_YEAR = new Date().getFullYear();
-export const SUPPORT_EMAIL = "deneal123@mail.ru";
 export const ORG_GITHUB_URL = "https://github.com/Prischli-Drink-Coffee";
 export const ORG_VK_URL = "https://vk.com/incellcorp";
 
@@ -98,10 +95,10 @@ export const FEATURE_SLIDES = [
   },
   {
     id: 4,
-    title: "Отслеживание прогресса",
+    title: "Контекст диалога",
     description:
-      "Ведите дневник питания, отслеживайте изменения веса и самочувствия. AI анализирует ваши данные и корректирует рекомендации.",
-    badge: "Аналитика",
+      "Ассистент удерживает историю беседы и ваши предпочтения, чтобы ответы оставались последовательными и полезными в рамках текущего контекста.",
+    badge: "Контекст",
     gradient:
       "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.35), rgba(20,184,166,0.2) 45%, rgba(6,11,21,0.75) 75%)",
   },
