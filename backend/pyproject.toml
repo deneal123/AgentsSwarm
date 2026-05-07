@@ -64,6 +64,6 @@ show_error_codes = true
 warn_unused_configs = true
 ignore_missing_imports = true
 follow_imports = "silent"
-packages = ["service.services", "service.agents"]
+packages = ["service"]
 disable_error_code = ["attr-defined", "assignment", "override", "arg-type", "operator", "dict-item", "union-attr", "name-defined", "misc", "valid-type", "method-assign"]
 

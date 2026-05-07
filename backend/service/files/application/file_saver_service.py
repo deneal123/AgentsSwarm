@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from service.infrastructure.storage.local_file_storage import LocalFileStorage
-from service.ports import FileStoragePort, MessageBusPort
+from service.files.application.ports.interfaces import FileStoragePort, MessageBusPort
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
 from service.models.key_value import ServiceType

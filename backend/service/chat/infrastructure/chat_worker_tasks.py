@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from service.ports import AgentExecutionPort
+from service.agents.application.ports.interfaces import AgentExecutionPort
 
 from celery import shared_task
 
@@ -86,10 +86,10 @@ async def process_agent_message_async(
     from service.models.key_value import ProcessingStatus
     from service.repositories.file_repository import FileRepository
     from service.repositories.job_repository import JobRepository
-    from service.services.agent_file_bridge import persist_generated_artifacts
-    from service.services.file_saver_service import FileSaverService
-    from service.services.agent_execution_service import DefaultAgentExecutionService
-    from service.services.agent_session_service import AgentSessionService
+    from service.agents.application.agent_file_bridge import persist_generated_artifacts
+    from service.files.application.file_saver_service import FileSaverService
+    from service.agents.application.agent_execution_service import DefaultAgentExecutionService
+    from service.agents.application.agent_session_service import AgentSessionService
     from service.settings import Config
 
     config = Config()
@@ -162,7 +162,7 @@ async def process_agent_message_async(
             try:
                 memory_user_id = await _resolve_memory_user_id(db_session=session, user_id=user_id, thread_id=thread_id)
                 if memory_user_id:
-                    from service.services.memory_service import MemoryService
+                    from service.analytics.application.memory_service import MemoryService
 
                     await MemoryService().extract_and_save_facts(
                         memory_user_id,

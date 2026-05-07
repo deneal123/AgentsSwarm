@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from service.ports import ChatCommandPort, JobOrchestrationPort, JobQueuePort
+from service.chat.application.ports.interfaces import ChatCommandPort
+from service.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 
 from uuid import UUID
 

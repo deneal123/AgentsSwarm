@@ -14,7 +14,7 @@ from service.presentation.routers.auth_api.schemas import (
     RegisterResponse,
 )
 from service.repositories.auth_repository import AuthRepository
-from service.services.profile_service import ProfileService
+from service.profile.application.profile_service import ProfileService
 from service.settings import AuthConfig
 
 logger = logging.getLogger(__name__)

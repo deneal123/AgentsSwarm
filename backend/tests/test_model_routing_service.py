@@ -4,7 +4,7 @@ import types
 import pytest
 
 from service.chat.domain.chat_exceptions import ModelRoutingError
-from service.services.model_routing_service import ModelRoutingService
+from service.agents.application.model_routing_service import ModelRoutingService
 
 
 @pytest.mark.asyncio

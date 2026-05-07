@@ -127,7 +127,7 @@ class ChatFallbackService:
         file_url = None
         try:
             if self.file_service is not None:
-                from service.services.agent_file_bridge import persist_generated_artifacts
+                from service.agents.application.agent_file_bridge import persist_generated_artifacts
 
                 generated_file_url, processor_metadata = await persist_generated_artifacts(
                     file_service=self.file_service,

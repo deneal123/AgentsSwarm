@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from service.services.file_scanner_service import BasicFileScanner
+from service.files.application.file_scanner_service import BasicFileScanner
 
 
 class FakeStorage:

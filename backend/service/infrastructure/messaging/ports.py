@@ -8,7 +8,9 @@ from celery.result import AsyncResult  # type: ignore[import]
 from service.infrastructure.messaging import stream_helpers
 from service.infrastructure.messaging.celery_app import celery_app
 from service.infrastructure.messaging import tasks
-from service.ports import JobHandlePort, JobQueuePort, MessageBusPort, StreamPort
+from service.jobs.application.ports.interfaces import JobHandlePort, JobQueuePort
+from service.files.application.ports.interfaces import MessageBusPort
+from service.agents.application.ports.interfaces import StreamPort
 
 
 class CeleryJobHandle(JobHandlePort):

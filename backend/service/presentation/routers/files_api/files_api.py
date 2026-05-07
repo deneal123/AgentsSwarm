@@ -18,7 +18,7 @@ from service.presentation.routers.files_api.schemas import (
     FileDetailResponse,
     CallbackRequest,
 )
-from service.services.file_saver_service import FileSaverService
+from service.files.application.file_saver_service import FileSaverService
 from service.settings import config
 
 logger = logging.getLogger(__name__)

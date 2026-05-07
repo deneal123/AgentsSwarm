@@ -8,7 +8,7 @@ from service.chat.domain.chat_fallback_service import ChatFallbackService
 from service.chat.domain.chat_job_orchestrator import ChatJobOrchestrator
 from service.chat.domain.chat_service import ChatService
 from service.chat.persistence.chat_persistence_service import ChatPersistenceService
-from service.services.model_routing_service import ModelRoutingService
+from service.agents.application.model_routing_service import ModelRoutingService
 
 
 @dataclass(slots=True)
