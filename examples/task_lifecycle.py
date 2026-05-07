@@ -116,6 +116,17 @@ def _section(title: str) -> None:
     _out(f"{_color('─' * 60, _DIM)}")
 
 
+# Tracks whether we're currently mid-stream (printed prefix but no newline yet).
+_streaming_active: dict = {"agent": None}
+
+
+def _flush_stream() -> None:
+    """End an in-progress streaming line with a newline."""
+    if _streaming_active["agent"] is not None:
+        print()
+        _streaming_active["agent"] = None
+
+
 def _render_event(ev: dict) -> None:
     """Print a single event in a readable live format."""
     source = ev.get("source", "")
@@ -125,55 +136,83 @@ def _render_event(ev: dict) -> None:
 
     label_color = _SOURCE_COLORS.get(source, _DIM)
     label = _SOURCE_LABELS.get(source, source.upper()[:6])
-
-    # Prefix: colored [LABEL]
     prefix = _color(f"[{label:<6}]", label_color)
 
-    # Highlight errors/warnings
     if level == "error":
         msg = _color(msg, _RED)
     elif level == "warning":
         msg = _color(msg, _YELLOW)
 
-    # Show step transitions more prominently
     event_type = meta.get("event_type", "")
+
+    # ── Step/task lifecycle events ──────────────────────────────────────────
     if "step" in event_type and "start" in event_type:
+        _flush_stream()
         agent = meta.get("agent", "")
         step_id = meta.get("step_id", "")
         _out(f"\n  {prefix} {_color(f'► Step {step_id} — {agent}', _BOLD + _CYAN)}")
         return
     if "step" in event_type and "complet" in event_type:
+        _flush_stream()
         agent = meta.get("agent", "")
         step_id = meta.get("step_id", "")
         _out(f"  {prefix} {_color(f'✓ Step {step_id} — {agent} завершён', _GREEN)}")
         return
     if "task_complet" in event_type or msg == "Task completed":
+        _flush_stream()
         _out(f"\n  {_color('✓ ЗАДАЧА ЗАВЕРШЕНА', _BOLD + _GREEN)}")
         return
     if "task_fail" in event_type or msg == "Task failed":
+        _flush_stream()
         _out(f"\n  {_color('✗ ЗАДАЧА ПРОВАЛЕНА', _BOLD + _RED)}")
         return
 
-    # Show handoff info distinctly
+    # ── Handoff / retry ─────────────────────────────────────────────────────
     if "Handoff to" in msg:
+        _flush_stream()
         _out(f"  {prefix} {_color(msg, _CYAN)}")
         return
-
-    # Show retry distinctly
     if "Повтор шага" in msg:
+        _flush_stream()
         _out(f"  {prefix} {_color(msg, _YELLOW)}")
         return
 
-    # Long agent messages (actual output) — show with indent
+    # ── Streaming text delta (raw_response_event) ────────────────────────────
+    sdk_event = meta.get("sdk_event", "")
+    if sdk_event == "raw_response_event":
+        agent_name = meta.get("agent", "?")
+        if _streaming_active["agent"] != agent_name:
+            # Start a new streaming line for this agent.
+            _flush_stream()
+            indent = f"  {prefix} "
+            print(indent, end="", flush=True)
+            _log(indent)
+            _streaming_active["agent"] = agent_name
+        print(msg, end="", flush=True)
+        _log(msg)
+        return
+
+    # ── Tool call / argument delta ───────────────────────────────────────────
+    if sdk_event == "raw_response_event":
+        # tool_call deltas handled above; shouldn't reach here
+        return
+
+    # ── All other SDK events (tool_called, message_output_created, etc.) ────
+    _flush_stream()
+    if not msg or msg in {"Task accepted", "Plan created"}:
+        return
+    # Skip message_output_created duplicate if it just echoes the streamed text
+    if sdk_event == "message_output_created":
+        return
+
+    # Long multi-line messages — indent each line
     if source in _AGENT_SOURCES and len(msg) > 80:
         _out(f"  {prefix}")
         for line in msg.splitlines():
             _out(f"           {line}")
         return
 
-    # Default: single line
-    if msg and msg not in {"Task accepted", "Plan created"}:
-        _out(f"  {prefix} {msg}")
+    _out(f"  {prefix} {msg}")
 
 
 # ─── steps ────────────────────────────────────────────────────────────────────

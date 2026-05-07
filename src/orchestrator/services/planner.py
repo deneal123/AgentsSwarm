@@ -118,75 +118,53 @@ async def build_plan(prompt: str) -> List[PlanStep]:
         agent in {"Navigation", "SwarmCoordinator"} for _, agent, _ in goal_tuples
     )
 
-    steps: List[PlanStep] = [
-        PlanStep(
-            id=1,
-            description="Анализ запроса и уточнение цели",
-            agent="Router",
-            meta={
-                "expected_outcome": "Уточненная цель и параметры задачи",
-                "inputs": {"prompt": prompt},
-                "tools": [],
-                "depends_on": [],
-            },
-        ),
-        PlanStep(
-            id=2,
-            description="Получение данных/контекст",
-            agent="RobotInfo",
-            meta={
-                "expected_outcome": "Контекст и данные по доступным роботам",
-                "inputs": {"from_step": 1},
-                "tools": ["get_fleet_summary", "get_robot_status", "check_robot_health"],
-                "depends_on": [1],
-                "target_robots": [],
-            },
-        ),
-    ]
+    steps: List[PlanStep] = []
+    current_id = 1
 
     if needs_map:
         nav_goals = [desc for desc, agent, _ in goal_tuples if agent in {"Navigation", "SwarmCoordinator"}]
         steps.append(
             PlanStep(
-                id=3,
+                id=current_id,
                 description="Анализ карты окружения для навигации",
                 agent="MapAnalyst",
                 meta={
                     "expected_outcome": "Целевые координаты, рекомендуемые waypoints, препятствия на пути",
-                    "inputs": {"from_step": 1},
+                    "inputs": {"prompt": prompt},
                     "tools": [],
-                    "depends_on": [1],
+                    "depends_on": [],
                     "task_description": " | ".join(nav_goals),
                 },
             )
         )
+        current_id += 1
 
-    exec_start_id = 4 if needs_map else 3
-    map_depends = [1, 2, 3] if needs_map else [1, 2]
+    map_step_ids = [s.id for s in steps]
 
-    for current_id, (description, agent, target_robots) in enumerate(goal_tuples, start=exec_start_id):
+    for description, agent, target_robots in goal_tuples:
         tools_for_exec = (
-            ["get_idle_robots", "check_robot_health", "submit_navigation_mission",
+            ["get_idle_robots", "check_robot_health", "cancel_active_missions",
              "dispatch_mission", "get_mission_status"]
             if agent == "SwarmCoordinator"
-            else ["get_robot_status", "submit_navigation_mission",
+            else ["get_robot_status", "cancel_active_missions",
                   "dispatch_mission", "get_mission_status"]
         )
-        depends_on = map_depends + ([current_id - 1] if current_id > exec_start_id else [])
+        depends_on = map_step_ids + ([current_id - 1] if current_id > (map_step_ids[-1] + 1 if map_step_ids else 1) else [])
         steps.append(
             PlanStep(
                 id=current_id,
-                description=f"Выполнение цели: {description}",
+                description=description,
                 agent=agent,
                 meta={
                     "expected_outcome": "Выполненная команда/миссия",
-                    "inputs": {"from_steps": depends_on, "target_robots": target_robots},
+                    "inputs": {"prompt": prompt, "target_robots": target_robots},
                     "tools": tools_for_exec,
                     "depends_on": depends_on,
                     "target_robots": target_robots,
                 },
             )
         )
+        current_id += 1
 
     return steps
 
