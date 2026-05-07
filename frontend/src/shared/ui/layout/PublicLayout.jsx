@@ -5,7 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { colors, spacing } from "@theme/tokens";
 import { ScrollToTop } from "@shared/ui/atoms";
-import { isChatRoute, shouldUseFullWidthLayout } from "@routes/routeState";
+import { isChatRoute, shouldUseFullWidthLayout } from "@app/router";
 
 // CSS animation for page transitions - works on iOS Safari
 const fadeIn = keyframes`
