@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
@@ -59,7 +59,7 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
-import { ChatSidebar, ChatHeaderControls, ChatComposer, TracePanel } from '../components';
+import { ChatSidebar, ChatHeaderControls, ChatComposer } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
@@ -69,6 +69,8 @@ import { COMPOSER_MAX_HEIGHT_PX, COMPOSER_MIN_HEIGHT_PX } from '../constants/lim
 import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
 import ModelSelector from '../components/ModelSelector';
 import { PROSE_SX } from './proseStyles';
+
+const TracePanel = lazy(() => import('../components/trace/TracePanel'));
 
 /**
  * ChatPage - Страница чата с AI агентом
@@ -1563,12 +1565,14 @@ function ChatPageContainer() {
                     {renderedMessages[idx]}
                     {showTracePanel && message.type === 'user' && traceSessionByAnchor.get(message.id)
                       ? (
-                        <TracePanel
-                          sessions={[traceSessionByAnchor.get(message.id)]}
-                          expandedMap={tracePanelsExpanded}
-                          isCompactTrace={isCompactTrace}
-                          onToggleExpanded={(id, expanded) => setTracePanelsExpanded((prev) => ({ ...prev, [id]: expanded }))}
-                        />
+                        <Suspense fallback={<Box h="24px" />}>
+                          <TracePanel
+                            sessions={[traceSessionByAnchor.get(message.id)]}
+                            expandedMap={tracePanelsExpanded}
+                            isCompactTrace={isCompactTrace}
+                            onToggleExpanded={(id, expanded) => setTracePanelsExpanded((prev) => ({ ...prev, [id]: expanded }))}
+                          />
+                        </Suspense>
                       )
                       : null}
                   </React.Fragment>

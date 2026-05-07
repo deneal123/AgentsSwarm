@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { memo, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Box, VStack, Text, Spinner, Center } from '@chakra-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
@@ -19,7 +19,7 @@ import { getDateLabel, groupMessagesBySender } from '../utils/messageGrouping';
  * - Loading состояния
  * - Пустое состояние
  */
-function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
+function ChatMessagesComponent({ onRetryMessage, onDeleteMessage, onCancelJob }) {
   const { messages, loading, error, currentJob, isTyping } = useChat();
   const scrollRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -53,8 +53,8 @@ function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
   const virtualizer = useVirtualizer({
     count: groupedMessages.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 200, // Примерная высота группы
-    overscan: 5,
+    estimateSize: () => 220,
+    overscan: 8,
   });
 
   // Auto-scroll к новым сообщениям
@@ -71,16 +71,12 @@ function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
   }, [messages.length]);
 
   // Рендер группы сообщений
-  const renderMessageGroup = (group, groupIndex) => {
-    // Группируем сообщения по отправителю
+  const renderMessageGroup = useCallback((group) => {
     const senderGroups = groupMessagesBySender(group.messages);
 
     return (
-      <Box key={group.date} mb={6}>
-        {/* Разделитель дат */}
+      <Box mb={6}>
         <MessageDateSeparator date={group.label} />
-
-        {/* Сообщения сгруппированные по отправителю */}
         <VStack spacing={4} align="stretch">
           {senderGroups.map((senderGroup, senderIndex) => (
             <MessageGroup
@@ -93,7 +89,7 @@ function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
         </VStack>
       </Box>
     );
-  };
+  }, [onDeleteMessage, onRetryMessage]);
 
   // Loading состояние
   if (loading && messages.length === 0) {
@@ -172,7 +168,7 @@ function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
               w="full"
               transform={`translateY(${virtualItem.start}px)`}
             >
-              {renderMessageGroup(group, virtualItem.index)}
+              {renderMessageGroup(group)}
             </Box>
           );
         })}
@@ -208,7 +204,7 @@ function ChatMessages({ onRetryMessage, onDeleteMessage, onCancelJob }) {
 }
 
 // Компонент разделителя дат
-function MessageDateSeparator({ date }) {
+const MessageDateSeparator = memo(function MessageDateSeparator({ date }) {
   return (
     <Center my={4}>
       <Box
@@ -230,8 +226,8 @@ function MessageDateSeparator({ date }) {
       </Box>
     </Center>
   );
-}
+});
 
-
+const ChatMessages = memo(ChatMessagesComponent);
 
 export default ChatMessages;
