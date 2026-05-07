@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class ChatApplicationService:
-    def __init__(self, chat_service: ChatService | None = None) -> None:
-        self.chat_service = chat_service or ChatService()
+    def __init__(self, chat_service: ChatService, file_service) -> None:
+        self.chat_service = chat_service
+        self.file_service = file_service
 
     @staticmethod
     def filter_chat_models(models: list[str]) -> list[str]:
@@ -92,10 +93,8 @@ class ChatApplicationService:
             raise HTTPException(status_code=503, detail="DB unavailable") from exc
 
     async def download_generated_file(self, file_key: str, filename: str | None) -> dict:
-        from service import container
-
         normalized_key = self._normalize_download_file_key(file_key)
-        file_service = container.get_current_container().services.file_saver_service
+        file_service = self.file_service
 
         try:
             download_url = await file_service.get_presigned_url_by_key(file_key=normalized_key)
