@@ -39,7 +39,7 @@ import {
 } from 'react-icons/fi';
 import { NavLink } from 'react-router-dom';
 import { useGuestSession } from '@features/chat';
-import { useAuth } from '@context/AuthContext';
+import { useAuth } from '@app/providers';
 import { AuthModal, useAuthModal } from '@features/auth';
 import BrandMark from '@shared/ui/layout';
 import {

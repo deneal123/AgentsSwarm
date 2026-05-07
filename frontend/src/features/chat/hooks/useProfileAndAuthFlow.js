@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '@context/AuthContext';
+import { useAuth } from '@app/providers';
 import { AuthModal, useAuthModal } from '@features/auth';
 import { useGuestSession } from '@features/chat';
 import { useProfileDrawer } from './useProfileDrawer';
