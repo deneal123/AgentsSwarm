@@ -23,6 +23,7 @@ to manage robots, submit missions, and visualize routes.
 """
 
 import asyncio
+import json
 import logging
 import os
 import sys
@@ -615,10 +616,6 @@ async def _main_sse() -> None:
     try:
         import uvicorn
         from mcp.server.sse import SseServerTransport
-        from starlette.applications import Starlette
-        from starlette.requests import Request
-        from starlette.responses import JSONResponse
-        from starlette.routing import Mount, Route
     except ImportError as exc:
         logger.error("SSE mode requires uvicorn and starlette: pip install 'uvicorn[standard]'")
         raise SystemExit(1) from exc
@@ -635,33 +632,35 @@ async def _main_sse() -> None:
 
     sse_transport = SseServerTransport("/messages/")
 
-    async def handle_sse(scope, receive, send) -> None:
-        async with sse_transport.connect_sse(scope, receive, send) as streams:
-            await server.run(
-                streams[0],
-                streams[1],
-                InitializationOptions(
-                    server_name="mission-control-mcp",
-                    server_version="1.0.0",
-                    capabilities=server.get_capabilities(
-                        notification_options=NotificationOptions(),
-                        experimental_capabilities={},
-                    ),
-                ),
-            )
-
-    async def health(_: Request) -> JSONResponse:
-        return JSONResponse({"status": "ok", "server": "mission-control-mcp", "upstream": base_url})
-
-    starlette_app = Starlette(
-        routes=[
-            Route("/health", endpoint=health),
-            Mount("/sse", app=handle_sse),
-            Mount("/messages/", app=sse_transport.handle_post_message),
-        ]
+    _init_options = InitializationOptions(
+        server_name="mission-control-mcp",
+        server_version="1.0.0",
+        capabilities=server.get_capabilities(
+            notification_options=NotificationOptions(),
+            experimental_capabilities={},
+        ),
     )
 
-    uvicorn_cfg = uvicorn.Config(starlette_app, host=mcp_host, port=mcp_port, log_level="info")
+    async def asgi_app(scope, receive, send) -> None:
+        """Minimal ASGI router — bypasses Starlette to avoid Route/None-return issues."""
+        if scope["type"] != "http":
+            return
+        path: str = scope.get("path", "")
+        if path == "/sse":
+            async with sse_transport.connect_sse(scope, receive, send) as streams:
+                await server.run(streams[0], streams[1], _init_options)
+        elif path == "/health":
+            body = json.dumps({"status": "ok", "server": "mission-control-mcp", "upstream": base_url}).encode()
+            await send({"type": "http.response.start", "status": 200,
+                        "headers": [[b"content-type", b"application/json"]]})
+            await send({"type": "http.response.body", "body": body})
+        elif path.startswith("/messages/"):
+            await sse_transport.handle_post_message(scope, receive, send)
+        else:
+            await send({"type": "http.response.start", "status": 404, "headers": []})
+            await send({"type": "http.response.body", "body": b"Not found"})
+
+    uvicorn_cfg = uvicorn.Config(asgi_app, host=mcp_host, port=mcp_port, log_level="info")
     uvicorn_server = uvicorn.Server(uvicorn_cfg)
     await uvicorn_server.serve()
 
