@@ -21,15 +21,6 @@
       "@theme/*": [
         "theme/*"
       ],
-      "@context/*": [
-        "context/*"
-      ],
-      "@api/*": [
-        "API/*"
-      ],
-      "@api": [
-        "API"
-      ],
       "@hooks/*": [
         "hooks/*"
       ],
@@ -47,6 +38,18 @@
       ],
       "@routes": [
         "routes"
+      ],
+      "@app/*": [
+        "app/*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ],
+      "@shared/api": [
+        "shared/api"
+      ],
+      "@shared/api/*": [
+        "shared/api/*"
       ]
     }
   }

@@ -6,7 +6,7 @@ import ReactDOM from "react-dom/client";
 import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
 import App from "./App";
 import theme from "./theme";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./app/providers";
 import { reportWebVitals } from "./utils/webVitals";
 import "./xy-theme.css";
 import {

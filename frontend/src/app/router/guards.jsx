@@ -1,7 +1,7 @@
 import React from 'react';
 import { Center, Spinner } from '@chakra-ui/react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@app/providers';
 import { ROUTE_GUARDS } from './routes';
 
 export function AuthOnlyRoute({ children }) {

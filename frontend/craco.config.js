@@ -9,9 +9,10 @@ const alias = {
   "@pages": resolveSrc("pages"),
   "@utils": resolveSrc("utils"),
   "@theme": resolveSrc("theme"),
-  "@context": resolveSrc("context"),
+  "@app": resolveSrc("app"),
+  "@shared": resolveSrc("shared"),
   "@constants": resolveSrc("constants"),
-  "@api": resolveSrc("API"),
+  "@api": resolveSrc("shared/api"),
   "@hooks": resolveSrc("hooks"),
 };
 
@@ -102,6 +103,22 @@ module.exports = {
 
       return webpackConfig;
     },
+  },
+
+  eslint: {
+    configure: {
+      rules: {
+        "import/no-restricted-paths": [
+          "error",
+          {
+            zones: [
+              { target: "./src/shared", from: "./src/features" },
+              { target: "./src/shared", from: "./src/app" }
+            ]
+          }
+        ]
+      }
+    }
   },
   jest: {
     configure: {

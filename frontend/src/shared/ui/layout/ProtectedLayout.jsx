@@ -3,7 +3,7 @@ import { Box, keyframes } from "@chakra-ui/react";
 import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
-import { LayoutProvider } from "@context/LayoutContext";
+import { LayoutProvider } from "@app/providers";
 import { gradients, colors, spacing } from "@theme/tokens";
 import { ScrollToTop } from "@shared/ui/atoms";
 
