@@ -13,6 +13,7 @@ from functools import lru_cache
 from typing import Iterable, Optional
 
 from agents import Agent, ModelSettings, RunConfig, Runner
+from openai.types.responses import ResponseTextDeltaEvent, ResponseFunctionCallArgumentsDeltaEvent
 from agents.mcp import MCPServer, MCPServerSse, MCPServerStdio, MCPServerStdioParams, MCPServerStreamableHttp
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from pydantic import BaseModel, Field
@@ -492,25 +493,14 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                         payload: str | None = None
 
                         if etype == "raw_response_event":
-                            # Extract streaming text delta from the raw LLM chunk.
+                            # SDK delivers raw events in Responses API format, not Chat Completions.
                             data = getattr(ev, "data", None)
-                            choices = getattr(data, "choices", None) or []
-                            if choices:
-                                delta = getattr(choices[0], "delta", None)
-                                text = getattr(delta, "content", None) if delta else None
-                                if text:
-                                    buf_key = step.agent
-                                    _text_buffer.setdefault(buf_key, []).append(text)
-                                    payload = text
-                                # Also surface tool call deltas so tool names appear in the stream.
-                                tool_calls = getattr(delta, "tool_calls", None) if delta else None
-                                if tool_calls and payload is None:
-                                    tc = tool_calls[0]
-                                    fn = getattr(getattr(tc, "function", None), "name", None)
-                                    if fn:
-                                        payload = f"[tool_call] {fn}"
+                            if isinstance(data, ResponseTextDeltaEvent):
+                                payload = data.delta or None
+                            elif isinstance(data, ResponseFunctionCallArgumentsDeltaEvent):
+                                # Show tool argument deltas so tool calls are visible while streaming.
+                                payload = data.delta or None
                             if payload is None:
-                                # Skip silent raw chunks (e.g. finish_reason only)
                                 continue
                         elif item is not None and getattr(item, "output", None):
                             payload = str(item.output)
