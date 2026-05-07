@@ -179,6 +179,7 @@ class PlanRunner:
 
     async def run(self, task_id: str, plan: List[PlanStep]) -> TaskStatus:
         map_context: str | None = None
+        agent_results: list[str] = []
 
         for step in plan:
             stop_status = self._stop_status(task_id)
@@ -196,6 +197,19 @@ class PlanRunner:
 
             if step.agent == "MapAnalyst" and result_msg:
                 map_context = result_msg
+            elif result_msg:
+                agent_results.append(result_msg)
+
+        if agent_results:
+            self._sc.record(
+                StreamEvent(
+                    task_id=task_id,
+                    source="orchestrator",
+                    message="\n\n".join(agent_results),
+                    level="info",
+                    meta={"user_facing": True, "code": "task_result"},
+                )
+            )
 
         return TaskStatus.COMPLETED
 

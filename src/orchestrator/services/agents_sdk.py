@@ -127,14 +127,21 @@ async def _poll_mission_background(
                 continue
             state = mission.get("status", {}).get("state", "UNKNOWN")
             if state in ("COMPLETED", "FAILED", "CANCELED"):
-                result_msg = f"Mission {mission_id} finished: state={state}"
+                error_info = mission.get("status", {}).get("error_information", "")
+                if state == "COMPLETED":
+                    result_msg = f"✓ Миссия {mission_id} завершена успешно (COMPLETED)."
+                elif state == "FAILED":
+                    detail = f" Причина: {error_info}" if error_info else ""
+                    result_msg = f"✗ Миссия {mission_id} завершилась с ошибкой (FAILED).{detail}"
+                else:
+                    result_msg = f"✗ Миссия {mission_id} отменена (CANCELED)."
                 if sc:
                     from orchestrator.services.streaming import StreamEvent
                     sc.record(StreamEvent(
                         task_id=task_id,
                         source="agent-sdk",
                         message=result_msg,
-                        level="info",
+                        level="info" if state == "COMPLETED" else "warning",
                         meta={"event_type": "mission_complete", "mission_id": mission_id, "state": state},
                     ))
                 logger.info("Background poll done: %s → %s", mission_id, state)
