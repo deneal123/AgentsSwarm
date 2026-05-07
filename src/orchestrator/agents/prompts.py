@@ -104,8 +104,10 @@ NAVIGATION_PROMPT = """
 - get_mission_status(mission_id?)
     Статус миссии. Используй с mission_id=<uuid> для мониторинга.
     Состояния: PENDING → RUNNING → COMPLETED / FAILED / CANCELED
-- sleep_seconds(seconds)
-    Подождать N секунд (макс 30) без вызова LLM. Используй между проверками статуса миссии.
+- wait_mission(mission_id)
+    Запустить фоновый опрос миссии. Возвращается МГНОВЕННО.
+    Оркестратор получит финальный статус когда миссия завершится (без токенов LLM).
+    Используй ПОСЛЕ dispatch_mission / dispatch_route вместо цикла get_mission_status.
 - get_recent_failures()
     Причины последних сбоев.
 
@@ -155,22 +157,21 @@ NAVIGATION_PROMPT = """
 Сообщи: «Миссия отправлена, UUID: <uuid>. Жду завершения...».
 
 **Шаг 3 — Мониторинг миссии (ОБЯЗАТЕЛЬНО)**
-Цикл: sleep_seconds(15) → get_mission_status(mission_id=<uuid>) → повторить.
-НЕ используй robot= в get_mission_status — возвращает историю со старыми FAILED.
+Вызови wait_mission(mission_id=<uuid>) — ОДИН раз, сразу после отправки миссии.
+Инструмент возвращается мгновенно. Оркестратор сам дождётся завершения в фоне.
+НЕ используй цикл get_mission_status / sleep_seconds — они не нужны.
 
-• PENDING/RUNNING → повтори (sleep_seconds(15) → get_mission_status).
-• COMPLETED  → сообщи об успехе: «Робот <имя> успешно прибыл в точку (<x>, <y>)».
-• FAILED     → сообщи причину. НЕ создавай новую миссию автоматически.
-  "Nav goal aborted" = цель в препятствии или вне карты.
-  "Mission timed out" = Nav2 не успел за 3600с.
-• CANCELED   → сообщи об отмене.
+После вызова wait_mission завершай шаг сообщением:
+«Миссия <uuid> запущена. Ожидаю завершения в фоне...»
+
+Финальный статус (COMPLETED / FAILED / CANCELED) будет добавлен автоматически.
 
 ━━━ СЦЕНАРИИ ━━━
 • Отмена всех миссий робота: cancel_active_missions(robot=<имя>) → сообщи результат.
 • Отмена конкретной миссии: cancel_mission(mission_name=<uuid>) → сообщи результат.
 • Отстыковка: cancel_active_missions → submit_undock_mission → проверить state = IDLE.
-• Навигация в точку: cancel_active_missions → dispatch_mission → wait_for_mission.
-• Объезд/кругосветка/маршрут: cancel_active_missions → dispatch_route(waypoints=[...]) → wait_for_mission.
+• Навигация в точку: cancel_active_missions → dispatch_mission → wait_mission(mission_id=<uuid>).
+• Объезд/кругосветка/маршрут: cancel_active_missions → dispatch_route(waypoints=[...]) → wait_mission(mission_id=<uuid>).
 • "Nav goal aborted" или "timed out": сообщи ошибку, не retry. Координаты могут быть вне карты.
 """.strip()
 
@@ -191,8 +192,9 @@ SWARM_PROMPT = """
     Отправить робота в координату напрямую. Возвращает объект миссии с полем name (UUID).
 - get_mission_status(mission_id?)
     Мгновенный снимок статуса. Используй ТОЛЬКО с mission_id=<uuid>.
-- sleep_seconds(seconds)
-    Подождать N секунд (макс 30) между проверками статуса. Не тратит токены LLM.
+- wait_mission(mission_id)
+    Запустить фоновый опрос миссии. Возвращается МГНОВЕННО.
+    Оркестратор получит финальный статус без цикла get_mission_status.
 - get_fleet_summary()
     Общая сводка флота.
 - get_recent_failures()

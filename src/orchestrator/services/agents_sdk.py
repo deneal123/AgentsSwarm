@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import logging
 import os
+import uuid as _uuid
 from functools import lru_cache
 from typing import Iterable, Optional
 
@@ -33,6 +35,12 @@ from orchestrator.services.streaming import StreamCollector, StreamEvent
 from orchestrator.utils.env import env_bool, env_float
 
 logger = logging.getLogger(__name__)
+
+# Context vars injected by _run_agent so function_tools can access per-run state.
+_ctx_task_id: contextvars.ContextVar[str] = contextvars.ContextVar("_ctx_task_id", default="")
+_ctx_sc: contextvars.ContextVar[Optional["StreamCollector"]] = contextvars.ContextVar("_ctx_sc", default=None)
+# Background mission polling tasks for the current agent run (keyed by mission_id).
+_ctx_mission_jobs: contextvars.ContextVar[dict] = contextvars.ContextVar("_ctx_mission_jobs", default={})
 
 
 @lru_cache(maxsize=1)
@@ -83,16 +91,85 @@ def check_proximity(x1: float, y1: float, x2: float, y2: float, threshold_m: flo
     )
 
 
+async def _poll_mission_background(
+    mission_id: str,
+    task_id: str,
+    sc: Optional["StreamCollector"],
+    md_url: str,
+) -> str:
+    """Poll mission status in the background until a terminal state is reached."""
+    import httpx
+
+    poll_interval = int(os.getenv("MISSION_POLL_INTERVAL", "10"))
+
+    async def _fetch_mission(client: httpx.AsyncClient) -> Optional[dict]:
+        try:
+            resp = await client.get("/mission", params={"name": mission_id})
+            resp.raise_for_status()
+            for m in resp.json():
+                if m.get("name") == mission_id:
+                    return m
+            # Fallback: scan all missions
+            resp2 = await client.get("/mission")
+            resp2.raise_for_status()
+            for m in resp2.json():
+                if m.get("name") == mission_id:
+                    return m
+        except Exception as exc:
+            logger.warning("Mission poll error for %s: %s", mission_id, exc)
+        return None
+
+    async with httpx.AsyncClient(base_url=md_url, timeout=10.0) as client:
+        while True:
+            await asyncio.sleep(poll_interval)
+            mission = await _fetch_mission(client)
+            if mission is None:
+                continue
+            state = mission.get("status", {}).get("state", "UNKNOWN")
+            if state in ("COMPLETED", "FAILED", "CANCELED"):
+                result_msg = f"Mission {mission_id} finished: state={state}"
+                if sc:
+                    from orchestrator.services.streaming import StreamEvent
+                    sc.record(StreamEvent(
+                        task_id=task_id,
+                        source="agent-sdk",
+                        message=result_msg,
+                        level="info",
+                        meta={"event_type": "mission_complete", "mission_id": mission_id, "state": state},
+                    ))
+                logger.info("Background poll done: %s → %s", mission_id, state)
+                return result_msg
+
+
 @function_tool
-async def sleep_seconds(seconds: float) -> str:
-    """Pause execution for the given number of seconds (max 30). Use between mission status polls."""
-    duration = min(float(seconds), 30.0)
-    await asyncio.sleep(duration)
-    return f"Slept {duration:.0f}s."
+async def wait_mission(mission_id: str) -> str:
+    """Start a background polling job for mission_id and return immediately.
+
+    The orchestrator will be notified when the mission reaches a terminal state
+    (COMPLETED / FAILED / CANCELED). No tokens are consumed during polling.
+    """
+    task_id = _ctx_task_id.get()
+    sc = _ctx_sc.get()
+    md_url = os.getenv("MISSION_DISPATCH_URL", "http://localhost:5002")
+
+    jobs = _ctx_mission_jobs.get()
+    if mission_id in jobs:
+        return f"Polling job for mission '{mission_id}' already running."
+
+    task = asyncio.create_task(
+        _poll_mission_background(mission_id, task_id, sc, md_url),
+        name=f"poll_{mission_id}",
+    )
+    jobs[mission_id] = task
+    _ctx_mission_jobs.set(jobs)
+    return (
+        f"Background polling started for mission '{mission_id}'. "
+        "Step will complete when mission status changes. No further action needed."
+    )
 
 
 # Tools available to Navigation and SwarmCoordinator agents
-_NAV_FUNCTION_TOOLS = [calculate_distance, check_proximity, sleep_seconds]
+_NAV_FUNCTION_TOOLS = [calculate_distance, check_proximity, wait_mission]
 
 
 def _model_instance() -> OpenAIChatCompletionsModel:
@@ -526,7 +603,30 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         lines.append("===========================")
         return "\n".join(lines)
 
+    async def _await_mission_jobs(self, task_id: str) -> str:
+        """Wait for all background mission polling jobs and return aggregated results."""
+        jobs: dict[str, asyncio.Task] = _ctx_mission_jobs.get()
+        if not jobs:
+            return ""
+        await self._record_stream(
+            task_id, "mission_polling",
+            message=f"Waiting for {len(jobs)} mission(s) to complete...",
+        )
+        results = await asyncio.gather(*jobs.values(), return_exceptions=True)
+        parts: list[str] = []
+        for res in results:
+            if isinstance(res, Exception):
+                logger.warning("Mission polling job failed: %s", res, extra={"task_id": task_id})
+            elif isinstance(res, str):
+                parts.append(res)
+        return "\n".join(parts)
+
     async def _run_agent(self, task_id: str, step, attempt: int, agent: Agent, run_config: RunConfig) -> HandoffResult:
+        # Inject per-run context so function_tools (wait_mission, etc.) can access task state.
+        _ctx_task_id.set(task_id)
+        _ctx_sc.set(self._sc)
+        _ctx_mission_jobs.set({})
+
         try:
             run_streamed = getattr(Runner, "run_streamed", None)
             if run_streamed:
@@ -574,17 +674,28 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                             message = parsed.reason or parsed.category or message
                     except Exception:
                         pass
+                    mission_result = await self._await_mission_jobs(task_id)
+                    if mission_result:
+                        message = f"{message}\n\n{mission_result}".strip()
                     return HandoffResult(success=True, message=message)
 
                 # Streaming failed mid-run; agent may not have completed — retry without streaming.
                 logger.info("Retrying step %s without streaming", step.id, extra={"task_id": task_id})
                 result = await Runner.run(agent, step.description, run_config=run_config, max_turns=_max_turns())
                 output = getattr(result, "final_output", None) or result
-                return HandoffResult(success=True, message=str(output) if output is not None else "")
+                mission_result = await self._await_mission_jobs(task_id)
+                msg = str(output) if output is not None else ""
+                if mission_result:
+                    msg = f"{msg}\n\n{mission_result}".strip()
+                return HandoffResult(success=True, message=msg)
 
             result = await Runner.run(agent, step.description, run_config=run_config, max_turns=_max_turns())
             output = getattr(result, "final_output", None) or result
-            return HandoffResult(success=True, message=str(output) if output is not None else "")
+            mission_result = await self._await_mission_jobs(task_id)
+            msg = str(output) if output is not None else ""
+            if mission_result:
+                msg = f"{msg}\n\n{mission_result}".strip()
+            return HandoffResult(success=True, message=msg)
 
         except Exception as exc:
             logger.exception(
