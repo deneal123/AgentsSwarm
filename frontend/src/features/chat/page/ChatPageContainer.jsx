@@ -59,7 +59,7 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
-import { ChatPageView, ChatSidebar, ChatHeaderControls, ChatComposer, TracePanel } from '../components';
+import { ChatSidebar, ChatHeaderControls, ChatComposer, TracePanel } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
@@ -1316,16 +1316,15 @@ function ChatPageContainer() {
 
   return (
     <ChatPageLayout>
-    <ChatPageView>
-    <Box
-      h="100vh"
-      position="relative"
-      bg={CHAT_THEME.pageBg}
-      color={CHAT_THEME.textPrimary}
-      fontFamily={CHAT_FONT_FAMILY}
-      fontSize="15px"
-      overflow="hidden"
-    >
+      <Box
+        h="100vh"
+        position="relative"
+        bg={CHAT_THEME.pageBg}
+        color={CHAT_THEME.textPrimary}
+        fontFamily={CHAT_FONT_FAMILY}
+        fontSize="15px"
+        overflow="hidden"
+      >
       {/* Animated aurora background */}
       <Box position="absolute" inset={0} pointerEvents="none" zIndex={0} overflow="hidden">
         <Box
@@ -2389,8 +2388,7 @@ function ChatPageContainer() {
           </DrawerBody>
         </DrawerContent>
       </Drawer>
-    </Box>
-    </ChatPageView>
+      </Box>
     </ChatPageLayout>
   );
 }
