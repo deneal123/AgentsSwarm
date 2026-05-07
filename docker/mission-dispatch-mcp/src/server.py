@@ -65,7 +65,6 @@ TOOL_CREATE_ROBOT = "create_robot"
 TOOL_DISPATCH_MISSION = "dispatch_mission"
 TOOL_CANCEL_MISSION = "cancel_mission"
 TOOL_CANCEL_ACTIVE_MISSIONS = "cancel_active_missions"
-TOOL_WAIT_FOR_MISSION = "wait_for_mission"
 TOOL_DISPATCH_ROUTE = "dispatch_route"
 
 
@@ -282,33 +281,6 @@ async def list_tools() -> ListToolsResult:
                         }
                     },
                     "required": ["robot"],
-                },
-            ),
-            Tool(
-                name=TOOL_WAIT_FOR_MISSION,
-                description=(
-                    "Wait (poll) until a mission reaches a terminal state (COMPLETED, FAILED, CANCELED). "
-                    "Call this immediately after dispatch_mission to block until the mission finishes. "
-                    "Returns the final mission state with success/failure details. "
-                    "No LLM calls happen during polling — only one tool call is charged."
-                ),
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "mission_id": {
-                            "type": "string",
-                            "description": "Mission UUID/name to wait for (required)",
-                        },
-                        "timeout": {
-                            "type": "integer",
-                            "description": "Maximum seconds to wait (default 3600)",
-                        },
-                        "poll_interval": {
-                            "type": "integer",
-                            "description": "Polling interval in seconds (default 5)",
-                        },
-                    },
-                    "required": ["mission_id"],
                 },
             ),
             Tool(
@@ -730,47 +702,6 @@ async def _handle_create_robot(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-async def _handle_wait_for_mission(arguments: dict) -> CallToolResult:
-    mission_id = _require(arguments, "mission_id")
-    timeout = int(arguments.get("timeout") or _DEFAULT_MISSION_TIMEOUT)
-    poll_interval = int(arguments.get("poll_interval") or 5)
-
-    _TERMINAL = {"COMPLETED", "FAILED", "CANCELED"}
-    elapsed = 0
-
-    while elapsed < timeout:
-        mission = await md_client.get_mission_by_id(mission_id)
-        if mission is None:
-            return _text_result(
-                f"**Wait failed**: mission '{mission_id}' not found.\n", is_error=True
-            )
-
-        state = mission.get("status", {}).get("state", "UNKNOWN")
-        if state in _TERMINAL:
-            result = f"**Mission {mission_id} finished**\n\n"
-            result += format_mission_info(mission)
-            if state == "COMPLETED":
-                result += "\n✅ Mission completed successfully.\n"
-            elif state == "FAILED":
-                reason = mission.get("status", {}).get("failure_reason", "unknown")
-                category = mission.get("status", {}).get("failure_category", "")
-                result += f"\n❌ Mission FAILED.\n- Reason: {reason}\n"
-                if category:
-                    result += f"- Category: {category}\n"
-            elif state == "CANCELED":
-                result += "\n⚠️ Mission was canceled.\n"
-            return _text_result(result)
-
-        await asyncio.sleep(poll_interval)
-        elapsed += poll_interval
-
-    return _text_result(
-        f"**Wait timed out** after {timeout}s: mission '{mission_id}' still in state "
-        f"{mission.get('status', {}).get('state', 'UNKNOWN') if mission else 'NOT_FOUND'}.\n",
-        is_error=True,
-    )
-
-
 async def _handle_dispatch_route(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot")
     waypoints = _require(arguments, "waypoints")
@@ -822,7 +753,6 @@ _TOOL_HANDLERS: Dict[str, Any] = {
     TOOL_DISPATCH_ROUTE: _handle_dispatch_route,
     TOOL_CANCEL_MISSION: _handle_cancel_mission,
     TOOL_CANCEL_ACTIVE_MISSIONS: _handle_cancel_active_missions,
-    TOOL_WAIT_FOR_MISSION: _handle_wait_for_mission,
 }
 
 

@@ -6,6 +6,7 @@ Streams user-facing events through PlanRunner via StreamCollector.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
@@ -82,8 +83,16 @@ def check_proximity(x1: float, y1: float, x2: float, y2: float, threshold_m: flo
     )
 
 
+@function_tool
+async def sleep_seconds(seconds: float) -> str:
+    """Pause execution for the given number of seconds (max 30). Use between mission status polls."""
+    duration = min(float(seconds), 30.0)
+    await asyncio.sleep(duration)
+    return f"Slept {duration:.0f}s."
+
+
 # Tools available to Navigation and SwarmCoordinator agents
-_NAV_FUNCTION_TOOLS = [calculate_distance, check_proximity]
+_NAV_FUNCTION_TOOLS = [calculate_distance, check_proximity, sleep_seconds]
 
 
 def _model_instance() -> OpenAIChatCompletionsModel:
@@ -97,11 +106,13 @@ def _model_instance() -> OpenAIChatCompletionsModel:
 
 
 def _run_config() -> RunConfig:
+    max_turns = int(os.getenv("AGENTS_MAX_TURNS", "60"))
     return RunConfig(
         model=_model_instance(),
         model_settings=_model_settings(),
         nest_handoff_history=env_bool("AGENTS_NEST_HANDOFF_HISTORY", False),
         tracing_disabled=env_bool("AGENTS_TRACING_DISABLED", True),
+        max_turns=max_turns,
     )
 
 
