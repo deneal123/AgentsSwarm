@@ -1,16 +1,10 @@
-import client from '@API/client';
-import { login, registerUser, logoutLocal } from '@API/auth';
-import { createChatThread, sendChatMessage, getChatModels } from '@API/chat';
+import { login, registerUser, logoutLocal } from '@/shared/api/auth';
+import { createChatThread, sendChatMessage, getChatModels } from '@/shared/api/chat';
+import { mapApiError } from '@/shared/api/dtoMappers';
+import { request } from '@/shared/api/request';
 
-jest.mock('@API/client', () => ({
-  __esModule: true,
-  default: {
-    post: jest.fn(),
-    get: jest.fn(),
-    delete: jest.fn(),
-    patch: jest.fn(),
-    interceptors: { response: { use: jest.fn() } },
-  },
+jest.mock('@/shared/api/request', () => ({
+  request: jest.fn(),
 }));
 
 describe('API adapters', () => {
@@ -18,32 +12,32 @@ describe('API adapters', () => {
     jest.clearAllMocks();
   });
 
-  it('login returns response data and calls transport with endpoint', async () => {
-    client.post.mockResolvedValue({ data: { token: 't' } });
+  it('login delegates to unified request client', async () => {
+    request.mockResolvedValue({ token: 't' });
     const payload = { email: 'a@a.com', password: 'p' };
 
     await expect(login(payload)).resolves.toEqual({ token: 't' });
-    expect(client.post).toHaveBeenCalledWith('/api/auth/v1/login', payload);
+    expect(request).toHaveBeenCalledWith({ method: 'post', url: '/api/auth/v1/login', data: payload });
   });
 
-  it('registerUser delegates payload to transport layer', async () => {
+  it('registerUser delegates payload to unified request client', async () => {
     const payload = { email: 'user@test.dev', password: 'pass' };
-    client.post.mockResolvedValue({ data: { user_id: 'u1' } });
+    request.mockResolvedValue({ user_id: 'u1' });
 
     await expect(registerUser(payload)).resolves.toEqual({ user_id: 'u1' });
-    expect(client.post).toHaveBeenCalledWith('/api/auth/v1/register', payload);
+    expect(request).toHaveBeenCalledWith({ method: 'post', url: '/api/auth/v1/register', data: payload });
   });
 
   it('createChatThread sends optional user id', async () => {
-    client.post.mockResolvedValue({ data: { thread_id: 'th_1' } });
+    request.mockResolvedValue({ thread_id: 'th_1' });
 
     await createChatThread('user-1');
 
-    expect(client.post).toHaveBeenCalledWith('/api/chats/', { user_id: 'user-1' });
+    expect(request).toHaveBeenCalledWith({ method: 'post', url: '/api/chats/', data: { user_id: 'user-1' } });
   });
 
   it('sendChatMessage maps options to transport payload', async () => {
-    client.post.mockResolvedValue({ data: { reply: 'ok' } });
+    request.mockResolvedValue({ reply: 'ok' });
 
     await sendChatMessage('th_1', ' hello ', 'user-1', 'gpt', 'text', {
       webSearch: true,
@@ -53,22 +47,37 @@ describe('API adapters', () => {
       routeOverride: 'analysis',
     });
 
-    expect(client.post).toHaveBeenCalledWith('/api/chats/th_1/message', {
-      text: 'hello',
-      user_id: 'user-1',
-      model: 'gpt',
-      input_type: 'text',
-      web_search: true,
-      deep_research: true,
-      file_context: 'context',
-      file_ids: ['f1'],
-      route_override: 'analysis',
+    expect(request).toHaveBeenCalledWith({
+      method: 'post',
+      url: '/api/chats/th_1/message',
+      data: {
+        text: 'hello',
+        user_id: 'user-1',
+        model: 'gpt',
+        input_type: 'text',
+        web_search: true,
+        deep_research: true,
+        file_context: 'context',
+        file_ids: ['f1'],
+        route_override: 'analysis',
+      },
     });
   });
 
   it('getChatModels returns empty array fallback', async () => {
-    client.get.mockResolvedValue({ data: null });
+    request.mockResolvedValue([]);
     await expect(getChatModels()).resolves.toEqual([]);
+  });
+
+  it('mapApiError returns typed domain error', () => {
+    const error = { response: { status: 401, data: { code: 'UNAUTHORIZED', detail: 'invalid credentials' } } };
+    expect(mapApiError(error)).toMatchObject({
+      type: 'DomainError',
+      status: 401,
+      code: 'UNAUTHORIZED',
+      isRetryable: false,
+      isCanceled: false,
+    });
   });
 
   it('logoutLocal clears auth cookie', () => {
