@@ -1,27 +1,32 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
-export const useChatMessagesState = () => {
-  const [messages, setMessages] = useState([]);
-  const [currentJob, setCurrentJob] = useState(null);
+export const useChatMessagesState = (externalContainer = null) => {
+  const container = externalContainer || useChatStateContainer();
+  const { state, dispatch } = container;
 
   const addMessage = useCallback((message) => {
-    setMessages((prev) => [...prev, message]);
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.ADD_MESSAGE, payload: message });
+  }, [dispatch]);
 
   const updateMessage = useCallback((id, updates) => {
-    setMessages((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.UPDATE_MESSAGE, payload: { id, ...updates } });
+  }, [dispatch]);
 
   const removeMessage = useCallback((id) => {
-    setMessages((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.REMOVE_MESSAGE, payload: id });
+  }, [dispatch]);
 
   const clearMessages = useCallback(() => {
-    setMessages([]);
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.CLEAR_MESSAGES });
+  }, [dispatch]);
 
-  const state = useMemo(() => ({ messages, currentJob }), [messages, currentJob]);
+  const setCurrentJob = useCallback((job) => {
+    dispatch({ type: CHAT_ACTIONS.SET_CURRENT_JOB, payload: job });
+  }, [dispatch]);
+
+  const scopedState = useMemo(() => ({ messages: state.messages, currentJob: state.currentJob }), [state.currentJob, state.messages]);
   const actions = useMemo(() => ({ addMessage, updateMessage, removeMessage, clearMessages, setCurrentJob }), [addMessage, updateMessage, removeMessage, clearMessages]);
 
-  return { state, actions };
+  return { state: scopedState, actions, container };
 };
