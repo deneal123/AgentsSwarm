@@ -28,15 +28,17 @@ Return JSON only (no markdown) matching this schema:
 {"goals": [{"description": "...", "agent": "...", "target_robots": ["robotId"]}]}
 
 Agent selection rules:
-- "Navigation"       — single-robot movement, navigation, or positioning
-- "SwarmCoordinator" — multi-robot or swarm tasks
-- "RobotInfo"        — status queries, health checks, fleet summaries
-- "General"          — anything else
+- "Navigation"       — single-robot movement, navigation, positioning, docking/undocking,
+                       OR canceling missions for a single robot (cancel, stop, abort)
+- "SwarmCoordinator" — multi-robot or swarm tasks, canceling missions for multiple robots
+- "RobotInfo"        — status queries, health checks, fleet summaries, mission history
+- "General"          — greetings, help questions, anything that requires no robot action
 
 Important:
 - Do NOT split coordinates, IDs, or values across multiple goals.
 - One goal = one distinct user action.
 - target_robots: robot IDs explicitly mentioned (e.g. "carter01"), else [].
+- "Cancel/stop/abort missions for robot X" → Navigation (it has cancel_active_missions tool).
 """
 
 
@@ -146,7 +148,7 @@ async def build_plan(prompt: str) -> List[PlanStep]:
             ["get_idle_robots", "check_robot_health", "cancel_active_missions",
              "dispatch_mission", "get_mission_status"]
             if agent == "SwarmCoordinator"
-            else ["get_robot_status", "cancel_active_missions",
+            else ["get_robot_status", "cancel_active_missions", "cancel_mission",
                   "dispatch_mission", "get_mission_status"]
         )
         depends_on = map_step_ids + ([current_id - 1] if current_id > (map_step_ids[-1] + 1 if map_step_ids else 1) else [])

@@ -147,13 +147,15 @@ NAVIGATION_PROMPT = """
 • COMPLETED       → сообщи об успехе.
 • FAILED          → вызови get_recent_failures(), сообщи причину. НЕ создавай новую миссию.
   "Nav goal aborted" = цель в препятствии или вне карты → вызови get_map_info() для проверки границ.
-  "Mission timed out" = Nav2 двигался но не успел за отведённое время (600с). Путь слишком длинный
+  "Mission timed out" = Nav2 двигался но не успел за отведённое время (3600с). Путь слишком длинный
     или есть препятствия. Проверь get_map_info() — возможно система координат сдвинута.
 • CANCELED        → сообщи об отмене.
 
 После 20 проверок и статус RUNNING → сообщи «миссия выполняется» и завершай шаг.
 
 ━━━ СЦЕНАРИИ ━━━
+• Отмена всех миссий робота: cancel_active_missions(robot=<имя>) → сообщи результат.
+• Отмена конкретной миссии: cancel_mission(mission_name=<uuid>) → сообщи результат.
 • Отстыковка: cancel_active_missions → submit_undock_mission → проверить state = IDLE.
 • Навигация по координатам: cancel_active_missions → dispatch_mission → мониторинг.
 • "Nav goal aborted" или "timed out": сообщи ошибку, не retry. Координаты могут быть вне карты.
