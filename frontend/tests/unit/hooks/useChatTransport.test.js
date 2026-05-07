@@ -1,11 +1,11 @@
 import { renderHook } from '@testing-library/react';
 import { useChatTransport } from '@features/chat/hooks/useChatTransport';
 
-jest.mock('@features/chat/model/useChatWebSocketModel', () => ({
-  useChatWebSocketModel: jest.fn(),
+jest.mock('@features/chat/model/useWebSocketChat', () => ({
+  useWebSocketChat: jest.fn(),
 }));
 
-const { useChatWebSocketModel } = require('@features/chat/model/useChatWebSocketModel');
+const { useWebSocketChat } = require('@features/chat/model/useWebSocketChat');
 
 describe('useChatTransport websocket edge cases', () => {
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('useChatTransport websocket edge cases', () => {
   });
 
   it('injects safe onMessage callback when callbacks are undefined', () => {
-    useChatWebSocketModel.mockReturnValue({
+    useWebSocketChat.mockReturnValue({
       isConnected: false,
       connectionState: 'disconnected',
       currentJob: null,
@@ -24,17 +24,17 @@ describe('useChatTransport websocket edge cases', () => {
 
     renderHook(() => useChatTransport({ threadId: 'thread-1', callbacks: undefined, isAuthenticated: false }));
 
-    expect(useChatWebSocketModel).toHaveBeenCalledWith(expect.objectContaining({
-      threadId: 'thread-1',
-      isAuthenticated: false,
-      callbacks: expect.objectContaining({
+    expect(useWebSocketChat).toHaveBeenCalledWith(
+      'thread-1',
+      expect.objectContaining({
         onMessage: expect.any(Function),
       }),
-    }));
+      false,
+    );
   });
 
   it('keeps websocket transport disabled while reconnecting', () => {
-    useChatWebSocketModel.mockReturnValue({
+    useWebSocketChat.mockReturnValue({
       isConnected: true,
       connectionState: 'reconnecting',
       currentJob: null,
@@ -49,7 +49,7 @@ describe('useChatTransport websocket edge cases', () => {
   });
 
   it('keeps websocket transport disabled when connected flag is stale false', () => {
-    useChatWebSocketModel.mockReturnValue({
+    useWebSocketChat.mockReturnValue({
       isConnected: false,
       connectionState: 'connected',
       currentJob: { id: 'job-1' },
@@ -65,7 +65,7 @@ describe('useChatTransport websocket edge cases', () => {
   });
 
   it('enables websocket transport only when fully connected', () => {
-    useChatWebSocketModel.mockReturnValue({
+    useWebSocketChat.mockReturnValue({
       isConnected: true,
       connectionState: 'connected',
       currentJob: null,

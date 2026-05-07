@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useChatWebSocketModel } from '../model/useChatWebSocketModel';
+import { useWebSocketChat } from '../model/useWebSocketChat';
 
 export function useChatTransport({ threadId, callbacks, isAuthenticated }) {
   const wsCallbacks = useMemo(() => ({
@@ -7,22 +7,15 @@ export function useChatTransport({ threadId, callbacks, isAuthenticated }) {
     ...callbacks,
   }), [callbacks]);
 
-  const {
-    isConnected,
-    connectionState,
-    currentJob,
-    agentStatus,
-    sendMessage,
-    cancelJob,
-  } = useChatWebSocketModel({ threadId, callbacks: wsCallbacks, isAuthenticated });
+  const transport = useWebSocketChat(threadId, wsCallbacks, isAuthenticated);
 
   return {
-    isConnected,
-    connectionState,
-    currentJob,
-    agentStatus,
-    sendMessage,
-    cancelJob,
-    useWebSocket: isConnected && connectionState === 'connected',
+    isConnected: transport.isConnected,
+    connectionState: transport.connectionState,
+    currentJob: transport.currentJob,
+    agentStatus: transport.agentStatus,
+    sendMessage: transport.sendMessage,
+    cancelJob: transport.cancelJob,
+    useWebSocket: transport.isConnected && transport.connectionState === 'connected',
   };
 }
