@@ -22,6 +22,7 @@ from orchestrator.agents.mcp import MCPServerConfig
 from orchestrator.agents.router import get_router_config
 from orchestrator.services.guardrails import prompt_input_guardrail, router_output_guardrail
 from orchestrator.services.map_analyst import get_map_context
+from orchestrator.services.map_overlay import annotate_map, fetch_robot_markers, robots_to_text
 from orchestrator.services.openai_client import build_openai_client
 from orchestrator.services.plan_runner import AgentHandoffExecutor, HandoffResult
 from orchestrator.services.streaming import StreamCollector, StreamEvent
@@ -215,13 +216,25 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             return HandoffResult(success=True, message="")
 
         meta = map_ctx.metadata
-        mime = "image/png" if map_ctx.image_bytes[:4] == b"\x89PNG" else "image/jpeg"
-        b64_map = base64.b64encode(map_ctx.image_bytes).decode()
 
+        # Overlay robot positions on the map image so the vision LLM can see them.
+        robots = await fetch_robot_markers()
+        annotated_bytes = annotate_map(map_ctx.image_bytes, meta, robots)
+        mime = "image/png"  # annotate_map always outputs PNG
+        b64_map = base64.b64encode(annotated_bytes).decode()
+
+        # Emit the annotated map over the stream so the UI can display it in real time.
         await self._record_stream(
-            task_id, "map_analyst_candidates",
-            meta={"map_id": meta.get("map_id"), "resolution": meta.get("resolution")},
-            message="Map fetched, generating route candidates...",
+            task_id, "map_image",
+            meta={
+                "type": "map_image",
+                "image_b64": b64_map,
+                "mime": mime,
+                "robots_on_map": len(robots),
+                "map_id": meta.get("map_id"),
+                "resolution": meta.get("resolution"),
+            },
+            message=f"Map fetched ({len(robots)} robots overlaid), generating route candidates...",
         )
 
         # ── Phase 1: Agent proposes 3 route candidates ──────────────────────
@@ -244,6 +257,10 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                                 f"- x_offset: {meta.get('x_offset', '?')} m\n"
                                 f"- y_offset: {meta.get('y_offset', '?')} m\n"
                                 f"- safety_distance: {meta.get('safety_distance', 0.45)} m\n\n"
+                                f"РОБОТЫ НА КАРТЕ (цветные метки):\n"
+                                f"{robots_to_text(robots)}\n"
+                                f"Легенда цветов: зелёный=IDLE, синий=ON_TASK, жёлтый=CHARGING, "
+                                f"оранжевый=TELEOP, фиолетовый=MAP_DEPLOYMENT, красный=offline.\n\n"
                                 "Проанализируй карту и предложи 3 варианта маршрута согласно инструкции."
                             ),
                         },
@@ -465,6 +482,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
         try:
             run_streamed = getattr(Runner, "run_streamed", None)
             if run_streamed:
+                streaming_ok = False
                 result = run_streamed(agent, input=step.description, run_config=run_config)
                 try:
                     async for ev in result.stream_events():  # type: ignore[attr-defined]
@@ -479,18 +497,26 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                             meta={"agent": step.agent, "attempt": attempt, "sdk_event": etype},
                             message=payload or f"SDK event: {etype}",
                         )
+                    streaming_ok = True
                 except Exception:
-                    logger.exception("Failed to consume streaming events", extra={"task_id": task_id})
+                    logger.exception("Failed to consume streaming events — falling back to Runner.run()", extra={"task_id": task_id})
 
-                output = getattr(result, "final_output", None) or getattr(result, "output", None)
-                message = str(output) if output is not None else ""
-                try:
-                    parsed = result.final_output_as(RoutingDecision)
-                    if parsed:
-                        message = parsed.reason or parsed.category or message
-                except Exception:
-                    pass
-                return HandoffResult(success=True, message=message)
+                if streaming_ok:
+                    output = getattr(result, "final_output", None) or getattr(result, "output", None)
+                    message = str(output) if output is not None else ""
+                    try:
+                        parsed = result.final_output_as(RoutingDecision)
+                        if parsed:
+                            message = parsed.reason or parsed.category or message
+                    except Exception:
+                        pass
+                    return HandoffResult(success=True, message=message)
+
+                # Streaming failed mid-run; agent may not have completed — retry without streaming.
+                logger.info("Retrying step %s without streaming", step.id, extra={"task_id": task_id})
+                result = await Runner.run(agent, step.description, run_config=run_config)
+                output = getattr(result, "final_output", None) or result
+                return HandoffResult(success=True, message=str(output) if output is not None else "")
 
             result = await Runner.run(agent, step.description, run_config=run_config)
             output = getattr(result, "final_output", None) or result

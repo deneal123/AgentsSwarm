@@ -7,8 +7,9 @@ existing `/task/{id}/logs` endpoint.
 
 from __future__ import annotations
 
+from collections import deque
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +27,8 @@ class StreamEvent(BaseModel):
 
 class StreamCollector:
     def __init__(self, task_store: Optional[TaskStore] = None, max_events_per_task: int = 500) -> None:
-        self._events: Dict[str, List[Tuple[int, StreamEvent]]] = {}
+        # deque with maxlen gives O(1) append and automatic eviction of oldest events.
+        self._events: Dict[str, Deque[Tuple[int, StreamEvent]]] = {}
         self._seq: Dict[str, int] = {}
         self._task_store = task_store or TaskStore()
         self._max = max_events_per_task
@@ -35,10 +37,9 @@ class StreamCollector:
         seq = self._seq.get(event.task_id, 0) + 1
         self._seq[event.task_id] = seq
 
-        bucket = self._events.setdefault(event.task_id, [])
-        bucket.append((seq, event))
-        if len(bucket) > self._max:
-            bucket.pop(0)
+        if event.task_id not in self._events:
+            self._events[event.task_id] = deque(maxlen=self._max)
+        self._events[event.task_id].append((seq, event))
 
         # Mirror to task log for existing API consumers
         if self._task_store.exists(event.task_id):

@@ -6,11 +6,13 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 
 from orchestrator.services.streaming import StreamCollector
-from orchestrator.services.tasks import TaskStore
+from orchestrator.services.tasks import TaskStatus, TaskStore
 from orchestrator.utils.logger import get_logger
 
 
 logger = get_logger(__name__)
+
+_TERMINAL_STATUSES = {TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELED}
 
 
 class WebSocketTaskStreamService:
@@ -37,6 +39,14 @@ class WebSocketTaskStreamService:
                 last_seq = payload.get("last_seq", last_seq)
                 if payload.get("events"):
                     await websocket.send_text(json.dumps(payload))
+
+                # Stop polling once the task reaches a terminal state and all
+                # buffered events have been drained.
+                current = self._task_store.get_task(task_id)
+                if current and current.status in _TERMINAL_STATUSES and not payload.get("events"):
+                    await websocket.close(code=1000)
+                    return
+
                 await asyncio.sleep(self._poll_interval)
         except WebSocketDisconnect:
             logger.info("WebSocket disconnected for task %s", task_id)
