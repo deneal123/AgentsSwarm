@@ -59,7 +59,7 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
-import { ChatSidebar, ChatHeaderControls, ChatComposer } from '../components';
+import { ChatSidebar } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
@@ -1318,15 +1318,7 @@ function ChatPageContainer() {
 
   return (
     <ChatPageLayout>
-      <Box
-        h="100vh"
-        position="relative"
-        bg={CHAT_THEME.pageBg}
-        color={CHAT_THEME.textPrimary}
-        fontFamily={CHAT_FONT_FAMILY}
-        fontSize="15px"
-        overflow="hidden"
-      >
+      <Box>
       {/* Animated aurora background */}
       <Box position="absolute" inset={0} pointerEvents="none" zIndex={0} overflow="hidden">
         <Box
@@ -1374,19 +1366,11 @@ function ChatPageContainer() {
       </Box>
       <Flex h="100vh" overflow="hidden" position="relative" zIndex={1}>
         {/* Sidebar */}
-        <Box
-          as="aside"
-          display={{ base: 'none', lg: 'flex' }}
-          flexDirection="column"
-          w={isSidebarCollapsed ? '0' : '272px'}
-          minW={isSidebarCollapsed ? '0' : '272px'}
-          overflow="hidden"
-          borderRight={isSidebarCollapsed ? 'none' : `1px solid ${CHAT_THEME.panelBorder}`}
-          bg={CHAT_THEME.sidebarBg}
-          transition="all 0.24s cubic-bezier(0.4,0,0.2,1)"
-        >
-          {!isSidebarCollapsed && sidebar}
-        </Box>
+        <ChatSidebar isCollapsed={isSidebarCollapsed}>
+          <Box bg={CHAT_THEME.sidebarBg} h="full" borderRight={`1px solid ${CHAT_THEME.panelBorder}`}>
+            {sidebar}
+          </Box>
+        </ChatSidebar>
 
         <VStack flex="1" align="stretch" spacing={0} minH="0" overflow="hidden">
           {/* Header */}
