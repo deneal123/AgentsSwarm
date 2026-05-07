@@ -5,17 +5,19 @@ from uuid import UUID
 
 from service.infrastructure.messaging import tasks as messaging_tasks
 from service.services.agent_file_bridge import resolve_user_uuid
-from service.chat.domain.chat_service import ChatService
+from service.chat.application.use_cases.chat_use_cases import StreamChatResponseUseCase
+from service.chat.presentation.error_mapper import map_to_ws_error_payload, normalize_response_metadata
 from service.chat.presentation.ws.chat_ws.metrics import ChatWsMetrics
 
 logger = logging.getLogger(__name__)
 
 
 class ChatMessageHandler:
-    def __init__(self, job_service, file_service, metrics: ChatWsMetrics) -> None:
+    def __init__(self, job_service, file_service, metrics: ChatWsMetrics, chat_service) -> None:
         self._job_service = job_service
         self._file_service = file_service
         self._metrics = metrics
+        self._chat_service = chat_service
 
     async def handle_incoming_messages(self, websocket, thread_id: str, session: dict, consumer_task: asyncio.Task, heartbeat_task: asyncio.Task) -> None:
         try:
@@ -85,8 +87,7 @@ class ChatMessageHandler:
                 )
                 return
             except Exception:
-                chat_service = ChatService()
-                fallback_result = await chat_service._direct_agent_call(
+                fallback_result = await StreamChatResponseUseCase(self._chat_service).execute(
                     thread_id=thread_id,
                     text=text,
                     user_id=str(user_id) if user_id else None,
@@ -104,7 +105,7 @@ class ChatMessageHandler:
                         "reply": str(fallback_result.get("reply") or ""),
                         "thread_id": thread_id,
                         "file_url": fallback_result.get("file_url"),
-                        "metadata": fallback_result.get("metadata") or {},
+                        "metadata": normalize_response_metadata(fallback_result.get("metadata"), selected_model=selected_model),
                         "message_id": message_id,
                         "timestamp": datetime.now().isoformat(),
                     }
@@ -117,15 +118,8 @@ class ChatMessageHandler:
                         "timestamp": datetime.now().isoformat(),
                     }
                 )
-        except Exception:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "message_id": msg.get("id"),
-                    "error": "Failed to process message",
-                    "timestamp": datetime.now().isoformat(),
-                }
-            )
+        except Exception as exc:
+            await websocket.send_json(map_to_ws_error_payload(exc, message_id=msg.get("id")))
 
     @staticmethod
     def _register_temp_file_ids(session: dict, file_ids: list[str]) -> None:

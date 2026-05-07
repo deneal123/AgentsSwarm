@@ -15,6 +15,8 @@ from service.chat.infrastructure.chat_worker import (
     WorkerStreamPublisherService,
 )
 from service.chat.persistence.chat_worker_repository import ChatWorkerRepository
+from service.chat.application.use_cases.chat_use_cases import PersistChatMessagesUseCase
+from service.chat.presentation.error_mapper import map_to_worker_error_payload, normalize_response_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +82,7 @@ async def process_agent_message_async(
     dependency_factory: ChatWorkerDependencyFactory | None = None,
     agent_execution: AgentExecutionPort | None = None,
 ) -> dict:
+    from service import container
     from service.models.key_value import ProcessingStatus
     from service.repositories.file_repository import FileRepository
     from service.repositories.job_repository import JobRepository
@@ -145,7 +148,13 @@ async def process_agent_message_async(
             publisher.publish_payload({"type": "stream_complete", "job_id": job_id, "metadata": {"chunks": execution_result["reply_parts_count"], "reply_chars": execution_result["reply_chars_count"]}, "timestamp": datetime.now(timezone.utc).isoformat()})
 
             file_url, metadata = await persist_generated_artifacts(file_service=file_service, user_id=user_id, metadata=metadata, job_id=job_id)
-            await _persist_chat_turn(db_session=session, thread_id=thread_id, user_text=text, assistant_text=reply, user_id=user_id)
+            metadata = normalize_response_metadata(metadata, selected_model=resolved_model or selected_model)
+            await PersistChatMessagesUseCase(container.get_current_container().services.chat_application_service.chat_service).execute(
+                thread_id=thread_id,
+                user_text=text,
+                assistant_text=reply,
+                user_id=user_id,
+            )
 
             await _update_job_status_with_session(job_repo, job_id, ProcessingStatus.SUCCESS, session, user_id, {"reply": reply, "file_url": file_url, "metadata": metadata})
             publisher.publish_payload({"type": "agent_reply", "job_id": job_id, "reply": reply, "file_url": file_url, "metadata": metadata, "timestamp": datetime.now(timezone.utc).isoformat()})
@@ -168,7 +177,7 @@ async def process_agent_message_async(
         except Exception as exc:
             await session.rollback()
             await _update_job_status_with_session(job_repo, job_id, ProcessingStatus.FAILURE, session, user_id)
-            publisher.publish_payload({"type": "error", "job_id": job_id, "error": str(exc), "timestamp": datetime.now(timezone.utc).isoformat()})
+            publisher.publish_payload(map_to_worker_error_payload(exc, job_id=job_id))
             return {"status": "error", "error": str(exc)}
         finally:
             publisher.close()

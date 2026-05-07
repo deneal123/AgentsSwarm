@@ -33,11 +33,12 @@ def get_chat_ws_connection_service(
     session_store: Annotated[Any, Depends(container.get_optional_redis_session_store)],
     job_service: Annotated[Any, Depends(get_optional_job_service)],
     file_service: Annotated[Any, Depends(get_optional_file_service)],
+    app_container: Annotated[container.AppContainer, Depends(container.get_app_container)],
 ) -> ChatWsConnectionService:
     ws_settings = config.chat_ws.settings
     auth_service = ChatWsAuthService(AuthValidator(config.auth), session_store)
     stream_consumer = ChatStreamConsumer(redis_client, ws_settings, _metrics)
-    message_handler = ChatMessageHandler(job_service, file_service, _metrics)
+    message_handler = ChatMessageHandler(job_service, file_service, _metrics, app_container.services.chat_application_service.chat_service)
     return ChatWsConnectionService(auth_service, stream_consumer, message_handler, ws_settings, _metrics)
 
 
