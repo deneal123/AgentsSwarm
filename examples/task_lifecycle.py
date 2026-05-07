@@ -8,9 +8,16 @@
     python examples/task_lifecycle.py --prompt "Покажи статус carter01"
     python examples/task_lifecycle.py --log run.log          # сохранить в файл
     python examples/task_lifecycle.py --log auto             # авто-имя по времени
+
+Артефакты задачи сохраняются в logs/<task_id>/:
+    run.log          — текстовый лог сессии
+    map.png          — карта с метками роботов (если MapAnalyst запускался)
+    route_<name>.png — визуализации маршрутов
+    events.json      — все события задачи (сырые)
 """
 
 import argparse
+import base64
 import json
 import sys
 import time
@@ -67,6 +74,30 @@ def _color(text: str, code: str) -> str:
     return f"{code}{text}{_RESET}"
 
 
+# ─── artifact dir ─────────────────────────────────────────────────────────────
+
+_artifact_dir: Path | None = None
+
+
+def _init_artifact_dir(task_id: str) -> Path:
+    global _artifact_dir
+    _artifact_dir = Path("logs") / task_id
+    _artifact_dir.mkdir(parents=True, exist_ok=True)
+    return _artifact_dir
+
+
+def _save_image(filename: str, b64_data: str) -> Path | None:
+    if not _artifact_dir:
+        return None
+    try:
+        data = base64.b64decode(b64_data)
+        path = _artifact_dir / filename
+        path.write_bytes(data)
+        return path
+    except Exception:
+        return None
+
+
 # ─── log file ─────────────────────────────────────────────────────────────────
 
 _log_file: Path | None = None
@@ -116,19 +147,65 @@ def _section(title: str) -> None:
     _out(f"{_color('─' * 60, _DIM)}")
 
 
-# Tracks whether we're currently mid-stream (printed prefix but no newline yet).
+# ─── streaming state ──────────────────────────────────────────────────────────
+
 _streaming_active: dict = {"agent": None}
 
 
 def _flush_stream() -> None:
-    """End an in-progress streaming line with a newline."""
     if _streaming_active["agent"] is not None:
         print()
         _streaming_active["agent"] = None
 
 
+# ─── image event handlers ─────────────────────────────────────────────────────
+
+_saved_map = False
+_saved_routes: set[str] = set()
+
+
+def _handle_image_events(ev: dict) -> None:
+    """Extract and save images from map_image / route_images events."""
+    global _saved_map
+    meta = ev.get("meta") or {}
+    event_type = meta.get("type", "")
+
+    if event_type == "map_image" and not _saved_map:
+        b64 = meta.get("image_b64", "")
+        if b64:
+            path = _save_image("map.png", b64)
+            if path:
+                robots = meta.get("robots_on_map", 0)
+                _flush_stream()
+                _out(f"  {_color('[IMG   ]', _MAGENTA)} Карта сохранена: {path}  ({robots} роботов)")
+                _saved_map = True
+
+    elif event_type == "route_images":
+        images = meta.get("images") or []
+        winner = meta.get("winner", "")
+        for img in images:
+            name = img.get("name", "route")
+            if name in _saved_routes:
+                continue
+            b64 = img.get("image_b64", "")
+            if not b64:
+                continue
+            is_best = img.get("is_best", False) or name == winner
+            filename = f"route_{name}{'_BEST' if is_best else ''}.png"
+            path = _save_image(filename, b64)
+            if path:
+                tag = _color("★ лучший", _GREEN) if is_best else ""
+                _flush_stream()
+                _out(f"  {_color('[IMG   ]', _MAGENTA)} Маршрут {_color(name, _BOLD)}: {path} {tag}")
+                _saved_routes.add(name)
+
+
+# ─── event renderer ───────────────────────────────────────────────────────────
+
 def _render_event(ev: dict) -> None:
     """Print a single event in a readable live format."""
+    _handle_image_events(ev)
+
     source = ev.get("source", "")
     msg = ev.get("message", "")
     meta = ev.get("meta") or {}
@@ -182,7 +259,6 @@ def _render_event(ev: dict) -> None:
     if sdk_event == "raw_response_event":
         agent_name = meta.get("agent", "?")
         if _streaming_active["agent"] != agent_name:
-            # Start a new streaming line for this agent.
             _flush_stream()
             indent = f"  {prefix} "
             print(indent, end="", flush=True)
@@ -192,17 +268,14 @@ def _render_event(ev: dict) -> None:
         _log(msg)
         return
 
-    # ── Tool call / argument delta ───────────────────────────────────────────
-    if sdk_event == "raw_response_event":
-        # tool_call deltas handled above; shouldn't reach here
-        return
-
-    # ── All other SDK events (tool_called, message_output_created, etc.) ────
+    # ── All other SDK events ─────────────────────────────────────────────────
     _flush_stream()
     if not msg or msg in {"Task accepted", "Plan created"}:
         return
-    # Skip message_output_created duplicate if it just echoes the streamed text
     if sdk_event == "message_output_created":
+        return
+    # Skip image events — already handled above
+    if meta.get("type") in {"map_image", "route_images"}:
         return
 
     # Long multi-line messages — indent each line
@@ -226,7 +299,7 @@ def create_and_run(host: str, prompt: str) -> str:
     return task_id
 
 
-def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
+def stream_until_done(host: str, task_id: str, timeout: int = 300) -> str:
     """Poll /events incrementally and render agent output live."""
     _section("2. Живой вывод агентов")
 
@@ -237,7 +310,6 @@ def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
     poll_interval = 0.5
 
     while time.time() < deadline:
-        # Fetch new events since last seq
         resp = _req("GET", f"{host}/task/{task_id}/events?after_seq={after_seq}")
         events = resp.get("events") or []
 
@@ -245,12 +317,10 @@ def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
             _render_event(ev)
         after_seq = resp.get("last_seq", after_seq)
 
-        # Check task status
         status_resp = _req("GET", f"{host}/task/{task_id}/status")
         status = status_resp["task"]["status"]
 
         if status in terminal:
-            # Drain any remaining events one more time
             resp = _req("GET", f"{host}/task/{task_id}/events?after_seq={after_seq}")
             for ev in (resp.get("events") or []):
                 _render_event(ev)
@@ -258,8 +328,10 @@ def stream_until_done(host: str, task_id: str, timeout: int = 120) -> str:
 
         time.sleep(poll_interval)
     else:
+        _flush_stream()
         _out(f"\n  {_color(f'✗ Таймаут {timeout}с — последний статус: {status}', _RED)}")
 
+    _flush_stream()
     return status
 
 
@@ -276,7 +348,6 @@ def show_plan(host: str, task_id: str) -> None:
         icon_color = _GREEN if st == "completed" else _RED if st == "failed" else _DIM
         agent = step.get("agent", "?")
         desc = step.get("description", "")
-        # Truncate long descriptions (map context etc.)
         if len(desc) > 80:
             desc = desc[:77] + "..."
         _out(
@@ -299,47 +370,70 @@ def show_logs(host: str, task_id: str) -> None:
         _out(f"  {_color(str(i).rjust(3), _DIM)}. {entry}")
 
 
+def show_artifacts() -> None:
+    if not _artifact_dir:
+        return
+    files = sorted(_artifact_dir.iterdir())
+    if not files:
+        return
+    _section("5. Артефакты")
+    for f in files:
+        size = f.stat().st_size
+        size_str = f"{size // 1024} KB" if size >= 1024 else f"{size} B"
+        _out(f"  {_color(f.name, _BOLD):<40} {_color(size_str, _DIM)}")
+    _out(f"\n  Папка: {_color(str(_artifact_dir.resolve()), _CYAN)}")
+
+
 # ─── main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    global _log_file
+    global _log_file, _saved_map, _saved_routes
 
     parser = argparse.ArgumentParser(description="Orchestrator task lifecycle demo")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Base URL of orchestrator")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT, help="Task prompt")
-    parser.add_argument("--timeout", type=int, default=120, help="Wait timeout in seconds")
+    parser.add_argument("--timeout", type=int, default=300, help="Wait timeout in seconds")
     parser.add_argument(
         "--log",
         metavar="FILE",
-        help="Write full output + raw events JSON to FILE (e.g. run.log). "
-             "Omit to disable. Pass 'auto' to auto-name by timestamp.",
+        help="Write output to FILE (pass 'auto' to auto-name). "
+             "Deprecated: artifacts are always saved to logs/<task_id>/",
     )
     args = parser.parse_args()
 
     host = args.host.rstrip("/")
 
-    # Configure log file
-    if args.log:
-        log_path = args.log
-        if log_path == "auto":
-            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            log_path = f"orchestrator_{ts}.log"
-        _log_file = Path(log_path)
-        _log_file.write_text(
-            f"# Orchestrator run — {datetime.now(timezone.utc).isoformat()}\n"
-            f"# host:   {host}\n"
-            f"# prompt: {args.prompt}\n\n",
-            encoding="utf-8",
-        )
-        print(f"  {_color(f'Лог: {_log_file.resolve()}', _DIM)}")
+    # Legacy --log flag: if pointing to a file, use it; otherwise ignored (artifacts go to logs/<id>/)
+    legacy_log: Path | None = None
+    if args.log and args.log != "auto":
+        legacy_log = Path(args.log)
 
     _out(f"\n{_color('Оркестратор:', _BOLD)} {host}")
     _out(f"{_color('Промпт:     ', _BOLD)} {args.prompt}")
 
+    # Create task first to get task_id
     task_id = create_and_run(host, args.prompt)
+
+    # Init artifact directory now that we have task_id
+    artifact_dir = _init_artifact_dir(task_id)
+    _log_file = artifact_dir / "run.log"
+    _log_file.write_text(
+        f"# Orchestrator run — {datetime.now(timezone.utc).isoformat()}\n"
+        f"# host:   {host}\n"
+        f"# prompt: {args.prompt}\n"
+        f"# task:   {task_id}\n\n",
+        encoding="utf-8",
+    )
+    _out(f"  {_color(f'Артефакты: {artifact_dir.resolve()}', _DIM)}")
+
+    # Reset image tracking state for this run
+    _saved_map = False
+    _saved_routes.clear()
+
     final_status = stream_until_done(host, task_id, timeout=args.timeout)
     show_plan(host, task_id)
     show_logs(host, task_id)
+    show_artifacts()
 
     color = _GREEN if final_status == "completed" else _RED
     _out(f"\n{_color('─' * 60, _DIM)}")
@@ -348,20 +442,28 @@ def main() -> None:
     _out(f"  Swagger: {host}/docs")
     _out(f"{_color('─' * 60, _DIM)}\n")
 
-    # Append full raw events dump to log for debugging
-    if _log_file:
-        all_events = _req("GET", f"{host}/task/{task_id}/events?after_seq=0")
-        raw_plan = _req("GET", f"{host}/task/{task_id}/plan")
-        raw_logs = _req("GET", f"{host}/task/{task_id}/logs")
-        with _log_file.open("a", encoding="utf-8") as f:
-            f.write("\n\n# ── RAW PLAN ──────────────────────────────────────\n")
-            f.write(json.dumps(raw_plan, ensure_ascii=False, indent=2))
-            f.write("\n\n# ── RAW LOGS ──────────────────────────────────────\n")
-            f.write(json.dumps(raw_logs, ensure_ascii=False, indent=2))
-            f.write("\n\n# ── RAW EVENTS ────────────────────────────────────\n")
-            f.write(json.dumps(all_events, ensure_ascii=False, indent=2))
-            f.write("\n")
-        print(f"  {_color(f'Лог сохранён: {_log_file.resolve()}', _GREEN)}")
+    # Save raw events and plan to artifact dir
+    all_events = _req("GET", f"{host}/task/{task_id}/events?after_seq=0")
+    raw_plan = _req("GET", f"{host}/task/{task_id}/plan")
+    raw_logs = _req("GET", f"{host}/task/{task_id}/logs")
+
+    (artifact_dir / "events.json").write_text(
+        json.dumps(all_events, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (artifact_dir / "plan.json").write_text(
+        json.dumps(raw_plan, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (artifact_dir / "task_logs.json").write_text(
+        json.dumps(raw_logs, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    print(f"  {_color(f'Сохранено в: {artifact_dir.resolve()}', _GREEN)}")
+
+    # Legacy --log support
+    if legacy_log:
+        import shutil
+        shutil.copy(artifact_dir / "run.log", legacy_log)
+        print(f"  {_color(f'Лог: {legacy_log.resolve()}', _DIM)}")
 
 
 if __name__ == "__main__":

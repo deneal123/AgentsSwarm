@@ -126,8 +126,10 @@ NAVIGATION_PROMPT = """
 **Шаг 2 — Формирование маршрута и отправка ОДНОЙ миссии**
 Если есть раздел "MAP ANALYSIS RESULT" (контекст карты):
   • TARGET содержит целевые координаты. Возьми position из get_robot_status.
-  • ПРОВЕРКА БЛИЗОСТИ: если расстояние от position до TARGET < 0.15м — робот уже у цели.
-    Сообщи «Робот уже у цели» и завершай.
+  • ПРОВЕРКА БЛИЗОСТИ: вызови check_proximity(x1=position.x, y1=position.y, x2=TARGET.x, y2=TARGET.y).
+    Если результат «WITHIN threshold» — робот уже у цели, сообщи и завершай.
+  • Для расчёта расстояний ВСЕГДА используй calculate_distance или check_proximity.
+    Никогда не считай координаты вручную — только через инструменты.
   • В любом случае: dispatch_mission(robot, x=TARGET.x, y=TARGET.y).
     Nav2 сам построит маршрут. Промежуточные waypoints НЕ нужны.
     (submit_navigation_mission НЕ использовать — он создаёт служебные get_objects миссии

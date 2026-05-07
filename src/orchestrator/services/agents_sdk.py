@@ -12,7 +12,9 @@ import os
 from functools import lru_cache
 from typing import Iterable, Optional
 
-from agents import Agent, ModelSettings, RunConfig, Runner
+import math
+
+from agents import Agent, ModelSettings, RunConfig, Runner, function_tool
 from openai.types.responses import ResponseTextDeltaEvent, ResponseFunctionCallArgumentsDeltaEvent
 from agents.mcp import MCPServer, MCPServerSse, MCPServerStdio, MCPServerStdioParams, MCPServerStreamableHttp
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
@@ -60,6 +62,28 @@ def _model_settings() -> ModelSettings:
 
 def _model_name() -> str:
     return os.getenv("AGENTS_MODEL", "gpt-4o-mini")
+
+
+@function_tool
+def calculate_distance(x1: float, y1: float, x2: float, y2: float) -> str:
+    """Calculate Euclidean distance between two 2D points (metres)."""
+    dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    return f"Distance from ({x1}, {y1}) to ({x2}, {y2}) = {dist:.4f} m"
+
+
+@function_tool
+def check_proximity(x1: float, y1: float, x2: float, y2: float, threshold_m: float = 0.15) -> str:
+    """Check if two points are within threshold_m metres of each other."""
+    dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    within = dist <= threshold_m
+    return (
+        f"Distance = {dist:.4f} m, threshold = {threshold_m} m → "
+        f"{'WITHIN threshold (robot already at goal)' if within else 'OUTSIDE threshold (navigation needed)'}"
+    )
+
+
+# Tools available to Navigation and SwarmCoordinator agents
+_NAV_FUNCTION_TOOLS = [calculate_distance, check_proximity]
 
 
 def _model_instance() -> OpenAIChatCompletionsModel:
@@ -116,6 +140,12 @@ def _mcp_servers(configs: Iterable[MCPServerConfig]) -> list[MCPServer]:
     return servers
 
 
+_FUNCTION_TOOLS_BY_AGENT: dict[str, list] = {
+    "Navigation": _NAV_FUNCTION_TOOLS,
+    "SwarmCoordinator": _NAV_FUNCTION_TOOLS,
+}
+
+
 def _build_agent(agent_name: str, mcp_configs: Iterable[MCPServerConfig] | None = None) -> Agent:
     return Agent(
         name=agent_name,
@@ -123,6 +153,7 @@ def _build_agent(agent_name: str, mcp_configs: Iterable[MCPServerConfig] | None 
         model=OpenAIChatCompletionsModel(model=_model_name(), openai_client=_client()),
         model_settings=_model_settings(),
         mcp_servers=_mcp_servers(mcp_configs or []),
+        tools=_FUNCTION_TOOLS_BY_AGENT.get(agent_name, []),
     )
 
 
