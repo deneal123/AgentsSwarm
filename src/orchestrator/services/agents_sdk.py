@@ -485,17 +485,44 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
                 streaming_ok = False
                 result = run_streamed(agent, input=step.description, run_config=run_config)
                 try:
+                    _text_buffer: dict[str, list[str]] = {}  # agent_name → accumulated delta
                     async for ev in result.stream_events():  # type: ignore[attr-defined]
                         etype = getattr(ev, "type", "event")
                         item = getattr(ev, "item", None)
-                        payload = getattr(ev, "name", None)
-                        if item is not None and getattr(item, "output", None):
+                        payload: str | None = None
+
+                        if etype == "raw_response_event":
+                            # Extract streaming text delta from the raw LLM chunk.
+                            data = getattr(ev, "data", None)
+                            choices = getattr(data, "choices", None) or []
+                            if choices:
+                                delta = getattr(choices[0], "delta", None)
+                                text = getattr(delta, "content", None) if delta else None
+                                if text:
+                                    buf_key = step.agent
+                                    _text_buffer.setdefault(buf_key, []).append(text)
+                                    payload = text
+                                # Also surface tool call deltas so tool names appear in the stream.
+                                tool_calls = getattr(delta, "tool_calls", None) if delta else None
+                                if tool_calls and payload is None:
+                                    tc = tool_calls[0]
+                                    fn = getattr(getattr(tc, "function", None), "name", None)
+                                    if fn:
+                                        payload = f"[tool_call] {fn}"
+                            if payload is None:
+                                # Skip silent raw chunks (e.g. finish_reason only)
+                                continue
+                        elif item is not None and getattr(item, "output", None):
                             payload = str(item.output)
+                        else:
+                            name = getattr(ev, "name", None)
+                            payload = name or f"SDK event: {etype}"
+
                         await self._record_stream(
                             task_id,
                             event_type=etype,
                             meta={"agent": step.agent, "attempt": attempt, "sdk_event": etype},
-                            message=payload or f"SDK event: {etype}",
+                            message=payload,
                         )
                     streaming_ok = True
                 except Exception:
