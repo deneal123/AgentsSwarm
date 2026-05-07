@@ -105,14 +105,16 @@ def _model_instance() -> OpenAIChatCompletionsModel:
     return OpenAIChatCompletionsModel(model=_model_name(), openai_client=_client())
 
 
+def _max_turns() -> int:
+    return int(os.getenv("AGENTS_MAX_TURNS", "60"))
+
+
 def _run_config() -> RunConfig:
-    max_turns = int(os.getenv("AGENTS_MAX_TURNS", "60"))
     return RunConfig(
         model=_model_instance(),
         model_settings=_model_settings(),
         nest_handoff_history=env_bool("AGENTS_NEST_HANDOFF_HISTORY", False),
         tracing_disabled=env_bool("AGENTS_TRACING_DISABLED", True),
-        max_turns=max_turns,
     )
 
 
@@ -318,7 +320,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             async with contextlib.AsyncExitStack() as stack:
                 for server in self._collect_mcp_servers(agent):
                     await stack.enter_async_context(server)
-                result = await Runner.run(agent, agent_input, run_config=_run_config())
+                result = await Runner.run(agent, agent_input, run_config=_run_config(), max_turns=_max_turns())
 
             raw = str(getattr(result, "final_output", None) or result)
             # Strip possible markdown fences
@@ -529,7 +531,7 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
             run_streamed = getattr(Runner, "run_streamed", None)
             if run_streamed:
                 streaming_ok = False
-                result = run_streamed(agent, input=step.description, run_config=run_config)
+                result = run_streamed(agent, input=step.description, run_config=run_config, max_turns=_max_turns())
                 try:
                     _text_buffer: dict[str, list[str]] = {}  # agent_name → accumulated delta
                     async for ev in result.stream_events():  # type: ignore[attr-defined]
@@ -576,11 +578,11 @@ class AgentsSDKExecutor(AgentHandoffExecutor):
 
                 # Streaming failed mid-run; agent may not have completed — retry without streaming.
                 logger.info("Retrying step %s without streaming", step.id, extra={"task_id": task_id})
-                result = await Runner.run(agent, step.description, run_config=run_config)
+                result = await Runner.run(agent, step.description, run_config=run_config, max_turns=_max_turns())
                 output = getattr(result, "final_output", None) or result
                 return HandoffResult(success=True, message=str(output) if output is not None else "")
 
-            result = await Runner.run(agent, step.description, run_config=run_config)
+            result = await Runner.run(agent, step.description, run_config=run_config, max_turns=_max_turns())
             output = getattr(result, "final_output", None) or result
             return HandoffResult(success=True, message=str(output) if output is not None else "")
 
