@@ -1,6 +1,5 @@
 import hashlib
 import logging
-from typing import Any
 
 from service.infrastructure.storage.abstract_file_storage import AbstractFileStorage
 
@@ -32,7 +31,9 @@ class BasicFileScanner(FileScanner):
                 data = await getter(file_key)
             else:
                 # If storage doesn't support download, try presigned URL as a fallback (not ideal)
-                logger.warning("Storage does not support get_file for scanning: %s", type(self.storage))
+                logger.warning(
+                    "Storage does not support get_file for scanning: %s", type(self.storage)
+                )
                 return {"status": "skipped", "reason": "no_download"}
 
             size = len(data) if data is not None else 0
@@ -40,12 +41,16 @@ class BasicFileScanner(FileScanner):
 
             result = {"status": "ok", "size": size, "sha256": sha256}
             try:
+                from service.monitoring import metrics as monmetrics
+
                 monmetrics.FILE_SCANS_TOTAL.inc()
             except Exception:
                 logger.debug("Failed to increment FILE_SCANS_TOTAL metric", exc_info=True)
             return result
         except Exception as e:
             try:
+                from service.monitoring import metrics as monmetrics
+
                 monmetrics.FILE_SCANS_FAILED_TOTAL.inc()
             except Exception:
                 logger.debug("Failed to increment FILE_SCANS_FAILED_TOTAL metric", exc_info=True)
