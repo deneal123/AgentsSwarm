@@ -170,10 +170,13 @@ class MissionDispatchClient:
 
     def get_mission_by_id(self, mission_id: str) -> Optional[Dict]:
         """Get a specific mission by its name/UUID."""
+        # The dispatch API ?name= filter may return all missions (unsupported param),
+        # so always verify by exact name match rather than trusting missions[0].
         missions = self._make_request("mission", params={"name": mission_id})
-        if missions:
-            return missions[0]
-        # Fallback: search all missions (some APIs don't support name filter)
+        for m in missions:
+            if m.get("name") == mission_id:
+                return m
+        # Fallback: scan all missions in case the API ignored the name param entirely.
         all_missions = self._make_request("mission")
         for m in all_missions:
             if m.get("name") == mission_id:
