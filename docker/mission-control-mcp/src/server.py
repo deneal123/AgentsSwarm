@@ -27,7 +27,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
@@ -386,8 +386,8 @@ async def list_tools() -> ListToolsResult:
     )
 
 
-def _handle_test_connection(_: dict) -> CallToolResult:
-    health = mc_client.health_check()
+async def _handle_test_connection(_: dict) -> CallToolResult:
+    health = await mc_client.health_check()
     if health.get("api_accessible"):
         lines = [
             "**Mission Control Connection OK**",
@@ -409,12 +409,12 @@ def _handle_test_connection(_: dict) -> CallToolResult:
     return _text_result("\n".join(lines) + "\n", is_error=True)
 
 
-def _handle_submit_navigation(arguments: dict) -> CallToolResult:
+async def _handle_submit_navigation(arguments: dict) -> CallToolResult:
     waypoints = arguments.get("waypoints") or []
     if not isinstance(waypoints, list) or len(waypoints) < 1:
         return _text_result("Error: at least one waypoint is required.\n", is_error=True)
 
-    response = mc_client.submit_navigation_mission(
+    response = await mc_client.submit_navigation_mission(
         route=waypoints,
         solver=arguments.get("solver", "NVIDIA_CUOPT"),
         timeout=arguments.get("timeout", 3600),
@@ -429,10 +429,10 @@ def _handle_submit_navigation(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_submit_charging(arguments: dict) -> CallToolResult:
+async def _handle_submit_charging(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
     dock_id = arguments.get("dock_id")
-    response = mc_client.submit_charging_mission(robot_name, dock_id)
+    response = await mc_client.submit_charging_mission(robot_name, dock_id)
 
     result = "**Charging Mission Submitted**\n\n"
     result += f"- Robot: {robot_name}\n"
@@ -442,9 +442,9 @@ def _handle_submit_charging(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_submit_undock(arguments: dict) -> CallToolResult:
+async def _handle_submit_undock(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
-    response = mc_client.submit_undock_mission(robot_name)
+    response = await mc_client.submit_undock_mission(robot_name)
 
     result = "**Undock Mission Submitted**\n\n"
     result += f"- Robot: {robot_name}\n"
@@ -452,9 +452,9 @@ def _handle_submit_undock(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_detected_objects(arguments: dict) -> CallToolResult:
+async def _handle_detected_objects(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
-    objects = mc_client.get_available_objects(robot_name)
+    objects = await mc_client.get_available_objects(robot_name)
     if not objects:
         return _text_result(f"No objects detected by {robot_name}.\n")
     lines = [f"**Detected Objects — {robot_name}**", ""]
@@ -463,9 +463,9 @@ def _handle_detected_objects(arguments: dict) -> CallToolResult:
     return _text_result("\n".join(lines) + "\n")
 
 
-def _handle_detected_apriltags(arguments: dict) -> CallToolResult:
+async def _handle_detected_apriltags(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
-    tags = mc_client.get_available_apriltags(robot_name)
+    tags = await mc_client.get_available_apriltags(robot_name)
     if not tags:
         return _text_result(f"No AprilTags detected by {robot_name}.\n")
     lines = [f"**Detected AprilTags — {robot_name}**", ""]
@@ -474,11 +474,11 @@ def _handle_detected_apriltags(arguments: dict) -> CallToolResult:
     return _text_result("\n".join(lines) + "\n")
 
 
-def _handle_visualize_route(arguments: dict) -> CallToolResult:
+async def _handle_visualize_route(arguments: dict) -> CallToolResult:
     waypoints = arguments.get("waypoints") or []
     if not isinstance(waypoints, list) or len(waypoints) < 1:
         return _text_result("Error: at least one waypoint is required.\n", is_error=True)
-    image_bytes = mc_client.visualize_route(waypoints, solver=arguments.get("solver", "NVIDIA_CUOPT"))
+    image_bytes = await mc_client.visualize_route(waypoints, solver=arguments.get("solver", "NVIDIA_CUOPT"))
     if not image_bytes:
         return _text_result("No visualization returned from Mission Control.\n", is_error=True)
     import base64
@@ -486,8 +486,8 @@ def _handle_visualize_route(arguments: dict) -> CallToolResult:
     return _text_result(f"Route visualization (base64 PNG):\n{encoded}\n")
 
 
-def _handle_get_map_info(_: dict) -> CallToolResult:
-    meta = mc_client.get_map_metadata()
+async def _handle_get_map_info(_: dict) -> CallToolResult:
+    meta = await mc_client.get_map_metadata()
     if not isinstance(meta, dict):
         return _text_result(f"Map info: {meta}\n")
     lines = ["**Current Map Info**", ""]
@@ -496,8 +496,8 @@ def _handle_get_map_info(_: dict) -> CallToolResult:
     return _text_result("\n".join(lines) + "\n")
 
 
-def _handle_list_maps(_: dict) -> CallToolResult:
-    maps = mc_client.list_maps()
+async def _handle_list_maps(_: dict) -> CallToolResult:
+    maps = await mc_client.list_maps()
     if not maps:
         return _text_result("No maps uploaded to Mission Control.\n")
     if isinstance(maps, list):
@@ -506,36 +506,36 @@ def _handle_list_maps(_: dict) -> CallToolResult:
     return _text_result(f"Maps: {maps}\n")
 
 
-def _handle_select_map(arguments: dict) -> CallToolResult:
+async def _handle_select_map(arguments: dict) -> CallToolResult:
     map_id = _require(arguments, "map_id")
-    response = mc_client.select_map(map_id)
+    response = await mc_client.select_map(map_id)
     return _text_result(f"**Map Selected**\n\n- Map ID: {map_id}\n- Response: {response}\n")
 
 
-def _handle_deploy_map(arguments: dict) -> CallToolResult:
+async def _handle_deploy_map(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
     map_id = _require(arguments, "map_id")
-    response = mc_client.update_robot_map(robot_name, map_id)
+    response = await mc_client.update_robot_map(robot_name, map_id)
     return _text_result(f"**Map Deployed**\n\n- Robot: {robot_name}\n- Map ID: {map_id}\n- Response: {response}\n")
 
 
-def _handle_submit_objective(arguments: dict) -> CallToolResult:
+async def _handle_submit_objective(arguments: dict) -> CallToolResult:
     objective = arguments.get("objective")
     if not objective:
         return _text_result("Error: objective is required.\n", is_error=True)
-    response = mc_client.submit_objective(objective)
+    response = await mc_client.submit_objective(objective)
     return _text_result(f"**Objective Submitted**\n\n- Response: {response}\n")
 
 
-def _handle_cancel_objective(arguments: dict) -> CallToolResult:
+async def _handle_cancel_objective(arguments: dict) -> CallToolResult:
     objective_name = _require(arguments, "objective_name")
-    mc_client.cancel_objective(objective_name)
+    await mc_client.cancel_objective(objective_name)
     return _text_result(f"**Objective Cancelled**\n\n- Name: {objective_name}\n")
 
 
-def _handle_pick_and_place(arguments: dict) -> CallToolResult:
+async def _handle_pick_and_place(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot_name")
-    response = mc_client.submit_pick_and_place(
+    response = await mc_client.submit_pick_and_place(
         robot_name=robot_name,
         object_id=_require(arguments, "object_id"),
         class_id=_require(arguments, "class_id"),
@@ -550,9 +550,7 @@ def _handle_pick_and_place(arguments: dict) -> CallToolResult:
     return _text_result(f"**Pick and Place Mission Submitted**\n\n- Robot: {robot_name}\n- Response: {response}\n")
 
 
-ToolHandler = Callable[[dict], CallToolResult]
-
-_TOOL_HANDLERS: Dict[str, ToolHandler] = {
+_TOOL_HANDLERS: Dict[str, Any] = {
     TOOL_TEST_CONNECTION: _handle_test_connection,
     TOOL_SUBMIT_NAVIGATION: _handle_submit_navigation,
     TOOL_SUBMIT_CHARGING: _handle_submit_charging,
@@ -578,7 +576,7 @@ async def call_tool(name: str, arguments: dict) -> CallToolResult:
         handler = _TOOL_HANDLERS.get(name)
         if handler is None:
             return _text_result(f"Error: unknown tool: {name}\n", is_error=True)
-        return handler(arguments or {})
+        return await handler(arguments or {})
     except ValueError as e:
         return _text_result(f"Error: {e}\n", is_error=True)
     except Exception as e:

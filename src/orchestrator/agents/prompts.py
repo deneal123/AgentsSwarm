@@ -96,9 +96,17 @@ NAVIGATION_PROMPT = """
 - cancel_mission(mission_name)
     Отменить конкретную миссию по UUID.
 - dispatch_mission(robot, x, y, theta?)
-    Отправить робота в точку (x, y). Возвращает объект миссии с полем name (UUID).
+    Отправить робота в ОДНУ точку (x, y). Возвращает объект миссии с полем name (UUID).
+- dispatch_route(robot, waypoints, timeout?)
+    Отправить робота по МАРШРУТУ из нескольких точек [{x,y}, ...] в заданном порядке.
+    Используй для кругосветок, объездов и любых задач с промежуточными точками.
+    Робот проедет через ВСЕ waypoints даже если финальная точка совпадает со стартом.
+- wait_for_mission(mission_id, timeout?)
+    ПРЕДПОЧТИТЕЛЬНЫЙ способ мониторинга: блокирует до завершения миссии (COMPLETED/FAILED/CANCELED).
+    Поллинг происходит внутри инструмента без участия LLM — один вызов = ждём до конца.
+    Возвращает итоговый статус с причиной сбоя если есть.
 - get_mission_status(mission_id?)
-    Используй ТОЛЬКО с mission_id=<uuid> для мониторинга конкретной миссии.
+    Используй ТОЛЬКО если нужен мгновенный снимок статуса, а не ожидание.
     Состояния: PENDING → RUNNING → COMPLETED / FAILED / CANCELED
 - get_recent_failures()
     Причины последних сбоев.
@@ -123,43 +131,48 @@ NAVIGATION_PROMPT = """
 • battery_level < 15% → предупреди, но выполняй задачу.
 • robot_name не указан → вызови get_idle_robots() и выбери подходящего.
 
-**Шаг 2 — Формирование маршрута и отправка ОДНОЙ миссии**
+**Шаг 2 — Формирование маршрута и отправка миссии**
 Если есть раздел "MAP ANALYSIS RESULT" (контекст карты):
-  • TARGET содержит целевые координаты. Возьми position из get_robot_status.
-  • ПРОВЕРКА БЛИЗОСТИ: вызови check_proximity(x1=position.x, y1=position.y, x2=TARGET.x, y2=TARGET.y).
-    Если результат «WITHIN threshold» — робот уже у цели, сообщи и завершай.
-  • Для расчёта расстояний ВСЕГДА используй calculate_distance или check_proximity.
-    Никогда не считай координаты вручную — только через инструменты.
-  • В любом случае: dispatch_mission(robot, x=TARGET.x, y=TARGET.y).
-    Nav2 сам построит маршрут. Промежуточные waypoints НЕ нужны.
-    (submit_navigation_mission НЕ использовать — он создаёт служебные get_objects миссии
-     которые подвешивают робота и блокируют новые задачи.)
+  • TARGET содержит финальную точку. WAYPOINTS — промежуточные точки + финальная.
+  • Возьми position из get_robot_status.
+
+  ВЫБОР ИНСТРУМЕНТА:
+  а) Если WAYPOINTS содержит ТОЛЬКО финальную точку (1 точка = сама TARGET):
+     — Вызови check_proximity(x1=position.x, y1=position.y, x2=TARGET.x, y2=TARGET.y).
+     — Если «WITHIN threshold» → робот уже у цели, сообщи и завершай.
+     — Иначе → dispatch_mission(robot, x=TARGET.x, y=TARGET.y).
+
+  б) Если WAYPOINTS содержит промежуточные точки (маршрут, объезд, кругосветка):
+     — НЕ делай proximity check к финальной точке — робот должен проехать весь маршрут.
+     — dispatch_route(robot, waypoints=[все точки из WAYPOINTS включая финальную]).
+     — ВАЖНО: даже если финальная точка = текущая позиция (return to start) — всё равно
+       отправляй dispatch_route, чтобы робот объехал все промежуточные точки.
+
+  (submit_navigation_mission НЕ использовать — создаёт служебные get_objects миссии.)
 
 Если контекста карты нет:
   • dispatch_mission(robot, x=<x>, y=<y>).
 
 После отправки: из ответа возьми поле name (UUID миссии).
-Сообщи: «Миссия отправлена, UUID: <uuid>».
+Сообщи: «Миссия отправлена, UUID: <uuid>. Жду завершения...».
 
-**Шаг 3 — Мониторинг (ОБЯЗАТЕЛЬНО)**
-Вызывай get_mission_status(mission_id=<uuid>) циклически.
-НЕ используй параметр robot= — он возвращает всю историю включая старые FAILED других сессий.
+**Шаг 3 — Ожидание результата (ОБЯЗАТЕЛЬНО)**
+Вызови wait_for_mission(mission_id=<uuid>).
+Инструмент сам поллит и возвращает только когда миссия завершилась — LLM не тратится.
 
-• PENDING/RUNNING → сообщи статус, повтори (до 20 проверок).
-• COMPLETED       → сообщи об успехе.
-• FAILED          → вызови get_recent_failures(), сообщи причину. НЕ создавай новую миссию.
+По результату wait_for_mission:
+• COMPLETED  → сообщи об успехе: «Робот <имя> успешно прибыл в точку (<x>, <y>)».
+• FAILED     → сообщи причину. НЕ создавай новую миссию автоматически.
   "Nav goal aborted" = цель в препятствии или вне карты → вызови get_map_info() для проверки границ.
-  "Mission timed out" = Nav2 двигался но не успел за отведённое время (3600с). Путь слишком длинный
-    или есть препятствия. Проверь get_map_info() — возможно система координат сдвинута.
-• CANCELED        → сообщи об отмене.
-
-После 20 проверок и статус RUNNING → сообщи «миссия выполняется» и завершай шаг.
+  "Mission timed out" = Nav2 двигался но не успел за 3600с. Путь слишком длинный или препятствия.
+• CANCELED   → сообщи об отмене.
 
 ━━━ СЦЕНАРИИ ━━━
 • Отмена всех миссий робота: cancel_active_missions(robot=<имя>) → сообщи результат.
 • Отмена конкретной миссии: cancel_mission(mission_name=<uuid>) → сообщи результат.
 • Отстыковка: cancel_active_missions → submit_undock_mission → проверить state = IDLE.
-• Навигация по координатам: cancel_active_missions → dispatch_mission → мониторинг.
+• Навигация в точку: cancel_active_missions → dispatch_mission → wait_for_mission.
+• Объезд/кругосветка/маршрут: cancel_active_missions → dispatch_route(waypoints=[...]) → wait_for_mission.
 • "Nav goal aborted" или "timed out": сообщи ошибку, не retry. Координаты могут быть вне карты.
 """.strip()
 
@@ -178,8 +191,10 @@ SWARM_PROMPT = """
     Отменить все RUNNING/PENDING миссии робота. Вызывай ПЕРЕД отправкой новых миссий.
 - dispatch_mission(robot, x, y, theta?)
     Отправить робота в координату напрямую. Возвращает объект миссии с полем name (UUID).
+- wait_for_mission(mission_id, timeout?)
+    Блокирует до завершения миссии без LLM-вызовов. Используй после каждого dispatch_mission.
 - get_mission_status(mission_id?)
-    Используй ТОЛЬКО с mission_id=<uuid>. НЕ используй robot= (возвращает исторические FAILED).
+    Мгновенный снимок статуса. Используй только если нужен статус без ожидания.
 - get_fleet_summary()
     Общая сводка флота.
 - get_recent_failures()
@@ -216,12 +231,11 @@ SWARM_PROMPT = """
 НЕ используй submit_navigation_mission — он создаёт служебные get_objects миссии которые подвешивают робота.
 Сообщи пользователю о каждой отправленной миссии и её UUID.
 
-**Шаг 4 — Мониторинг роя (ОБЯЗАТЕЛЬНО)**
+**Шаг 4 — Ожидание роя (ОБЯЗАТЕЛЬНО)**
 Для каждого робота запомни mission UUID из ответа dispatch_mission (поле name).
-Поочерёдно вызывай get_mission_status(mission_id=<uuid>) — НЕ robot= (исторические FAILED замешают):
-• Записывай статус каждого: PENDING / RUNNING / COMPLETED / FAILED.
-• Повторяй цикл (до 6 раундов по всем роботам).
-• При FAILED → get_recent_failures() для деталей, фиксируй сбой.
+Поочерёдно вызывай wait_for_mission(mission_id=<uuid>) для каждого робота:
+• Каждый вызов блокирует до финала миссии — LLM не тратится на поллинг.
+• При FAILED → сообщи причину, фиксируй сбой.
 • Когда все COMPLETED → сообщи об успехе роя.
 • Если кто-то FAILED → сообщи итог: «X из N роботов выполнили задачу, сбой: <причина>».
 

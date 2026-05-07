@@ -22,6 +22,7 @@ Handles communication with the Mission Dispatch REST API to retrieve
 robot and mission status information.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -29,7 +30,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-import requests
+import httpx
 
 _DEFAULT_MISSION_TIMEOUT: int = int(os.getenv("MISSION_DISPATCH_TIMEOUT", "3600"))
 
@@ -49,8 +50,12 @@ class MissionDispatchClient:
 
     def __init__(self, base_url: str = "http://localhost:5002"):
         self.base_url = base_url
+        self._client: httpx.AsyncClient = httpx.AsyncClient(base_url=self.base_url, timeout=10.0)
 
-    def _request_json(
+    async def close(self):
+        await self._client.aclose()
+
+    async def _request_json(
         self,
         method: str,
         endpoint: str,
@@ -59,26 +64,25 @@ class MissionDispatchClient:
         data: Optional[Dict] = None,
     ) -> Any:
         """Make an HTTP request and return parsed JSON with consistent error handling."""
-        url = f"{self.base_url}/{endpoint}"
         try:
             if method == "GET":
-                response = requests.get(url, params=params, timeout=10)
+                response = await self._client.get(endpoint, params=params)
             elif method == "POST":
-                response = requests.post(url, json=data, timeout=10)
+                response = await self._client.post(endpoint, json=data)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             response.raise_for_status()
-        except requests.exceptions.ConnectionError as e:
+        except httpx.ConnectError as e:
             raise MissionDispatchClientError(
                 f"Cannot connect to Mission Dispatch at {self.base_url}. Is the service running?"
             ) from e
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             raise MissionDispatchClientError(
                 f"Timeout connecting to Mission Dispatch at {self.base_url}"
             ) from e
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             raise MissionDispatchClientError(
-                f"HTTP error {response.status_code}: {response.text}"
+                f"HTTP error {e.response.status_code}: {e.response.text}"
             ) from e
 
         try:
@@ -86,54 +90,54 @@ class MissionDispatchClient:
         except json.JSONDecodeError as e:
             raise MissionDispatchClientError("Invalid JSON response from Mission Dispatch API") from e
 
-    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> List[Dict]:
+    async def _get(self, endpoint: str, params: Optional[Dict] = None) -> List[Dict]:
         """Make a GET request to the API with error handling."""
-        return self._request_json("GET", endpoint, params=params)
+        return await self._request_json("GET", endpoint, params=params)
 
-    def _post_request(self, endpoint: str, data: Dict) -> Dict:
+    async def _post(self, endpoint: str, data: Dict) -> Dict:
         """Make a POST request to the API with error handling."""
-        return self._request_json("POST", endpoint, data=data)
+        return await self._request_json("POST", endpoint, data=data)
 
-    def create_robot(self, name: str, labels: Optional[Dict] = None) -> Dict:
+    async def create_robot(self, name: str, labels: Optional[Dict] = None) -> Dict:
         """Create a new robot in the database"""
         data = {"name": name}
         if labels:
             data["labels"] = labels
-        return self._post_request("robot", data)
+        return await self._post("robot", data)
 
-    def get_all_robots(self) -> List[Dict]:
+    async def get_all_robots(self) -> List[Dict]:
         """Get all robots from the database"""
-        return self._make_request("robot")
+        return await self._get("robot")
 
-    def get_robot_by_name(self, name: str) -> Dict:
+    async def get_robot_by_name(self, name: str) -> Dict:
         """Get specific robot by name"""
         try:
-            response = requests.get(f"{self.base_url}/robot/{name}", timeout=10)
+            response = await self._client.get(f"/robot/{name}")
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as e:
-            if response.status_code == 400:
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
                 raise RobotNotFoundError(f"Robot '{name}' not found") from e
             raise MissionDispatchClientError(
-                f"HTTP error {response.status_code}: {response.text}"
+                f"HTTP error {e.response.status_code}: {e.response.text}"
             ) from e
 
-    def get_robots_by_state(self, state: str) -> List[Dict]:
+    async def get_robots_by_state(self, state: str) -> List[Dict]:
         """Get robots filtered by state"""
         params = {"state": state}
-        return self._make_request("robot", params=params)
+        return await self._get("robot", params=params)
 
-    def get_online_robots(self) -> List[Dict]:
+    async def get_online_robots(self) -> List[Dict]:
         """Get all online robots"""
         params = {"online": "true"}
-        return self._make_request("robot", params=params)
+        return await self._get("robot", params=params)
 
-    def get_offline_robots(self) -> List[Dict]:
+    async def get_offline_robots(self) -> List[Dict]:
         """Get all offline robots"""
         params = {"online": "false"}
-        return self._make_request("robot", params=params)
+        return await self._get("robot", params=params)
 
-    def get_robots_by_battery_range(
+    async def get_robots_by_battery_range(
         self, min_battery: Optional[float] = None, max_battery: Optional[float] = None
     ) -> List[Dict]:
         """Get robots filtered by battery level range"""
@@ -142,82 +146,82 @@ class MissionDispatchClient:
             params["min_battery"] = min_battery
         if max_battery is not None:
             params["max_battery"] = max_battery
-        return self._make_request("robot", params=params)
+        return await self._get("robot", params=params)
 
-    def get_all_missions(self) -> List[Dict]:
+    async def get_all_missions(self) -> List[Dict]:
         """Get all missions from the database"""
-        return self._make_request("mission")
+        return await self._get("mission")
 
-    def get_missions(self, params: Optional[Dict] = None) -> List[Dict]:
+    async def get_missions(self, params: Optional[Dict] = None) -> List[Dict]:
         """Get missions with arbitrary query params.
 
         Server-side filtering/limiting is used when supported.
         """
-        return self._make_request("mission", params=params)
+        return await self._get("mission", params=params)
 
-    def get_missions_by_state(self, state: str) -> List[Dict]:
+    async def get_missions_by_state(self, state: str) -> List[Dict]:
         """Get missions filtered by state"""
         params = {"state": state}
-        return self._make_request("mission", params=params)
+        return await self._get("mission", params=params)
 
-    def get_missions_by_robot(self, robot_name: str, limit: Optional[int] = None) -> List[Dict]:
+    async def get_missions_by_robot(self, robot_name: str, limit: Optional[int] = None) -> List[Dict]:
         """Get missions for a specific robot, optionally limited to most recent N."""
         params: Dict[str, Any] = {"robot": robot_name}
-        missions = self._make_request("mission", params=params)
+        missions = await self._get("mission", params=params)
         if limit is not None and len(missions) > limit:
             missions = missions[-limit:]
         return missions
 
-    def get_mission_by_id(self, mission_id: str) -> Optional[Dict]:
+    async def get_mission_by_id(self, mission_id: str) -> Optional[Dict]:
         """Get a specific mission by its name/UUID."""
         # The dispatch API ?name= filter may return all missions (unsupported param),
         # so always verify by exact name match rather than trusting missions[0].
-        missions = self._make_request("mission", params={"name": mission_id})
+        missions = await self._get("mission", params={"name": mission_id})
         for m in missions:
             if m.get("name") == mission_id:
                 return m
         # Fallback: scan all missions in case the API ignored the name param entirely.
-        all_missions = self._make_request("mission")
+        all_missions = await self._get("mission")
         for m in all_missions:
             if m.get("name") == mission_id:
                 return m
         return None
 
-    def get_active_missions(self) -> List[Dict]:
+    async def get_active_missions(self) -> List[Dict]:
         """Get all currently active missions (RUNNING and PENDING)"""
-        all_missions = self.get_all_missions()
+        all_missions = await self.get_all_missions()
         return [
             m for m in all_missions if m.get("status", {}).get("state") in ["RUNNING", "PENDING"]
         ]
 
-    def get_completed_missions(self) -> List[Dict]:
+    async def get_completed_missions(self) -> List[Dict]:
         """Get all completed missions"""
-        return self.get_missions_by_state("COMPLETED")
+        return await self.get_missions_by_state("COMPLETED")
 
-    def get_failed_missions(self) -> List[Dict]:
+    async def get_failed_missions(self) -> List[Dict]:
         """Get all failed missions"""
-        return self.get_missions_by_state("FAILED")
+        return await self.get_missions_by_state("FAILED")
 
-    def get_robot_with_current_mission(self, robot_name: str) -> Dict:
+    async def get_robot_with_current_mission(self, robot_name: str) -> Dict:
         """Get robot info along with its current active mission if any"""
-        robot = self.get_robot_by_name(robot_name)
-        missions = self.get_missions_by_robot(robot_name)
+        robot = await self.get_robot_by_name(robot_name)
+        missions = await self.get_missions_by_robot(robot_name)
         active_missions = [
             m for m in missions if m.get("status", {}).get("state") in ["RUNNING", "PENDING"]
         ]
 
         return {"robot": robot, "current_missions": active_missions}
 
-    def health_check(self) -> Dict:
+    async def health_check(self) -> Dict:
         """Check if the Mission Dispatch API is accessible"""
         try:
-            response = requests.get(f"{self.base_url}/health", timeout=5)
+            response = await self._client.get("/health", timeout=5)
             response.raise_for_status()
             return {"status": "healthy", "api_accessible": True}
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             return {"status": "unhealthy", "api_accessible": False, "error": str(e)}
 
-    def dispatch_mission(
+    async def dispatch_mission(
         self,
         robot: str,
         mission_tree: List[Dict],
@@ -236,28 +240,27 @@ class MissionDispatchClient:
             "needs_canceled": needs_canceled,
             "name": name or "mission",
         }
-        return self._post_request("mission", data)
+        return await self._post("mission", data)
 
-    def cancel_mission(self, mission_name: str) -> Dict:
+    async def cancel_mission(self, mission_name: str) -> Dict:
         """Cancel a running or pending mission by its name/UUID."""
         try:
-            response = requests.patch(
-                f"{self.base_url}/mission/{mission_name}",
+            response = await self._client.patch(
+                f"/mission/{mission_name}",
                 json={"needs_canceled": True},
-                timeout=10,
             )
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             raise MissionDispatchClientError(
-                f"HTTP error {response.status_code}: {response.text}"
+                f"HTTP error {e.response.status_code}: {e.response.text}"
             ) from e
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             raise MissionDispatchClientError(f"Request failed: {e}") from e
 
-    def cancel_active_missions(self, robot_name: str) -> List[str]:
+    async def cancel_active_missions(self, robot_name: str) -> List[str]:
         """Cancel all RUNNING and PENDING missions for a robot. Returns list of canceled names."""
-        missions = self.get_missions_by_robot(robot_name, limit=None)
+        missions = await self.get_missions_by_robot(robot_name, limit=None)
         active = [
             m for m in missions
             if m.get("status", {}).get("state") in ("RUNNING", "PENDING")
@@ -268,13 +271,13 @@ class MissionDispatchClient:
             if not name:
                 continue
             try:
-                self.cancel_mission(name)
+                await self.cancel_mission(name)
                 canceled.append(name)
             except MissionDispatchClientError:
                 pass
         return canceled
 
-    def dispatch_move_mission(
+    async def dispatch_move_mission(
         self,
         robot: str,
         x: float,
@@ -285,29 +288,51 @@ class MissionDispatchClient:
         allowed_deviation_xy: float = 0.1,
         allowed_deviation_theta: float = 0.0,
     ) -> Dict:
-        """Dispatch a simple move mission to navigate a robot to a pose"""
-        # Use a UUID suffix so repeated dispatches to the same coords get unique names.
-        # Without this, get_mission_by_id returns the oldest historical mission with that name.
+        """Dispatch a move mission with a single destination waypoint."""
+        return await self.dispatch_route_mission(
+            robot=robot,
+            waypoints=[{"x": x, "y": y, "theta": theta}],
+            name=name,
+            timeout=timeout,
+            allowed_deviation_xy=allowed_deviation_xy,
+        )
+
+    async def dispatch_route_mission(
+        self,
+        robot: str,
+        waypoints: List[Dict],
+        name: Optional[str] = None,
+        timeout: int = _DEFAULT_MISSION_TIMEOUT,
+        allowed_deviation_xy: float = 0.1,
+        allowed_deviation_theta: float = 0.0,
+    ) -> Dict:
+        """Dispatch a mission with one or more waypoints (supports round trips and loops).
+
+        waypoints: list of dicts with keys x, y, theta (theta optional, defaults to 0.0).
+        """
         mission_name = name or f"nav_{uuid.uuid4().hex[:12]}"
         deadline = (datetime.now(timezone.utc) + timedelta(seconds=timeout)).isoformat()
 
-        waypoint = {
-            "x": x,
-            "y": y,
-            "theta": theta,
-            "map_id": "",
-            "allowedDeviationXY": allowed_deviation_xy,
-            "allowedDeviationTheta": allowed_deviation_theta,
-        }
+        wp_list = [
+            {
+                "x": float(wp["x"]),
+                "y": float(wp["y"]),
+                "theta": float(wp.get("theta", 0.0)),
+                "map_id": "",
+                "allowedDeviationXY": allowed_deviation_xy,
+                "allowedDeviationTheta": allowed_deviation_theta,
+            }
+            for wp in waypoints
+        ]
 
         data = {
             "robot": robot,
             "mission_tree": [
-                {"name": mission_name, "parent": "root", "route": {"waypoints": [waypoint]}}
+                {"name": mission_name, "parent": "root", "route": {"waypoints": wp_list}}
             ],
             "timeout": timeout,
             "deadline": deadline,
             "needs_canceled": False,
             "name": mission_name,
         }
-        return self._post_request("mission", data)
+        return await self._post("mission", data)

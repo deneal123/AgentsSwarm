@@ -27,7 +27,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict, List
 
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
@@ -65,6 +65,8 @@ TOOL_CREATE_ROBOT = "create_robot"
 TOOL_DISPATCH_MISSION = "dispatch_mission"
 TOOL_CANCEL_MISSION = "cancel_mission"
 TOOL_CANCEL_ACTIVE_MISSIONS = "cancel_active_missions"
+TOOL_WAIT_FOR_MISSION = "wait_for_mission"
+TOOL_DISPATCH_ROUTE = "dispatch_route"
 
 
 def _text_result(text: str, *, is_error: bool = False) -> CallToolResult:
@@ -283,8 +285,75 @@ async def list_tools() -> ListToolsResult:
                 },
             ),
             Tool(
+                name=TOOL_WAIT_FOR_MISSION,
+                description=(
+                    "Wait (poll) until a mission reaches a terminal state (COMPLETED, FAILED, CANCELED). "
+                    "Call this immediately after dispatch_mission to block until the mission finishes. "
+                    "Returns the final mission state with success/failure details. "
+                    "No LLM calls happen during polling — only one tool call is charged."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "mission_id": {
+                            "type": "string",
+                            "description": "Mission UUID/name to wait for (required)",
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "description": "Maximum seconds to wait (default 3600)",
+                        },
+                        "poll_interval": {
+                            "type": "integer",
+                            "description": "Polling interval in seconds (default 5)",
+                        },
+                    },
+                    "required": ["mission_id"],
+                },
+            ),
+            Tool(
+                name=TOOL_DISPATCH_ROUTE,
+                description=(
+                    "Dispatch a multi-waypoint route mission. Use this for round trips, loops, "
+                    "or any path that requires passing through intermediate points before reaching "
+                    "the final destination (e.g. 'go around obstacle and return'). "
+                    "Each waypoint is visited in order. The robot will travel through ALL waypoints "
+                    "even if the last one equals the starting position."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "robot": {
+                            "type": "string",
+                            "description": "Name of the robot to dispatch (required)",
+                        },
+                        "waypoints": {
+                            "type": "array",
+                            "description": (
+                                "Ordered list of waypoints to visit. Each item: {x, y, theta?}. "
+                                "Include ALL intermediate points AND the final destination."
+                            ),
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "x": {"type": "number"},
+                                    "y": {"type": "number"},
+                                    "theta": {"type": "number", "description": "Orientation in radians (optional, default 0)"},
+                                },
+                                "required": ["x", "y"],
+                            },
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "description": f"Mission timeout in seconds (optional, default {_DEFAULT_MISSION_TIMEOUT}s)",
+                        },
+                    },
+                    "required": ["robot", "waypoints"],
+                },
+            ),
+            Tool(
                 name=TOOL_DISPATCH_MISSION,
-                description="Dispatch a mission to send a robot to a location (x, y coordinates)",
+                description="Dispatch a mission to send a robot to a single (x, y) location. For multi-point routes or round trips use dispatch_route instead.",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -318,12 +387,12 @@ async def list_tools() -> ListToolsResult:
     )
 
 
-def _handle_test_connection(_: dict) -> CallToolResult:
-    health = md_client.health_check()
+async def _handle_test_connection(_: dict) -> CallToolResult:
+    health = await md_client.health_check()
     if health.get("api_accessible"):
         try:
-            robots = md_client.get_all_robots()
-            missions = md_client.get_all_missions()
+            robots = await md_client.get_all_robots()
+            missions = await md_client.get_all_missions()
             result = "**Mission Dispatch Connection OK**\n\n"
             result += f"- API URL: {base_url}\n"
             result += f"- Robots in database: {len(robots)}\n"
@@ -343,21 +412,21 @@ def _handle_test_connection(_: dict) -> CallToolResult:
     return _text_result(result, is_error=True)
 
 
-def _handle_get_robot_status(arguments: dict) -> CallToolResult:
+async def _handle_get_robot_status(arguments: dict) -> CallToolResult:
     state = arguments.get("state")
     robot_name = arguments.get("robot_name")
 
     if robot_name:
-        robot = md_client.get_robot_by_name(robot_name)
+        robot = await md_client.get_robot_by_name(robot_name)
         result = f"**Robot {robot_name} Status**\n\n"
         result += format_robot_info(robot)
         return _text_result(result)
 
     if state:
-        robots = md_client.get_robots_by_state(state)
+        robots = await md_client.get_robots_by_state(state)
         result = f"**Robots in {state} state**\n\n"
     else:
-        robots = md_client.get_all_robots()
+        robots = await md_client.get_all_robots()
         result = "**All Robots**\n\n"
 
     if not robots:
@@ -368,14 +437,14 @@ def _handle_get_robot_status(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_mission_status(arguments: dict) -> CallToolResult:
+async def _handle_get_mission_status(arguments: dict) -> CallToolResult:
     state = arguments.get("state")
     robot = arguments.get("robot")
     mission_id = arguments.get("mission_id")
     limit = arguments.get("limit")
 
     if mission_id:
-        mission = md_client.get_mission_by_id(mission_id)
+        mission = await md_client.get_mission_by_id(mission_id)
         result = f"**Mission {mission_id}**\n\n"
         if mission is None:
             result += "Mission not found.\n"
@@ -385,13 +454,13 @@ def _handle_get_mission_status(arguments: dict) -> CallToolResult:
 
     if robot:
         effective_limit = int(limit) if limit is not None else 5
-        missions = md_client.get_missions_by_robot(robot, limit=effective_limit)
+        missions = await md_client.get_missions_by_robot(robot, limit=effective_limit)
         result = f"**Recent missions for robot {robot}** (last {effective_limit})\n\n"
     elif state:
-        missions = md_client.get_missions_by_state(state)
+        missions = await md_client.get_missions_by_state(state)
         result = f"**Missions in {state} state**\n\n"
     else:
-        missions = md_client.get_all_missions()
+        missions = await md_client.get_all_missions()
         result = "**All Missions**\n\n"
 
     if not missions:
@@ -402,8 +471,8 @@ def _handle_get_mission_status(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_robots_on_missions(_: dict) -> CallToolResult:
-    robots = md_client.get_robots_by_state("ON_TASK")
+async def _handle_get_robots_on_missions(_: dict) -> CallToolResult:
+    robots = await md_client.get_robots_by_state("ON_TASK")
     result = "**Robots Currently On Missions**\n\n"
 
     if not robots:
@@ -413,7 +482,7 @@ def _handle_get_robots_on_missions(_: dict) -> CallToolResult:
     for robot in robots:
         result += format_robot_info(robot)
         try:
-            missions = md_client.get_missions_by_robot(robot["name"])
+            missions = await md_client.get_missions_by_robot(robot["name"])
             active = [
                 m
                 for m in missions
@@ -431,8 +500,8 @@ def _handle_get_robots_on_missions(_: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_idle_robots(_: dict) -> CallToolResult:
-    robots = md_client.get_robots_by_state("IDLE")
+async def _handle_get_idle_robots(_: dict) -> CallToolResult:
+    robots = await md_client.get_robots_by_state("IDLE")
     result = "**Idle Robots Available for Missions**\n\n"
 
     if not robots:
@@ -448,9 +517,9 @@ def _handle_get_idle_robots(_: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_fleet_summary(_: dict) -> CallToolResult:
-    all_robots = md_client.get_all_robots()
-    all_missions = md_client.get_all_missions()
+async def _handle_get_fleet_summary(_: dict) -> CallToolResult:
+    all_robots = await md_client.get_all_robots()
+    all_missions = await md_client.get_all_missions()
 
     robot_states: Dict[str, list] = {}
     online_count = 0
@@ -586,9 +655,9 @@ def _format_healthy_section(healthy: list[str]) -> str:
     return "".join(lines)
 
 
-def _handle_check_robot_health(arguments: dict) -> CallToolResult:
+async def _handle_check_robot_health(arguments: dict) -> CallToolResult:
     min_battery = float(arguments.get("min_battery", 20.0))
-    robots = md_client.get_all_robots()
+    robots = await md_client.get_all_robots()
     offline, low_battery, with_errors, healthy = _collect_robot_health_buckets(robots, min_battery)
 
     result = "**Robot Health Check**\n\n"
@@ -607,8 +676,8 @@ def _handle_check_robot_health(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_mission_queue(_: dict) -> CallToolResult:
-    pending = md_client.get_missions_by_state("PENDING")
+async def _handle_get_mission_queue(_: dict) -> CallToolResult:
+    pending = await md_client.get_missions_by_state("PENDING")
     result = "**Mission Queue (Pending Missions)**\n\n"
     if not pending:
         result += "No missions currently pending.\n"
@@ -619,8 +688,8 @@ def _handle_get_mission_queue(_: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_get_recent_failures(_: dict) -> CallToolResult:
-    failed = md_client.get_failed_missions()
+async def _handle_get_recent_failures(_: dict) -> CallToolResult:
+    failed = await md_client.get_failed_missions()
     result = "**Recent Mission Failures**\n\n"
     if not failed:
         result += "No failed missions found.\n"
@@ -631,19 +700,19 @@ def _handle_get_recent_failures(_: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_cancel_mission(arguments: dict) -> CallToolResult:
+async def _handle_cancel_mission(arguments: dict) -> CallToolResult:
     mission_name = _require(arguments, "mission_name")
     try:
-        result_data = md_client.cancel_mission(mission_name)
+        result_data = await md_client.cancel_mission(mission_name)
         result = f"**Mission Canceled**\n\n- Mission: {mission_name}\n- Response: {result_data}\n"
         return _text_result(result)
     except Exception as e:
         return _text_result(f"Error canceling mission {mission_name}: {e}\n", is_error=True)
 
 
-def _handle_cancel_active_missions(arguments: dict) -> CallToolResult:
+async def _handle_cancel_active_missions(arguments: dict) -> CallToolResult:
     robot = _require(arguments, "robot")
-    canceled = md_client.cancel_active_missions(robot)
+    canceled = await md_client.cancel_active_missions(robot)
     if not canceled:
         return _text_result(f"**No active missions found for {robot}** — nothing to cancel.\n")
     result = f"**Canceled {len(canceled)} mission(s) for {robot}**\n\n"
@@ -652,16 +721,75 @@ def _handle_cancel_active_missions(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-def _handle_create_robot(arguments: dict) -> CallToolResult:
+async def _handle_create_robot(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "name")
     labels = arguments.get("labels")
-    robot = md_client.create_robot(robot_name, labels)
+    robot = await md_client.create_robot(robot_name, labels)
     result = "**Robot Created Successfully**\n\n"
     result += format_robot_info(robot)
     return _text_result(result)
 
 
-def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
+async def _handle_wait_for_mission(arguments: dict) -> CallToolResult:
+    mission_id = _require(arguments, "mission_id")
+    timeout = int(arguments.get("timeout") or _DEFAULT_MISSION_TIMEOUT)
+    poll_interval = int(arguments.get("poll_interval") or 5)
+
+    _TERMINAL = {"COMPLETED", "FAILED", "CANCELED"}
+    elapsed = 0
+
+    while elapsed < timeout:
+        mission = await md_client.get_mission_by_id(mission_id)
+        if mission is None:
+            return _text_result(
+                f"**Wait failed**: mission '{mission_id}' not found.\n", is_error=True
+            )
+
+        state = mission.get("status", {}).get("state", "UNKNOWN")
+        if state in _TERMINAL:
+            result = f"**Mission {mission_id} finished**\n\n"
+            result += format_mission_info(mission)
+            if state == "COMPLETED":
+                result += "\n✅ Mission completed successfully.\n"
+            elif state == "FAILED":
+                reason = mission.get("status", {}).get("failure_reason", "unknown")
+                category = mission.get("status", {}).get("failure_category", "")
+                result += f"\n❌ Mission FAILED.\n- Reason: {reason}\n"
+                if category:
+                    result += f"- Category: {category}\n"
+            elif state == "CANCELED":
+                result += "\n⚠️ Mission was canceled.\n"
+            return _text_result(result)
+
+        await asyncio.sleep(poll_interval)
+        elapsed += poll_interval
+
+    return _text_result(
+        f"**Wait timed out** after {timeout}s: mission '{mission_id}' still in state "
+        f"{mission.get('status', {}).get('state', 'UNKNOWN') if mission else 'NOT_FOUND'}.\n",
+        is_error=True,
+    )
+
+
+async def _handle_dispatch_route(arguments: dict) -> CallToolResult:
+    robot_name = _require(arguments, "robot")
+    waypoints = _require(arguments, "waypoints")
+    if not isinstance(waypoints, list) or len(waypoints) == 0:
+        return _text_result("Error: waypoints must be a non-empty list\n", is_error=True)
+    timeout = int(arguments.get("timeout") or _DEFAULT_MISSION_TIMEOUT)
+    mission = await md_client.dispatch_route_mission(robot_name, waypoints, timeout=timeout)
+    result = "**Route Mission Dispatched Successfully**\n\n"
+    result += format_mission_info(mission)
+    result += f"\nWaypoints ({len(waypoints)}): "
+    result += " → ".join(f"({float(w['x']):.2f}, {float(w['y']):.2f})" for w in waypoints)
+    result += "\n"
+    mission_uuid = mission.get("name", "")
+    if mission_uuid:
+        result += f"\nMission UUID (use for wait_for_mission): {mission_uuid}\n"
+    return _text_result(result)
+
+
+async def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
     robot_name = _require(arguments, "robot")
     x = _require(arguments, "x")
     y = _require(arguments, "y")
@@ -669,7 +797,7 @@ def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
     mission_name = arguments.get("mission_name")
 
     timeout = int(arguments.get("timeout") or _DEFAULT_MISSION_TIMEOUT)
-    mission = md_client.dispatch_move_mission(robot_name, x, y, theta, mission_name, timeout=timeout)
+    mission = await md_client.dispatch_move_mission(robot_name, x, y, theta, mission_name, timeout=timeout)
     result = "**Mission Dispatched Successfully**\n\n"
     result += format_mission_info(mission)
     result += f"\nTarget: ({float(x):.2f}, {float(y):.2f}) @ {theta:.2f} rad\n"
@@ -679,9 +807,7 @@ def _handle_dispatch_mission(arguments: dict) -> CallToolResult:
     return _text_result(result)
 
 
-ToolHandler = Callable[[dict], CallToolResult]
-
-_TOOL_HANDLERS: Dict[str, ToolHandler] = {
+_TOOL_HANDLERS: Dict[str, Any] = {
     TOOL_TEST_CONNECTION: _handle_test_connection,
     TOOL_GET_ROBOT_STATUS: _handle_get_robot_status,
     TOOL_GET_MISSION_STATUS: _handle_get_mission_status,
@@ -693,8 +819,10 @@ _TOOL_HANDLERS: Dict[str, ToolHandler] = {
     TOOL_GET_RECENT_FAILURES: _handle_get_recent_failures,
     TOOL_CREATE_ROBOT: _handle_create_robot,
     TOOL_DISPATCH_MISSION: _handle_dispatch_mission,
+    TOOL_DISPATCH_ROUTE: _handle_dispatch_route,
     TOOL_CANCEL_MISSION: _handle_cancel_mission,
     TOOL_CANCEL_ACTIVE_MISSIONS: _handle_cancel_active_missions,
+    TOOL_WAIT_FOR_MISSION: _handle_wait_for_mission,
 }
 
 
@@ -706,7 +834,7 @@ async def call_tool(name: str, arguments: dict) -> CallToolResult:
         handler = _TOOL_HANDLERS.get(name)
         if handler is None:
             return _text_result(f"Error: unknown tool: {name}\n", is_error=True)
-        return handler(arguments or {})
+        return await handler(arguments or {})
     except ValueError as e:
         return _text_result(f"Error: {e}\n", is_error=True)
     except Exception as e:
