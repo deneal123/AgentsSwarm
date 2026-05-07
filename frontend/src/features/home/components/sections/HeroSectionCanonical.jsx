@@ -62,7 +62,7 @@ function HeroSectionCanonical({ variant, isAuthenticated }) {
                 <Wrap justify="center" spacing={2}>
                   {HERO_TECH_STACK.map((tech) => (
                     <WrapItem key={tech}>
-                      <Badge px={3} py={1.5} borderRadius={borderRadius.lg} bg="rgba(255,255,255,0.06)" color={colors.text.secondary}>
+                      <Badge px={3} py={1.5} borderRadius={borderRadius.lg} bg={colors.border.default} color={colors.text.secondary}>
                         {tech}
                       </Badge>
                     </WrapItem>
