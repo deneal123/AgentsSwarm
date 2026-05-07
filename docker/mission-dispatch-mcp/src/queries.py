@@ -25,12 +25,13 @@ robot and mission status information.
 import json
 import logging
 import os
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import requests
 
-_DEFAULT_MISSION_TIMEOUT: int = int(os.getenv("MISSION_DISPATCH_TIMEOUT", "600"))
+_DEFAULT_MISSION_TIMEOUT: int = int(os.getenv("MISSION_DISPATCH_TIMEOUT", "3600"))
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +283,9 @@ class MissionDispatchClient:
         allowed_deviation_theta: float = 0.0,
     ) -> Dict:
         """Dispatch a simple move mission to navigate a robot to a pose"""
-        mission_name = name or f"move_to_{x:.2f}_{y:.2f}"
+        # Use a UUID suffix so repeated dispatches to the same coords get unique names.
+        # Without this, get_mission_by_id returns the oldest historical mission with that name.
+        mission_name = name or f"nav_{uuid.uuid4().hex[:12]}"
         deadline = (datetime.now(timezone.utc) + timedelta(seconds=timeout)).isoformat()
 
         waypoint = {
