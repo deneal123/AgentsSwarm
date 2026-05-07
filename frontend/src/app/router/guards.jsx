@@ -4,7 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@app/providers';
 import { ROUTE_GUARDS } from './routes';
 
-export function AuthOnlyRoute({ children }) {
+function RouteGuard({ children, guard }) {
   const { isSessionLoading, resolveGuardRedirect } = useAuth();
   const location = useLocation();
 
@@ -16,7 +16,7 @@ export function AuthOnlyRoute({ children }) {
     );
   }
 
-  const redirect = resolveGuardRedirect(ROUTE_GUARDS.AUTH_ONLY, location);
+  const redirect = resolveGuardRedirect(guard, location);
   if (redirect) {
     return <Navigate to={redirect.to} replace state={redirect.state} />;
   }
@@ -24,14 +24,18 @@ export function AuthOnlyRoute({ children }) {
   return children;
 }
 
+export function AuthOnlyRoute({ children }) {
+  return <RouteGuard guard={ROUTE_GUARDS.AUTH_ONLY}>{children}</RouteGuard>;
+}
+
+export function GuestOnlyRoute({ children }) {
+  return <RouteGuard guard={ROUTE_GUARDS.GUEST_ONLY}>{children}</RouteGuard>;
+}
+
 export function PublicRoute({ children }) {
-  const { resolveGuardRedirect } = useAuth();
-  const location = useLocation();
-  const redirect = resolveGuardRedirect(ROUTE_GUARDS.PUBLIC, location);
+  return <RouteGuard guard={ROUTE_GUARDS.PUBLIC}>{children}</RouteGuard>;
+}
 
-  if (redirect) {
-    return <Navigate to={redirect.to} replace state={redirect.state} />;
-  }
-
-  return children;
+export function FeatureFlagRoute({ children }) {
+  return <RouteGuard guard={ROUTE_GUARDS.FEATURE_FLAG}>{children}</RouteGuard>;
 }

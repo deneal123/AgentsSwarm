@@ -27,8 +27,8 @@ import {
 } from "@chakra-ui/react";
 import { ChevronRightIcon, HamburgerIcon, TriangleDownIcon } from "@chakra-ui/icons";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { APP_ROUTES } from "@routes/routeConfig";
-import { isAuthRoute } from "@routes/routeState";
+import { APP_ROUTES } from "@app/router";
+import { isAuthRoute } from "@app/router";
 import { FaHome, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { MotionBox } from "@shared/ui/lib/motionPrimitives";
 import { useAuth } from "@app/providers";

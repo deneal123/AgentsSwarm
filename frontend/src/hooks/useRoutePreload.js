@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { APP_ROUTES } from '../app/router';
-import { ROUTE_CONFIG, ROUTE_LOADERS } from '../routes/routeConfig';
+import { ROUTE_CONFIG, ROUTE_LOADERS } from '../app/router';
 
 const loaded = new Set();
 
 const intentPreloadByPath = {
   [APP_ROUTES.LOGIN]: ROUTE_LOADERS.login,
+  [APP_ROUTES.SIGNUP]: ROUTE_LOADERS.signup,
   [APP_ROUTES.REGISTER]: ROUTE_LOADERS.signup,
 };
 

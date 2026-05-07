@@ -4,7 +4,7 @@ import useLocalStorage from "@hooks/useLocalStorage";
 import { fetchProfile, logoutLocal } from "@api";
 import extractErrorInfo from "@utils/errorHandler";
 import { registerUnauthorizedHandler } from "@api/client";
-import { APP_ROUTES } from "@routes/routeConfig";
+import { APP_ROUTES } from "@app/router";
 
 const AuthSessionContext = createContext(null);
 const AuthActionsContext = createContext(null);
@@ -71,6 +71,16 @@ export function AuthProvider({ children }) {
         return {
           to: APP_ROUTES.LOGIN,
           state: { from: location },
+        };
+      }
+      if (guardType === "guest-only" && isAuthenticated) {
+        return {
+          to: APP_ROUTES.ROOT,
+        };
+      }
+      if (guardType === "feature-flag") {
+        return {
+          to: APP_ROUTES.ROOT,
         };
       }
       return null;
