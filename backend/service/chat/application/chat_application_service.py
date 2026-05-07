@@ -6,8 +6,8 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from service.agents.client import list_available_models
-from service.chat.domain.chat_contracts import ChatRequestContext
-from service.chat.domain.chat_exceptions import map_chat_exception_to_http
+from service.chat.application.use_cases.chat_use_cases import CreateThreadUseCase, PostMessageUseCase
+from service.chat.presentation.error_mapper import map_to_http_exception, normalize_response_metadata
 from service.chat.domain.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
@@ -24,31 +24,20 @@ class ChatApplicationService:
         return [m for m in (models or []) if not any(marker in str(m).lower() for marker in blocked_markers)]
 
     async def post_message(self, thread_id: str, payload) -> dict:
+        use_case = PostMessageUseCase(self.chat_service)
         try:
-            result = await self.chat_service.post_message(
-                ChatRequestContext(
-                    thread_id=thread_id,
-                    text=payload.text,
-                    user_id=payload.user_id,
-                    selected_model=payload.model,
-                    route_override=payload.route_override,
-                    input_type=payload.input_type,
-                    web_search=payload.web_search,
-                    deep_research=payload.deep_research,
-                    file_context=payload.file_context,
-                )
-            )
+            result = await use_case.execute(thread_id=thread_id, payload=payload)
         except Exception as exc:
             logger.exception("ChatService failed to handle message: %s", exc)
-            raise map_chat_exception_to_http(exc) from exc
+            raise map_to_http_exception(exc) from exc
         return {
             "reply": result.reply,
             "thread_id": result.thread_id,
-            "metadata": result.metadata.data,
+            "metadata": normalize_response_metadata(result.metadata.data, selected_model=payload.model),
         }
 
     async def create_thread(self, user_id: str | None, title: str | None) -> dict:
-        res = await self.chat_service.create_thread(user_id=user_id, title=title)
+        res = await CreateThreadUseCase(self.chat_service).execute(user_id=user_id, title=title)
         return {
             "thread_id": res["thread_id"],
             "title": res["title"],
