@@ -8,6 +8,7 @@ export const CHAT_ACTIONS = {
   SET_SIDEBAR_SEARCH: 'SET_SIDEBAR_SEARCH', SET_SIDEBAR_COLLAPSED: 'SET_SIDEBAR_COLLAPSED', SET_INPUT_VALUE: 'SET_INPUT_VALUE', SET_ATTACHED_FILE: 'SET_ATTACHED_FILE', SET_IS_RECORDING: 'SET_IS_RECORDING',
   TRACE_START_SESSION: 'TRACE_START_SESSION', TRACE_APPEND_EVENT: 'TRACE_APPEND_EVENT', TRACE_FINALIZE_SESSION: 'TRACE_FINALIZE_SESSION', TRACE_RESET: 'TRACE_RESET',
   SOCKET_ERROR: 'SOCKET_ERROR', RECONNECT: 'RECONNECT', CANCEL_GENERATION: 'CANCEL_GENERATION', CLEAR_THREAD: 'CLEAR_THREAD',
+  STREAM_APPEND_CHUNK: 'STREAM_APPEND_CHUNK', STREAM_COMPLETE_LAST_AGENT: 'STREAM_COMPLETE_LAST_AGENT',
 };
 
 export const initialChatState = {
@@ -45,6 +46,28 @@ export function chatStateReducer(state, action) { switch (action.type) {
   case CHAT_ACTIONS.RECONNECT: return { ...state, connectionState: 'reconnecting', reconnectAttempts: state.reconnectAttempts + 1 };
   case CHAT_ACTIONS.CANCEL_GENERATION: return { ...state, loading: false, currentJob: null };
   case CHAT_ACTIONS.CLEAR_THREAD: return { ...state, messages: [], traceSessions: [], activeTraceSessionId: null, currentJob: null, error: null };
+  case CHAT_ACTIONS.STREAM_APPEND_CHUNK: {
+    const chunk = action.payload?.chunk || '';
+    const metadata = action.payload?.metadata || {};
+    if (!chunk.trim()) return state;
+    const last = state.messages[state.messages.length - 1];
+    if (last && last.type === 'agent' && !last.complete) {
+      const content = `${last.content}${chunk}`;
+      return {
+        ...state,
+        messages: state.messages.map((msg, index) => index === state.messages.length - 1 ? { ...msg, content, typingProgress: Math.min(1, content.length / 1000), metadata: { ...(msg.metadata || {}), ...metadata } } : msg),
+      };
+    }
+    return {
+      ...state,
+      messages: [...state.messages, { id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: chunk, timestamp: new Date().toISOString(), metadata, complete: false, isTyping: true, typingProgress: 0 }],
+    };
+  }
+  case CHAT_ACTIONS.STREAM_COMPLETE_LAST_AGENT:
+    return {
+      ...state,
+      messages: state.messages.map((msg, index) => (index === state.messages.length - 1 && msg.type === 'agent' && msg.isTyping ? { ...msg, isTyping: false, complete: true, typingProgress: 1 } : msg)),
+    };
   default: return state;
 }}
 

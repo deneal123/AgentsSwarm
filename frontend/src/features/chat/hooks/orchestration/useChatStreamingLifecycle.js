@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { clampTraceDetail } from '../../utils/trace';
 
-export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, setMessages, setInputValue }) {
+export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, addMessage, appendStreamChunk, completeLastAgentMessage, setCurrentJob, clearCurrentJob, setInputValue }) {
   const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
@@ -29,10 +29,11 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
       activeWsJobIdRef.current = incomingJobId;
       lastWsReplyFingerprintRef.current = '';
     }
+    setCurrentJob(incomingJobId ? { id: incomingJobId, status: 'processing', progress: 0 } : null);
     setIsLoading(true);
   }, [resolveWsEventJobId, setIsLoading]);
 
-  const onComplete = useCallback(() => setIsLoading(false), [setIsLoading]);
+  const onComplete = useCallback(() => { clearCurrentJob(); setIsLoading(false); }, [clearCurrentJob, setIsLoading]);
 
   const onError = useCallback((err) => {
     const rawMessage = String(err?.message || '').trim();
@@ -51,15 +52,8 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
   const onStreamChunk = useCallback((data) => {
     if (!isLoadingRef.current || shouldIgnoreWsEvent(data) || !data?.data?.trim()) return;
     const chunkMeta = data.metadata || {};
-    setMessages((prev) => {
-      const lastMessage = prev[prev.length - 1];
-      if (lastMessage && lastMessage.type === 'agent' && !lastMessage.complete) {
-        const chunkedContent = `${lastMessage.content}${data.data}`;
-        return prev.map((msg, index) => (index === prev.length - 1 ? { ...msg, content: chunkedContent, typingProgress: Math.min(1, chunkedContent.length / 1000), metadata: { ...(msg.metadata || {}), ...chunkMeta } } : msg));
-      }
-      return [...prev, { id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: data.data, timestamp: new Date().toISOString(), metadata: chunkMeta, complete: false, isTyping: true, typingProgress: 0 }];
-    });
-  }, [setMessages, shouldIgnoreWsEvent]);
+    appendStreamChunk(data.data, chunkMeta);
+  }, [completeLastAgentMessage, shouldIgnoreWsEvent]);
 
   const onAgentReply = useCallback((data) => {
     if (shouldIgnoreWsEvent(data)) return;
@@ -77,16 +71,16 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
     }
     lastWsReplyFingerprintRef.current = replyFingerprint;
     appendTraceEvent({ kind: data?.metadata?.provider_unavailable ? 'error' : 'done', title: data?.metadata?.provider_unavailable ? 'Ответ сформирован в деградированном режиме' : 'Ответ сформирован', detail: data?.metadata?.provider_error || '' });
-    setMessages((prev) => [...prev, { id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: incomingReply, timestamp: new Date().toISOString(), metadata: data.metadata, file_url: data.file_url, complete: true, isTyping: false, typingProgress: 1 }]);
+    addMessage({ id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: incomingReply, timestamp: new Date().toISOString(), metadata: data.metadata, file_url: data.file_url, complete: true, isTyping: false, typingProgress: 1 });
     setIsLoading(false);
     setInputValue('');
     finalizeTraceSession(data?.metadata?.provider_unavailable ? 'error' : 'done');
-  }, [appendTraceEvent, finalizeTraceSession, resolveWsEventJobId, setInputValue, setIsLoading, setMessages, shouldIgnoreWsEvent]);
+  }, [addMessage, appendTraceEvent, finalizeTraceSession, resolveWsEventJobId, setInputValue, setIsLoading, shouldIgnoreWsEvent]);
 
   const onAgentComplete = useCallback((data) => {
     if (shouldIgnoreWsEvent(data)) return;
-    setMessages((prev) => prev.map((msg, index) => (index === prev.length - 1 && msg.type === 'agent' && msg.isTyping ? { ...msg, isTyping: false, complete: true, typingProgress: 1 } : msg)));
-  }, [setMessages, shouldIgnoreWsEvent]);
+    completeLastAgentMessage();
+  }, [completeLastAgentMessage, shouldIgnoreWsEvent]);
 
   const onAgentEvent = useCallback((event) => {
     if (!event?.type || shouldIgnoreWsEvent(event)) return;
