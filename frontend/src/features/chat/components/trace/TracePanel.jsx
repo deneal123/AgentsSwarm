@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { VStack } from '@chakra-ui/react';
 import TraceSessionCard from './TraceSessionCard';
 
-function TracePanel({ sessions, expandedMap, isCompactTrace, onToggleExpanded }) {
+function TracePanelComponent({ sessions, expandedMap, isCompactTrace, onToggleExpanded }) {
+  const handleToggle = useCallback((sessionId, expanded) => {
+    onToggleExpanded(sessionId, expanded);
+  }, [onToggleExpanded]);
+
   return (
     <VStack align="stretch" spacing={3} w="100%">
       {sessions.map((session) => (
@@ -11,11 +15,13 @@ function TracePanel({ sessions, expandedMap, isCompactTrace, onToggleExpanded })
           session={session}
           isCompactTrace={isCompactTrace}
           isExpanded={expandedMap[session.id] ?? (session.status === 'running')}
-          onToggleExpanded={(expanded) => onToggleExpanded(session.id, expanded)}
+          onToggleExpanded={(expanded) => handleToggle(session.id, expanded)}
         />
       ))}
     </VStack>
   );
 }
+
+const TracePanel = memo(TracePanelComponent);
 
 export default TracePanel;

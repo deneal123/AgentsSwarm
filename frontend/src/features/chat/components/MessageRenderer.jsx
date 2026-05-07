@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -76,8 +76,8 @@ function CopyButton({ text }) {
   );
 }
 
-function MessageRenderer({ content }) {
-  const MarkdownComponents = {
+function MessageRendererComponent({ content }) {
+  const markdownComponents = useMemo(() => ({
     code: ({ node, inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
@@ -136,13 +136,13 @@ function MessageRenderer({ content }) {
         </code>
       );
     },
-  };
+  }), []);
 
-  const safeContent = completeMarkdown(content || '');
+  const safeContent = useMemo(() => completeMarkdown(content || ''), [content]);
 
   try {
     return (
-      <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm]}>
+      <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
         {safeContent}
       </ReactMarkdown>
     );
@@ -155,5 +155,7 @@ function MessageRenderer({ content }) {
     );
   }
 }
+
+const MessageRenderer = memo(MessageRendererComponent);
 
 export default MessageRenderer;

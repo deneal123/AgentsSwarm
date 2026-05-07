@@ -30,18 +30,39 @@ export function useResponsive() {
     if (typeof window === "undefined") return;
 
     let timeoutId = null;
+    let lastRunAt = 0;
 
-    const handleResize = () => {
-      // Debounce для производительности
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        setWindowSize({
+    const updateWindowSize = () => {
+      setWindowSize((prev) => {
+        const next = {
           width: window.innerWidth,
           height: window.innerHeight,
-        });
-      }, 100);
+        };
+        if (prev.width === next.width && prev.height === next.height) {
+          return prev;
+        }
+        return next;
+      });
+      lastRunAt = Date.now();
+    };
+
+    const handleResize = () => {
+      const now = Date.now();
+      const remaining = 120 - (now - lastRunAt);
+      if (remaining <= 0) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        updateWindowSize();
+        return;
+      }
+      if (!timeoutId) {
+        timeoutId = setTimeout(() => {
+          timeoutId = null;
+          updateWindowSize();
+        }, remaining);
+      }
     };
 
     window.addEventListener("resize", handleResize);
