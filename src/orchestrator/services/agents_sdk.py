@@ -100,7 +100,10 @@ def _mcp_servers(configs: Iterable[MCPServerConfig]) -> list[MCPServer]:
     servers: list[MCPServer] = []
     for cfg in configs:
         if cfg.transport == "sse":
-            servers.append(MCPServerSse(params={"url": cfg.url}, name=cfg.name))
+            servers.append(MCPServerSse(
+                params={"url": cfg.url, "timeout": 30.0, "sse_read_timeout": 300.0},
+                name=cfg.name,
+            ))
         elif cfg.transport == "streamable-http":
             servers.append(MCPServerStreamableHttp(params={"url": cfg.url}, name=cfg.name))
         else:

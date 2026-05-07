@@ -116,9 +116,21 @@ async def build_plan(prompt: str) -> List[PlanStep]:
     else:
         goal_tuples = _build_plan_heuristic(prompt)
 
-    needs_map = any(
-        agent in {"Navigation", "SwarmCoordinator"} for _, agent, _ in goal_tuples
-    )
+    # MapAnalyst is only useful for actual movement — skip it for cancel/status tasks.
+    _MOVEMENT_WORDS = {"отправ", "перем", "навигац", "move", "go", "send", "navigat", "поед", "доед"}
+    _CANCEL_WORDS = {"отмен", "cancel", "stop", "abort", "останов", "прекрат"}
+
+    def _needs_map_for(description: str, agent: str) -> bool:
+        if agent not in {"Navigation", "SwarmCoordinator"}:
+            return False
+        desc_lower = description.lower()
+        # Cancel/stop/abort tasks don't need map analysis.
+        if any(w in desc_lower for w in _CANCEL_WORDS):
+            return False
+        # All other Navigation/Swarm tasks default to needing the map.
+        return True
+
+    needs_map = any(_needs_map_for(desc, agent) for desc, agent, _ in goal_tuples)
 
     steps: List[PlanStep] = []
     current_id = 1
