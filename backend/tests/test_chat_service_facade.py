@@ -1,13 +1,13 @@
 import pytest
 
-from service.services.chat_contracts import (
+from service.chat.domain.chat_contracts import (
     ChatProcessingMetadata,
     ChatReplyResult,
     ChatRequestContext,
     ChatRouteDecision,
 )
-from service.services.chat_exceptions import JobExecutionError
-from service.services.chat_service import ChatService
+from service.chat.domain.chat_exceptions import JobExecutionError
+from service.chat.domain.chat_service import ChatService
 
 
 @pytest.mark.asyncio

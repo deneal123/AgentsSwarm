@@ -1,7 +1,7 @@
 import pytest
 
-from service.services.chat_exceptions import JobExecutionError
-from service.services.chat_job_orchestrator import ChatJobOrchestrator
+from service.chat.domain.chat_exceptions import JobExecutionError
+from service.chat.domain.chat_job_orchestrator import ChatJobOrchestrator
 
 
 class _Handler:
@@ -16,7 +16,7 @@ class _Handler:
 
 @pytest.mark.asyncio
 async def test_execute_success() -> None:
-    from service.services.chat_contracts import ChatReplyResult, ChatProcessingMetadata
+    from service.chat.domain.chat_contracts import ChatReplyResult, ChatProcessingMetadata
 
     handler = _Handler(
         {

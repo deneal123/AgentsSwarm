@@ -9,12 +9,12 @@ from service.ports import AgentExecutionPort
 
 from celery import shared_task
 
-from service.services.chat_worker import (
+from service.chat.infrastructure.chat_worker import (
     ChatWorkerConversationService,
     ChatWorkerDependencyFactory,
     WorkerStreamPublisherService,
 )
-from service.repositories.chat_worker_repository import ChatWorkerRepository
+from service.chat.persistence.chat_worker_repository import ChatWorkerRepository
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ async def process_agent_message_async(
             publisher.close()
 
 
-@shared_task(bind=True, name="service.infrastructure.messaging.chat_worker_tasks.process_agent_message", soft_time_limit=300, time_limit=330)
+@shared_task(bind=True, name="service.chat.infrastructure.chat_worker_tasks.process_agent_message", soft_time_limit=300, time_limit=330)
 def process_agent_message(
     self,
     job_id: str,
@@ -190,7 +190,7 @@ def process_agent_message(
     file_context: str = "",
 ) -> dict:
     from service import container
-    from service.services.process_chat_message_handler import ProcessChatMessageCommand, ProcessChatMessageFlags, ProcessChatMessageModelSettings
+    from service.chat.domain.process_chat_message_handler import ProcessChatMessageCommand, ProcessChatMessageFlags, ProcessChatMessageModelSettings
 
     handler = container.get_current_container().services.process_chat_message_handler
     command = ProcessChatMessageCommand(
@@ -210,7 +210,7 @@ def process_agent_message(
         loop.close()
 
 
-@shared_task(bind=True, name="service.infrastructure.messaging.chat_worker_tasks.delete_old_chat_history", time_limit=300, soft_time_limit=280)
+@shared_task(bind=True, name="service.chat.infrastructure.chat_worker_tasks.delete_old_chat_history", time_limit=300, soft_time_limit=280)
 def delete_old_chat_history(self) -> dict:
     from service.settings import config
 

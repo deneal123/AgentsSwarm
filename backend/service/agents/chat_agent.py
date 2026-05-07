@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from service.agents.processor import AgentProcessor
 from service.agents.events import EventType
 from service.ports import StreamPort
-from service.services.chat_contracts import ChatProcessingMetadata, ChatReplyResult
+from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
 logger = logging.getLogger(__name__)
 

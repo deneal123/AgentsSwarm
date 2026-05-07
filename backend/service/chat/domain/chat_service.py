@@ -1,17 +1,17 @@
 import logging
 from typing import Any
 
-from service.services.chat_contracts import (
+from service.chat.domain.chat_contracts import (
     ChatProcessingMetadata,
     ChatReplyResult,
     ChatRequestContext,
     ChatRouteDecision,
     build_provider_unavailable_reply,
 )
-from service.services.chat_exceptions import ChatErrorMapper, JobOrchestrationError, ModelRoutingError
-from service.services.chat_fallback_service import ChatFallbackService
-from service.services.chat_job_orchestrator import ChatJobOrchestrator
-from service.services.chat_persistence_service import ChatPersistenceService
+from service.chat.domain.chat_exceptions import ChatErrorMapper, JobOrchestrationError, ModelRoutingError
+from service.chat.domain.chat_fallback_service import ChatFallbackService
+from service.chat.domain.chat_job_orchestrator import ChatJobOrchestrator
+from service.chat.persistence.chat_persistence_service import ChatPersistenceService
 from service.services.model_routing_service import ModelRoutingService
 
 logger = logging.getLogger(__name__)

@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from service.repositories.chat_worker_repository import ChatWorkerRepository
-from service.services.chat_worker.services import ChatWorkerConversationService
+from service.chat.persistence.chat_worker_repository import ChatWorkerRepository
+from service.chat.infrastructure.chat_worker.services import ChatWorkerConversationService
 
 
 class _FakePseudoSession:

@@ -5,9 +5,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Body, Query
 from fastapi.responses import RedirectResponse, Response
-from service.application.chat_application_service import ChatApplicationService
+from service.chat.application.chat_application_service import ChatApplicationService
 
-from service.presentation.routers.chat_api.schemas import (
+from service.chat.presentation.routers.chat_api.schemas import (
     MessageRequest,
     MessageResponse,
     ModelsResponse,

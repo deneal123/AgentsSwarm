@@ -16,7 +16,7 @@ from service.services.file_saver_service import FileSaverService
 from service.services.file_scanner_service import BasicFileScanner
 from service.services.job_processor import NewJobProcessor
 from service.services.job_service import JobService
-from service.services.process_chat_message_handler import ProcessChatMessageHandler
+from service.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.services.profile_service import ProfileService
 from service.settings import Config
 from service.utils.background_task_manager import BackgroundTaskManager

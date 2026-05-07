@@ -5,8 +5,8 @@ from uuid import UUID
 
 from service.infrastructure.messaging import tasks as messaging_tasks
 from service.services.agent_file_bridge import resolve_user_uuid
-from service.services.chat_service import ChatService
-from service.services.chat_ws.metrics import ChatWsMetrics
+from service.chat.domain.chat_service import ChatService
+from service.chat.presentation.ws.chat_ws.metrics import ChatWsMetrics
 
 logger = logging.getLogger(__name__)
 

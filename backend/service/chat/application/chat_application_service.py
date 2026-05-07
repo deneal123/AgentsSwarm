@@ -6,9 +6,9 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from service.agents.client import list_available_models
-from service.services.chat_contracts import ChatRequestContext
-from service.services.chat_exceptions import map_chat_exception_to_http
-from service.services.chat_service import ChatService
+from service.chat.domain.chat_contracts import ChatRequestContext
+from service.chat.domain.chat_exceptions import map_chat_exception_to_http
+from service.chat.domain.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
 

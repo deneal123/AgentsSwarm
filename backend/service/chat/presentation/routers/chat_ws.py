@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, WebSocket, status
 from starlette.websockets import WebSocketDisconnect
 
 from service import container
-from service.services.chat_ws import (
+from service.chat.presentation.ws.chat_ws import (
     ChatMessageHandler,
     ChatStreamConsumer,
     ChatWsAuthService,

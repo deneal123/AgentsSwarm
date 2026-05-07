@@ -10,7 +10,7 @@ from service.models.key_value import ProcessingStatus, ServiceType, UserTypes
 from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.jobs_api.jobs_api import jobs_router
 from service.presentation.routers.jobs_api.schemas import StartJobRequest
-from service.services.chat_contracts import JobExecutionResult
+from service.chat.domain.chat_contracts import JobExecutionResult
 
 
 # ---- Fakes for dependency overrides ----
