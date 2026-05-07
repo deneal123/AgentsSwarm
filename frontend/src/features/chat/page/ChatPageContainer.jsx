@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   AlertDescription,
@@ -28,7 +28,6 @@ import {
   Textarea,
   VStack,
   useBreakpointValue,
-  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import { getChatModels, sendChatMessage } from '@api/chat';
@@ -59,14 +58,15 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { useChatInitialization } from '../hooks/orchestration/useChatInitialization';
+import { useChatThreadRouting } from '../hooks/orchestration/useChatThreadRouting';
+import { useChatDrawersState } from '../hooks/orchestration/useChatDrawersState';
+import { CHAT_UI_CONFIG } from '../config/uiConfig';
 import { ChatSidebar } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
-import { createThreadId } from '../utils/chatThread';
 import { clampTraceDetail } from '../utils/trace';
-import { COMPOSER_MAX_HEIGHT_PX, COMPOSER_MIN_HEIGHT_PX } from '../constants/limits';
-import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
 import ModelSelector from '../components/ModelSelector';
 import { PROSE_SX } from './proseStyles';
 
@@ -83,19 +83,21 @@ const TracePanel = lazy(() => import('../components/trace/TracePanel'));
  */
 function ChatPageContainer() {
   const { threadId: routeThreadId } = useParams();
-  const [fallbackThreadId, setFallbackThreadId] = useState(() => createThreadId());
-  const threadId = routeThreadId || fallbackThreadId;
-  const [searchParams] = useSearchParams();
+  const init = useChatInitialization(routeThreadId);
+  const { threadId, initialMessage, initialManualModel, initialInputType, initialWebSearch, initialDeepResearch, initialFileContext, selectedModelOverride } = init.state;
+  const { setSelectedModelOverride } = init.actions;
   const navigate = useNavigate();
+  useChatThreadRouting({ routeThreadId, initialMessage, threadId, navigate });
   const toast = useToast();
   const sideEffects = useChatSideEffects({ toast, navigate });
-  const sidebarDisclosure = useDisclosure();
-  const memoryDisclosure = useDisclosure();
-  const settingsDisclosure = useDisclosure();
-  const [memoryFacts, setMemoryFacts] = useState([]);
+
   const {
     isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileQuota, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
   } = useProfileAndAuthFlow();
+
+  const drawers = useChatDrawersState(profileDisclosure);
+  const { sidebarDisclosure, memoryDisclosure, settingsDisclosure, memoryFacts } = drawers.state;
+  const { setMemoryFacts } = drawers.actions;
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -103,16 +105,9 @@ function ChatPageContainer() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [messages, setMessages] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
-  const [selectedModelOverride, setSelectedModelOverride] = useState(() => searchParams.get('model') || '');
   const composer = useComposerState({ onSubmit: () => {} });
   const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
 
-  const initialMessage = searchParams.get('initial');
-  const initialManualModel = searchParams.get('model') || '';
-  const initialInputType = searchParams.get('input_type') || '';
-  const initialWebSearch = searchParams.get('web_search') === 'true';
-  const initialDeepResearch = searchParams.get('deep_research') === 'true';
-  const initialFileContext = searchParams.get('file_context') || '';
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
@@ -122,7 +117,7 @@ function ChatPageContainer() {
   const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
-  const isCompactTrace = useBreakpointValue({ base: true, md: false }) ?? false;
+  const isCompactTrace = useBreakpointValue(CHAT_UI_CONFIG.trace.compactBreakpoint) ?? false;
   const {
     traceSessions,
     tracePanelsExpanded,
@@ -593,7 +588,7 @@ function ChatPageContainer() {
 
     const collapseTimer = window.setTimeout(() => {
       setTracePanelsExpanded((prev) => ({ ...prev, [latestSession.id]: false }));
-    }, 600);
+    }, CHAT_UI_CONFIG.trace.autoCollapseDelayMs);
 
     return () => {
       window.clearTimeout(collapseTimer);
