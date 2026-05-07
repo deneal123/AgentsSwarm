@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@chakra-ui/react';
+import { validateChatEvent } from '@features/chat/schema/chatEventsSchema';
 
 /**
  * useWebSocketChat - Хук для работы с WebSocket соединением чат-агентов
@@ -202,6 +203,16 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
           });
         }
       };
+
+      const validation = validateChatEvent(data);
+      if (!validation.isValid) {
+        emitAgentEvent('protocol_error', {
+          error: validation.error,
+          event_type: validation.eventType,
+          raw_event: data,
+        });
+        return;
+      }
 
       // Обработка разных типов сообщений
       switch (switchValue) {
@@ -474,6 +485,7 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
         break;
 
       case 'stream_complete':
+      case 'complete':
         // Поток завершён: гарантированно сбрасываем индикаторы обработки
         setCurrentJob(null);
         setAgentStatus(null);
@@ -530,21 +542,22 @@ export function useWebSocketChat(threadId, callbacks = {}, isAuthenticated = fal
 
       case 'error':
         // Ошибка обработки
-        console.error('❌ Error from server:', data.error);
+        const errorMessage = data.error || data?.data?.message;
+        console.error('❌ Error from server:', errorMessage);
         emitAgentEvent('error', {
-          error: data.error,
+          error: errorMessage,
           job_id: data.job_id,
         });
         setCurrentJob(null);
-        if (onError) onError(new Error(data.error || 'Unknown websocket error'));
+        if (onError) onError(new Error(errorMessage || 'Unknown websocket error'));
         appendAgentTimeline({
           type: 'error',
-          message: `❌ Ошибка: ${data.error || 'неизвестная ошибка'}`,
+          message: `❌ Ошибка: ${errorMessage || 'неизвестная ошибка'}`,
         });
         // Показываем ошибку пользователю
         toast({
           title: 'Ошибка',
-          description: data.error || 'Произошла ошибка при обработке сообщения',
+          description: errorMessage || 'Произошла ошибка при обработке сообщения',
           status: 'error',
           duration: 5000,
         });
