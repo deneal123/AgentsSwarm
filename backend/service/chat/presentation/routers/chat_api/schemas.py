@@ -35,3 +35,15 @@ class ThreadResponse(BaseModel):
 
 class ModelsResponse(BaseModel):
     models: list[str]
+
+
+class UploadFileResponse(BaseModel):
+    filename: str
+    file_type: str
+    size: int
+    extracted_text: str
+    thread_id: str
+    file_id: str | None = None
+    file_url: str | None = None
+    file_key: str | None = None
+    temp_file: bool
