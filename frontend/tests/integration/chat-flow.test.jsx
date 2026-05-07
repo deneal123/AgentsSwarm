@@ -6,11 +6,11 @@ import { BrowserRouter } from 'react-router-dom';
 import SearchInterface from '@features/home/components/SearchInterface';
 import { useChatTransport } from '@features/chat/hooks/useChatTransport';
 
-jest.mock('@features/chat/model/useChatWebSocketModel', () => ({
-  useChatWebSocketModel: jest.fn(),
+jest.mock('@features/chat/model/useWebSocketChat', () => ({
+  useWebSocketChat: jest.fn(),
 }));
 
-const { useChatWebSocketModel } = require('@features/chat/model/useChatWebSocketModel');
+const { useWebSocketChat } = require('@features/chat/model/useWebSocketChat');
 
 jest.mock('@features/chat/context/ChatContext', () => ({
   useChat: () => ({
@@ -94,7 +94,7 @@ describe('Chat Flow Integration', () => {
     const cancelJob = jest.fn();
     const snapshots = [];
 
-    useChatWebSocketModel
+    useWebSocketChat
       .mockReturnValueOnce({
         isConnected: false,
         connectionState: 'reconnecting',
