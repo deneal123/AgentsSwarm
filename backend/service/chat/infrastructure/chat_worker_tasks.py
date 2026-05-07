@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from service.ports import AgentExecutionPort
+from service.agents.application.ports.interfaces import AgentExecutionPort
 
 from celery import shared_task
 

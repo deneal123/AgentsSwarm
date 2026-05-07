@@ -11,7 +11,7 @@ from service.presentation.routers.jobs_api.schemas import StartJobRequest
 from service.repositories.job_repository import JobRepository
 from service.repositories.exceptions import RepositoryIntegrityError
 from service.profile.application.profile_service import ProfileService
-from service.ports import JobOrchestrationPort, JobQueuePort
+from service.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 from service.settings import JobConfig, config
 from service.chat.domain.chat_contracts import JobExecutionResult
 from service.models.key_value import ServiceType

@@ -3,7 +3,7 @@ import pytest
 from service.infrastructure.messaging.tasks import _resolve_memory_user_id
 from service.agents.integration.base import BaseIntegration, BaseMemoryIntegration
 from service.agents.integration.memory import Mem0MemoryIntegration
-from service.services.memory_service import MemoryService
+from service.analytics.application.memory_service import MemoryService
 
 
 class _FakeMem0Client:

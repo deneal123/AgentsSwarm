@@ -1,15 +1,10 @@
 import asyncio
 
-from service.ports import (
-    AgentExecutionPort,
-    ChatCommandPort,
-    FileStoragePort,
-    JobHandlePort,
-    JobOrchestrationPort,
-    JobQueuePort,
-    MessageBusPort,
-    StreamPort,
-)
+from service.agents.application.ports.interfaces import AgentExecutionPort, StreamPort
+from service.chat.application.ports.interfaces import ChatCommandPort
+from service.files.application.ports.interfaces import FileStoragePort, MessageBusPort
+from service.jobs.application.ports.interfaces import JobHandlePort, JobOrchestrationPort, JobQueuePort
+
 
 
 class FakeMessageBus:
