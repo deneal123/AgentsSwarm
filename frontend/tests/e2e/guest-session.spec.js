@@ -51,6 +51,24 @@ test.describe('Guest Session Management', () => {
     expect(parsedData).toHaveProperty('requestCount');
   });
 
+  test('restores guest session state after refresh', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    const searchInput = page.locator('input[placeholder*="запрос"]').first();
+    const sendButton = page.locator('button').filter({ hasText: 'отправить' }).first();
+
+    await searchInput.fill('Persist after refresh');
+    await sendButton.click();
+
+    await expect(page.locator('text=/Осталось запросов: 9/')).toBeVisible();
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    await expect(page.locator('text=/Осталось запросов: 9/')).toBeVisible();
+    const sessionData = await page.evaluate(() => localStorage.getItem('guest_session'));
+    expect(sessionData).not.toBeNull();
+  });
+
   test('shows auth modal when requests exhausted', async ({ page }) => {
     // Mock exhausted session
     await page.addInitScript(() => {
