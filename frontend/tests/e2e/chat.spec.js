@@ -113,6 +113,23 @@ test.describe('Chat functionality', () => {
     await expect(page.url()).not.toContain('first-chat');
   });
 
+  test('restores active chat session after page refresh', async ({ page }) => {
+    const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
+
+    const searchInput = page.locator('input[placeholder*="запрос"]');
+    await searchInput.fill('Session restore test');
+    await page.locator('button').filter({ hasText: 'отправить' }).click();
+
+    await expect(page).toHaveURL(/.*\/chat\/.*/);
+    const chatUrlBeforeReload = page.url();
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    await expect(page).toHaveURL(chatUrlBeforeReload);
+    await expect(page.locator('input[placeholder*="запрос"]').first()).toBeVisible();
+  });
+
   test('user can use keyboard shortcuts', async ({ page }) => {
     const base = process.env.E2E_BASE_URL || 'http://localhost:3000';
     await page.goto(base, { waitUntil: 'domcontentloaded' });

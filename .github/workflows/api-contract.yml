@@ -67,3 +67,5 @@ jobs:
         run: npm run lint
       - name: Frontend tests and snapshots
         run: npm run test -- --watchAll=false --ci --runInBand --updateSnapshot=false
+      - name: Critical chat/auth regression gate
+        run: npm run test -- --watchAll=false --ci --runInBand tests/unit/features/chat/chatStateContainer.test.js tests/unit/hooks/useChatTransport.test.js tests/integration/chat-flow.test.jsx tests/integration/auth.test.jsx

@@ -84,6 +84,39 @@ global.localStorage = localStorageMock;
 // Mock fetch
 global.fetch = jest.fn();
 
+const stableApiContracts = {
+  chatSuccess: {
+    thread_id: 'contract-thread-001',
+    message: 'contract-response',
+    status: 'ok',
+  },
+  chatStreamChunk: {
+    event: 'message_chunk',
+    content: 'partial-token',
+    done: false,
+  },
+  authProfile: {
+    id: 'contract-user-001',
+    email: 'contract@example.com',
+    role: 'user',
+  },
+  backendError: {
+    error: 'backend_error',
+    message: 'Service unavailable',
+  },
+};
+
+global.__API_CONTRACTS__ = stableApiContracts;
+
+beforeEach(() => {
+  global.fetch.mockReset();
+  global.fetch.mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ ...stableApiContracts.chatSuccess }),
+  });
+});
+
 // Silence console warnings during tests
 const originalWarn = console.warn;
 beforeAll(() => {
