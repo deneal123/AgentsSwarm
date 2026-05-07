@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from service.infrastructure.messaging import tasks as messaging_tasks
-from service.services.agent_file_bridge import resolve_user_uuid
+from service.agents.application.agent_file_bridge import resolve_user_uuid
 from service.chat.application.use_cases.chat_use_cases import StreamChatResponseUseCase
 from service.chat.presentation.error_mapper import map_to_ws_error_payload, normalize_response_metadata
 from service.chat.presentation.ws.chat_ws.metrics import ChatWsMetrics

@@ -10,7 +10,7 @@ from service.presentation.routers.auth_api.schemas import (
     RegisterRequest,
     RegisterResponse,
 )
-from service.services.auth_service import AuthService
+from service.profile.application.auth_service import AuthService
 from service.settings import config
 
 logger = logging.getLogger(__name__)

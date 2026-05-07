@@ -11,15 +11,15 @@ from service.repositories.auth_repository import AuthRepository
 from service.repositories.file_repository import FileRepository
 from service.repositories.job_repository import JobRepository
 from service.repositories.profile_repository import ProfileRepository
-from service.services.auth_service import AuthService
-from service.services.file_saver_service import FileSaverService
-from service.services.file_scanner_service import BasicFileScanner
-from service.services.job_processor import NewJobProcessor
-from service.services.job_service import JobService
+from service.profile.application.auth_service import AuthService
+from service.files.application.file_saver_service import FileSaverService
+from service.files.application.file_scanner_service import BasicFileScanner
+from service.jobs.application.job_processor import NewJobProcessor
+from service.jobs.application.job_service import JobService
 from service.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.chat.composition import build_chat_components
 from service.chat.persistence.chat_repository import ChatRepository
-from service.services.profile_service import ProfileService
+from service.profile.application.profile_service import ProfileService
 from service.settings import Config
 from service.utils.background_task_manager import BackgroundTaskManager
 

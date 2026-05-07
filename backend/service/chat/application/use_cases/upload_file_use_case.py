@@ -5,7 +5,7 @@ import io
 
 from service.chat.application.ports.media_analysis_port import MediaAnalysisPort
 from service.models.key_value import ServiceType
-from service.services.agent_file_bridge import resolve_user_uuid
+from service.agents.application.agent_file_bridge import resolve_user_uuid
 
 
 class UploadFileUseCase:

@@ -13,7 +13,7 @@ from service.presentation.routers.profile_api.schemas import (
     ProfileResponse,
     ProfileUpdateRequest,
 )
-from service.services.profile_service import ProfileService
+from service.profile.application.profile_service import ProfileService
 from service.settings import config
 
 logger = logging.getLogger(__name__)

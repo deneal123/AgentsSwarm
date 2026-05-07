@@ -15,7 +15,7 @@ async def load_memory_context(user_id: Optional[Union[int, str]], logger) -> str
         return ""
 
     try:
-        from service.services.memory_service import MemoryService
+        from service.analytics.application.memory_service import MemoryService
 
         mem_svc = MemoryService()
         return await mem_svc.get_memory_context(str(user_id))
@@ -130,7 +130,7 @@ def schedule_memory_extraction(user_id: str, thread_id: str, last_message: str, 
 
     async def _extract():
         try:
-            from service.services.memory_service import MemoryService
+            from service.analytics.application.memory_service import MemoryService
 
             svc = MemoryService()
             messages = [{"role": "user", "content": last_message}]
