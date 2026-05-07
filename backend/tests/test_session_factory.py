@@ -1,6 +1,6 @@
 import pytest
 
-from service.agents.sessions import create_session, PseudoSession, SQLiteSession, RedisSession
+from service.services.agents.sessions import create_session, PseudoSession, SQLiteSession, RedisSession
 from service.settings import config
 
 

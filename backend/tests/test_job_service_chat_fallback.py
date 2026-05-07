@@ -5,7 +5,7 @@ import pytest
 
 from service.models.key_value import ProcessingStatus
 from service.repositories.exceptions import RepositoryIntegrityError
-from service.services.job_service import ANON_USER_UUID, JobService
+from service.services.jobs.application.job_service import ANON_USER_UUID, JobService
 from service.settings import JobConfig, config
 
 

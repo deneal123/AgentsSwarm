@@ -20,7 +20,7 @@ class _FakeResponse:
 
 @pytest.mark.asyncio
 async def test_deep_research_fast_fallback_when_no_sources(monkeypatch):
-    dr = importlib.import_module("service.agents.tools.deep_research")
+    dr = importlib.import_module("service.services.agents.tools.deep_research")
 
     async def fake_create_chat_completion(messages, model, temperature, max_tokens):
         # Только шаг планирования

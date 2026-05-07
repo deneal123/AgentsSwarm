@@ -1,7 +1,7 @@
 import pytest
 
-from service.agents.events import EventType
-from service.agents.subagents.image_generation import ImageGenerationAgent
+from service.services.agents.events import EventType
+from service.services.agents.subagents.image_generation import ImageGenerationAgent
 
 
 class _Msg:
@@ -30,7 +30,7 @@ class _BrokenImagesClient:
 
 @pytest.mark.asyncio
 async def test_image_agent_falls_back_to_prompt_when_image_api_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    from service.agents import client as agents_client
+    from service.services.agents import client as agents_client
 
     async def _fake_models() -> list[str]:
         return ["qwen-image", "mws-gpt-alpha"]

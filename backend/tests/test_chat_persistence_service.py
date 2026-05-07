@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 
 from service.repositories.exceptions import RepositoryNotFoundError
-from service.chat.persistence.chat_persistence_service import ChatPersistenceService
+from service.services.chat.persistence.chat_persistence_service import ChatPersistenceService
 
 
 class _Repo:
