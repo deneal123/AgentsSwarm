@@ -8,13 +8,14 @@ logger = logging.getLogger(__name__)
 
 
 class ChatFallbackService:
-    def __init__(self, agent=None):
+    def __init__(self, agent=None, file_service=None):
         if agent is None:
             from service.agents.chat_agent import ChatAgent
 
             self.agent = ChatAgent()
         else:
             self.agent = agent
+        self.file_service = file_service
 
     async def execute(
         self,
@@ -125,18 +126,16 @@ class ChatFallbackService:
 
         file_url = None
         try:
-            from service import container
+            if self.file_service is not None:
+                from service.services.agent_file_bridge import persist_generated_artifacts
 
-            file_service = container.get_current_container().services.file_saver_service
-            from service.services.agent_file_bridge import persist_generated_artifacts
-
-            generated_file_url, processor_metadata = await persist_generated_artifacts(
-                file_service=file_service,
-                user_id=user_id,
-                metadata=processor_metadata,
-                job_id=thread_id,
-            )
-            file_url = generated_file_url
+                generated_file_url, processor_metadata = await persist_generated_artifacts(
+                    file_service=self.file_service,
+                    user_id=user_id,
+                    metadata=processor_metadata,
+                    job_id=thread_id,
+                )
+                file_url = generated_file_url
         except Exception:
             logger.debug("Failed to persist generated artifacts in fallback", exc_info=True)
 

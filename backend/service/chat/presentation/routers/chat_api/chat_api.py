@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from fastapi.responses import RedirectResponse, Response
 from service.chat.application.chat_application_service import ChatApplicationService
+from service.container import get_chat_application_service
 from service.chat.presentation.http.upload_api import upload_router
 
 from service.chat.presentation.routers.chat_api.schemas import (
@@ -21,16 +22,13 @@ logger = logging.getLogger(__name__)
 chat_router = APIRouter(prefix="/api/chats")
 chat_router.include_router(upload_router)
 
-def get_chat_application_service() -> ChatApplicationService:
-    return ChatApplicationService()
-
 
 @chat_router.get("/files/download")
 async def download_generated_file(
     file_key: Annotated[str, Query(..., description="Storage file key or legacy local path")],
     filename: Annotated[str | None, Query(description="Optional download filename")] = None,
+    service: ChatApplicationService = Depends(get_chat_application_service),
 ):
-    service = get_chat_application_service()
     download = await service.download_generated_file(file_key=file_key, filename=filename)
     if "redirect_url" in download:
         return RedirectResponse(url=download["redirect_url"], status_code=307)

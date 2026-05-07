@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 import io
 
-from service import container
 from service.chat.application.ports.media_analysis_port import MediaAnalysisPort
 from service.models.key_value import ServiceType
 from service.services.agent_file_bridge import resolve_user_uuid
 
 
 class UploadFileUseCase:
-    def __init__(self, media_analysis_port: MediaAnalysisPort) -> None:
+    def __init__(self, media_analysis_port: MediaAnalysisPort, file_service) -> None:
         self.media_analysis_port = media_analysis_port
+        self.file_service = file_service
 
     async def execute(self, *, filename: str, content_type: str | None, content_bytes: bytes, thread_id: str, user_id: str | None) -> dict:
         if not filename:
@@ -39,11 +39,10 @@ class UploadFileUseCase:
 
     async def _save_file(self, filename: str, content_bytes: bytes, user_id: str | None) -> tuple[str | None, str | None, str | None]:
         try:
-            file_service = container.get_current_container().services.file_saver_service
             uploader_uuid = resolve_user_uuid(user_id, anonymous_fallback=True)
             if uploader_uuid is None:
                 return None, None, None
-            saved = await file_service.save(user_id=uploader_uuid, mode=ServiceType.CHAT, file_name=filename, file_content=content_bytes)
+            saved = await self.file_service.save(user_id=uploader_uuid, mode=ServiceType.CHAT, file_name=filename, file_content=content_bytes)
             return str(saved.file_id), saved.file_url, saved.file_key
         except Exception:
             return None, None, None

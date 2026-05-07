@@ -17,6 +17,8 @@ from service.services.file_scanner_service import BasicFileScanner
 from service.services.job_processor import NewJobProcessor
 from service.services.job_service import JobService
 from service.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
+from service.chat.composition import build_chat_components
+from service.chat.persistence.chat_repository import ChatRepository
 from service.services.profile_service import ProfileService
 from service.settings import Config
 from service.utils.background_task_manager import BackgroundTaskManager
@@ -56,6 +58,7 @@ class ServicesContainer:
     file_saver_service: FileSaverService
     process_chat_message_handler: ProcessChatMessageHandler
     new_job_processor: NewJobProcessor
+    chat_application_service: Any
 
 
 @dataclass(slots=True)
@@ -208,6 +211,12 @@ def build_services(
         repos.job_repository,
     )
 
+    chat_components = build_chat_components(
+        repository=ChatRepository(infra.pg_connector),
+        job_handler=process_chat_message_handler,
+        file_service=file_saver_service,
+    )
+
     return ServicesContainer(
         profile_service=profile_service,
         auth_service=auth_service,
@@ -215,6 +224,7 @@ def build_services(
         file_saver_service=file_saver_service,
         process_chat_message_handler=process_chat_message_handler,
         new_job_processor=new_job_processor,
+        chat_application_service=chat_components.application_service,
     )
 
 
@@ -265,3 +275,7 @@ def get_optional_redis_client(request: Request) -> Any:
 
 def get_optional_redis_session_store(request: Request) -> Any:
     return get_app_container(request).infra.redis_session_store
+
+
+def get_chat_application_service(request: Request):
+    return get_app_container(request).services.chat_application_service
