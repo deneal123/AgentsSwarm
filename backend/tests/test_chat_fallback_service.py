@@ -1,6 +1,6 @@
 import pytest
 
-from service.services.chat_fallback_service import ChatFallbackService
+from service.chat.domain.chat_fallback_service import ChatFallbackService
 
 
 class _Agent:

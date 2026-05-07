@@ -8,7 +8,7 @@ from service.agents.sessions import PseudoSession
 from service.agents.tools.router import route_model
 from service.infrastructure.messaging.agent_streaming import ReplyAssembler
 from service.ports import AgentExecutionPort
-from service.services.chat_contracts import build_provider_unavailable_reply
+from service.chat.domain.chat_contracts import build_provider_unavailable_reply
 
 
 class DefaultAgentExecutionService(AgentExecutionPort):

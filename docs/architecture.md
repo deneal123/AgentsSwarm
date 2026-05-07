@@ -1,6 +1,6 @@
 # Архитектура GPTHub
 
-**Последнее обновление:** 2026-04-23
+**Последнее обновление:** 2026-05-07
 
 ## Контрактный pipeline API
 
@@ -37,6 +37,15 @@
 - Тест `backend/tests/test_enum_schema_contract.py` вычисляет набор значений enum из SQLAlchemy metadata и сравнивает его с итоговым состоянием по цепочке Alembic ревизий.
 - CI шаг `python scripts/check_enum_revision_guard.py <base> <head>` блокирует PR, если enum-модели изменены без новой ревизии в `backend/alembic/versions/`.
 - Для каждого enum-change используется шаблон `backend/alembic/templates/enum_change_template.py` с обязательными блоками `upgrade`, `downgrade`, `backfill`, `data-check`.
+
+
+## Карта модулей chat-контекста
+
+- `backend/service/chat/presentation` — HTTP/WS transport слой (`routers/chat_api`, `routers/chat_ws`, `ws/chat_ws`).
+- `backend/service/chat/application` — use-case слой (`chat_application_service.py`).
+- `backend/service/chat/domain` — доменные сервисы, контракты и исключения (`chat_service.py`, `chat_contracts.py`, `chat_exceptions.py`, `chat_job_orchestrator.py`, `chat_fallback_service.py`, `process_chat_message_handler.py`).
+- `backend/service/chat/infrastructure` — адаптеры воркеров и streaming-интеграций (`chat_worker/`, `chat_worker_tasks.py`).
+- `backend/service/chat/persistence` — репозитории и persistence-адаптеры (`chat_repository.py`, `chat_worker_repository.py`, `chat_persistence_service.py`).
 
 ## Mermaid: верхнеуровневая схема проекта
 

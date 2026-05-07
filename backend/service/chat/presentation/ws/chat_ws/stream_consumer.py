@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 from service.infrastructure.messaging import stream_helpers
-from service.services.chat_ws.metrics import ChatWsMetrics
+from service.chat.presentation.ws.chat_ws.metrics import ChatWsMetrics
 
 logger = logging.getLogger(__name__)
 

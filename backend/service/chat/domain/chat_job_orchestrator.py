@@ -1,7 +1,7 @@
 import logging
 
-from service.services.chat_contracts import ChatReplyResult
-from service.services.process_chat_message_handler import (
+from service.chat.domain.chat_contracts import ChatReplyResult
+from service.chat.domain.process_chat_message_handler import (
     ProcessChatMessageCommand,
     ProcessChatMessageFlags,
     ProcessChatMessageHandler,

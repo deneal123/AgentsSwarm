@@ -1,8 +1,8 @@
 import logging
 from typing import Any
 
-from service.services.chat_contracts import ChatRouteDecision
-from service.services.chat_exceptions import ModelRoutingError
+from service.chat.domain.chat_contracts import ChatRouteDecision
+from service.chat.domain.chat_exceptions import ModelRoutingError
 
 logger = logging.getLogger(__name__)
 

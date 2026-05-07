@@ -13,7 +13,7 @@ from service.repositories.exceptions import RepositoryIntegrityError
 from service.services.profile_service import ProfileService
 from service.ports import JobOrchestrationPort, JobQueuePort
 from service.settings import JobConfig, config
-from service.services.chat_contracts import JobExecutionResult
+from service.chat.domain.chat_contracts import JobExecutionResult
 from service.models.key_value import ServiceType
 
 logger = logging.getLogger(__name__)

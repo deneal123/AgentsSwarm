@@ -4,7 +4,7 @@ import logging
 
 from celery import shared_task
 
-from service.infrastructure.messaging.chat_worker_tasks import (
+from service.chat.infrastructure.chat_worker_tasks import (
     _persist_chat_turn,
     _resolve_memory_user_id,
     _restore_pseudo_session_history,
@@ -12,7 +12,7 @@ from service.infrastructure.messaging.chat_worker_tasks import (
     process_agent_message,
     process_agent_message_async,
 )
-from service.services.chat_contracts import ChatProcessingMetadata, ChatReplyResult, ChatRequestContext
+from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, ChatRequestContext
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def process_chat_message_core(thread_id: str, message_id: str, text: str, user_id: int | None = None) -> dict:
     from service import container as svc_container
     from service.infrastructure.messaging import stream_helpers as stream_helpers_module
-    from service.services.chat_service import ChatService
+    from service.chat.domain.chat_service import ChatService
 
     service = ChatService()
 

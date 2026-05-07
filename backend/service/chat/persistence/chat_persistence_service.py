@@ -7,7 +7,7 @@ from service.repositories.exceptions import RepositoryNotFoundError
 class ChatPersistenceService:
     def __init__(self, repository=None):
         if repository is None:
-            from service.repositories.chat_repository import ChatRepository
+            from service.chat.persistence.chat_repository import ChatRepository
 
             self.repo = ChatRepository()
         else:

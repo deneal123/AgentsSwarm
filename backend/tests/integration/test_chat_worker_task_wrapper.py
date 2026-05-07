@@ -1,4 +1,4 @@
-from service.infrastructure.messaging.chat_worker_tasks import process_agent_message
+from service.chat.infrastructure.chat_worker_tasks import process_agent_message
 
 
 def test_task_wrapper_calls_handler(monkeypatch):

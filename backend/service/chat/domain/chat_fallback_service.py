@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Any
 
-from service.services.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
+from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
 
 logger = logging.getLogger(__name__)
 

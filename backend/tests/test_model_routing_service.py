@@ -3,7 +3,7 @@ import types
 
 import pytest
 
-from service.services.chat_exceptions import ModelRoutingError
+from service.chat.domain.chat_exceptions import ModelRoutingError
 from service.services.model_routing_service import ModelRoutingService
 
 

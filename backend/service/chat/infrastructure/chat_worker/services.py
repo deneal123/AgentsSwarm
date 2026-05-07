@@ -6,7 +6,7 @@ from typing import Any
 
 from service.infrastructure.messaging.agent_streaming import AgentStreamPublisher, EventSerializer
 from service.infrastructure.messaging import stream_helpers
-from service.repositories.chat_worker_repository import ChatWorkerRepository
+from service.chat.persistence.chat_worker_repository import ChatWorkerRepository
 
 
 @dataclass(slots=True)

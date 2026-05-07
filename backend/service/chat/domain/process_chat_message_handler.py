@@ -5,8 +5,8 @@ from service.ports import ChatCommandPort, JobOrchestrationPort, JobQueuePort
 
 from uuid import UUID
 
-from service.services.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
-from service.services.chat_exceptions import (
+from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
+from service.chat.domain.chat_exceptions import (
     JobCreationError,
     JobEnqueueError,
     JobExecutionError,
