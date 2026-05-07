@@ -65,6 +65,7 @@ import { useChatStreamingLifecycle } from '../hooks/orchestration/useChatStreami
 import { CHAT_UI_CONFIG } from '../config/uiConfig';
 import { ChatSidebar } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
+import { useChatDomainState } from '../hooks/useChatDomainState';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
 import { clampTraceDetail } from '../utils/trace';
@@ -101,10 +102,10 @@ function ChatPageContainer() {
   const { setMemoryFacts } = drawers.actions;
 
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const { state: domainState, actions: domainActions } = useChatDomainState();
+  const { messages, loading: isLoading, error, currentJob } = domainState;
+  const { setLoading: setIsLoading, setError, clearError, addMessage, clearMessages, replaceMessages, setCurrentJob, clearCurrentJob } = domainActions;
   const [availableModels, setAvailableModels] = useState([]);
   const composer = useComposerState({ onSubmit: () => {} });
   const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
@@ -135,7 +136,7 @@ function ChatPageContainer() {
     deletingThreadId,
     upsertRecentThread,
     handleDeleteThread,
-  } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages, toast });
+  } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages: replaceMessages, toast });
   const { sidebarSearch, setSidebarSearch, isSidebarCollapsed, setIsSidebarCollapsed, filteredRecentThreads } = useSidebarState({ recentThreads });
 
 
@@ -145,7 +146,11 @@ function ChatPageContainer() {
     setError,
     appendTraceEvent,
     finalizeTraceSession,
-    setMessages,
+    addMessage,
+    appendStreamChunk: domainActions.updateLastAgentChunk,
+    completeLastAgentMessage: domainActions.completeLastAgentMessage,
+    setCurrentJob,
+    clearCurrentJob,
     setInputValue,
   });
   const { wsCallbacks } = streamingLifecycle.actions;
@@ -153,7 +158,6 @@ function ChatPageContainer() {
   const {
     isConnected,
     connectionState,
-    currentJob,
     agentStatus,
     sendMessage: wsSendMessage,
     cancelJob,
@@ -218,7 +222,7 @@ function ChatPageContainer() {
           isTyping: false,
           typingProgress: 1,
         }));
-        setMessages(mapped);
+        replaceMessages(mapped);
       } catch {
         // thread may be new — ignore
       }
@@ -308,7 +312,7 @@ function ChatPageContainer() {
   }, [activeOrLatestTraceSession, showTracePanel, traceSessions.length]);
 
   const handleSendMessageRef = useRef(null);
-  const { copyMessage, regenerateMessage } = useMessageActions({ messages, actions: { truncateAfter: (count) => setMessages((prev) => prev.slice(0, count)) }, handleSendMessageRef });
+  const { copyMessage, regenerateMessage } = useMessageActions({ messages, actions: { truncateAfter: (count) => replaceMessages(messages.slice(0, count)) }, handleSendMessageRef });
 
   const renderedMessages = useMemo(() => {
     return visibleMessages.map((message, idx) => {
@@ -529,7 +533,7 @@ function ChatPageContainer() {
         content: message,
         timestamp: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, userMessage]);
+      addMessage(userMessage);
     }
 
     const response = await sendChatMessage(
@@ -592,7 +596,7 @@ function ChatPageContainer() {
         isTyping: false,
         typingProgress: 1,
       };
-      setMessages((prev) => [...prev, agentMessage]);
+      addMessage(agentMessage);
       finalizeTraceSession(responseMeta?.provider_unavailable ? 'error' : 'done', options.traceSessionId);
     } else {
       appendTraceEvent({
@@ -644,7 +648,7 @@ function ChatPageContainer() {
     }
 
     setIsLoading(true);
-    setError(null);
+    clearError();
     upsertRecentThread(threadId, trimmed);
     const traceSessionId = startTraceSession(trimmed, anchorMessageId);
     appendTraceEvent({
@@ -721,7 +725,7 @@ function ChatPageContainer() {
             content: trimmed,
             timestamp: new Date().toISOString(),
           };
-          setMessages((prev) => [...prev, userMessage]);
+          addMessage(userMessage);
         }
         const wsOptions = {
           ...(webSearchEnabled && { webSearch: true }),
@@ -793,11 +797,11 @@ function ChatPageContainer() {
 
   const startNewChat = useCallback(() => {
     setFallbackThreadId(createThreadId());
-    setMessages([]);
+    clearMessages();
     setInputValue('');
     setSidebarSearch('');
     setAttachedFile(null);
-    setError(null);
+    clearError();
     resetTraceSessions();
     setTracePanelsExpanded({});
     navigate('/');
