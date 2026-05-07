@@ -1,14 +1,18 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
-export const useChatUiState = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [connectionState, setConnectionState] = useState('disconnected');
+export const useChatUiState = (externalContainer = null) => {
+  const container = externalContainer || useChatStateContainer();
+  const { state, dispatch } = container;
 
-  const clearError = useCallback(() => setError(null), []);
+  const setLoading = useCallback((value) => dispatch({ type: CHAT_ACTIONS.SET_LOADING, payload: value }), [dispatch]);
+  const setError = useCallback((value) => dispatch({ type: CHAT_ACTIONS.SET_ERROR, payload: value }), [dispatch]);
+  const setConnectionState = useCallback((value) => dispatch({ type: CHAT_ACTIONS.SET_CONNECTION_STATE, payload: value }), [dispatch]);
 
-  const state = useMemo(() => ({ loading, error, connectionState }), [loading, error, connectionState]);
+  const clearError = useCallback(() => dispatch({ type: CHAT_ACTIONS.CLEAR_ERROR }), [dispatch]);
+
+  const scopedState = useMemo(() => ({ loading: state.loading, error: state.error, connectionState: state.connectionState }), [state.connectionState, state.error, state.loading]);
   const actions = useMemo(() => ({ setLoading, setError, clearError, setConnectionState }), [clearError]);
 
-  return { state, actions };
+  return { state: scopedState, actions, container };
 };

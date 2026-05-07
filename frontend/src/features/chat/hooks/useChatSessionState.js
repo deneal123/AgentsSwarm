@@ -1,40 +1,32 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
-const initialSessionState = {
-  attachments: [],
-  typingUsers: new Set(),
-};
-
-export const useChatSessionState = () => {
-  const [attachments, setAttachments] = useState(initialSessionState.attachments);
-  const [typingUsers, setTypingUsers] = useState(initialSessionState.typingUsers);
+export const useChatSessionState = (externalContainer = null) => {
+  const container = externalContainer || useChatStateContainer();
+  const { state, dispatch } = container;
 
   const addAttachment = useCallback((attachment) => {
-    setAttachments((prev) => [...prev, attachment]);
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.ADD_ATTACHMENT, payload: attachment });
+  }, [dispatch]);
 
   const removeAttachment = useCallback((id) => {
-    setAttachments((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.REMOVE_ATTACHMENT, payload: id });
+  }, [dispatch]);
 
   const clearAttachments = useCallback(() => {
-    setAttachments([]);
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.CLEAR_ATTACHMENTS });
+  }, [dispatch]);
 
   const setTyping = useCallback((userId) => {
-    setTypingUsers((prev) => new Set([...prev, userId]));
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.SET_TYPING, payload: userId });
+  }, [dispatch]);
 
   const clearTyping = useCallback((userId) => {
-    setTypingUsers((prev) => {
-      const next = new Set(prev);
-      next.delete(userId);
-      return next;
-    });
-  }, []);
+    dispatch({ type: CHAT_ACTIONS.CLEAR_TYPING, payload: userId });
+  }, [dispatch]);
 
-  const state = useMemo(() => ({ attachments, typingUsers }), [attachments, typingUsers]);
+  const scopedState = useMemo(() => ({ attachments: state.attachments, typingUsers: state.typingUsers }), [state.attachments, state.typingUsers]);
   const actions = useMemo(() => ({ addAttachment, removeAttachment, clearAttachments, setTyping, clearTyping }), [addAttachment, removeAttachment, clearAttachments, setTyping, clearTyping]);
 
-  return { state, actions };
+  return { state: scopedState, actions, container };
 };
