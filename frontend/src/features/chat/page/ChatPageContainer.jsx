@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   AlertDescription,
@@ -28,7 +28,6 @@ import {
   Textarea,
   VStack,
   useBreakpointValue,
-  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import { getChatModels, sendChatMessage } from '@api/chat';
@@ -59,14 +58,16 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { useChatInitialization } from '../hooks/orchestration/useChatInitialization';
+import { useChatThreadRouting } from '../hooks/orchestration/useChatThreadRouting';
+import { useChatDrawersState } from '../hooks/orchestration/useChatDrawersState';
+import { useChatStreamingLifecycle } from '../hooks/orchestration/useChatStreamingLifecycle';
+import { CHAT_UI_CONFIG } from '../config/uiConfig';
 import { ChatSidebar } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
-import { createThreadId } from '../utils/chatThread';
 import { clampTraceDetail } from '../utils/trace';
-import { COMPOSER_MAX_HEIGHT_PX, COMPOSER_MIN_HEIGHT_PX } from '../constants/limits';
-import { bgAuroraA, bgAuroraB, bgAuroraC, dotPulse, traceRingSpin } from '../styles/keyframes';
 import ModelSelector from '../components/ModelSelector';
 import { PROSE_SX } from './proseStyles';
 
@@ -83,19 +84,21 @@ const TracePanel = lazy(() => import('../components/trace/TracePanel'));
  */
 function ChatPageContainer() {
   const { threadId: routeThreadId } = useParams();
-  const [fallbackThreadId, setFallbackThreadId] = useState(() => createThreadId());
-  const threadId = routeThreadId || fallbackThreadId;
-  const [searchParams] = useSearchParams();
+  const init = useChatInitialization(routeThreadId);
+  const { threadId, initialMessage, initialManualModel, initialInputType, initialWebSearch, initialDeepResearch, initialFileContext, selectedModelOverride } = init.state;
+  const { setSelectedModelOverride } = init.actions;
   const navigate = useNavigate();
+  useChatThreadRouting({ routeThreadId, initialMessage, threadId, navigate });
   const toast = useToast();
   const sideEffects = useChatSideEffects({ toast, navigate });
-  const sidebarDisclosure = useDisclosure();
-  const memoryDisclosure = useDisclosure();
-  const settingsDisclosure = useDisclosure();
-  const [memoryFacts, setMemoryFacts] = useState([]);
+
   const {
     isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileQuota, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
   } = useProfileAndAuthFlow();
+
+  const drawers = useChatDrawersState(profileDisclosure);
+  const { sidebarDisclosure, memoryDisclosure, settingsDisclosure, memoryFacts } = drawers.state;
+  const { setMemoryFacts } = drawers.actions;
 
 
   const [isLoading, setIsLoading] = useState(false);
@@ -103,26 +106,18 @@ function ChatPageContainer() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [messages, setMessages] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
-  const [selectedModelOverride, setSelectedModelOverride] = useState(() => searchParams.get('model') || '');
   const composer = useComposerState({ onSubmit: () => {} });
   const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
 
-  const initialMessage = searchParams.get('initial');
-  const initialManualModel = searchParams.get('model') || '';
-  const initialInputType = searchParams.get('input_type') || '';
-  const initialWebSearch = searchParams.get('web_search') === 'true';
-  const initialDeepResearch = searchParams.get('deep_research') === 'true';
-  const initialFileContext = searchParams.get('file_context') || '';
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
   const messagesEndRef = useRef(null);
   const messagesScrollRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
-  const isCompactTrace = useBreakpointValue({ base: true, md: false }) ?? false;
+  const isCompactTrace = useBreakpointValue(CHAT_UI_CONFIG.trace.compactBreakpoint) ?? false;
   const {
     traceSessions,
     tracePanelsExpanded,
@@ -144,304 +139,16 @@ function ChatPageContainer() {
   const { sidebarSearch, setSidebarSearch, isSidebarCollapsed, setIsSidebarCollapsed, filteredRecentThreads } = useSidebarState({ recentThreads });
 
 
-  useEffect(() => {
-    isLoadingRef.current = isLoading;
-  }, [isLoading]);
-
-  const resolveWsEventJobId = useCallback((payload) => {
-    return String(payload?.job_id || payload?.metadata?.job_id || '').trim();
-  }, []);
-
-  const shouldIgnoreWsEvent = useCallback((payload) => {
-    const incomingJobId = resolveWsEventJobId(payload);
-    if (!incomingJobId) {
-      return false;
-    }
-
-    const activeJobId = String(activeWsJobIdRef.current || '').trim();
-    if (!activeJobId) {
-      activeWsJobIdRef.current = incomingJobId;
-      return false;
-    }
-
-    return activeJobId !== incomingJobId;
-  }, [resolveWsEventJobId]);
-
-
-  const onJobCreated = useCallback((data) => {
-    const incomingJobId = resolveWsEventJobId(data);
-    if (incomingJobId) {
-      activeWsJobIdRef.current = incomingJobId;
-      lastWsReplyFingerprintRef.current = '';
-    }
-    setIsLoading(true);
-  }, [resolveWsEventJobId]);
-
-  const onComplete = useCallback(() => {
-    setIsLoading(false);
-  }, []);
-
-  const onError = useCallback((err) => {
-    const rawMessage = String(err?.message || '').trim();
-    appendTraceEvent({
-      kind: 'error',
-      title: 'Ошибка канала обработки',
-      detail: rawMessage || 'Ошибка соединения с чатом',
-    });
-
-    if (/403|401|permission|forbidden|unauthorized/i.test(rawMessage)) {
-      finalizeTraceSession('error');
-      setError('Модель недоступна для текущего ключа API. Попробуйте другой профиль/модель.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (rawMessage) {
-      finalizeTraceSession('error');
-      setError(`Ошибка чата: ${rawMessage}`);
-      setIsLoading(false);
-      return;
-    }
-
-    finalizeTraceSession('error');
-    setError('Ошибка соединения с чатом. Переключились на резервный режим.');
-    setIsLoading(false);
-  }, [appendTraceEvent, finalizeTraceSession]);
-
-  const onStreamChunk = useCallback((data) => {
-    if (!isLoadingRef.current) {
-      return;
-    }
-
-    if (shouldIgnoreWsEvent(data)) {
-      return;
-    }
-
-    if (!data.data || !data.data.trim()) {
-      return;
-    }
-
-    const chunkMeta = data.metadata || {};
-
-    setMessages((prev) => {
-      const lastMessage = prev[prev.length - 1];
-      if (lastMessage && lastMessage.type === 'agent' && !lastMessage.complete) {
-        const chunkedContent = `${lastMessage.content}${data.data}`;
-        return prev.map((msg, index) => (
-          index === prev.length - 1
-            ? {
-                ...msg,
-                content: chunkedContent,
-                typingProgress: Math.min(1, chunkedContent.length / 1000),
-                metadata: { ...(msg.metadata || {}), ...chunkMeta },
-              }
-            : msg
-        ));
-      }
-
-      return [
-        ...prev,
-        {
-          id: `agent_${Date.now()}_${Math.random()}`,
-          type: 'agent',
-          content: data.data,
-          timestamp: new Date().toISOString(),
-          metadata: chunkMeta,
-          complete: false,
-          isTyping: true,
-          typingProgress: 0,
-        },
-      ];
-    });
-  }, [shouldIgnoreWsEvent]);
-
-  const onAgentReply = useCallback((data) => {
-    if (shouldIgnoreWsEvent(data)) {
-      return;
-    }
-
-    if (!data.reply || !data.reply.trim()) {
-      finalizeTraceSession('error');
-      setIsLoading(false);
-      return;
-    }
-
-    const incomingReply = data.reply.trim();
-    const incomingJobId = resolveWsEventJobId(data) || String(activeWsJobIdRef.current || '').trim() || 'unknown_job';
-    const replyFingerprint = `${incomingJobId}::${incomingReply}`;
-    if (lastWsReplyFingerprintRef.current === replyFingerprint) {
-      setIsLoading(false);
-      return;
-    }
-    lastWsReplyFingerprintRef.current = replyFingerprint;
-
-    appendTraceEvent({
-      kind: data?.metadata?.provider_unavailable ? 'error' : 'done',
-      title: data?.metadata?.provider_unavailable ? 'Ответ сформирован в деградированном режиме' : 'Ответ сформирован',
-      detail: data?.metadata?.provider_error || '',
-    });
-
-    setMessages((prev) => {
-      const lastMessage = prev[prev.length - 1];
-      if (lastMessage && lastMessage.type === 'agent') {
-        const existing = String(lastMessage.content || '').trim();
-        const shouldMergeIntoLast =
-          lastMessage.isTyping
-          || (!lastMessage.complete && existing.length > 0)
-          || (existing.length > 0 && (
-            incomingReply === existing
-            || incomingReply.startsWith(existing)
-            || existing.startsWith(incomingReply)
-            || incomingReply.includes(existing)
-            || existing.includes(incomingReply)
-          ));
-
-        if (shouldMergeIntoLast) {
-          return prev.map((msg, index) => (
-            index === prev.length - 1
-              ? {
-                  ...msg,
-                  content: incomingReply,
-                  isTyping: false,
-                  complete: true,
-                  typingProgress: 1,
-                  metadata: data.metadata,
-                  file_url: data.file_url || msg.file_url,
-                }
-              : msg
-          ));
-        }
-      }
-
-      if (lastMessage && lastMessage.type === 'agent' && lastMessage.isTyping) {
-        return prev.map((msg, index) => (
-          index === prev.length - 1
-            ? { ...msg, isTyping: false, complete: true, typingProgress: 1, metadata: data.metadata }
-            : msg
-        ));
-      }
-
-      return [
-        ...prev,
-        {
-          id: `agent_${Date.now()}_${Math.random()}`,
-          type: 'agent',
-          content: incomingReply,
-          timestamp: new Date().toISOString(),
-          metadata: data.metadata,
-          file_url: data.file_url,
-          complete: true,
-          isTyping: false,
-          typingProgress: 1,
-        },
-      ];
-    });
-
-    setIsLoading(false);
-    setInputValue('');
-    finalizeTraceSession(data?.metadata?.provider_unavailable ? 'error' : 'done');
-  }, [appendTraceEvent, finalizeTraceSession, resolveWsEventJobId, shouldIgnoreWsEvent]);
-
-  const onAgentComplete = useCallback((data) => {
-    if (shouldIgnoreWsEvent(data)) {
-      return;
-    }
-
-    setMessages((prev) => {
-      const lastMessage = prev[prev.length - 1];
-      if (!lastMessage || lastMessage.type !== 'agent' || !lastMessage.isTyping) {
-        return prev;
-      }
-
-      return prev.map((msg, index) => (
-        index === prev.length - 1
-          ? { ...msg, isTyping: false, complete: true, typingProgress: 1 }
-          : msg
-      ));
-    });
-  }, [shouldIgnoreWsEvent]);
-
-  const onAgentEvent = useCallback((event) => {
-    if (!event?.type) {
-      return;
-    }
-
-    if (shouldIgnoreWsEvent(event)) {
-      return;
-    }
-
-    switch (event.type) {
-      case 'routing_start':
-        appendTraceEvent({
-          kind: 'info',
-          title: 'Маршрутизатор анализирует запрос',
-          detail: event.message || 'Подбор оптимального агента и модели',
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'routing_complete':
-        appendTraceEvent({
-          kind: 'done',
-          title: `Выбран агент: ${event.agent_name || 'auto'}`,
-          detail: event.message || '',
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'agent_start':
-        appendTraceEvent({
-          kind: 'done',
-          title: `Запущен агент: ${event.agent_name || 'assistant'}`,
-          detail: event.message || 'Начата генерация ответа',
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'tool_call_start':
-        appendTraceEvent({
-          kind: 'info',
-          title: `Вызван инструмент: ${event.tool_name || 'external_tool'}`,
-          detail: event.agent_name ? `Инициатор: ${event.agent_name}` : '',
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'tool_call_complete':
-        appendTraceEvent({
-          kind: 'done',
-          title: `Инструмент завершен: ${event.tool_name || 'external_tool'}`,
-          detail: clampTraceDetail(event.result),
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'structured_output':
-        appendTraceEvent({
-          kind: 'done',
-          title: 'Подготовлен структурированный результат',
-          detail: 'Данные готовы для отображения в UI',
-          timestamp: event.timestamp,
-        });
-        break;
-      case 'error':
-        appendTraceEvent({
-          kind: 'error',
-          title: 'Ошибка во время обработки',
-          detail: event.error || 'Неизвестная ошибка',
-          timestamp: event.timestamp,
-        });
-        break;
-      default:
-        break;
-    }
-  }, [appendTraceEvent, shouldIgnoreWsEvent]);
-
-  const wsCallbacks = useMemo(() => ({
-    onMessage: () => {},
-    onJobCreated,
-    onComplete,
-    onError,
-    onStreamChunk,
-    onAgentReply,
-    onAgentComplete,
-    onAgentEvent,
-  }), [onJobCreated, onComplete, onError, onStreamChunk, onAgentReply, onAgentComplete, onAgentEvent]);
+  const streamingLifecycle = useChatStreamingLifecycle({
+    isLoading,
+    setIsLoading,
+    setError,
+    appendTraceEvent,
+    finalizeTraceSession,
+    setMessages,
+    setInputValue,
+  });
+  const { wsCallbacks } = streamingLifecycle.actions;
 
   const {
     isConnected,
@@ -593,7 +300,7 @@ function ChatPageContainer() {
 
     const collapseTimer = window.setTimeout(() => {
       setTracePanelsExpanded((prev) => ({ ...prev, [latestSession.id]: false }));
-    }, 600);
+    }, CHAT_UI_CONFIG.trace.autoCollapseDelayMs);
 
     return () => {
       window.clearTimeout(collapseTimer);
