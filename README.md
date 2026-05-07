@@ -26,6 +26,7 @@ docker exec -it vda5050_client /bin/bash
 
 *Workspace будет в: ~/{root}/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy_ws*
 
+*Перед запуском убедиться, что правильно высталвен origin в map конфигурации относительно origin в симуляции isaac*
 
 ## Запуск нескольких инстансов роботов
 
@@ -45,7 +46,7 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 
 ```bash
 ros2 run tf2_ros static_transform_publisher \
-  --x -6.0 --y -1.0 --z 0.0 \
+  --x 0.0 --y 0.0 --z 0.0 \
   --roll 0.0 --pitch 0.0 --yaw 0.0 \
   --frame-id map \
   --child-frame-id odom &
@@ -65,8 +66,8 @@ ros2 run tf2_ros static_transform_publisher \
 
 ```bash
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
-  init_pose_x:=-6.0 \
-  init_pose_y:=-1.0 \
+  init_pose_x:=0.0 \
+  init_pose_y:=0.0 \
   reconnect_period:=30 \
   mqtt_host_name:=185.55.57.82 \
   map:=/workspace/maps/map.yaml \
@@ -77,6 +78,7 @@ ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launc
 
 *Иначе не будет работать, делать при старте*
 
+*Внимательно пересмотреть координаты роботов относительно симуляции в isaac*
 ```bash
 # Публикуем только TF лидаров — через namespace топик
 ros2 run tf2_ros static_transform_publisher \
@@ -108,6 +110,7 @@ ros2 run tf2_ros static_transform_publisher \
   --ros-args --remap /tf_static:=/carter02/tf_static &
 ```
 
+*Внимательно пересмотреть координаты роботов относительно симуляции в isaac*
 ```bash
 ros2 launch isaac_ros_vda5050_client_bringup isaac_ros_vda5050_client_nav2.launch.py \
   serial_number:=carter01 \

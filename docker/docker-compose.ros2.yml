@@ -4,16 +4,12 @@ services:
     container_name: vda5050_client
     network_mode: "host"
     ipc: host
-    ports:
-      - "9090:9090"
     environment:
       - ROS_DISTRO=jazzy
       - ROS_DOMAIN_ID=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
       - FASTRTPS_DEFAULT_PROFILES_FILE=/jazzy_ws/fastdds.xml
       - ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
-      - PATH_TO_ISAAC_ROS_WORKSPACES=/root/projects/workspace_isaac_simulation/IsaacSim-ros_workspaces
-      - PATH_TO_ISAAC_MISSION_CONTROL_CONFIG=/root/projects/isaac_mission_control/docker/config
     volumes:
       - ${PATH_TO_ISAAC_ROS_WORKSPACES}/build_ws/jazzy/isaac_sim_ros_ws:/jazzy_ws:ro
       - ${PATH_TO_ISAAC_MISSION_CONTROL_CONFIG}/uploaded_maps:/workspace/maps:ro
