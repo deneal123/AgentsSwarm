@@ -25,7 +25,6 @@ import {
   Spinner,
   Switch,
   Text,
-  Textarea,
   VStack,
   useBreakpointValue,
   useToast,
@@ -37,7 +36,6 @@ import BrandMark from '@shared/ui/layout';
 import {
   FiCopy,
   FiEye,
-  FiFileText,
   FiLayers,
   FiRotateCcw,
   FiSearch,
@@ -45,10 +43,8 @@ import {
   FiLogOut,
   FiMenu,
   FiMessageSquare,
-  FiMic,
   FiPaperclip,
   FiPlus,
-  FiSend,
   FiSettings,
   FiSliders,
   FiX,
@@ -57,7 +53,7 @@ import MessageRenderer from '@features/chat/components/MessageRenderer';
 import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
-import { useChatTransport, useComposerState, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { useChatTransport, useComposerController, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
 import { useChatInitialization } from '../hooks/orchestration/useChatInitialization';
 import { useChatThreadRouting } from '../hooks/orchestration/useChatThreadRouting';
 import { useChatDrawersState } from '../hooks/orchestration/useChatDrawersState';
@@ -70,6 +66,11 @@ import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
 import { clampTraceDetail } from '../utils/trace';
 import ModelSelector from '../components/ModelSelector';
+import ComposerShell from '../components/composer/ComposerShell';
+import ComposerInput from '../components/composer/ComposerInput';
+import ComposerActions from '../components/composer/ComposerActions';
+import ComposerAttachments from '../components/composer/ComposerAttachments';
+import ComposerVoiceControl from '../components/composer/ComposerVoiceControl';
 import { PROSE_SX } from './proseStyles';
 
 const TracePanel = lazy(() => import('../components/trace/TracePanel'));
@@ -107,7 +108,7 @@ function ChatPageContainer() {
   const { messages, loading: isLoading, error, currentJob } = domainState;
   const { setLoading: setIsLoading, setError, clearError, addMessage, clearMessages, replaceMessages, setCurrentJob, clearCurrentJob } = domainActions;
   const [availableModels, setAvailableModels] = useState([]);
-  const composer = useComposerState({ onSubmit: () => {} });
+  const composer = useComposerController({ onSubmit: (value) => handleSendMessageRef.current?.(value), onCancelSubmit: () => {}, disabled: isLoading });
   const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
 
 
@@ -788,13 +789,6 @@ function ChatPageContainer() {
     threadId,
   ]);
 
-  const handleSubmitInput = useCallback(() => {
-    if (isLoading) {
-      return;
-    }
-    handleSendMessage(inputValue);
-  }, [handleSendMessage, inputValue, isLoading]);
-
   const startNewChat = useCallback(() => {
     setFallbackThreadId(createThreadId());
     clearMessages();
@@ -1297,11 +1291,7 @@ function ChatPageContainer() {
             backdropFilter="blur(20px)"
           >
             <Box maxW="960px" mx="auto">
-              <Box
-                w="100%"
-                maxW="100%"
-              >
-              <Box position="relative">
+              <ComposerShell>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1366,63 +1356,18 @@ function ChatPageContainer() {
                   onClick={() => fileInputRef.current?.click()}
                 />
 
-                <Textarea
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmitInput();
-                    }
-                  }}
-                  placeholder="Напишите сообщение..."
-                  minH={`${COMPOSER_MIN_HEIGHT_PX}px`}
-                  maxH={`${COMPOSER_MAX_HEIGHT_PX}px`}
-                  h={`${composerHeightPx}px`}
-                  overflowY={composerHeightPx >= COMPOSER_MAX_HEIGHT_PX ? 'auto' : 'hidden'}
-                  resize="none"
-                  pl={12}
-                  pr={24}
-                  py="15px"
-                  borderRadius="16px"
-                  bg={CHAT_THEME.inputBg}
-                  border={`1.5px solid ${CHAT_THEME.inputBorder}`}
-                  color={CHAT_THEME.textPrimary}
-                  fontSize="15px"
-                  fontWeight="450"
-                  fontFamily={CHAT_FONT_FAMILY}
-                  lineHeight="1.6"
-                  _placeholder={{ color: CHAT_THEME.textTertiary }}
-                  _focus={{
-                    borderColor: CHAT_THEME.inputBorderFocus,
-                    boxShadow: `0 0 0 3px ${CHAT_THEME.accentGlow}`,
-                    outline: 'none',
-                  }}
-                  sx={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(239,68,68,0.45) transparent',
-                    '&::-webkit-scrollbar': { width: '6px' },
-                    '&::-webkit-scrollbar-track': { background: 'transparent' },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: 'rgba(239,68,68,0.45)',
-                      borderRadius: '99px',
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': { background: 'rgba(239,68,68,0.62)' },
-                  }}
-                  transition="border-color 0.18s, box-shadow 0.18s"
+                <ComposerInput
+                  value={composer.value}
+                  onChange={composer.onChange}
+                  onSubmit={composer.onSubmit}
+                  disabled={composer.disabled}
+                  onKeyDown={composer.onKeyDown}
+                  inputRef={inputRef}
+                  composerHeightPx={composerHeightPx}
                 />
-
-                <HStack position="absolute" right={3} bottom="10px" spacing={1.5} zIndex={2}>
-                  <IconButton
-                    aria-label="Голосовой ввод"
-                    icon={<FiMic />}
-                    size="sm"
-                    variant="ghost"
-                    color={isRecording ? '#f87171' : CHAT_THEME.textTertiary}
-                    _hover={{ color: CHAT_THEME.textPrimary, bg: CHAT_THEME.panelHover }}
-                    borderRadius="9px"
-                    onClick={async () => {
+                <ComposerVoiceControl
+                  recordingState={composer.recordingState}
+                  onToggle={async () => {
                       if (isRecording) {
                         if (mediaRecorderRef.current) {
                           mediaRecorderRef.current.stop();
@@ -1460,39 +1405,11 @@ function ChatPageContainer() {
                       } catch {
                         sideEffects.notify({ title: 'Микрофон недоступен', status: 'error', duration: 3000 });
                       }
-                    }}
-                  />
-                  <IconButton
-                    aria-label="Отправить"
-                    icon={<FiSend />}
-                    size="sm"
-                    bg={inputValue.trim() && !isLoading ? CHAT_THEME.accent : 'rgba(255,255,255,0.08)'}
-                    color="white"
-                    borderRadius="10px"
-                    _hover={{ bg: inputValue.trim() && !isLoading ? CHAT_THEME.accentHover : 'rgba(255,255,255,0.12)' }}
-                    _disabled={{ opacity: 0.4, cursor: 'not-allowed' }}
-                    isDisabled={!inputValue.trim() || isLoading}
-                    onClick={handleSubmitInput}
-                    transition="background 0.18s"
-                  />
-                </HStack>
-              </Box>
-
-              {attachedFile && (
-                <HStack mt={2} px={2} py={1} bg="rgba(239,68,68,0.15)" borderRadius="lg" spacing={2}>
-                  <Icon as={FiFileText} color="red.300" boxSize={4} />
-                  <Text fontSize="xs" color="red.200" noOfLines={1}>
-                    {attachedFile.filename} ({attachedFile.file_type})
-                  </Text>
-                  <IconButton
-                    aria-label="Удалить файл"
-                    icon={<Text fontSize="xs">✕</Text>}
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setAttachedFile(null)}
-                  />
-                </HStack>
-              )}
+                  }}
+                />
+                <ComposerActions value={composer.value} onSubmit={composer.onSubmit} disabled={composer.disabled} />
+              </ComposerShell>
+              <ComposerAttachments attachments={composer.attachments} onClear={() => setAttachedFile(null)} />
 
               <HStack mt={2.5} spacing={2} justify="space-between" flexWrap="wrap">
                 <HStack spacing={1.5}>
