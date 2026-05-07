@@ -51,8 +51,8 @@ ROS_MSP_MCP_URL=http://ros-msp:8000/sse
 ROSBRIDGE_IP=195.225.110.91
 ROSBRIDGE_PORT=9090
 
-# Внешние API
-MISSION_CONTROL_URL=http://195.225.110.91:8050   # прямой доступ для MapAnalyst
+# Внешние API (прямой доступ для MapAnalyst и фонового поллинга)
+MISSION_CONTROL_URL=http://195.225.110.91:8050
 MISSION_DISPATCH_URL=http://185.55.57.82:8051
 
 # Модель
@@ -60,8 +60,15 @@ AGENTS_PROVIDER=vllm           # openai | vllm
 AGENTS_MODEL=Qwen/Qwen2.5-7B-Instruct
 AGENTS_TEMPERATURE=1.0
 
+# Поведение агентов
+AGENTS_MAX_TURNS=60            # макс. ходов агента за шаг (default: 60)
+
 # Поведение планировщика
 PLAN_REPLAN_MAX=1              # макс. повторных планирований при сбое
+
+# Фоновый поллинг миссий
+MISSION_POLL_INTERVAL=10       # интервал опроса статуса миссии в секундах (default: 10)
+MISSION_DISPATCH_TIMEOUT=3600  # таймаут миссии по умолчанию в секундах
 ```
 
 ---
@@ -106,6 +113,8 @@ graph TB
     Swarm["SwarmCoordinator Agent"]
     General["General Agent"]
 
+    BgPoller["Background Poller\nasyncio.Task\n(wait_mission)"]
+
     MissionControlAPI["Mission Control API\n:8050"]
     RosMSP["ros-msp\nFastMCP SSE\n:8012"]
     MissionControl["mission-control-mcp\nSSE :8010"]
@@ -121,12 +130,15 @@ graph TB
     OrchestratorAPI --> Planner
     Planner -->|"список PlanStep"| PlanRunner
     PlanRunner -->|"шаг за шагом"| Router
-    PlanRunner -->|"шаг 3 (если навигация)"| MapAnalyst
+    PlanRunner -->|"если навигация"| MapAnalyst
 
     Router -->|"robot_info"| RobotInfo
     Router -->|"navigation"| Navigation
     Router -->|"swarm_coord"| Swarm
     Router -->|"general"| General
+
+    Navigation -->|"wait_mission()"| BgPoller
+    BgPoller -->|"mission_complete event"| StreamCollector
 
     MapAnalyst -->|"GET /api/v1/map"| MissionControlAPI
     MapAnalyst -->|"POST /api/v1/visualize_route"| MissionControlAPI
@@ -136,6 +148,7 @@ graph TB
     Swarm -->|"MCP"| RosMSP
     Swarm -->|"MCP"| MissionControl
     Swarm -->|"MCP"| MissionDispatch
+    BgPoller -->|"GET /mission"| MissionDispatch
 
     RosMSP -->|"WebSocket ws://"| Rosbridge
     Rosbridge -->|"ROS2 topics"| IsaacSim
@@ -156,6 +169,7 @@ graph TB
     style WebSocket fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style Planner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style PlanRunner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style BgPoller fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style MapAnalyst fill:none,stroke:#1890ff,stroke-width:2px,color:#fff
     style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
@@ -180,46 +194,100 @@ graph TB
 4. **PlanRunner** исполняет шаги последовательно:
    - Перед каждым шагом проверяет статус задачи (если `canceled` или `failed` — прекращает).
    - Шаги навигации/роя автоматически получают результат MapAnalyst в контексте.
+   - MapAnalyst **не вставляется** для задач отмены миссий и запросов статуса — только для движения.
    - Специализированный агент вызывает инструменты через MCP.
-5. Все события (старт шага, вызов инструмента, результат, ошибка, изображения маршрутов) пишутся в **StreamCollector** и сразу транслируются через WebSocket.
-6. После завершения всех шагов задача переходит в `completed`.
+5. После завершения всех шагов PlanRunner **эмитирует финальный ответ** (`user_facing=true`, `code=task_result`) с результатами агентов.
+6. Все события (старт шага, вызов инструмента, завершение миссии, изображения маршрутов) пишутся в **StreamCollector** и сразу транслируются через WebSocket.
 
 ### Пример плана для навигационной задачи
 
 ```
-Шаг 1 — Router          : анализ запроса
-Шаг 2 — RobotInfo       : сбор контекста (статус, батарея, позиция)
-Шаг 3 — MapAnalyst      : анализ карты, построение маршрутов, выбор лучшего
-Шаг 4 — Navigation      : выполнение миссии с учётом контекста карты
+Шаг 1 — MapAnalyst      : анализ карты, построение маршрутов, выбор лучшего
+Шаг 2 — Navigation      : выполнение миссии с учётом контекста карты
 ```
+
+### Пример плана для задачи отмены / статуса
+
+```
+Шаг 1 — Navigation/RobotInfo : отмена миссий или запрос статуса (без MapAnalyst)
+```
+
+---
+
+## Фоновый поллинг миссий (`wait_mission`)
+
+Навигационный агент **никогда не уходит в сон** — после отправки миссии он вызывает инструмент `wait_mission(mission_id)`, который **возвращается мгновенно** и запускает asyncio-задачу в фоне.
+
+### Принцип работы
+
+```
+Агент:
+  dispatch_mission(robot, x, y)         → UUID: nav_abc123
+  wait_mission(mission_id="nav_abc123")  → "Polling started" (мгновенно)
+  [шаг завершён]
+
+Фоновая задача (asyncio.Task):
+  каждые MISSION_POLL_INTERVAL секунд:
+    GET /mission?name=nav_abc123
+    state == COMPLETED → emit StreamEvent("✓ Миссия завершена")
+    state == FAILED    → emit StreamEvent("✗ Миссия завершилась с ошибкой: ...")
+    state == CANCELED  → emit StreamEvent("✗ Миссия отменена")
+
+PlanRunner:
+  _await_mission_jobs() → ждёт завершения фоновой задачи
+  результат добавляется в финальный ответ task_result
+```
+
+**Преимущества по сравнению с циклом `get_mission_status`:**
+
+- Токены LLM не тратятся во время ожидания
+- Оркестратор не блокируется
+- Нет риска исчерпать `max_turns` агента при длинных миссиях
 
 ---
 
 ## MapAnalyst — анализ карты и планирование маршрутов
 
-Специализированный агент, вставляемый в план автоматически при любой навигационной или роевой задаче.
+Специализированный агент, вставляемый в план автоматически при любой навигационной или роевой задаче (кроме задач отмены и запросов статуса).
 
 ### Трёхфазный воркфлоу
 
 **Фаза 1 — Предложение кандидатов**
-- Скачивает актуальное изображение карты (`GET /api/v1/map`) и метаданные (`/api/v1/map/metadata`) напрямую из Mission Control.
-- Отправляет карту (base64 PNG) + задание в vision-модель.
-- Получает ровно 3 кандидата маршрута с разной стратегией:
+
+- Скачивает актуальное изображение карты (`GET /api/v1/map`) и метаданные напрямую из Mission Control.
+- Накладывает на карту маркеры всех роботов с цветовой кодировкой состояния (зелёный=IDLE, синий=ON_TASK, жёлтый=CHARGING).
+- Отправляет аннотированную карту (base64 PNG) + задание в vision-модель.
+- Получает ровно 3 кандидата маршрута:
   - `direct` — минимум точек, прямо к цели
   - `safe` — обходит препятствия с запасом ≥ safety\_distance + 0.3 м
   - `optimal` — баланс длины пути и безопасности
 
 **Фаза 2 — Визуализация маршрутов**
+
 - Для каждого кандидата отправляет waypoints в Mission Control (`POST /api/v1/visualize_route`).
 - Получает PNG-изображения с нарисованными маршрутами на реальной карте.
-- **Все PNG передаются в WebSocket-стрим** в событии `route_visualizations` — фронтенд может отобразить их пользователю.
+- **Все PNG передаются в WebSocket-стрим** в событии `route_visualizations`.
 
 **Фаза 3 — Выбор лучшего маршрута (vision LLM)**
-- Отправляет все PNG на сравнение vision-модели.
-- Критерии: эффективность пути, запас от стен, плавность, риск узких мест.
+
+- Сравнивает все PNG через vision-модель: эффективность, запас от стен, плавность, риск узких мест.
 - Победитель + обоснование передаются в контекст следующего шага (Navigation/SwarmCoordinator).
 
-**Нефатальная архитектура**: любой сбой (карта недоступна, waypoints не на navigable поверхности, vision API недоступен) → возвращает `HandoffResult(success=True, message="")`, план продолжается без контекста карты.
+**Нефатальная архитектура**: любой сбой (карта недоступна, визуализация упала, vision API недоступен) → план продолжается без контекста карты.
+
+### Контекст карты для Navigation
+
+Результат MapAnalyst содержит:
+
+- Границы карты (resolution, x/y bounds)
+- Финальную TARGET координату
+- Список WAYPOINTS (промежуточные точки + финальная)
+- Обоснование выбранного маршрута
+
+Navigation агент читает этот контекст и выбирает инструмент:
+
+- **1 waypoint** (только TARGET) → `dispatch_mission` после proximity check
+- **2+ waypoints** (маршрут с промежуточными точками) → `dispatch_route` без proximity check
 
 ### Формат события `route_visualizations` в WebSocket
 
@@ -230,30 +298,27 @@ graph TB
     "type": "route_images",
     "winner": "optimal",
     "images": [
-      {
-        "name": "direct",
-        "image_b64": "<base64 PNG>",
-        "mime": "image/png",
-        "is_best": false
-      },
-      {
-        "name": "safe",
-        "image_b64": "<base64 PNG>",
-        "mime": "image/png",
-        "is_best": false
-      },
-      {
-        "name": "optimal",
-        "image_b64": "<base64 PNG>",
-        "mime": "image/png",
-        "is_best": true
-      }
+      { "name": "direct",  "image_b64": "<base64 PNG>", "mime": "image/png", "is_best": false },
+      { "name": "safe",    "image_b64": "<base64 PNG>", "mime": "image/png", "is_best": false },
+      { "name": "optimal", "image_b64": "<base64 PNG>", "mime": "image/png", "is_best": true  }
     ]
   }
 }
 ```
 
 Обнаружение на стороне клиента: `event.meta?.type === "route_images"`.
+
+---
+
+## Function Tools агентов
+
+Navigation и SwarmCoordinator дополнены встроенными function_tools (не требуют MCP):
+
+| Инструмент | Описание |
+| --- | --- |
+| `calculate_distance(x1, y1, x2, y2)` | Евклидово расстояние между двумя точками (метры) |
+| `check_proximity(x1, y1, x2, y2, threshold_m)` | Проверить, находится ли робот в пределах порога от цели (default 0.15 м) |
+| `wait_mission(mission_id)` | Запустить фоновый поллинг миссии, вернуться мгновенно |
 
 ---
 
@@ -268,21 +333,22 @@ graph TB
 | **Отмена** | `POST /task/{id}/cancel` — немедленная остановка, шаги помечаются `canceled`. |
 | **Ручной перезапуск** | `POST /task/{id}/replan?run=true` — пересобрать план и запустить заново. |
 | **Внешние события** | `POST /task/{id}/events` — внешние агенты или воркеры могут напрямую пушить статус. |
-
-> **Ограничение:** оркестратор **не поллирует** выполнение миссии роботом автоматически. После отправки миссии агент считает шаг завершённым по ответу API. Для отслеживания фактического выполнения промпт агента явно инструктирует вызов `get_mission_status()` в цикле.
+| **Поллинг миссий** | Фоновая задача `wait_mission` переживает сбои сети — логирует предупреждение и продолжает опрос. |
 
 ---
 
 ## Поддерживаемые сценарии
 
-| Сценарий | Агент(ы) | MCP-инструменты |
+| Сценарий | Агент(ы) | Инструменты |
 | --- | --- | --- |
-| Статус роботов (батарея, позиция) | RobotInfo | `get_robot_status`, `get_topics` |
-| Навигация одного робота в точку | MapAnalyst → Navigation | `visualize_route`, `submit_navigation_mission`, `dispatch_mission` |
-| Отстыковка робота от дока | Navigation | `submit_undock_mission` |
-| Координация нескольких роботов | MapAnalyst → SwarmCoordinator | `visualize_route`, `dispatch_mission`, `submit_navigation_mission` |
-| Опрос очереди и статуса миссий | Navigation / RobotInfo | `get_mission_status`, `get_fleet_summary` |
-| ROS2-топики и ноды | RobotInfo / Swarm | `get_topics`, `get_nodes`, `subscribe_topic` |
+| Статус роботов (батарея, позиция) | RobotInfo | `get_robot_status`, `get_fleet_summary` |
+| Навигация одного робота в точку | MapAnalyst → Navigation | `check_proximity`, `dispatch_mission`, `wait_mission` |
+| Навигация по маршруту / кругосветка | MapAnalyst → Navigation | `dispatch_route`, `wait_mission` |
+| Отстыковка робота от дока | Navigation | `cancel_active_missions`, `submit_undock_mission` |
+| Отмена миссий робота | Navigation | `cancel_active_missions`, `cancel_mission` |
+| Координация нескольких роботов | MapAnalyst → SwarmCoordinator | `dispatch_mission`, `wait_mission` |
+| Опрос очереди и статуса миссий | RobotInfo | `get_mission_status`, `get_fleet_summary` |
+| ROS2-топики и ноды | RobotInfo / Swarm | `get_topics`, `get_nodes`, `subscribe_once` |
 | Общий вопрос без инструментов | General | — |
 
 ---
@@ -291,45 +357,51 @@ graph TB
 
 `Planner` строит план в два этапа:
 
-1. **LLM-планирование** — запрос к языковой модели (OpenAI/vLLM) с промптом, описывающим доступных агентов. Возвращает список `_GoalItem(description, agent, target_robots)`.
-2. **Эвристический fallback** — если LLM недоступна или возвращает пустой результат, применяется детерминированная эвристика по ключевым словам и robot\_id в промпте.
+1. **LLM-планирование** — запрос к языковой модели с JSON-схемой. Возвращает список `_GoalItem(description, agent, target_robots)`.
+2. **Эвристический fallback** — если LLM недоступна, применяется детерминированная эвристика по ключевым словам и robot\_id.
 
-### Структура плана
+### Логика вставки MapAnalyst
 
-**Для навигационных задач (Navigation или SwarmCoordinator):**
-
-```
-Шаг 1 — Router          (depends_on: [])
-Шаг 2 — RobotInfo       (depends_on: [1])
-Шаг 3 — MapAnalyst      (depends_on: [1], meta.task_description = описание целей)
-Шаг 4+ — Navigation/Swarm (depends_on: [1, 2, 3])
-```
-
-**Для информационных задач (RobotInfo, General):**
-
-```
-Шаг 1 — Router          (depends_on: [])
-Шаг 2 — RobotInfo       (depends_on: [1])
-Шаг 3 — RobotInfo/General (depends_on: [1, 2])
-```
+MapAnalyst вставляется как первый шаг **только** для навигационных задач (Navigation/SwarmCoordinator), и только если задача содержит слова движения (`move`, `go`, `send`, `navigat`, `отправ`, `перем` и т.д.). Задачи отмены (`cancel`, `stop`, `abort`, `отмен`) и запросы статуса MapAnalyst **не получают**.
 
 ### Контекстная инъекция MapAnalyst → Navigation
 
-После выполнения MapAnalyst PlanRunner автоматически инжектирует результат анализа карты в описание и мета всех последующих шагов Navigation и SwarmCoordinator:
+После выполнения MapAnalyst PlanRunner автоматически добавляет результат в описание всех последующих шагов Navigation и SwarmCoordinator:
 
 ```python
-step.meta["map_context"] = map_analyst_result
 step.description += f"\n\nКонтекст карты:\n{map_analyst_result}"
 ```
-
-Navigation агент использует координаты из контекста карты и текущую позицию робота из `get_robot_status` для формирования итоговых waypoints.
 
 ---
 
 ## MCP-серверы
 
+Все три MCP-сервера используют **полностью асинхронный стек** (`httpx.AsyncClient`).
+
+### mission-dispatch-mcp
+
+Обёртка над HTTP API Mission Dispatch. Все обработчики async.
+
+| Инструмент | Описание |
+| --- | --- |
+| `get_robot_status` | Статус, батарея, позиция, состояние |
+| `get_fleet_summary` | Сводка по всему флоту |
+| `get_idle_robots` | Роботы в состоянии IDLE |
+| `get_robots_on_missions` | Роботы сейчас на задании |
+| `check_robot_health` | Диагностика (офлайн, низкий заряд, ошибки) |
+| `get_mission_status` | Статус миссий с фильтрами (state, robot, mission_id) |
+| `get_mission_queue` | Очередь ожидающих миссий (PENDING) |
+| `get_recent_failures` | Последние сбои миссий |
+| `dispatch_mission` | Отправить робота в одну координату (x, y, theta) |
+| `dispatch_route` | Маршрут из нескольких waypoints `[{x, y, theta}]` |
+| `cancel_active_missions` | Отменить все RUNNING/PENDING миссии робота |
+| `cancel_mission` | Отменить конкретную миссию по UUID |
+
+> `get_mission_by_id` — внутренний метод с гарантированной точной проверкой имени (API Mission Dispatch игнорирует параметр `?name=`, поэтому выполняется итерация по всем миссиям с фильтром на стороне клиента).
+
 ### mission-control-mcp
-Обёртка над HTTP API Mission Control (`http://195.225.110.91:8050`).
+
+Обёртка над HTTP API Mission Control.
 
 | Инструмент | Описание |
 | --- | --- |
@@ -344,19 +416,8 @@ Navigation агент использует координаты из конте�
 | `submit_objective` | Behavior tree objective |
 | `submit_pick_and_place` | Миссия манипулятора |
 
-### mission-dispatch-mcp
-Обёртка над HTTP API Mission Dispatch (`http://185.55.57.82:8051`).
-
-| Инструмент | Описание |
-| --- | --- |
-| `get_robot_status` | Статус, батарея, позиция, состояние |
-| `get_fleet_summary` | Сводка по всему флоту |
-| `get_idle_robots` | Роботы в состоянии IDLE |
-| `get_mission_status` | Статус миссий с фильтрами |
-| `dispatch_mission` | Отправить робота в координату |
-| `get_recent_failures` | Последние сбои миссий |
-
 ### ros-msp
+
 FastMCP-сервер, подключающийся к **rosbridge WebSocket** (`ws://195.225.110.91:9090`).
 Не требует ROS2 на машине с оркестратором — только сетевой доступ к rosbridge.
 
@@ -368,7 +429,7 @@ FastMCP-сервер, подключающийся к **rosbridge WebSocket** (`
 | `get_parameter` | Параметры ноды |
 | `connect_to_robot` | Подключиться к другому rosbridge |
 
-**Требование:** на машине `195.225.110.91` в контейнере `vda5050_client` должен быть запущен `rosbridge_server`:
+**Требование:** на машине `195.225.110.91` должен быть запущен `rosbridge_server`:
 ```bash
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 ```
@@ -390,10 +451,10 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 {
   "task_id": "abc123",
   "source": "agent-sdk",
-  "message": "Route visualizations ready (2 images)",
+  "message": "✓ Миссия nav_abc123 завершена успешно (COMPLETED).",
   "level": "info",
-  "ts": "2026-05-06T09:43:38.000000+00:00",
-  "meta": { "event_type": "route_visualizations", "..." : "..." }
+  "ts": "2026-05-07T09:43:38.000000+00:00",
+  "meta": { "event_type": "mission_complete", "mission_id": "nav_abc123", "state": "COMPLETED" }
 }
 ```
 
@@ -402,14 +463,18 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml
 | `api` | HTTP API (task accepted) |
 | `planner` | Создание/старт шагов плана |
 | `agent` | PlanRunner: handoff, step completed |
-| `agent-sdk` | Agents SDK: tool calls, agent output, route images |
-| `orchestrator` | Оркестратор: replan, внутренние события |
+| `agent-sdk` | Agents SDK: tool calls, agent output, mission events |
+| `orchestrator` | Оркестратор: финальный ответ, replan, внутренние события |
 
-**Специальные события** (определяются по `meta.type`):
+**Специальные события** (определяются по `meta.type` или `meta.code`):
 
-| `meta.type` | Смысл | Полезная нагрузка |
+| Поле | Значение | Смысл |
 | --- | --- | --- |
-| `route_images` | PNG маршрутов от MapAnalyst | `meta.images[]` — массив `{name, image_b64, mime, is_best}` |
+| `meta.type` | `route_images` | PNG маршрутов от MapAnalyst (`meta.images[]`) |
+| `meta.type` | `map_image` | Аннотированная карта с роботами (base64 PNG) |
+| `meta.event_type` | `mission_complete` | Фоновый поллинг: миссия достигла терминального состояния |
+| `meta.code` | `task_result` | Финальный ответ оркестратора после всех шагов (`user_facing=true`) |
+| `meta.code` | `step_failed` | Шаг завершился с ошибкой (`user_facing=true`) |
 
 Инкрементальный polling: `GET /task/{id}/events?after_seq=N` — возвращает только события с seq > N, плюс `last_seq` для следующего запроса.
 
@@ -435,12 +500,12 @@ orchestrator/
 │   ├── Dockerfile                       # образ оркестратора
 │   ├── mission-control-mcp/             # MCP Mission Control (mcp + SSE)
 │   │   └── src/
-│   │       ├── server.py                # 14 инструментов, SSE/stdio транспорт
-│   │       └── queries.py               # MissionControlClient (HTTP)
+│   │       ├── server.py                # инструменты, SSE/stdio транспорт
+│   │       └── queries.py               # MissionControlClient (httpx async)
 │   ├── mission-dispatch-mcp/            # MCP Mission Dispatch (mcp + SSE)
 │   │   └── src/
-│   │       ├── server.py
-│   │       └── queries.py               # MissionDispatchClient (HTTP)
+│   │       ├── server.py                # dispatch_route, cancel_*, async handlers
+│   │       └── queries.py               # MissionDispatchClient (httpx async)
 │   └── ros-msp/                         # MCP ROS2 (fastmcp + rosbridge)
 │       └── main.py                      # rosbridge WebSocket tools
 └── src/orchestrator/
@@ -456,10 +521,10 @@ orchestrator/
     │   ├── .env                         # рабочая конфигурация
     │   └── .env.example
     └── services/
-        ├── agents_sdk.py                # AgentsSDKExecutor + MapAnalyst pipeline
+        ├── agents_sdk.py                # AgentsSDKExecutor, function_tools, background poller
         ├── map_analyst.py               # get_map_context() — прямой fetch карты
         ├── orchestrator_runtime.py      # build_plan + run_task
-        ├── plan_runner.py               # пошаговый исполнитель + map context injection
+        ├── plan_runner.py               # пошаговый исполнитель, map context injection, task_result
         ├── planner.py                   # LLM + эвристический builder плана
         ├── streaming.py                 # StreamCollector
         ├── task_application_service.py
@@ -474,6 +539,6 @@ orchestrator/
 | **Router** | Классификация запроса, handoff к нужному агенту | — |
 | **RobotInfo** | Статус роботов, ROS2-диагностика | ros-msp, mission-dispatch-mcp |
 | **MapAnalyst** | Анализ карты, генерация маршрутов, сравнение через vision LLM | Прямой HTTP к Mission Control |
-| **Navigation** | Навигация одного робота, мониторинг миссии | mission-control-mcp, mission-dispatch-mcp |
+| **Navigation** | Навигация одного робота, маршруты, отмена миссий | mission-control-mcp, mission-dispatch-mcp |
 | **SwarmCoordinator** | Координация нескольких роботов параллельно | все три MCP |
 | **General** | Ответы на вопросы без инструментов | — |
