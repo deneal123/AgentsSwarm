@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from service import container
+from service.presentation.dependencies import providers
 from service.models.auth_models import AuthProfile
 from service.models.profile_models import UserProfileLogic
 from service.presentation.dependencies.auth_checker import check_auth
@@ -44,7 +44,7 @@ def _build_profile_response(
 @profile_router.get("/me", response_model=ProfileResponse)
 async def get_profile(
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(container.get_profile_service)],
+    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
 ) -> ProfileResponse:
     try:
         result = await service.get_profile_overview(auth_profile.user_id)
@@ -58,7 +58,7 @@ async def get_profile(
 async def update_profile(
     payload: ProfileUpdateRequest,
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(container.get_profile_service)],
+    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
 ) -> ProfileResponse:
     try:
         await service.update_profile_details(
@@ -74,7 +74,7 @@ async def update_profile(
 @profile_router.delete("/me/chat-history", status_code=204)
 async def delete_my_chat_history(
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(container.get_profile_service)],
+    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
 ) -> None:
     """Allow authenticated user to delete their chat history."""
     try:
@@ -82,6 +82,5 @@ async def delete_my_chat_history(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
     return None
-
 
 

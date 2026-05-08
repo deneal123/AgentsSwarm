@@ -3,15 +3,15 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 
-from service import container
-from service.application.job_application_service import JobApplicationService
 from service.models.auth_models import AuthProfile
+from service.presentation.dependencies import providers
 from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.jobs_api.schemas import (
     JobResponse,
     StartJobRequest,
     TaskStatusResponse,
 )
+from service.services.jobs.application.job_application_service import JobApplicationService
 from service.services.jobs.application.job_service import JobService
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ jobs_router = APIRouter(prefix="/api/jobs/v1")
 
 
 def get_job_application_service(
-    service: Annotated["JobService", Depends(container.get_job_service)],
+    service: Annotated["JobService", Depends(providers.get_job_service)],
 ) -> JobApplicationService:
     return JobApplicationService(job_service=service)
 

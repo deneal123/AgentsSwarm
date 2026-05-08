@@ -1,9 +1,12 @@
 # GPTHub Backend API Documentation
 
-**Последнее обновление:** 2026-04-23  
+**Последнее обновление:** 2026-05-08  
 **Статус:** Актуализировано по текущим роутерам backend
 
-Документ описывает актуальные REST и WebSocket контракты из `backend/service/presentation/routers/*`.
+Документ описывает актуальные REST и WebSocket контракты из:
+
+- `backend/service/presentation/routers/*`
+- `backend/service/services/chat/presentation/routers/*`
 
 ---
 
