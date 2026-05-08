@@ -153,9 +153,7 @@ class JobService(JobOrchestrationPort):
 
         logger.info(f"Job created with ID: {created_job.id} for user: {user_id}")
 
-        wait_time = self.config.settings.wait_time_sec
-        if created_job.type.name == "DEFAULT":
-            wait_time = max(wait_time, self.config.settings.processing_timeout_sec)
+        wait_time = self._resolve_wait_time(created_job.type)
 
         return JobExecutionResult(
             job_id=created_job.id,
@@ -164,6 +162,12 @@ class JobService(JobOrchestrationPort):
             wait_time_sec=wait_time,
             celery_task_id=None,
         )
+
+    def _resolve_wait_time(self, job_type: ServiceType) -> int:
+        wait_time = self.config.settings.wait_time_sec
+        if job_type is ServiceType.DEFAULT:
+            return max(wait_time, self.config.settings.processing_timeout_sec)
+        return wait_time
 
     async def create_calendar_job(
         self,
