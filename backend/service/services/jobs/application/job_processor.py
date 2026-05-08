@@ -7,6 +7,7 @@ from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
 from service.repositories.job_repository import JobRepository
 from service.settings import JobConfig
+from service.shared.policies import TimeoutPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class NewJobProcessor:
         self.config = config
         self.repository = repository
         self._use_celery = USE_CELERY
+        self.timeout_policy = TimeoutPolicy(timeout_sec=self.config.settings.processing_timeout_sec)
 
     async def process_new_jobs(self) -> NoReturn:
         while True:
@@ -45,12 +47,12 @@ class NewJobProcessor:
     async def _process_job_with_timeout(self, job: JobLogic) -> JobLogic | None:
         try:
             result = await asyncio.wait_for(
-                self._process_job(job), timeout=self.config.settings.processing_timeout_sec
+                self._process_job(job), timeout=self.timeout_policy.timeout_sec
             )
             return result
         except asyncio.TimeoutError:
             logger.error(
-                f"Job {job.id} timed out after {self.config.settings.processing_timeout_sec} seconds"
+                f"Job {job.id} timed out after {self.timeout_policy.timeout_sec} seconds"
             )
 
             job.status = ProcessingStatus.FAILURE

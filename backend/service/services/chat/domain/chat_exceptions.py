@@ -1,8 +1,11 @@
 from fastapi import HTTPException, status
 
+from service.shared.exceptions import ApplicationError
 
-class ChatDomainError(Exception):
-    pass
+
+class ChatDomainError(ApplicationError):
+    def __init__(self, message: str = "Chat domain error", code: str = "chat_domain_error", status_code: int = status.HTTP_400_BAD_REQUEST):
+        super().__init__(message=message, code=code, status_code=status_code)
 
 
 class ModelRoutingError(ChatDomainError):
