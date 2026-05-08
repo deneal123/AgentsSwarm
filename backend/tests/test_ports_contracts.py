@@ -1,6 +1,8 @@
 import asyncio
 
 from service.services.agents.application.ports.interfaces import AgentExecutionPort, StreamPort
+from service.services.analytics.application.ports.interfaces import MemoryIntegrationPort
+from service.services.profile.application.ports.interfaces import ProfileCachePort, ProfileRepositoryPort
 from service.services.chat.application.ports.interfaces import ChatCommandPort
 from service.services.files.application.ports.interfaces import FileStoragePort, MessageBusPort
 from service.services.jobs.application.ports.interfaces import JobHandlePort, JobOrchestrationPort, JobQueuePort
@@ -64,6 +66,54 @@ class FakeChatCommand:
 class FakeJobOrchestration:
     async def create_chat_job(self, user_id, thread_id: str, text: str):
         return {"job_id": "1", "user_id": user_id, "thread_id": thread_id, "text": text}
+
+
+class FakeProfileRepository:
+    async def fetch_user_profile(self, user_id: str):
+        return None
+
+    async def fetch_user_by_email(self, email: str):
+        return None
+
+    async def create_user(self, *, email: str, password_hash: str):
+        return {"email": email, "password_hash": password_hash}
+
+    async def update_user_profile(self, profile):
+        return profile
+
+    async def delete_user_chat_history(self, user_id: str) -> None:
+        return None
+
+
+class FakeProfileCache:
+    def __init__(self):
+        self.bucket = {}
+
+    async def set_json(self, namespace: str, key: str, value: dict, ttl_seconds: int | None = None) -> None:
+        self.bucket[(namespace, key)] = value
+
+    async def get_json(self, namespace: str, key: str):
+        return self.bucket.get((namespace, key))
+
+    async def invalidate(self, namespace: str, key: str) -> None:
+        self.bucket.pop((namespace, key), None)
+
+
+class FakeMemoryIntegration:
+    async def get_memory_context(self, *, user_id: str, top_k: int = 5) -> str:
+        return f"ctx:{user_id}:{top_k}"
+
+    async def save_messages(self, *, user_id: str, messages: list[dict], metadata: dict | None = None) -> None:
+        return None
+
+    async def list_facts(self, *, user_id: str, query: str | None = None, top_k: int = 50) -> list[dict]:
+        return [{"id": "1", "memory": "name:John"}]
+
+    async def add_fact(self, *, user_id: str, fact_type: str, fact_key: str, fact_value: str) -> dict:
+        return {"id": "1", "fact_key": fact_key, "memory": fact_value}
+
+    async def delete_fact(self, *, user_id: str, fact_id: str) -> bool:
+        return True
 
 
 class FakeAgentExecution:
@@ -130,3 +180,23 @@ def test_agent_execution_port_contract() -> None:
     assert isinstance(agent_execution, AgentExecutionPort)
     payload = asyncio.run(agent_execution.execute(thread_id="t1"))
     assert payload["thread_id"] == "t1"
+
+
+def test_profile_repository_port_contract() -> None:
+    repo = FakeProfileRepository()
+    assert isinstance(repo, ProfileRepositoryPort)
+
+
+def test_profile_cache_port_contract() -> None:
+    cache = FakeProfileCache()
+    assert isinstance(cache, ProfileCachePort)
+    asyncio.run(cache.set_json("ns", "k", {"a": 1}))
+    assert asyncio.run(cache.get_json("ns", "k")) == {"a": 1}
+    asyncio.run(cache.invalidate("ns", "k"))
+
+
+def test_memory_integration_port_contract() -> None:
+    integration = FakeMemoryIntegration()
+    assert isinstance(integration, MemoryIntegrationPort)
+    assert asyncio.run(integration.get_memory_context(user_id="u1", top_k=2)) == "ctx:u1:2"
+    assert asyncio.run(integration.delete_fact(user_id="u1", fact_id="f1")) is True
