@@ -17,12 +17,12 @@ from service.presentation.routers.analytics_api.analytics_api import analytics_r
 from service.services.chat.presentation.routers.chat_ws import router as chat_ws_router
 from service.presentation.routers.jobs_ws import router as jobs_ws_router
 from service.presentation.routers.debug_api import router as debug_router
-from service.settings import LOGGING, config
+from service.settings import LOGGING, config, redact_config_for_logging
 from service.utils.app_lifespan import lifespan
 
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
-logger.info(f"config.initialized: {config.model_dump_json(indent=4)}")
+logger.info("config.initialized", extra={"config": redact_config_for_logging(config)})
 
 
 def create_app(container_override: AppContainer | None = None) -> FastAPI:
