@@ -3,9 +3,8 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-from service.infrastructure.messaging import tasks as messaging_tasks
 from service.services.agents.application.agent_file_bridge import resolve_user_uuid
-from service.services.chat.application.use_cases.chat_use_cases import StreamChatResponseUseCase
+from service.services.chat.application.use_cases.ws_message_use_case import HandleWsChatMessageUseCase
 from service.services.chat.presentation.error_mapper import map_to_ws_error_payload, normalize_response_metadata
 from service.services.chat.presentation.ws.chat_ws.metrics import ChatWsMetrics
 
@@ -42,82 +41,39 @@ class ChatMessageHandler:
 
     async def _handle_chat_message(self, websocket, thread_id: str, msg: dict, session: dict) -> None:
         try:
-            text = msg.get("text")
-            user_id_str = msg.get("user_id") or session.get("user_id")
-            user_id = UUID(user_id_str) if isinstance(user_id_str, str) else user_id_str
-            message_id = msg.get("id")
-            selected_model = msg.get("model")
-            route_override = msg.get("route_override")
-            input_type = msg.get("input_type")
-            web_search = bool(msg.get("web_search", False))
-            deep_research = bool(msg.get("deep_research", False))
-            file_context = msg.get("file_context", "")
             file_ids = msg.get("file_ids") if isinstance(msg.get("file_ids"), list) else []
-
             if file_ids:
                 self._register_temp_file_ids(session, file_ids)
 
-            try:
-                job_response = await self._job_service.create_chat_job(user_id=user_id, thread_id=thread_id, text=text)
-                task = messaging_tasks.process_agent_message.apply_async(
-                    kwargs={
-                        "job_id": str(job_response.job_id),
-                        "thread_id": thread_id,
-                        "text": text,
-                        "user_id": str(user_id) if user_id else None,
-                        "session_data": {"session_id": thread_id},
-                        "selected_model": selected_model,
-                        "route_override": route_override,
-                        "input_type": input_type,
-                        "web_search": web_search,
-                        "deep_research": deep_research,
-                        "file_context": file_context,
-                    },
-                    queue="agents",
-                )
-                await self._job_service.update_job_celery_task_id(job_response.job_id, str(task.id))
-                await websocket.send_json(
-                    {
-                        "type": "job_created",
-                        "job_id": str(job_response.job_id),
-                        "celery_task_id": str(task.id),
-                        "message_id": message_id,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+            result = await HandleWsChatMessageUseCase(self._job_service, self._chat_service).execute(
+                thread_id=thread_id,
+                msg=msg,
+                session=session,
+            )
+            if result["type"] == "job_created":
+                await websocket.send_json(result)
                 return
-            except Exception:
-                fallback_result = await StreamChatResponseUseCase(self._chat_service).execute(
-                    thread_id=thread_id,
-                    text=text,
-                    user_id=str(user_id) if user_id else None,
-                    selected_model=selected_model,
-                    input_type=input_type,
-                    web_search=web_search,
-                    deep_research=deep_research,
-                    file_context=file_context,
-                    route_override=route_override,
-                    routing_metadata=None,
-                )
-                await websocket.send_json(
-                    {
-                        "type": "agent_reply",
-                        "reply": str(fallback_result.get("reply") or ""),
-                        "thread_id": thread_id,
-                        "file_url": fallback_result.get("file_url"),
-                        "metadata": normalize_response_metadata(fallback_result.get("metadata"), selected_model=selected_model),
-                        "message_id": message_id,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
-                await websocket.send_json(
-                    {
-                        "type": "agent_complete",
-                        "agent_name": (fallback_result.get("metadata") or {}).get("agent_type", "general"),
-                        "message_id": message_id,
-                        "timestamp": datetime.now().isoformat(),
-                    }
-                )
+
+            fallback_result = result["fallback_result"]
+            await websocket.send_json(
+                {
+                    "type": "agent_reply",
+                    "reply": str(fallback_result.get("reply") or ""),
+                    "thread_id": result["thread_id"],
+                    "file_url": fallback_result.get("file_url"),
+                    "metadata": normalize_response_metadata(fallback_result.get("metadata"), selected_model=result["selected_model"]),
+                    "message_id": result["message_id"],
+                    "timestamp": result["timestamp"],
+                }
+            )
+            await websocket.send_json(
+                {
+                    "type": "agent_complete",
+                    "agent_name": (fallback_result.get("metadata") or {}).get("agent_type", "general"),
+                    "message_id": result["message_id"],
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
         except Exception as exc:
             await websocket.send_json(map_to_ws_error_payload(exc, message_id=msg.get("id")))
 
