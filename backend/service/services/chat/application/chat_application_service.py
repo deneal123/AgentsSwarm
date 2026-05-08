@@ -15,10 +15,11 @@ from service.services.chat.presentation.error_mapper import map_to_http_exceptio
 from service.services.chat.domain.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
-DEFAULT_STORAGE_ROOT = "/var/lib/app/storage"
 
 
 class ChatApplicationService:
+    DEFAULT_STORAGE_ROOT = "/var/lib/app/storage"
+
     def __init__(self, chat_service: ChatService, file_service) -> None:
         self.chat_service = chat_service
         self.file_service = file_service
@@ -110,11 +111,11 @@ class ChatApplicationService:
         raw = str(file_key or "").strip()
         if not raw:
             raise HTTPException(status_code=400, detail="file_key is required")
-        storage_root = (config.storage.root or DEFAULT_STORAGE_ROOT).rstrip("/")
+        storage_root = (config.storage.root or ChatApplicationService.DEFAULT_STORAGE_ROOT).rstrip("/")
         if raw.startswith(f"{storage_root}/"):
             raw = raw[len(storage_root) + 1 :]
-        elif raw.startswith(f"{DEFAULT_STORAGE_ROOT}/"):
-            raw = raw[len(DEFAULT_STORAGE_ROOT) + 1 :]
+        elif raw.startswith(f"{ChatApplicationService.DEFAULT_STORAGE_ROOT}/"):
+            raw = raw[len(ChatApplicationService.DEFAULT_STORAGE_ROOT) + 1 :]
         raw = raw.lstrip("/")
         path_obj = Path(raw)
         if ".." in path_obj.parts:
@@ -136,11 +137,12 @@ class ChatApplicationService:
             raise HTTPException(status_code=400, detail="URL is required")
         try:
             return await parse_url(url_value)
-        except HTTPException:
-            raise
         except Exception as exc:  # noqa: BLE001
             logger.exception("URL parsing failed: %s", exc)
-            raise HTTPException(status_code=502, detail="Failed to parse URL") from exc
+            raise HTTPException(
+                status_code=502,
+                detail="Unable to fetch or parse URL content",
+            ) from exc
 
     async def generate_topic_pptx(self, topic: str) -> dict:
         topic_value = topic.strip()
