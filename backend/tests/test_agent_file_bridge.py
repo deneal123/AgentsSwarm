@@ -4,7 +4,7 @@ import uuid
 import pytest
 
 from service.repositories.exceptions import RepositoryIntegrityError
-from service.agents.application import agent_file_bridge as bridge
+from service.services.agents.application import agent_file_bridge as bridge
 
 
 class _Saved:

@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from service.infrastructure.messaging.celery_app import celery_app
 from service.models.auth_models import AuthProfile
 from service.presentation.routers.jobs_api.schemas import StartJobRequest, TaskStatusResponse
-from service.jobs.application.job_service import JobService
+from service.services.jobs.application.job_service import JobService
 
 USE_CELERY = os.getenv("USE_CELERY", "").strip().lower() in {"1", "true", "yes", "on"}
 

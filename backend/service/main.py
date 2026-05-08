@@ -11,10 +11,10 @@ from service.presentation.routers.auth_api.auth_api import auth_router
 from service.presentation.routers.files_api.files_api import files_router
 from service.presentation.routers.jobs_api.jobs_api import jobs_router
 from service.presentation.routers.profile_api.profile_api import profile_router
-from service.chat.presentation.routers.chat_api.chat_api import chat_router
+from service.services.chat.presentation.routers.chat_api.chat_api import chat_router
 from service.presentation.routers.memory_api.memory_api import memory_router
 from service.presentation.routers.analytics_api.analytics_api import analytics_router
-from service.chat.presentation.routers.chat_ws import router as chat_ws_router
+from service.services.chat.presentation.routers.chat_ws import router as chat_ws_router
 from service.presentation.routers.jobs_ws import router as jobs_ws_router
 from service.presentation.routers.debug_api import router as debug_router
 from service.settings import LOGGING, config

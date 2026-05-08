@@ -2,7 +2,7 @@ import json
 from types import SimpleNamespace
 
 import service.infrastructure.messaging.tasks as tasks
-from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
+from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
 
 def test_process_chat_message_core_publishes_agent_reply(monkeypatch):
@@ -29,7 +29,7 @@ def test_process_chat_message_core_publishes_agent_reply(monkeypatch):
             )
 
     # patch ChatService import used inside the function
-    import service.chat.domain.chat_service as chat_mod
+    import service.services.chat.domain.chat_service as chat_mod
 
     monkeypatch.setattr(chat_mod, "ChatService", FakeChatService)
 

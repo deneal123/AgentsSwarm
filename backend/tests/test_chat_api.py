@@ -4,9 +4,9 @@ from httpx import AsyncClient, ASGITransport
 
 from service.main import app
 from service import container
-from service.agents.chat_agent import ChatAgent
-from service.chat.presentation.routers.chat_api import chat_api
-from service.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
+from service.services.agents.chat_agent import ChatAgent
+from service.services.chat.presentation.routers.chat_api import chat_api
+from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_chat_endpoint_passes_selected_model_to_service():
 
     fake_service = _FakeService()
 
-    from service.chat.presentation.routers.chat_api.chat_api import get_chat_service
+    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
 
     app.dependency_overrides[get_chat_service] = lambda: fake_service
     try:
@@ -133,7 +133,7 @@ async def test_chat_endpoint_passes_input_type_to_service():
 
     fake_service = _FakeService()
 
-    from service.chat.presentation.routers.chat_api.chat_api import get_chat_service
+    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
 
     app.dependency_overrides[get_chat_service] = lambda: fake_service
     try:
@@ -189,7 +189,7 @@ async def test_chat_endpoint_passes_tool_flags_to_service():
 
     fake_service = _FakeService()
 
-    from service.chat.presentation.routers.chat_api.chat_api import get_chat_service
+    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
 
     app.dependency_overrides[get_chat_service] = lambda: fake_service
     try:

@@ -1,12 +1,12 @@
 import pytest
 
-from service.agents.guardrails import (
+from service.services.agents.guardrails import (
     check_appropriate_language,
     check_forbidden_topics,
     ensure_non_empty_response,
     fact_check_output,
 )
-from service.agents.tools.function_tools import fetch_runtime_context_tool, summarize_brief_tool
+from service.services.agents.tools.function_tools import fetch_runtime_context_tool, summarize_brief_tool
 
 
 @pytest.mark.asyncio

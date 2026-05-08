@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from service.main import app
-from service.chat.domain import chat_service
+from service.services.chat.domain import chat_service
 
 
 @pytest.mark.asyncio

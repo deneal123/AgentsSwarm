@@ -41,7 +41,7 @@ class _FakeClient:
 
 @pytest.mark.asyncio
 async def test_web_search_parses_duckduckgo_result_blocks(monkeypatch):
-    ws = importlib.import_module("service.agents.tools.web_search")
+    ws = importlib.import_module("service.services.agents.tools.web_search")
 
     html_payload = """
     <html><body>
@@ -79,7 +79,7 @@ async def test_web_search_parses_duckduckgo_result_blocks(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_web_search_uses_bing_fallback_when_duckduckgo_empty(monkeypatch):
-    ws = importlib.import_module("service.agents.tools.web_search")
+    ws = importlib.import_module("service.services.agents.tools.web_search")
 
     empty_html = "<html><body><a href='https://duckduckgo.com/'>DuckDuckGo</a></body></html>"
     # u=a1 + base64("https://example.org/news")
@@ -114,7 +114,7 @@ async def test_web_search_uses_bing_fallback_when_duckduckgo_empty(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_web_search_uses_yandex_fallback_when_others_empty(monkeypatch):
-    ws = importlib.import_module("service.agents.tools.web_search")
+    ws = importlib.import_module("service.services.agents.tools.web_search")
 
     empty_html = "<html><body><div>no results</div></body></html>"
     yandex_html = """
@@ -150,7 +150,7 @@ async def test_web_search_uses_yandex_fallback_when_others_empty(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_web_search_uses_brave_fallback_when_duck_bing_lite_empty(monkeypatch):
-    ws = importlib.import_module("service.agents.tools.web_search")
+    ws = importlib.import_module("service.services.agents.tools.web_search")
 
     empty_html = "<html><body><div>no results</div></body></html>"
     brave_html = """

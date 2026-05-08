@@ -8,12 +8,12 @@ from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
 from service.models.profile_models import UserProfileLogic
 from service.presentation.routers.jobs_api.schemas import StartJobRequest
-from service.repositories.job_repository import JobRepository
 from service.repositories.exceptions import RepositoryIntegrityError
+from service.repositories.job_repository import JobRepository
 from service.profile.application.profile_service import ProfileService
 from service.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 from service.settings import JobConfig, config
-from service.chat.domain.chat_contracts import JobExecutionResult
+from service.services.chat.domain.chat_contracts import JobExecutionResult
 from service.models.key_value import ServiceType
 
 logger = logging.getLogger(__name__)

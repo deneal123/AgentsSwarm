@@ -1,7 +1,7 @@
 import pytest
 
-from service.agents.events import EventType
-from service.agents.subagents.audio_transcribe import AudioTranscriptionAgent
+from service.services.agents.events import EventType
+from service.services.agents.subagents.audio_transcribe import AudioTranscriptionAgent
 
 
 @pytest.mark.asyncio

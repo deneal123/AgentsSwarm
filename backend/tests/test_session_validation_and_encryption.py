@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from cryptography.fernet import Fernet
 
-from service.agents.sessions import PseudoSession, RedisSession
+from service.services.agents.sessions import PseudoSession, RedisSession
 
 
 @pytest.mark.asyncio

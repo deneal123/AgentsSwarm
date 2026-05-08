@@ -12,7 +12,7 @@ from service.presentation.routers.jobs_api.schemas import (
     StartJobRequest,
     TaskStatusResponse,
 )
-from service.jobs.application.job_service import JobService
+from service.services.jobs.application.job_service import JobService
 
 logger = logging.getLogger(__name__)
 jobs_router = APIRouter(prefix="/api/jobs/v1")

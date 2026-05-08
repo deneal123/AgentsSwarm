@@ -1,4 +1,4 @@
-from service.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
+from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 
 
 def test_normalize_result_payload_adds_selected_model_and_keeps_reply_format() -> None:

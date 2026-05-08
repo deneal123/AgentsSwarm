@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 
 from service.models.profile_models import UserProfileLogic
-from service.profile.application.profile_service import ProfileService
+from service.services.profile.application.profile_service import ProfileService
 from service.settings import ProfileConfig
 
 

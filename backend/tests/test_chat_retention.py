@@ -1,5 +1,5 @@
 from service.infrastructure.messaging import tasks
-from service.chat.infrastructure.chat_worker.factory import ChatWorkerDependencyFactory
+from service.services.chat.infrastructure.chat_worker.factory import ChatWorkerDependencyFactory
 from tests.test_helpers import FakeConnector, FakeDBSession
 from service import settings
 

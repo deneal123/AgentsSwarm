@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from service.agents.base_agent import SimpleStreamingAgent
+from service.services.agents.base_agent import SimpleStreamingAgent
 
 
 def test_extract_text_from_sdk_event_supports_responses_delta_shape() -> None:

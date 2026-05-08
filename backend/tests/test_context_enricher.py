@@ -1,6 +1,6 @@
 import pytest
 
-from service.agents.pipeline.context_enricher import (
+from service.services.agents.pipeline.context_enricher import (
     build_effective_input,
     load_session_history_context,
 )

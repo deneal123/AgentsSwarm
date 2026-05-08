@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from service.chat.presentation.routers.chat_api.schemas import MessageResponse, ThreadResponse
+from service.services.chat.presentation.routers.chat_api.schemas import MessageResponse, ThreadResponse
 from service.presentation.routers.jobs_api.schemas import JobResponse
 
 

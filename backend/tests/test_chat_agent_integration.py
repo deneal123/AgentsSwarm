@@ -6,7 +6,7 @@ import types
 def test_process_chat_message_core_creates_calendar(monkeypatch):
     from service.infrastructure.messaging.tasks import process_chat_message_core
     from service import container
-    from service.agents.pydantic.agents import MealCalendarOutput
+    from service.services.agents.pydantic.agents import MealCalendarOutput
 
     # Fake Redis sync client
     class FakeRedis:
@@ -53,10 +53,10 @@ def test_process_chat_message_core_creates_calendar(monkeypatch):
         cal = MealCalendarOutput(calendar=[{"date": "2025-12-26", "meals": [{"name": "Soup", "calories": 200, "ingredients": ["water"]}]}])
         return type("R", (), {"final_output": cal, "last_agent": starting_agent})
 
-    monkeypatch.setattr("service.agents.orchestrator.Orchestrator.route", fake_route)
-    monkeypatch.setattr("service.agents.runner.Runner.run", fake_runner_run)
+    monkeypatch.setattr("service.services.agents.orchestrator.Orchestrator.route", fake_route)
+    monkeypatch.setattr("service.services.agents.runner.Runner.run", fake_runner_run)
 
-    # Also patch the Runner used by service.agents.runner (ExternalRunner) so run_streamed
+    # Also patch the Runner used by service.services.agents.runner (ExternalRunner) so run_streamed
     # returns a lightweight result with a final_output and an empty stream_events async generator.
     class FakeResult:
         def __init__(self, final):
@@ -76,7 +76,7 @@ def test_process_chat_message_core_creates_calendar(monkeypatch):
             cal = MealCalendarOutput(calendar=[{"date": "2025-12-26", "meals": [{"name": "Soup", "calories": 200, "ingredients": ["water"]}]}])
             return FakeResult(cal)
 
-    monkeypatch.setattr("service.agents.runner.ExternalRunner", FakeExternalRunner)
+    monkeypatch.setattr("service.services.agents.runner.ExternalRunner", FakeExternalRunner)
 
     # Call core processing with a message that triggers calendar creation
     res = process_chat_message_core("T1", "m-1", "Please create calendar named MyPlan", 1)

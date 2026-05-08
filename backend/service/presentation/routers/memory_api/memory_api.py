@@ -12,7 +12,7 @@ from service.presentation.routers.memory_api.schemas import (
     MemoryFactResponse,
     MemoryFactsResponse,
 )
-from service.analytics.application.memory_service import MemoryService
+from service.services.analytics.application.memory_service import MemoryService
 
 memory_router = APIRouter(prefix="/api/memory")
 
