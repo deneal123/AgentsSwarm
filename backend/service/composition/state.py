@@ -55,5 +55,5 @@ def get_optional_redis_session_store(request: Request) -> Any:
     return get_app_container(request).infra.redis_session_store
 
 
-def get_chat_application_service(request: Request):
+def get_chat_application_service(request: Request) -> Any:
     return get_app_container(request).services.chat_application_service

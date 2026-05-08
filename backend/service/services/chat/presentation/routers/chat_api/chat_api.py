@@ -127,6 +127,6 @@ async def generate_pptx_endpoint(
         )
     except HTTPException:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("PPTX generation failed")
-        raise HTTPException(status_code=500, detail=f"PPTX generation failed: {str(exc)}")
+        raise HTTPException(status_code=500, detail="PPTX generation failed")
