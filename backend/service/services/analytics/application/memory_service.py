@@ -10,7 +10,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from service.services.agents.integration import BaseMemoryIntegration, get_memory_integration
+from service.services.agents.integration import get_memory_integration
+from service.services.analytics.application.ports.interfaces import MemoryIntegrationPort
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 class MemoryService:
     """Facade for memory operations used by agent layer and background tasks."""
 
-    def __init__(self, integration: BaseMemoryIntegration | None = None) -> None:
+    def __init__(self, integration: MemoryIntegrationPort | None = None) -> None:
         self.integration = integration or get_memory_integration()
 
     @staticmethod

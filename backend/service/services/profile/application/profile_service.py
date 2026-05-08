@@ -5,14 +5,10 @@ from uuid import UUID
 from argon2 import PasswordHasher
 
 from service.models.profile_models import UserProfileLogic
-from service.repositories.profile_repository import ProfileRepository
+from service.services.profile.application.ports.interfaces import ProfileCachePort, ProfileRepositoryPort
 from service.settings import ProfileConfig
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from service.infrastructure.cache.redis_cache import RedisCacheService
-
 
 PROFILE_BY_ID_NAMESPACE = "profile:id"
 PROFILE_BY_EMAIL_NAMESPACE = "profile:email"
@@ -23,8 +19,8 @@ class ProfileService:
     def __init__(
         self,
         config: ProfileConfig,
-        repository: ProfileRepository,
-        cache: "RedisCacheService | None" = None,
+        repository: ProfileRepositoryPort,
+        cache: ProfileCachePort | None = None,
         cache_ttl_seconds: int | None = None,
     ) -> None:
         self.config = config
