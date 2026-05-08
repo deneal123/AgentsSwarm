@@ -39,9 +39,11 @@ def create_app(container_override: AppContainer | None = None) -> FastAPI:
     if container_override is not None:
         app.state.container = container_override
 
-    # CORS middleware for WebSocket support
     cors_config = getattr(config, "cors", None)
     allow_origins = getattr(cors_config, "allow_origins", []) if cors_config else []
+    auth_mode = str(getattr(getattr(config, "auth", None), "auth_mode", "prod")).strip().lower()
+    is_dev_mode = auth_mode == "dev"
+
     if allow_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -50,14 +52,22 @@ def create_app(container_override: AppContainer | None = None) -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-    else:
-        # Fallback for development
+    elif is_dev_mode:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
+            allow_origins=[
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001",
+            ],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
+        )
+    else:
+        raise RuntimeError(
+            "CORS_ALLOW_ORIGINS must be configured in production mode (AUTH__AUTH_MODE=prod)."
         )
 
     app.include_router(auth_router, tags=["Auth-API"])
