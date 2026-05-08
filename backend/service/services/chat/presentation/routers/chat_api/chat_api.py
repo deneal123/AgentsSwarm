@@ -116,7 +116,7 @@ async def parse_url_endpoint(
         if exc.status_code == 400:
             raise
         logger.warning("URL parse request failed")
-        raise HTTPException(status_code=502, detail="Unable to fetch or parse URL content") from exc
+        raise HTTPException(status_code=502, detail="Unable to fetch or parse URL content")
     except Exception:
         logger.exception("Unexpected parse-url failure")
         raise HTTPException(status_code=502, detail="Unable to fetch or parse URL content")

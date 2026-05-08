@@ -142,7 +142,7 @@ class ChatApplicationService:
             raise HTTPException(
                 status_code=502,
                 detail="Unable to fetch or parse URL content",
-            ) from exc
+            )
 
     async def generate_topic_pptx(self, topic: str) -> dict:
         topic_value = topic.strip()
