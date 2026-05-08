@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from service.services.agents.base_agent import BaseAgent
+from service.services.agents.domain.base import BaseAgent
 from service.services.agents.subagents.audio_transcribe import AudioTranscriptionAgent
 from service.services.agents.subagents.deep_research import DeepResearchAgent
 from service.services.agents.subagents.general import GeneralAgent

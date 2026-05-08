@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from service.services.agents.events import AgentEvent, EventType
+from service.services.agents.domain.events import AgentEvent, EventType
 
 
 def build_processing_error_event(exc: Exception, *, thread_id: str, logger) -> AgentEvent:

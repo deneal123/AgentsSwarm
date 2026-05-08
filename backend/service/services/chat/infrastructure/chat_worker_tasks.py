@@ -84,8 +84,8 @@ async def process_agent_message_async(
 ) -> dict:
     from service import container
     from service.models.key_value import ProcessingStatus
-    from service.repositories.file_repository import FileRepository
-    from service.repositories.job_repository import JobRepository
+    from service.services.files.persistence.file_repository import FileRepository
+    from service.services.jobs.persistence.job_repository import JobRepository
     from service.services.agents.application.agent_file_bridge import persist_generated_artifacts
     from service.services.files.application.file_saver_service import FileSaverService
     from service.services.agents.application.agent_execution_service import DefaultAgentExecutionService

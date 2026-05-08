@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from service.main import app
 from service.presentation.routers.analytics_api.analytics_api import get_analytics_repository
-from service.repositories.analytics_vitals_repository import AnalyticsVitalsRepository
+from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
 
 
 class FakeRedis:

@@ -7,9 +7,9 @@ from fastapi import HTTPException, status
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
 from service.models.profile_models import UserProfileLogic
-from service.presentation.routers.jobs_api.schemas import StartJobRequest
+from service.services.jobs.presentation.routers.jobs_api.schemas import StartJobRequest
 from service.repositories.exceptions import RepositoryIntegrityError
-from service.repositories.job_repository import JobRepository
+from service.services.jobs.persistence.job_repository import JobRepository
 from service.services.profile.application.profile_service import ProfileService
 from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 from service.settings import JobConfig, config
@@ -164,10 +164,7 @@ class JobService(JobOrchestrationPort):
         )
 
     def _resolve_wait_time(self, job_type: ServiceType) -> int:
-        wait_time = self.config.settings.wait_time_sec
-        if job_type is ServiceType.DEFAULT:
-            return max(wait_time, self.config.settings.processing_timeout_sec)
-        return wait_time
+        return self.config.settings.wait_time_sec
 
     async def create_calendar_job(
         self,

@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from service.models.auth_models import AuthProfile
-from service.presentation.routers.jobs_api.schemas import StartJobRequest, TaskStatusResponse
+from service.services.jobs.presentation.routers.jobs_api.schemas import StartJobRequest, TaskStatusResponse
 from service.services.jobs.application.job_service import JobService
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from service.services.agents.client import get_active_provider
-from service.services.agents.pydantic.agents import RoutingDecision
+from service.services.agents.schemas.agents import RoutingDecision
 from service.services.agents.routing.constants import ALLOWED_CATEGORIES, ROUTER_PROMPT
 from service.services.agents.tools.router import route_model
 

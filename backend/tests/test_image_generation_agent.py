@@ -1,6 +1,6 @@
 import pytest
 
-from service.services.agents.events import EventType
+from service.services.agents.domain.events import EventType
 from service.services.agents.subagents.image_generation import ImageGenerationAgent
 
 

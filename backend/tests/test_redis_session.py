@@ -2,7 +2,7 @@ import asyncio
 import json
 import pytest
 
-from service.services.agents.sessions import RedisSession
+from service.services.agents.infrastructure.sessions import RedisSession
 
 
 class FakeRedis:

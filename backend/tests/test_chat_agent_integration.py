@@ -6,7 +6,7 @@ import types
 def test_process_chat_message_core_creates_calendar(monkeypatch):
     from service.infrastructure.messaging.tasks import process_chat_message_core
     from service import container
-    from service.services.agents.pydantic.agents import MealCalendarOutput
+    from service.services.agents.schemas.agents import MealCalendarOutput
 
     # Fake Redis sync client
     class FakeRedis:

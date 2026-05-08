@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 PROFILE_BY_ID_NAMESPACE = "profile:id"
 PROFILE_BY_EMAIL_NAMESPACE = "profile:email"
-PROFILE_MUTABLE_FIELDS = {"first_name", "company", "timezone", "phone", "avatar_url"}
+PROFILE_MUTABLE_FIELDS = {"first_name", "timezone", "avatar_url"}
 
 
 class ProfileService:
@@ -177,9 +177,8 @@ class ProfileService:
         return to_profile_overview_result(updated_profile)
 
     async def delete_chat_history(self, command: DeleteChatHistoryCommand) -> None:
-        """Delete user's chat history (hard delete). Also invalidate cache entries."""
-        # call repository to delete threads and messages
+        cached = await self._get_cached_profile_by_id(command.user_id)
         await self.repository.delete_user_chat_history(str(command.user_id))
-        # invalidate cache if present
-        await self._invalidate_profile_cache(command.user_id, (await self.fetch_user_profile(command.user_id)).email)
+        if cached:
+            await self._invalidate_profile_cache(command.user_id, cached.email)
         logger.info("Deleted chat history for user=%s", command.user_id)

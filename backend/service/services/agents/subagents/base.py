@@ -3,9 +3,9 @@
 from abc import abstractmethod
 from typing import AsyncGenerator
 
-from service.services.agents.base_agent import BaseAgent
-from service.services.agents.events import AgentEvent, EventType
-from service.services.agents.pydantic.agents import UserContext
+from service.services.agents.domain.base import BaseAgent
+from service.services.agents.domain.events import AgentEvent, EventType
+from service.services.agents.schemas.agents import UserContext
 
 
 class BaseSubAgent(BaseAgent):

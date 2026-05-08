@@ -11,7 +11,7 @@ from service.services.agents.application.use_cases.agent_execution_use_cases imp
     RouteModelUseCase,
     RunAgentUseCase,
 )
-from service.services.agents.processor import AgentProcessor
+from service.services.agents.application.processor import AgentProcessor
 
 
 class DefaultAgentExecutionService(AgentExecutionPort):

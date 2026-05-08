@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from service.models.auth_models import AuthProfile
 from service.models.key_value import UserTypes
 from service.models.profile_models import UserProfileLogic
-from service.presentation.routers.profile_api import profile_api as profile_module
-from service.presentation.routers.profile_api.profile_api import (
+from service.services.profile.presentation.routers.profile_api import profile_api as profile_module
+from service.services.profile.presentation.routers.profile_api.profile_api import (
     get_profile_service,
     profile_router,
 )

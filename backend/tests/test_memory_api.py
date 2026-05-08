@@ -5,8 +5,8 @@ from fastapi.testclient import TestClient
 
 from service.models.auth_models import AuthProfile
 from service.models.key_value import UserTypes
-from service.presentation.routers.memory_api import memory_api as memory_module
-from service.presentation.routers.memory_api.memory_api import get_memory_service, memory_router
+from service.services.analytics.presentation.routers.memory_api import memory_api as memory_module
+from service.services.analytics.presentation.routers.memory_api.memory_api import get_memory_service, memory_router
 
 
 class _FakeMemoryService:

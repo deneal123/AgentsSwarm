@@ -2,9 +2,39 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
-from service.services.chat.domain.chat_exceptions import map_chat_exception_to_http
+from service.services.chat.domain.chat_exceptions import (
+    ChatErrorMapper,
+    JobCreationError,
+    JobEnqueueError,
+    JobExecutionError,
+    JobOrchestrationError,
+    JobServiceUnavailableError,
+    ModelRoutingError,
+)
+
+_TRANSPORT_MAP = {
+    ModelRoutingError: (422, "Model routing failed"),
+    JobServiceUnavailableError: (503, "Job service unavailable"),
+    JobCreationError: (500, "Failed to create chat job"),
+    JobEnqueueError: (502, "Failed to enqueue chat task"),
+    JobExecutionError: (504, "Failed to execute chat task"),
+    JobOrchestrationError: (500, "Chat orchestration failed"),
+}
+
+
+def map_chat_exception_to_http(error: Exception) -> HTTPException:
+    for err_type, (status_code, message) in _TRANSPORT_MAP.items():
+        if isinstance(error, err_type):
+            return HTTPException(
+                status_code=status_code,
+                detail={"code": ChatErrorMapper.to_code(error), "message": message},
+            )
+    return HTTPException(
+        status_code=500,
+        detail={"code": ChatErrorMapper.to_code(error), "message": "Agent error"},
+    )
 
 
 def map_to_http_exception(error: Exception) -> HTTPException:

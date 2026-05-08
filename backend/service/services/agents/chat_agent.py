@@ -3,8 +3,8 @@ import logging
 from typing import Optional, Any
 from datetime import datetime, timezone
 
-from service.services.agents.processor import AgentProcessor
-from service.services.agents.events import EventType
+from service.services.agents.application.processor import AgentProcessor
+from service.services.agents.domain.events import EventType
 from service.services.agents.application.ports.interfaces import StreamPort
 from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 

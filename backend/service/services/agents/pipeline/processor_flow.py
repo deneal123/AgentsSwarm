@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional, Tuple
 
-from service.services.agents.events import AgentEvent, EventType
-from service.services.agents.pydantic.agents import UserContext
+from service.services.agents.domain.events import AgentEvent, EventType
+from service.services.agents.schemas.agents import UserContext
 
 
 def build_user_context(*, user_id: Optional[int], session: Optional[Any], thread_id: str) -> UserContext:

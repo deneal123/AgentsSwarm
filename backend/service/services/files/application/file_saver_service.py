@@ -9,12 +9,12 @@ from service.services.files.application.ports.interfaces import FileStoragePort,
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
 from service.models.key_value import ServiceType
-from service.presentation.routers.files_api.schemas import (
+from service.services.files.presentation.routers.files_api.schemas import (
     FetchUserFilesResponse,
     FileMetadata,
     UploadResponse,
 )
-from service.repositories.file_repository import FileRepository
+from service.services.files.persistence.file_repository import FileRepository
 
 logger = logging.getLogger(__name__)
 

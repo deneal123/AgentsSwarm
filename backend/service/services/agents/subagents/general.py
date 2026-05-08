@@ -1,6 +1,6 @@
 """General fallback assistant agent."""
 
-from service.services.agents.base_agent import SimpleStreamingAgent
+from service.services.agents.domain.base import SimpleStreamingAgent
 from service.services.agents.guardrails import (
     check_appropriate_language,
     check_forbidden_topics,

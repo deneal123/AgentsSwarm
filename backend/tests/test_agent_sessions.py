@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from service.services.agents.chat_agent import ChatAgent
-from service.services.agents.sessions import PseudoSession
+from service.services.agents.infrastructure.sessions import PseudoSession
 
 
 @pytest.mark.asyncio

@@ -6,8 +6,8 @@ import logging
 import re
 from typing import AsyncGenerator
 
-from service.services.agents.events import AgentEvent, EventType
-from service.services.agents.pydantic.agents import UserContext
+from service.services.agents.domain.events import AgentEvent, EventType
+from service.services.agents.schemas.agents import UserContext
 from service.services.agents.subagents.base import BaseSubAgent
 from service.services.agents.subagents.utils import pick_text_model
 

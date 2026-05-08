@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from service.services.agents.events import AgentEvent, EventType
+from service.services.agents.domain.events import AgentEvent, EventType
 
 
 class EventSequencer:

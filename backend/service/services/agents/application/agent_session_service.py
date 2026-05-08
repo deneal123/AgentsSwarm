@@ -1,4 +1,4 @@
-from service.services.agents.sessions import PseudoSession
+from service.services.agents.infrastructure.sessions import PseudoSession
 
 
 class AgentSessionService:

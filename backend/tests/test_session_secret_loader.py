@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from service.services.agents.sessions import create_session
+from service.services.agents.infrastructure.sessions import create_session
 from service.infrastructure.secrets import secret_loader
 
 

@@ -9,7 +9,6 @@ class UserProfileLogic(BaseModel):
     email: str
     password_hash: str
     first_name: str | None
-    company: str | None = None  # Make company optional with default None
     timezone: str | None
     avatar_url: str | None
     created_at: datetime

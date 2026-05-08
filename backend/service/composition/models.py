@@ -5,10 +5,10 @@ from typing import Any
 
 from service.infrastructure.database.postgresql import PgConnector
 from service.infrastructure.messaging.ports import CeleryJobQueuePort, RedisListMessageBusPort, RedisStreamPort
-from service.repositories.auth_repository import AuthRepository
-from service.repositories.file_repository import FileRepository
-from service.repositories.job_repository import JobRepository
-from service.repositories.profile_repository import ProfileRepository
+from service.services.profile.persistence.auth_repository import AuthRepository
+from service.services.files.persistence.file_repository import FileRepository
+from service.services.jobs.persistence.job_repository import JobRepository
+from service.services.profile.persistence.profile_repository import ProfileRepository
 from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.services.files.application.file_saver_service import FileSaverService
 from service.services.files.application.file_scanner_service import BasicFileScanner

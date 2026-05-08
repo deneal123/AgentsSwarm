@@ -87,8 +87,8 @@ class ChatFallbackService:
         file_context: str,
         route_override: str | None,
     ) -> ChatReplyResult:
-        from service.services.agents.events import EventType
-        from service.services.agents.processor import AgentProcessor
+        from service.services.agents.domain.events import EventType
+        from service.services.agents.application.processor import AgentProcessor
 
         model_settings = {"model": selected_model} if selected_model else {}
         processor = AgentProcessor(model_settings=model_settings)

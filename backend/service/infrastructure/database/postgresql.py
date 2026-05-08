@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator, Union
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -10,9 +10,16 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from service.settings import Postgresql
+from service.settings import PgConfig, Postgresql
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
+
+# PgConnector accepts either PgConfig (from composition) or the inner Postgresql
+# settings model. Both expose .dsn and .settings attributes used below.
+_PgConfigT = Union[PgConfig, Postgresql]
 
 
 class PgConnector:
@@ -20,7 +27,7 @@ class PgConnector:
     _session_maker: async_sessionmaker | None = None
     _bound_loop: asyncio.AbstractEventLoop | None = None
 
-    def __init__(self, config: Postgresql, force_new: bool = False) -> None:
+    def __init__(self, config: _PgConfigT, force_new: bool = False) -> None:
         self.config = config
         self._force_new = force_new
         self._engine = self._get_engine()

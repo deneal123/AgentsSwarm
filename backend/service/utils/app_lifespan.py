@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
         raise
 
     finally:
-        logger.info("Shutting down TeleRAG application...")
+        logger.info("Shutting down application...")
 
         try:
             active_container = getattr(app.state, "container", None) or get_current_container()

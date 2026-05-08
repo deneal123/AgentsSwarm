@@ -7,13 +7,13 @@ from fastapi import HTTPException, status
 from service.models.db.db_models import UserSession
 from service.models.key_value import SessionStatus, UserTypes
 from service.models.profile_models import UserProfileLogic
-from service.presentation.routers.auth_api.schemas import (
+from service.services.profile.presentation.routers.auth_api.schemas import (
     LoginRequest,
     LoginResponse,
     RegisterRequest,
     RegisterResponse,
 )
-from service.repositories.auth_repository import AuthRepository
+from service.services.profile.persistence.auth_repository import AuthRepository
 from service.services.profile.application.profile_service import ProfileService
 from service.settings import AuthConfig
 

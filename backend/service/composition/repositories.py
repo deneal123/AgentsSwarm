@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from service.composition.models import InfraContainer, RepositoriesContainer
-from service.repositories.auth_repository import AuthRepository
-from service.repositories.file_repository import FileRepository
-from service.repositories.job_repository import JobRepository
-from service.repositories.profile_repository import ProfileRepository
+from service.services.profile.persistence.auth_repository import AuthRepository
+from service.services.files.persistence.file_repository import FileRepository
+from service.services.jobs.persistence.job_repository import JobRepository
+from service.services.profile.persistence.profile_repository import ProfileRepository
 
 
 def build_repositories(infra: InfraContainer) -> RepositoriesContainer:

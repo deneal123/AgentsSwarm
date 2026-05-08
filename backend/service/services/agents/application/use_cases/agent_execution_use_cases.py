@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from service.infrastructure.messaging.agent_streaming import ReplyAssembler
-from service.services.agents.events import EventType
-from service.services.agents.processor import AgentProcessor
-from service.services.agents.sessions import PseudoSession
+from service.services.agents.domain.events import EventType
+from service.services.agents.application.processor import AgentProcessor
+from service.services.agents.infrastructure.sessions import PseudoSession
 from service.services.agents.tools.router import route_model
 from service.services.chat.domain.chat_contracts import build_provider_unavailable_reply
 

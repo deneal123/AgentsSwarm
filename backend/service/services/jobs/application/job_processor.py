@@ -5,7 +5,7 @@ from typing import NoReturn
 
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
-from service.repositories.job_repository import JobRepository
+from service.services.jobs.persistence.job_repository import JobRepository
 from service.settings import JobConfig
 from service.shared.policies import TimeoutPolicy
 

@@ -26,10 +26,4 @@ class BaseRepository:
             yield session
 
     async def _execute(self, session: AsyncSession, statement):
-        """Вспомогательный метод для выполнения выражения и возврата результата."""
-
         return await session.execute(statement)
-
-
-# Обратная совместимость для сохранения импортов в уже сгенерированном коде
-BseRepository = BaseRepository

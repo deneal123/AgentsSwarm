@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -128,13 +128,6 @@ class Batch(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="queued")
     size: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     progress: Mapped[dict | None] = mapped_column(JSONB, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
-    updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
 
     items: Mapped[list["BatchItem"]] = relationship(
         back_populates="batch",
@@ -153,11 +146,6 @@ class BatchItem(Base):
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="queued")
     result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     batch: Mapped[Batch] = relationship(back_populates="items", lazy="selectin")
 
@@ -174,11 +162,6 @@ class NutritionCalendar(Base):
     period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     manifest: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     storage_uri: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class NutritionCalendarVersion(Base):
@@ -192,8 +175,4 @@ class NutritionCalendarVersion(Base):
     )
     version: Mapped[int] = mapped_column(BigInteger, nullable=False)
     manifest: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    meta: Mapped[dict | None] = mapped_column(JSONB, name='metadata', default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-    )
+    meta: Mapped[dict | None] = mapped_column(JSONB, name="metadata", default=dict)
