@@ -23,7 +23,7 @@ async def test_prod_policy_blocks_legacy_query_token():
     validator = AuthValidator(
         AuthConfig(
             auth_mode="prod",
-            secret="secret",
+            secret="super-secret-key",
             algorithm="HS256",
             jwt_exp_hours=24,
             ws_auth_allowlist_prod=["jwt_cookie"],
@@ -40,7 +40,7 @@ async def test_prod_policy_blocks_dev_test_token_even_when_feature_enabled():
     validator = AuthValidator(
         AuthConfig(
             auth_mode="prod",
-            secret="secret",
+            secret="super-secret-key",
             algorithm="HS256",
             jwt_exp_hours=24,
             ws_auth_allowlist_prod=["jwt_cookie", "query_token"],
@@ -59,7 +59,7 @@ async def test_dev_policy_allows_legacy_token_when_flag_enabled():
     validator = AuthValidator(
         AuthConfig(
             auth_mode="dev",
-            secret="secret",
+            secret="super-secret-key",
             algorithm="HS256",
             jwt_exp_hours=24,
             ws_auth_allowlist_dev=["query_token"],
@@ -76,7 +76,7 @@ async def test_dev_policy_blocks_legacy_token_when_feature_disabled():
     validator = AuthValidator(
         AuthConfig(
             auth_mode="dev",
-            secret="secret",
+            secret="super-secret-key",
             algorithm="HS256",
             jwt_exp_hours=24,
             ws_auth_allowlist_dev=["query_token"],

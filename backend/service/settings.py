@@ -3,7 +3,7 @@ import json
 
 import dotenv
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = dotenv.find_dotenv()
@@ -106,9 +106,9 @@ class ServiceConfig(BaseSettings):
 class AuthConfig(BaseSettings):
     dev_mode: bool = Field(default_factory=bool)
     auth_mode: str = "prod"
-    secret: str = Field(default_factory=str)
-    algorithm: str = Field(default_factory=str)
-    jwt_exp_hours: int = Field(default_factory=int)
+    secret: str
+    algorithm: str
+    jwt_exp_hours: int
     ws_auth_allowlist_prod: list[str] = Field(default_factory=lambda: ["jwt_cookie"])
     ws_auth_allowlist_dev: list[str] = Field(
         default_factory=lambda: [
@@ -131,6 +131,55 @@ class AuthConfig(BaseSettings):
         if normalized in {"dev", "prod"}:
             return normalized
         return "prod"
+
+    @field_validator("secret", mode="before")
+    @classmethod
+    def _default_secret_for_dev(cls, value, info: ValidationInfo):
+        auth_mode = str(info.data.get("auth_mode") or "").strip().lower()
+        if auth_mode == "dev" and not str(value or "").strip():
+            return "dev-insecure-secret-change-me"
+        return value
+
+    @field_validator("secret")
+    @classmethod
+    def _validate_secret(cls, value: str):
+        secret = value.strip()
+        if len(secret) < 16:
+            raise ValueError("AUTH__SECRET must be at least 16 characters long")
+        return secret
+
+    @field_validator("algorithm", mode="before")
+    @classmethod
+    def _default_algorithm_for_dev(cls, value, info: ValidationInfo):
+        auth_mode = str(info.data.get("auth_mode") or "").strip().lower()
+        if auth_mode == "dev" and not str(value or "").strip():
+            return "HS256"
+        return value
+
+    @field_validator("algorithm")
+    @classmethod
+    def _validate_algorithm(cls, value: str):
+        algorithm = value.strip().upper()
+        allowed_algorithms = {"HS256", "HS384", "HS512"}
+        if algorithm not in allowed_algorithms:
+            raise ValueError("AUTH__ALGORITHM must be one of: HS256, HS384, HS512")
+        return algorithm
+
+    @field_validator("jwt_exp_hours", mode="before")
+    @classmethod
+    def _default_jwt_exp_hours_for_dev(cls, value, info: ValidationInfo):
+        auth_mode = str(info.data.get("auth_mode") or "").strip().lower()
+        if auth_mode == "dev" and (value is None or str(value).strip() == "" or int(value) <= 0):
+            return 24
+        return value
+
+    @field_validator("jwt_exp_hours")
+    @classmethod
+    def _validate_jwt_exp_hours(cls, value: int):
+        if value <= 0:
+            raise ValueError("AUTH__JWT_EXP_HOURS must be greater than zero")
+        return value
+
 
 
 class ProfileConfig(BaseSettings):
