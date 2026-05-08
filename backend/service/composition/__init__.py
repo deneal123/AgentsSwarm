@@ -1,15 +1,6 @@
-"""Compatibility facade for dependency container APIs.
-
-New composition code lives under `service.composition.*`.
-This module keeps stable imports for existing call-sites.
-"""
-
-from service.composition import (
-    AppContainer,
-    InfraContainer,
-    RepositoriesContainer,
-    ServicesContainer,
-    build_container,
+from service.composition.container import build_container
+from service.composition.models import AppContainer, InfraContainer, RepositoriesContainer, ServicesContainer
+from service.composition.state import (
     get_app_container,
     get_auth_service,
     get_chat_application_service,
@@ -23,10 +14,10 @@ from service.composition import (
 )
 
 __all__ = [
+    "AppContainer",
     "InfraContainer",
     "RepositoriesContainer",
     "ServicesContainer",
-    "AppContainer",
     "build_container",
     "set_current_container",
     "get_current_container",

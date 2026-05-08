@@ -4,8 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from fastapi.responses import RedirectResponse, Response
+
 from service.services.chat.application.chat_application_service import ChatApplicationService
-from service.container import get_chat_application_service
+from service.presentation.dependencies.providers import get_chat_application_service
 from service.services.chat.presentation.http.upload_api import upload_router
 
 from service.services.chat.presentation.routers.chat_api.schemas import (
@@ -96,49 +97,33 @@ async def delete_thread(thread_id: str, service: ChatApplicationService = Depend
 
 
 @chat_router.post("/web-search")
-async def web_search_endpoint(q: str = "", num_results: int = 5):
-    if not q.strip():
-        raise HTTPException(status_code=400, detail="Query is required")
-    from service.services.agents.tools.web_search import web_search
-    results = await web_search(q.strip(), num_results=min(num_results, 10))
-    return {"query": q, "results": results, "count": len(results)}
+async def web_search_endpoint(
+    q: str = "",
+    num_results: int = 5,
+    service: ChatApplicationService = Depends(get_chat_application_service),
+):
+    return await service.run_web_search(query=q, num_results=num_results)
 
 
 @chat_router.post("/parse-url")
-async def parse_url_endpoint(url: str = ""):
-    if not url.strip():
-        raise HTTPException(status_code=400, detail="URL is required")
-    from service.services.agents.tools.web_search import parse_url
-    result = await parse_url(url.strip())
-    return result
+async def parse_url_endpoint(
+    url: str = "",
+    service: ChatApplicationService = Depends(get_chat_application_service),
+):
+    return await service.parse_url_content(url=url)
 
 
 @chat_router.post("/generate-pptx")
-async def generate_pptx_endpoint(topic: str = ""):
-    from fastapi.responses import Response
-    if not topic.strip():
-        raise HTTPException(status_code=400, detail="Topic is required")
-
+async def generate_pptx_endpoint(
+    topic: str = "",
+    service: ChatApplicationService = Depends(get_chat_application_service),
+):
     try:
-        from service.services.agents.client import list_available_models
-        from service.services.agents.tools.pptx import generate_pptx
-        import re
-
-        models = await list_available_models()
-        text_re = re.compile(r"(gpt|qwen|llama|mistral|alpha|instruct|chat)", re.I)
-        model = next((m for m in models if text_re.search(m)), models[0] if models else None)
-
-        if not model:
-            raise HTTPException(status_code=503, detail="No models available")
-
-        pptx_bytes, _ = await generate_pptx(topic.strip(), model)
-
-        filename = re.sub(r"[^\w\s-]", "", topic.strip())[:40].strip().replace(" ", "_") or "presentation"
-
+        generated = await service.generate_topic_pptx(topic=topic)
         return Response(
-            content=pptx_bytes,
+            content=generated["payload"],
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            headers={"Content-Disposition": f'attachment; filename="{filename}.pptx"'},
+            headers={"Content-Disposition": f'attachment; filename="{generated["filename"]}"'},
         )
     except HTTPException:
         raise

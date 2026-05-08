@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, status
 
-from service import container
+from service.presentation.dependencies import providers
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceType
 from service.presentation.dependencies.auth_checker import check_auth
@@ -48,7 +48,7 @@ async def fetch_handler(
     mode: Annotated[ServiceType, Path(...)],
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> FetchUserFilesResponse:
     user_files = await service.fetch_all_user_files(profile.user_id, mode)
@@ -67,7 +67,7 @@ async def upload_handler(
     file: UploadFile,
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> UploadResponse:
     if file_name := file.filename:
@@ -101,7 +101,7 @@ async def delete_handler(
     file_id: Annotated[UUID, Path(..., title="File ID")],
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> None:
     await service.delete(
@@ -121,7 +121,7 @@ async def presign_upload(
     payload: PresignRequest,
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> PresignResponse:
     """Generate presigned URL and a temporary file_id for client to upload directly to storage."""
@@ -140,7 +140,7 @@ async def upload_callback(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> FileMetadata:
     """Finalize file metadata after successful direct upload and trigger processing (scanner, previews)."""
@@ -158,7 +158,7 @@ async def get_file(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     service: Annotated[
         FileSaverService,
-        Depends(container.get_file_saver_service),
+        Depends(providers.get_file_saver_service),
     ],
 ) -> FileDetailResponse:
     meta = await service.fetch_file_metadata(profile.user_id, file_id)

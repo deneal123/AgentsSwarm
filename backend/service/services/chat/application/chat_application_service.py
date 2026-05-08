@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 
 from fastapi import HTTPException, status
 
 from service.services.agents.client import list_available_models
+from service.settings import config
+from service.services.agents.tools.pptx import generate_pptx
+from service.services.agents.tools.web_search import parse_url, web_search
 from service.services.chat.application.use_cases.chat_use_cases import CreateThreadUseCase, PostMessageUseCase
 from service.services.chat.presentation.error_mapper import map_to_http_exception, normalize_response_metadata
 from service.services.chat.domain.chat_service import ChatService
@@ -102,12 +106,10 @@ class ChatApplicationService:
 
     @staticmethod
     def _normalize_download_file_key(file_key: str) -> str:
-        import os
-
         raw = str(file_key or "").strip()
         if not raw:
             raise HTTPException(status_code=400, detail="file_key is required")
-        storage_root = os.getenv("STORAGE_ROOT", "/var/lib/app/storage").rstrip("/")
+        storage_root = (config.storage.root or "/var/lib/app/storage").rstrip("/")
         if raw.startswith(f"{storage_root}/"):
             raw = raw[len(storage_root) + 1 :]
         elif raw.startswith("/var/lib/app/storage/"):
@@ -119,3 +121,31 @@ class ChatApplicationService:
         if not raw:
             raise HTTPException(status_code=400, detail="Invalid file_key")
         return raw
+
+    async def run_web_search(self, query: str, num_results: int = 5) -> dict:
+        query_value = query.strip()
+        if not query_value:
+            raise HTTPException(status_code=400, detail="Query is required")
+        results = await web_search(query_value, num_results=min(num_results, 10))
+        return {"query": query_value, "results": results, "count": len(results)}
+
+    async def parse_url_content(self, url: str) -> dict:
+        url_value = url.strip()
+        if not url_value:
+            raise HTTPException(status_code=400, detail="URL is required")
+        return await parse_url(url_value)
+
+    async def generate_topic_pptx(self, topic: str) -> dict:
+        topic_value = topic.strip()
+        if not topic_value:
+            raise HTTPException(status_code=400, detail="Topic is required")
+
+        models = await list_available_models()
+        text_re = re.compile(r"(gpt|qwen|llama|mistral|alpha|instruct|chat)", re.I)
+        model = next((m for m in models if text_re.search(m)), models[0] if models else None)
+        if not model:
+            raise HTTPException(status_code=503, detail="No models available")
+
+        pptx_bytes, _ = await generate_pptx(topic_value, model)
+        filename = re.sub(r"[^\w\s-]", "", topic_value)[:40].strip().replace(" ", "_") or "presentation"
+        return {"payload": pptx_bytes, "filename": f"{filename}.pptx"}

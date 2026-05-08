@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
 
-from service import container
+from service.presentation.dependencies import providers
 from service.presentation.routers.analytics_api.schemas import (
     IngestAcceptedResponse,
     VitalsBatchIn,
@@ -18,7 +18,7 @@ analytics_router = APIRouter(prefix="/api/analytics")
 
 
 def get_analytics_repository(
-    redis_client=Depends(container.get_optional_redis_client),
+    redis_client=Depends(providers.get_optional_redis_client),
 ) -> AnalyticsVitalsRepository:
     return AnalyticsVitalsRepository(redis_client=redis_client)
 

@@ -1,6 +1,6 @@
 # Архитектура GPTHub
 
-**Последнее обновление:** 2026-05-07
+**Последнее обновление:** 2026-05-08
 
 ## Контрактный pipeline API
 
@@ -29,6 +29,33 @@
 - ADR хранятся в `docs/adr/`.
 - Каждое крупное изменение архитектурного слоя обязательно сопровождается новым ADR.
 - Базовые решения по quality gates и метрикам сложности описаны в `docs/adr/0001-quality-gates-and-complexity-metrics.md`.
+- Scope текущего backend-refactor и ограничения зафиксированы в `docs/adr/0003-backend-refactor-scope-and-composition-root.md`.
+
+## Backend inventory (baseline)
+
+- `auth`: `backend/service/presentation/routers/auth_api/*`, `backend/service/services/profile/application/auth_service.py`, `backend/service/security/*`.
+- `jobs`: `backend/service/presentation/routers/jobs_api/*`, `backend/service/services/jobs/{application,domain,infrastructure}`.
+- `files`: `backend/service/presentation/routers/files_api/*`, `backend/service/services/files/{application,infrastructure}`.
+- `profile`: `backend/service/presentation/routers/profile_api/*`, `backend/service/services/profile/{application,domain}`.
+- `chat`: `backend/service/services/chat/{presentation,application,domain,infrastructure,persistence}`.
+- `agents`: `backend/service/services/agents/*`.
+- `infrastructure`: `backend/service/infrastructure/{database,messaging,cache,storage}`.
+
+## Must-not-regress checks
+
+- `backend/tests/test_critical_endpoint_snapshots.py`
+- `backend/tests/test_response_schema_snapshots.py`
+- `backend/tests/test_enum_schema_contract.py`
+- `backend/scripts/check_enum_revision_guard.py <base> <head>`
+- `pytest` coverage gate из `backend/pytest.ini`
+
+## Composition root (phase-1 split)
+
+- `backend/service/composition/infra.py` — bootstrap infra adapters.
+- `backend/service/composition/repositories.py` — repositories factory.
+- `backend/service/composition/services.py` — services/application factory.
+- `backend/service/composition/state.py` — current container state + FastAPI providers.
+- `backend/service/container.py` — compatibility facade для стабильных import-path.
 
 ## Безопасный lifecycle enum в БД
 
@@ -41,11 +68,11 @@
 
 ## Карта модулей chat-контекста
 
-- `backend/service/chat/presentation` — HTTP/WS transport слой (`routers/chat_api`, `routers/chat_ws`, `ws/chat_ws`).
-- `backend/service/chat/application` — use-case слой (`chat_application_service.py`).
-- `backend/service/chat/domain` — доменные сервисы, контракты и исключения (`chat_service.py`, `chat_contracts.py`, `chat_exceptions.py`, `chat_job_orchestrator.py`, `chat_fallback_service.py`, `process_chat_message_handler.py`).
-- `backend/service/chat/infrastructure` — адаптеры воркеров и streaming-интеграций (`chat_worker/`, `chat_worker_tasks.py`).
-- `backend/service/chat/persistence` — репозитории и persistence-адаптеры (`chat_repository.py`, `chat_worker_repository.py`, `chat_persistence_service.py`).
+- `backend/service/services/chat/presentation` — HTTP/WS transport слой (`routers/chat_api`, `routers/chat_ws`, `ws/chat_ws`).
+- `backend/service/services/chat/application` — use-case слой (`chat_application_service.py`).
+- `backend/service/services/chat/domain` — доменные сервисы, контракты и исключения (`chat_service.py`, `chat_contracts.py`, `chat_exceptions.py`, `chat_job_orchestrator.py`, `chat_fallback_service.py`, `process_chat_message_handler.py`).
+- `backend/service/services/chat/infrastructure` — адаптеры воркеров и streaming-интеграций (`chat_worker/`, `chat_worker_tasks.py`).
+- `backend/service/services/chat/persistence` — репозитории и persistence-адаптеры (`chat_repository.py`, `chat_worker_repository.py`, `chat_persistence_service.py`).
 
 ## Mermaid: верхнеуровневая схема проекта
 

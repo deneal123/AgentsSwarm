@@ -4,7 +4,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, WebSocket, status
 from starlette.websockets import WebSocketDisconnect
 
-from service import container
+from service.composition.models import AppContainer
+from service.presentation.dependencies import providers
 from service.services.chat.presentation.ws.chat_ws import (
     ChatMessageHandler,
     ChatStreamConsumer,
@@ -20,20 +21,24 @@ router = APIRouter()
 _metrics = ChatWsMetrics()
 
 
-def get_optional_job_service(app_container: Annotated[container.AppContainer, Depends(container.get_app_container)]) -> Any:
+def get_optional_job_service(
+    app_container: Annotated[AppContainer, Depends(providers.get_app_container)],
+) -> Any:
     return app_container.services.job_service
 
 
-def get_optional_file_service(app_container: Annotated[container.AppContainer, Depends(container.get_app_container)]) -> Any:
+def get_optional_file_service(
+    app_container: Annotated[AppContainer, Depends(providers.get_app_container)],
+) -> Any:
     return app_container.services.file_saver_service
 
 
 def get_chat_ws_connection_service(
-    redis_client: Annotated[Any, Depends(container.get_optional_redis_client)],
-    session_store: Annotated[Any, Depends(container.get_optional_redis_session_store)],
+    redis_client: Annotated[Any, Depends(providers.get_optional_redis_client)],
+    session_store: Annotated[Any, Depends(providers.get_optional_redis_session_store)],
     job_service: Annotated[Any, Depends(get_optional_job_service)],
     file_service: Annotated[Any, Depends(get_optional_file_service)],
-    app_container: Annotated[container.AppContainer, Depends(container.get_app_container)],
+    app_container: Annotated[AppContainer, Depends(providers.get_app_container)],
 ) -> ChatWsConnectionService:
     ws_settings = config.chat_ws.settings
     auth_service = ChatWsAuthService(AuthValidator(config.auth), session_store)
