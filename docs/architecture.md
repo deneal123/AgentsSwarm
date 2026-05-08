@@ -4,6 +4,21 @@
 
 ## Стандарт backend-модуля
 
+## План миграции по волнам
+
+- **Wave 1 (низкий риск):** `files`, `profile`, `analytics`
+- **Wave 2:** `jobs`
+- **Wave 3 (высокий риск):** `agents`, `chat`
+
+Порядок работ для каждой волны:
+
+1. Интерфейсы и use-case (`application`).
+2. Адаптеры (`infrastructure`).
+3. Presentation-слой (`presentation`).
+
+На переходном этапе сохраняются временные фасады и deprecated-импорты до полного перевода call-sites. После каждой волны обновляются тесты `backend/tests/`, архитектурные правила и ADR.
+
+
 Базовый стандарт для feature-модулей backend:
 
 `backend/service/services/<module>/{domain,application,infrastructure,presentation}`
