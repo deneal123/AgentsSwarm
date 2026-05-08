@@ -110,7 +110,16 @@ async def parse_url_endpoint(
     url: str = "",
     service: ChatApplicationService = Depends(get_chat_application_service),
 ):
-    return await service.parse_url_content(url=url)
+    try:
+        return await service.parse_url_content(url=url)
+    except HTTPException as exc:
+        if exc.status_code == 400:
+            raise
+        logger.warning("URL parse request failed")
+        raise HTTPException(status_code=502, detail="Unable to fetch or parse URL content") from exc
+    except Exception:
+        logger.exception("Unexpected parse-url failure")
+        raise HTTPException(status_code=502, detail="Unable to fetch or parse URL content")
 
 
 @chat_router.post("/generate-pptx")

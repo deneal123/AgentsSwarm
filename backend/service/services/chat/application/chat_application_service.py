@@ -138,7 +138,7 @@ class ChatApplicationService:
         try:
             return await parse_url(url_value)
         except Exception as exc:  # noqa: BLE001
-            logger.exception("URL parsing failed: %s", exc)
+            logger.exception("URL parsing failed")
             raise HTTPException(
                 status_code=502,
                 detail="Unable to fetch or parse URL content",
