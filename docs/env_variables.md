@@ -55,7 +55,10 @@
 
 | Переменная | Обязательна | Пример |
 |---|---:|---|
-| `CORS__ALLOW_ORIGINS` | Да | `["https://your-domain.example.com","http://localhost:3000"]` |
+| `CORS__ALLOW_ORIGINS` | Да (prod), Нет (dev) | `["https://your-domain.example.com","http://localhost:3000"]` |
+
+> В `prod` режиме (`AUTH__AUTH_MODE=prod`) пустой `CORS__ALLOW_ORIGINS` запрещен: сервис завершит инициализацию с ошибкой конфигурации.
+> В `dev` режиме при пустом значении применяется localhost fallback (`http://localhost:3000`, `http://localhost:3001`, `http://127.0.0.1:3000`, `http://127.0.0.1:3001`).
 
 ## 5) Storage
 
