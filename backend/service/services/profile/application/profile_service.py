@@ -5,6 +5,13 @@ from uuid import UUID
 from argon2 import PasswordHasher
 
 from service.models.profile_models import UserProfileLogic
+from service.services.profile.application.dto import (
+    DeleteChatHistoryCommand,
+    GetProfileOverviewQuery,
+    ProfileOverviewResult,
+    UpdateProfileCommand,
+)
+from service.services.profile.application.mappers import to_profile_overview_result
 from service.services.profile.application.ports.interfaces import ProfileCachePort, ProfileRepositoryPort
 from service.settings import ProfileConfig
 
@@ -107,10 +114,10 @@ class ProfileService:
         return user_profile
 
     async def get_profile_overview(
-        self, user_id: UUID
-    ) -> UserProfileLogic:
-        profile = await self.fetch_user_profile(user_id)
-        return profile
+        self, query: GetProfileOverviewQuery
+    ) -> ProfileOverviewResult:
+        profile = await self.fetch_user_profile(query.user_id)
+        return to_profile_overview_result(profile)
 
     async def fetch_user_profile_by_email(self, email: str) -> UserProfileLogic | None:
         logger.info(f"Fetching profile for email: {email}")
@@ -147,15 +154,17 @@ class ProfileService:
             return False
 
     async def update_profile_details(
-        self, user_id: UUID, updates: dict[str, str | None]
-    ) -> UserProfileLogic:
-        logger.info("Updating profile for user_id=%s with fields=%s", user_id, list(updates.keys()))
+        self, command: UpdateProfileCommand
+    ) -> ProfileOverviewResult:
+        updates = command.model_dump(exclude={"user_id"}, exclude_unset=True)
+        logger.info("Updating profile for user_id=%s with fields=%s", command.user_id, list(updates.keys()))
 
         fields_to_apply = {k: v for k, v in updates.items() if k in PROFILE_MUTABLE_FIELDS}
         if not fields_to_apply:
-            return await self.fetch_user_profile(user_id)
+            current = await self.fetch_user_profile(command.user_id)
+            return to_profile_overview_result(current)
 
-        profile = await self.fetch_user_profile(user_id)
+        profile = await self.fetch_user_profile(command.user_id)
         previous_email = profile.email
 
         for field_name, value in fields_to_apply.items():
@@ -164,13 +173,13 @@ class ProfileService:
         updated_profile = await self.repository.update_user_profile(profile)
         await self._refresh_profile_cache(updated_profile, previous_email)
 
-        logger.info("Profile updated for user_id=%s", user_id)
-        return updated_profile
+        logger.info("Profile updated for user_id=%s", command.user_id)
+        return to_profile_overview_result(updated_profile)
 
-    async def delete_chat_history(self, user_id: UUID) -> None:
+    async def delete_chat_history(self, command: DeleteChatHistoryCommand) -> None:
         """Delete user's chat history (hard delete). Also invalidate cache entries."""
         # call repository to delete threads and messages
-        await self.repository.delete_user_chat_history(str(user_id))
+        await self.repository.delete_user_chat_history(str(command.user_id))
         # invalidate cache if present
-        await self._invalidate_profile_cache(user_id, (await self.fetch_user_profile(user_id)).email)
-        logger.info("Deleted chat history for user=%s", user_id)
+        await self._invalidate_profile_cache(command.user_id, (await self.fetch_user_profile(command.user_id)).email)
+        logger.info("Deleted chat history for user=%s", command.user_id)
