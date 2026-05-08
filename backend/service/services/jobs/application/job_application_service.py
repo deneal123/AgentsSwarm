@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -7,6 +8,8 @@ from fastapi import HTTPException, status
 from service.models.auth_models import AuthProfile
 from service.presentation.routers.jobs_api.schemas import StartJobRequest, TaskStatusResponse
 from service.services.jobs.application.job_service import JobService
+
+logger = logging.getLogger(__name__)
 
 
 class JobApplicationService:
@@ -68,7 +71,8 @@ class JobApplicationService:
             result.revoke(terminate=True)
             return {"task_id": task_id, "cancelled": True}
         except Exception as exc:  # noqa: BLE001
+            logger.exception("Celery task cancel failed for %s: %s", task_id, exc)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Celery is unavailable: {exc}",
+                detail="Celery is unavailable",
             ) from exc
