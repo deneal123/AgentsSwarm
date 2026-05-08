@@ -329,4 +329,18 @@ def _get_config() -> Config:
     return config
 
 
+def redact_config_for_logging(config: Config) -> dict:
+    return {
+        "service": {
+            "name": config.service.name,
+            "server_port": config.service.server_port,
+        },
+        "auth": {
+            "auth_mode": config.auth.auth_mode,
+        },
+        "storage": {
+            "backend": config.storage.backend,
+        },
+    }
+
 config = _get_config()
