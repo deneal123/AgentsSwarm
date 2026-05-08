@@ -2,185 +2,193 @@
 
 **Последнее обновление:** 2026-05-08
 
-## Контрактный pipeline API
+## Стандарт backend-модуля
 
-- Источник правды контракта: `FastAPI app.openapi()` из `backend/service/main.py`.
-- В CI OpenAPI генерируется командой `python scripts/export_openapi.py --output artifacts/openapi.json`.
-- Для критичных операций используется snapshot-проверка `backend/tests/test_critical_endpoint_snapshots.py`.
-- Для DTO-моделей ответов используется snapshot-проверка `backend/tests/test_response_schema_snapshots.py`.
-- При изменении контракта разработчик обновляет snapshots и документацию `docs/api.md`, `docs/architecture.md`.
+Базовый стандарт для feature-модулей backend:
 
-## Стабилизированные зоны контракта
+`backend/service/services/<module>/{domain,application,infrastructure,presentation}`
 
-К критичным операциям, которые защищены endpoint-snapshot тестом, относятся:
+Допустимые дополнительные подпакеты внутри слоёв (например `application/ports`, `presentation/routers`, `infrastructure/chat_worker`) не нарушают стандарт, если сохраняют направление зависимостей.
 
-- `POST /api/auth/v1/register`
-- `POST /api/auth/v1/login`
-- `POST /api/chats/`
-- `GET /api/chats/{thread_id}`
-- `POST /api/chats/{thread_id}/message`
-- `POST /api/jobs/v1/start`
-- `GET /api/jobs/v1/result/{job_id}`
+## Карта текущих модулей и слоёв
 
+### agents
 
+- `presentation`
+  - `backend/service/services/agents/presentation/__init__.py`
+- `application`
+  - `backend/service/services/agents/application/__init__.py`
+  - `backend/service/services/agents/application/agent_execution_service.py`
+  - `backend/service/services/agents/application/agent_file_bridge.py`
+  - `backend/service/services/agents/application/agent_session_service.py`
+  - `backend/service/services/agents/application/model_routing_service.py`
+  - `backend/service/services/agents/application/ports/__init__.py`
+  - `backend/service/services/agents/application/ports/interfaces.py`
+- `domain`
+  - `backend/service/services/agents/domain/__init__.py`
+  - `backend/service/services/agents/base_agent.py`
+  - `backend/service/services/agents/chat_agent.py`
+  - `backend/service/services/agents/events.py`
+  - `backend/service/services/agents/orchestrator.py`
+  - `backend/service/services/agents/processor.py`
+  - `backend/service/services/agents/runner.py`
+  - `backend/service/services/agents/sessions.py`
+  - `backend/service/services/agents/pipeline/__init__.py`
+  - `backend/service/services/agents/pipeline/context_enricher.py`
+  - `backend/service/services/agents/pipeline/error_handling.py`
+  - `backend/service/services/agents/pipeline/event_stream.py`
+  - `backend/service/services/agents/pipeline/postprocess.py`
+  - `backend/service/services/agents/pipeline/processor_flow.py`
+  - `backend/service/services/agents/routing/__init__.py`
+  - `backend/service/services/agents/routing/constants.py`
+  - `backend/service/services/agents/routing/policy.py`
+  - `backend/service/services/agents/routing/router_agent.py`
+  - `backend/service/services/agents/guardrails/__init__.py`
+  - `backend/service/services/agents/guardrails/response_guardrails.py`
+  - `backend/service/services/agents/subagents/__init__.py`
+  - `backend/service/services/agents/subagents/audio_transcribe.py`
+  - `backend/service/services/agents/subagents/base.py`
+  - `backend/service/services/agents/subagents/deep_research.py`
+  - `backend/service/services/agents/subagents/factory.py`
+  - `backend/service/services/agents/subagents/general.py`
+  - `backend/service/services/agents/subagents/image_generation.py`
+  - `backend/service/services/agents/subagents/pptx_generation.py`
+  - `backend/service/services/agents/subagents/utils.py`
+  - `backend/service/services/agents/subagents/web_search.py`
+  - `backend/service/services/agents/tools/__init__.py`
+  - `backend/service/services/agents/tools/deep_research.py`
+  - `backend/service/services/agents/tools/function_tools.py`
+  - `backend/service/services/agents/tools/pptx.py`
+  - `backend/service/services/agents/tools/router.py`
+  - `backend/service/services/agents/tools/web_search.py`
+  - `backend/service/services/agents/pydantic/__init__.py`
+  - `backend/service/services/agents/pydantic/agents.py`
+  - `backend/service/services/agents/pydantic/sessions.py`
+- `infrastructure`
+  - `backend/service/services/agents/infrastructure/__init__.py`
+  - `backend/service/services/agents/client/__init__.py`
+  - `backend/service/services/agents/client/mws_client.py`
+  - `backend/service/services/agents/client/openai_client.py`
+  - `backend/service/services/agents/client/openrouter_client.py`
+  - `backend/service/services/agents/integration/__init__.py`
+  - `backend/service/services/agents/integration/base.py`
+  - `backend/service/services/agents/integration/memory.py`
 
-## ADR-практика
+### jobs
 
-- ADR хранятся в `docs/adr/`.
-- Каждое крупное изменение архитектурного слоя обязательно сопровождается новым ADR.
-- Базовые решения по quality gates и метрикам сложности описаны в `docs/adr/0001-quality-gates-and-complexity-metrics.md`.
-- Scope текущего backend-refactor и ограничения зафиксированы в `docs/adr/0003-backend-refactor-scope-and-composition-root.md`.
+- `presentation`
+  - `backend/service/services/jobs/presentation/__init__.py`
+- `application`
+  - `backend/service/services/jobs/application/__init__.py`
+  - `backend/service/services/jobs/application/job_application_service.py`
+  - `backend/service/services/jobs/application/job_processor.py`
+  - `backend/service/services/jobs/application/job_service.py`
+  - `backend/service/services/jobs/application/ports/__init__.py`
+  - `backend/service/services/jobs/application/ports/interfaces.py`
+- `domain`
+  - `backend/service/services/jobs/domain/__init__.py`
+- `infrastructure`
+  - `backend/service/services/jobs/infrastructure/__init__.py`
 
-## Backend inventory (baseline)
+### files
 
-- `auth`: `backend/service/presentation/routers/auth_api/*`, `backend/service/services/profile/application/auth_service.py`, `backend/service/security/*`.
-- `jobs`: `backend/service/presentation/routers/jobs_api/*`, `backend/service/services/jobs/{application,domain,infrastructure}`.
-- `files`: `backend/service/presentation/routers/files_api/*`, `backend/service/services/files/{application,infrastructure}`.
-- `profile`: `backend/service/presentation/routers/profile_api/*`, `backend/service/services/profile/{application,domain}`.
-- `chat`: `backend/service/services/chat/{presentation,application,domain,infrastructure,persistence}`.
-- `agents`: `backend/service/services/agents/*`.
-- `infrastructure`: `backend/service/infrastructure/{database,messaging,cache,storage}`.
+- `presentation`
+  - `backend/service/services/files/presentation/__init__.py`
+- `application`
+  - `backend/service/services/files/application/__init__.py`
+  - `backend/service/services/files/application/file_saver_service.py`
+  - `backend/service/services/files/application/file_scanner_service.py`
+  - `backend/service/services/files/application/ports/__init__.py`
+  - `backend/service/services/files/application/ports/interfaces.py`
+- `domain`
+  - `backend/service/services/files/domain/__init__.py`
+- `infrastructure`
+  - `backend/service/services/files/infrastructure/__init__.py`
 
-## Must-not-regress checks
+### profile
 
-- `backend/tests/test_critical_endpoint_snapshots.py`
-- `backend/tests/test_response_schema_snapshots.py`
-- `backend/tests/test_enum_schema_contract.py`
-- `backend/scripts/check_enum_revision_guard.py <base> <head>`
-- `pytest` coverage gate из `backend/pytest.ini`
+- `presentation`
+  - `backend/service/services/profile/presentation/__init__.py`
+- `application`
+  - `backend/service/services/profile/application/__init__.py`
+  - `backend/service/services/profile/application/auth_service.py`
+  - `backend/service/services/profile/application/profile_service.py`
+- `domain`
+  - `backend/service/services/profile/domain/__init__.py`
+- `infrastructure`
+  - `backend/service/services/profile/infrastructure/__init__.py`
 
-## Composition root (phase-1 split)
+### analytics
+
+- `presentation`
+  - `backend/service/services/analytics/presentation/__init__.py`
+- `application`
+  - `backend/service/services/analytics/application/__init__.py`
+  - `backend/service/services/analytics/application/memory_service.py`
+- `domain`
+  - `backend/service/services/analytics/domain/__init__.py`
+- `infrastructure`
+  - `backend/service/services/analytics/infrastructure/__init__.py`
+
+### chat
+
+- `presentation`
+  - `backend/service/services/chat/presentation/__init__.py`
+  - `backend/service/services/chat/presentation/error_mapper.py`
+  - `backend/service/services/chat/presentation/http/upload_api.py`
+  - `backend/service/services/chat/presentation/routers/__init__.py`
+  - `backend/service/services/chat/presentation/routers/chat_api/chat_api.py`
+  - `backend/service/services/chat/presentation/routers/chat_api/schemas.py`
+  - `backend/service/services/chat/presentation/routers/chat_ws.py`
+  - `backend/service/services/chat/presentation/ws/__init__.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/__init__.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/auth.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/connection.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/message_handler.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/metrics.py`
+  - `backend/service/services/chat/presentation/ws/chat_ws/stream_consumer.py`
+- `application`
+  - `backend/service/services/chat/application/__init__.py`
+  - `backend/service/services/chat/application/chat_application_service.py`
+  - `backend/service/services/chat/application/use_cases/chat_use_cases.py`
+  - `backend/service/services/chat/application/use_cases/upload_file_use_case.py`
+  - `backend/service/services/chat/application/ports/__init__.py`
+  - `backend/service/services/chat/application/ports/chat_ports.py`
+  - `backend/service/services/chat/application/ports/interfaces.py`
+  - `backend/service/services/chat/application/ports/media_analysis_port.py`
+- `domain`
+  - `backend/service/services/chat/domain/__init__.py`
+  - `backend/service/services/chat/domain/chat_contracts.py`
+  - `backend/service/services/chat/domain/chat_exceptions.py`
+  - `backend/service/services/chat/domain/chat_fallback_service.py`
+  - `backend/service/services/chat/domain/chat_job_orchestrator.py`
+  - `backend/service/services/chat/domain/chat_service.py`
+  - `backend/service/services/chat/domain/process_chat_message_handler.py`
+- `infrastructure`
+  - `backend/service/services/chat/infrastructure/__init__.py`
+  - `backend/service/services/chat/infrastructure/chat_worker_tasks.py`
+  - `backend/service/services/chat/infrastructure/chat_worker/__init__.py`
+  - `backend/service/services/chat/infrastructure/chat_worker/factory.py`
+  - `backend/service/services/chat/infrastructure/chat_worker/services.py`
+  - `backend/service/services/chat/infrastructure/media/openai_media_analysis_adapter.py`
+  - `backend/service/services/chat/persistence/__init__.py`
+  - `backend/service/services/chat/persistence/chat_persistence_service.py`
+  - `backend/service/services/chat/persistence/chat_repository.py`
+  - `backend/service/services/chat/persistence/chat_worker_repository.py`
+
+## Правила зависимостей (обязательные)
+
+1. `presentation -> application`
+2. `application -> domain + ports`
+3. `infrastructure -> application ports/domain`
+4. Запрещены прямые зависимости:
+   - `presentation -> infrastructure`
+   - `domain -> infrastructure`
+
+## Composition root
 
 - `backend/service/composition/infra.py` — bootstrap infra adapters.
 - `backend/service/composition/repositories.py` — repositories factory.
 - `backend/service/composition/services.py` — services/application factory.
-- `backend/service/composition/state.py` — current container state + FastAPI providers.
-- `backend/service/container.py` — compatibility facade для стабильных import-path.
-
-## Безопасный lifecycle enum в БД
-
-- Enum-контракт приложения фиксируется в `backend/service/models/key_value.py`.
-- Enum-контракт схемы фиксируется ревизиями Alembic в `backend/alembic/versions/`.
-- Тест `backend/tests/test_enum_schema_contract.py` вычисляет набор значений enum из SQLAlchemy metadata и сравнивает его с итоговым состоянием по цепочке Alembic ревизий.
-- CI шаг `python scripts/check_enum_revision_guard.py <base> <head>` блокирует PR, если enum-модели изменены без новой ревизии в `backend/alembic/versions/`.
-- Для каждого enum-change используется шаблон `backend/alembic/templates/enum_change_template.py` с обязательными блоками `upgrade`, `downgrade`, `backfill`, `data-check`.
-
-
-## Карта модулей chat-контекста
-
-- `backend/service/services/chat/presentation` — HTTP/WS transport слой (`routers/chat_api`, `routers/chat_ws`, `ws/chat_ws`).
-- `backend/service/services/chat/application` — use-case слой (`chat_application_service.py`).
-- `backend/service/services/chat/domain` — доменные сервисы, контракты и исключения (`chat_service.py`, `chat_contracts.py`, `chat_exceptions.py`, `chat_job_orchestrator.py`, `chat_fallback_service.py`, `process_chat_message_handler.py`).
-- `backend/service/services/chat/infrastructure` — адаптеры воркеров и streaming-интеграций (`chat_worker/`, `chat_worker_tasks.py`).
-- `backend/service/services/chat/persistence` — репозитории и persistence-адаптеры (`chat_repository.py`, `chat_worker_repository.py`, `chat_persistence_service.py`).
-
-## Mermaid: верхнеуровневая схема проекта
-
-```mermaid
-graph TB
-	User["User / Browser"]
-	Frontend["Frontend\nReact + Chakra UI"]
-	Api["Backend API\nFastAPI routers"]
-
-	Services["Service layer\nchat/job/profile flows"]
-	Agents["Agents layer\norchestrator + processor + subagents + tools"]
-	Repos["Repositories"]
-	Infra["Infrastructure adapters"]
-
-	DB["PostgreSQL"]
-	Redis["Redis\ncache + streams"]
-	Celery["Celery workers"]
-	Storage["MinIO / Local Storage"]
-	LLM["LLM providers\nOpenAI / MWS"]
-
-	Docs["docs/"]
-	Tests["backend/tests"]
-
-	User -->|"1. HTTP/WebSocket"| Frontend
-	Frontend -->|"2. API calls"| Api
-	Api -->|"3. use-cases"| Services
-
-	Services -->|"4a. agent processing"| Agents
-	Services -->|"4b. persistence"| Repos
-	Services -->|"4c. integration layer"| Infra
-
-	Infra -->|"5. data"| DB
-	Infra -->|"5. events/cache"| Redis
-	Infra -->|"5. async jobs"| Celery
-	Infra -->|"5. files"| Storage
-
-	Celery -->|"6. invoke"| Agents
-	Agents -->|"7. model/tool calls"| LLM
-
-	Services -.->|"8. design reference"| Docs
-	Services -.->|"9. quality checks"| Tests
-
-	style User fill:#ff6b6b,stroke:#ff6b6b,stroke-width:2px,color:#fff
-	style Frontend fill:#ff6b6b,stroke:#ff6b6b,stroke-width:2px,color:#fff
-
-	style Api fill:#4a9eff,stroke:#4a9eff,stroke-width:2px,color:#fff
-	style Services fill:#4a9eff,stroke:#4a9eff,stroke-width:2px,color:#fff
-	style Repos fill:#4a9eff,stroke:#4a9eff,stroke-width:2px,color:#fff
-
-	style Agents fill:#52c41a,stroke:#52c41a,stroke-width:2px,color:#fff
-
-	style Infra fill:#9b59b6,stroke:#9b59b6,stroke-width:2px,color:#fff
-	style DB fill:#9b59b6,stroke:#9b59b6,stroke-width:2px,color:#fff
-	style Redis fill:#9b59b6,stroke:#9b59b6,stroke-width:2px,color:#fff
-	style Celery fill:#9b59b6,stroke:#9b59b6,stroke-width:2px,color:#fff
-	style Storage fill:#9b59b6,stroke:#9b59b6,stroke-width:2px,color:#fff
-
-	style LLM fill:#e67e22,stroke:#e67e22,stroke-width:2px,color:#fff
-	style Docs fill:#ffa500,stroke:#ffa500,stroke-width:2px,color:#fff
-	style Tests fill:#ffa500,stroke:#ffa500,stroke-width:2px,color:#fff
-```
-
-## C4: Container boundaries after application services split
-
-```mermaid
-graph LR
-    User["User"]
-    FE["Frontend SPA"]
-    API["FastAPI Routers<br/>transport only"]
-    APP["Application Services<br/>chat_application_service<br/>job_application_service"]
-    DOMAIN["Domain Services<br/>chat/job/process handlers"]
-    PORTS["Ports Interfaces<br/>ChatCommandPort<br/>JobOrchestrationPort<br/>AgentExecutionPort"]
-    INFRA["Infrastructure Adapters<br/>celery/redis/storage/db"]
-    AGENTS["Agents Runtime"]
-    EXT["LLM Providers"]
-
-    User --> FE --> API
-    API --> APP
-    APP --> DOMAIN
-    DOMAIN --> PORTS
-    INFRA --> PORTS
-    AGENTS --> PORTS
-    INFRA --> EXT
-    AGENTS --> EXT
-```
-
-## Flow: Chat message orchestration with error mapping
-
-```mermaid
-sequenceDiagram
-    participant R as chat_api router
-    participant A as ChatApplicationService
-    participant C as ChatService
-    participant H as ProcessChatMessageHandler
-    participant Q as JobQueuePort
-    participant M as chat_exceptions mapper
-
-    R->>A: post_message(payload)
-    A->>C: post_message(context)
-    C->>H: dispatch_and_wait(command)
-    H->>Q: enqueue_process_agent_message
-    Q-->>H: result
-    H-->>C: ChatReplyResult
-    C-->>A: ChatReplyResult
-    A-->>R: DTO
-    Note over A,M: Any domain exception<br/>mapped in map_chat_exception_to_http
-```
-
-## UI boundaries (enforced)
-- All reusable UI components are located only in `frontend/src/shared/ui`.
-- Feature modules must not import components from other features directly; shared UI is consumed via `@shared/ui/*` public API only.
+- `backend/service/composition/state.py` — container state + FastAPI providers.
+- `backend/service/container.py` — compatibility facade.
