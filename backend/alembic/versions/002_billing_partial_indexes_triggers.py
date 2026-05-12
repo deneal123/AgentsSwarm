@@ -4,7 +4,6 @@ Revision ID: 016_billing_partial_indexes_triggers
 Revises: 001_initial
 Create Date: 2025-12-26 12:00:00.000000
 """
-from typing import Sequence, Union
 
 from alembic import op
 
@@ -66,7 +65,9 @@ def upgrade() -> None:
 
     # Trigger to invoke function before insert or update
     # Ensure any existing trigger is removed first
-    op.execute("DROP TRIGGER IF EXISTS trg_expire_reservation_before_insert_update ON profile.token_reservations;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trg_expire_reservation_before_insert_update ON profile.token_reservations;"
+    )
 
     # Then create the trigger invoking the plpgsql function
     op.execute(
@@ -80,7 +81,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DROP TRIGGER IF EXISTS trg_expire_reservation_before_insert_update ON profile.token_reservations;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS trg_expire_reservation_before_insert_update ON profile.token_reservations;"
+    )
     op.execute("DROP FUNCTION IF EXISTS profile.expire_reservation_if_past();")
     op.execute("DROP INDEX IF EXISTS profile.ix_profile_token_reservations_user_id_reserved;")
     op.execute("DROP INDEX IF EXISTS profile.ix_profile_token_reservations_expires_at_reserved;")

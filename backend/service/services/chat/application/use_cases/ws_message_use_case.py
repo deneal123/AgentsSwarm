@@ -13,7 +13,9 @@ class HandleWsChatMessageUseCase:
     job_service: Any
     chat_service: Any
 
-    async def execute(self, *, thread_id: str, msg: dict[str, Any], session: dict[str, Any]) -> dict[str, Any]:
+    async def execute(
+        self, *, thread_id: str, msg: dict[str, Any], session: dict[str, Any]
+    ) -> dict[str, Any]:
         text = msg.get("text")
         user_id_str = msg.get("user_id") or session.get("user_id")
         user_id = UUID(user_id_str) if isinstance(user_id_str, str) else user_id_str
@@ -25,7 +27,9 @@ class HandleWsChatMessageUseCase:
         deep_research = bool(msg.get("deep_research", False))
         file_context = msg.get("file_context", "")
         try:
-            job_response = await self.job_service.create_chat_job(user_id=user_id, thread_id=thread_id, text=text)
+            job_response = await self.job_service.create_chat_job(
+                user_id=user_id, thread_id=thread_id, text=text
+            )
             job_queue = getattr(self.job_service, "job_queue", None)
             if job_queue is None:
                 raise RuntimeError("Job queue is disabled")

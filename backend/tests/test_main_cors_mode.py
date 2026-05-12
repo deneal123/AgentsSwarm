@@ -31,11 +31,15 @@ def test_create_app_uses_localhost_fallback_in_dev_mode(monkeypatch: pytest.Monk
     ]
 
 
-def test_create_app_fails_fast_without_cors_origins_in_prod(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_app_fails_fast_without_cors_origins_in_prod(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from service import main as service_main
 
     monkeypatch.setattr(service_main.config.auth, "auth_mode", "prod")
     monkeypatch.setattr(service_main.config.cors, "allow_origins", [])
 
-    with pytest.raises(RuntimeError, match="CORS_ALLOW_ORIGINS must be configured in production mode"):
+    with pytest.raises(
+        RuntimeError, match="CORS_ALLOW_ORIGINS must be configured in production mode"
+    ):
         service_main.create_app()

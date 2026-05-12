@@ -19,7 +19,9 @@ class FetchModesResponse(BaseModel):
 
 class PresignRequest(BaseModel):
     filename: Annotated[str, Field(..., description="Original filename")]
-    expiry_sec: Annotated[int | None, Field(None, description="Expiry seconds for presigned URL")] = None
+    expiry_sec: Annotated[
+        int | None, Field(None, description="Expiry seconds for presigned URL")
+    ] = None
 
 
 class PresignResponse(BaseModel):
@@ -37,7 +39,9 @@ class CallbackRequest(BaseModel):
 class FileDetailResponse(BaseModel):
     file_id: Annotated[UUID, Field(..., description="File id")]
     file_url: Annotated[str, Field(..., description="Stored file URL")]
-    download_url: Annotated[str | None, Field(None, description="Presigned download URL if available")]
+    download_url: Annotated[
+        str | None, Field(None, description="Presigned download URL if available")
+    ]
 
 
 __all__ = [

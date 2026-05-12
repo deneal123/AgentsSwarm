@@ -1,7 +1,7 @@
 import pytest
 
-from service.services.agents.infrastructure.sessions import create_session
 from service.infrastructure.secrets import secret_loader
+from service.services.agents.infrastructure.sessions import create_session
 
 
 @pytest.mark.asyncio
@@ -9,6 +9,7 @@ async def test_create_session_uses_secret_loader(monkeypatch):
     monkeypatch.setattr(secret_loader, "get_encryption_key", lambda *a, **k: "secret-key-base64")
 
     from service.settings import config
+
     config.sessions.encryption_key = None
     config.redis.enabled = False
 

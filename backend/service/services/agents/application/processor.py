@@ -1,9 +1,11 @@
 """Main entry point for agent system — unified streaming processor."""
-import logging
-from typing import AsyncGenerator, Optional, Any
 
-from service.services.agents.domain.events import AgentEvent
+import logging
+from collections.abc import AsyncGenerator
+from typing import Any
+
 from service.services.agents.application.orchestrator import Orchestrator
+from service.services.agents.domain.events import AgentEvent
 from service.services.agents.domain.pipeline.event_stream import EventSequencer
 from service.services.agents.pipeline import (
     build_effective_input,
@@ -15,9 +17,6 @@ from service.services.agents.pipeline import (
     run_post_response_hooks,
 )
 from service.settings import config
-
-# Import unified client facade to initialize configured provider (MWS/OpenAI)
-from service.services.agents import client as agents_client  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +34,15 @@ class AgentProcessor:
         self,
         user_input: str,
         thread_id: str,
-        user_id: Optional[int] = None,
-        session: Optional[Any] = None,
+        user_id: int | None = None,
+        session: Any | None = None,
         *,
-        route_override: Optional[str] = None,
-        input_type: Optional[str] = None,
+        route_override: str | None = None,
+        input_type: str | None = None,
         web_search: bool = False,
         deep_research: bool = False,
-        file_context: Optional[str] = None,
-    ) -> AsyncGenerator[AgentEvent, None]:
+        file_context: str | None = None,
+    ) -> AsyncGenerator[AgentEvent]:
         """Process user message and yield events."""
         stream = EventSequencer()
 
@@ -91,4 +90,6 @@ class AgentProcessor:
             )
 
         except Exception as exc:
-            yield stream.attach(build_processing_error_event(exc, thread_id=thread_id, logger=logger))
+            yield stream.attach(
+                build_processing_error_event(exc, thread_id=thread_id, logger=logger)
+            )

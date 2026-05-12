@@ -5,13 +5,12 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends
 
 from service.composition.state import get_analytics_service
+from service.services.analytics.application.analytics_service import AnalyticsService
 from service.services.analytics.presentation.routers.analytics_api.schemas import (
     IngestAcceptedResponse,
     VitalsBatchIn,
     VitalsSummaryResponse,
 )
-from service.services.analytics.application.analytics_service import AnalyticsService
-
 
 analytics_router = APIRouter(prefix="/api/analytics")
 

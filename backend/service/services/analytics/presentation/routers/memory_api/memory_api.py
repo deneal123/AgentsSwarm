@@ -1,17 +1,18 @@
 """Memory API endpoints for viewing and managing long-term user facts."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from service.models.auth_models import AuthProfile
-from service.shared.security.auth_checker import check_auth
+from service.services.analytics.application.memory_service import MemoryService
 from service.services.analytics.presentation.routers.memory_api.schemas import (
     AddMemoryFactRequest,
     AddMemoryFactResponse,
     MemoryFactResponse,
     MemoryFactsResponse,
 )
-from service.services.analytics.application.memory_service import MemoryService
+from service.shared.security.auth_checker import check_auth
 
 memory_router = APIRouter(prefix="/api/memory")
 
@@ -56,7 +57,9 @@ async def search_user_memory(
 ) -> MemoryFactsResponse:
     effective_user_id = _ensure_owner_access(user_id, auth_profile)
     facts = await service.list_facts(effective_user_id, query=q)
-    return MemoryFactsResponse(facts=[MemoryFactResponse(**item) for item in facts], context_text=None)
+    return MemoryFactsResponse(
+        facts=[MemoryFactResponse(**item) for item in facts], context_text=None
+    )
 
 
 @memory_router.post("/{user_id}/facts", response_model=AddMemoryFactResponse, status_code=201)
@@ -77,7 +80,9 @@ async def add_memory_fact(
         fact_value=payload.fact_value,
     )
     if not created:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to add memory fact")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to add memory fact"
+        )
 
     return AddMemoryFactResponse(fact=MemoryFactResponse(**created))
 

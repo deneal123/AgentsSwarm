@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import HTTPException, status
@@ -13,8 +13,8 @@ from service.services.profile.application.dto import (
     RegisterRequest,
     RegisterResponse,
 )
-from service.services.profile.persistence.auth_repository import AuthRepository
 from service.services.profile.application.profile_service import ProfileService
+from service.services.profile.persistence.auth_repository import AuthRepository
 from service.settings import AuthConfig
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class AuthService:
             status=SessionStatus.ACTIVATED,
             session_code="",  # No code needed for password auth
             token=jwt_token,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=self.config.jwt_exp_hours),
+            expires_at=datetime.now(UTC) + timedelta(hours=self.config.jwt_exp_hours),
         )
         return await self.repository.create_session(new_session)
 
@@ -132,8 +132,8 @@ class AuthService:
             "sub": str(user_id),
             "fingerprint": fingerprint,
             "type": user_type.value,
-            "iat": datetime.now(timezone.utc),
-            "exp": datetime.now(timezone.utc) + timedelta(hours=self.config.jwt_exp_hours),
+            "iat": datetime.now(UTC),
+            "exp": datetime.now(UTC) + timedelta(hours=self.config.jwt_exp_hours),
         }
         token = jwt.encode(payload, self.config.secret, algorithm=self.config.algorithm)
         return token

@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from service.services.chat.domain.chat_contracts import ChatRouteDecision
 from service.services.chat.domain.chat_exceptions import ModelRoutingError

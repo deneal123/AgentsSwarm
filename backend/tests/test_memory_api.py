@@ -6,14 +6,19 @@ from fastapi.testclient import TestClient
 from service.models.auth_models import AuthProfile
 from service.models.key_value import UserTypes
 from service.services.analytics.presentation.routers.memory_api import memory_api as memory_module
-from service.services.analytics.presentation.routers.memory_api.memory_api import get_memory_service, memory_router
+from service.services.analytics.presentation.routers.memory_api.memory_api import (
+    get_memory_service,
+    memory_router,
+)
 
 
 class _FakeMemoryService:
     def __init__(self) -> None:
         self.deleted_fact_ids: list[tuple[str, str]] = []
 
-    async def list_facts(self, user_id: str, query: str | None = None, top_k: int = 50) -> list[dict]:
+    async def list_facts(
+        self, user_id: str, query: str | None = None, top_k: int = 50
+    ) -> list[dict]:
         return [
             {
                 "id": "fact-1",

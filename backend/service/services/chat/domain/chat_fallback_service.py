@@ -2,7 +2,11 @@ import logging
 import time
 from typing import Any
 
-from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
+from service.services.chat.domain.chat_contracts import (
+    ChatProcessingMetadata,
+    ChatReplyResult,
+    build_provider_unavailable_reply,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +91,8 @@ class ChatFallbackService:
         file_context: str,
         route_override: str | None,
     ) -> ChatReplyResult:
-        from service.services.agents.domain.events import EventType
         from service.services.agents.application.processor import AgentProcessor
+        from service.services.agents.domain.events import EventType
 
         model_settings = {"model": selected_model} if selected_model else {}
         processor = AgentProcessor(model_settings=model_settings)
@@ -127,7 +131,9 @@ class ChatFallbackService:
         file_url = None
         try:
             if self.file_service is not None:
-                from service.services.agents.application.agent_file_bridge import persist_generated_artifacts
+                from service.services.agents.application.agent_file_bridge import (
+                    persist_generated_artifacts,
+                )
 
                 generated_file_url, processor_metadata = await persist_generated_artifacts(
                     file_service=self.file_service,

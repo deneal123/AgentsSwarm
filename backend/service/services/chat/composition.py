@@ -3,12 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from service.services.agents.application.model_routing_service import ModelRoutingService
 from service.services.chat.application.chat_application_service import ChatApplicationService
 from service.services.chat.domain.chat_fallback_service import ChatFallbackService
 from service.services.chat.domain.chat_job_orchestrator import ChatJobOrchestrator
 from service.services.chat.domain.chat_service import ChatService
 from service.services.chat.persistence.chat_persistence_service import ChatPersistenceService
-from service.services.agents.application.model_routing_service import ModelRoutingService
 
 
 @dataclass(slots=True)
@@ -21,7 +21,9 @@ class ChatComponents:
     application_service: ChatApplicationService
 
 
-def build_chat_components(*, repository: Any, job_handler: Any, file_service: Any, agent: Any = None) -> ChatComponents:
+def build_chat_components(
+    *, repository: Any, job_handler: Any, file_service: Any, agent: Any = None
+) -> ChatComponents:
     routing_service = ModelRoutingService()
     orchestration_service = ChatJobOrchestrator(handler=job_handler)
     persistence_service = ChatPersistenceService(repository=repository)
@@ -32,7 +34,9 @@ def build_chat_components(*, repository: Any, job_handler: Any, file_service: An
         persistence_service=persistence_service,
         fallback_service=fallback_service,
     )
-    application_service = ChatApplicationService(chat_service=chat_service, file_service=file_service)
+    application_service = ChatApplicationService(
+        chat_service=chat_service, file_service=file_service
+    )
     return ChatComponents(
         routing_service=routing_service,
         orchestration_service=orchestration_service,

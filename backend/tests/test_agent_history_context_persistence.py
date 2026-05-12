@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -76,7 +76,7 @@ async def test_restore_pseudo_history_maps_agent_role_from_explicit_history() ->
 async def test_restore_pseudo_history_maps_agent_role_from_db_rows() -> None:
     from service.infrastructure.messaging.tasks import _restore_pseudo_session_history
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     rows = [
         ("agent", "Помню ваше имя", now),
         ("user", "Как меня зовут?", now),

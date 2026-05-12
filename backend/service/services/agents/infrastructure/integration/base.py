@@ -17,7 +17,9 @@ class BaseIntegration(abc.ABC):
 
     def __init__(self, *, name: str) -> None:
         self.name = name
-        self.logger = logging.getLogger(f"service.services.agents.infrastructure.integration.{name}")
+        self.logger = logging.getLogger(
+            f"service.services.agents.infrastructure.integration.{name}"
+        )
 
     @property
     @abc.abstractmethod

@@ -7,7 +7,7 @@ actual provider calls to `service.services.agents.integration` layer.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from service.services.agents.integration import get_memory_integration
@@ -79,7 +79,7 @@ class MemoryService:
             return value
         if isinstance(value, datetime):
             if value.tzinfo is None:
-                value = value.replace(tzinfo=timezone.utc)
+                value = value.replace(tzinfo=UTC)
             return value.isoformat()
         return None
 
@@ -87,7 +87,12 @@ class MemoryService:
     def _normalize_fact_item(item: dict[str, Any], index: int) -> dict[str, Any] | None:
         metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
 
-        fact_value = item.get("memory") or item.get("text") or item.get("content") or metadata.get("fact_value")
+        fact_value = (
+            item.get("memory")
+            or item.get("text")
+            or item.get("content")
+            or metadata.get("fact_value")
+        )
         if not isinstance(fact_value, str) or not fact_value.strip():
             return None
         fact_value = fact_value.strip()
@@ -121,7 +126,10 @@ class MemoryService:
             confidence_value = float(confidence)
 
         updated_at = MemoryService._normalize_datetime(
-            item.get("updated_at") or item.get("created_at") or metadata.get("updated_at") or metadata.get("created_at")
+            item.get("updated_at")
+            or item.get("created_at")
+            or metadata.get("updated_at")
+            or metadata.get("created_at")
         )
 
         return {
@@ -133,7 +141,9 @@ class MemoryService:
             "updated_at": updated_at,
         }
 
-    async def list_facts(self, user_id: str, query: str | None = None, top_k: int = 50) -> list[dict[str, Any]]:
+    async def list_facts(
+        self, user_id: str, query: str | None = None, top_k: int = 50
+    ) -> list[dict[str, Any]]:
         if not user_id:
             return []
 
@@ -142,10 +152,14 @@ class MemoryService:
             return []
 
         try:
-            raw_facts = await self.integration.list_facts(user_id=scoped_user_id, query=query, top_k=top_k)
+            raw_facts = await self.integration.list_facts(
+                user_id=scoped_user_id, query=query, top_k=top_k
+            )
             if not raw_facts:
                 # Backward-compatibility with previously stored raw user_id memories.
-                raw_facts = await self.integration.list_facts(user_id=str(user_id), query=query, top_k=top_k)
+                raw_facts = await self.integration.list_facts(
+                    user_id=str(user_id), query=query, top_k=top_k
+                )
 
             normalized: list[dict[str, Any]] = []
             seen_ids: set[str] = set()
@@ -165,7 +179,9 @@ class MemoryService:
             logger.debug("Facts listing failed", exc_info=True)
             return []
 
-    async def add_fact(self, user_id: str, fact_type: str, fact_key: str, fact_value: str) -> dict[str, Any]:
+    async def add_fact(
+        self, user_id: str, fact_type: str, fact_key: str, fact_value: str
+    ) -> dict[str, Any]:
         if not user_id:
             return {}
 

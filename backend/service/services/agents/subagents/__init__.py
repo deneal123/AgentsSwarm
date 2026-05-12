@@ -1,12 +1,12 @@
 from service.services.agents.domain.subagents import (
     AudioTranscriptionAgent,
     BaseSubAgent,
-    build_subagents,
     DeepResearchAgent,
     GeneralAgent,
     ImageGenerationAgent,
     PPTXGenerationAgent,
     WebSearchAgent,
+    build_subagents,
 )
 
 __all__ = [

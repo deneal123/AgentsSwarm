@@ -36,4 +36,11 @@ Tie-break правила:
 {"category": "deep_research|web_search|audio_transcribe|image_gen|pptx_gen|general"}
 """
 
-ALLOWED_CATEGORIES = {"deep_research", "web_search", "audio_transcribe", "image_gen", "pptx_gen", "general"}
+ALLOWED_CATEGORIES = {
+    "deep_research",
+    "web_search",
+    "audio_transcribe",
+    "image_gen",
+    "pptx_gen",
+    "general",
+}

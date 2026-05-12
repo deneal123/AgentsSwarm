@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from service.infrastructure.messaging import stream_helpers
@@ -27,7 +27,7 @@ class EventSerializer:
             "agent_name": event.agent_name,
             "metadata": self.to_jsonable(event.metadata or {}),
             "seq": getattr(event, "seq", 0),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         if isinstance(event.metadata, dict) and event.metadata.get("tool_name"):
             payload["tool_name"] = event.metadata.get("tool_name")
@@ -43,7 +43,9 @@ class ReplyAssembler:
         self.metadata: dict[str, Any] = {}
         self.structured_output: Any = None
 
-    def consume(self, *, event: Any, stream_chunk_type: Any, error_type: Any, structured_output_type: Any) -> None:
+    def consume(
+        self, *, event: Any, stream_chunk_type: Any, error_type: Any, structured_output_type: Any
+    ) -> None:
         if event.metadata:
             self.metadata.update(event.metadata)
         if event.type == stream_chunk_type and event.data is not None:
@@ -66,7 +68,9 @@ class ReplyAssembler:
 
 
 class AgentStreamPublisher:
-    def __init__(self, redis_client: Any, stream_key: str, retry_attempts: int = 3, retry_delay: float = 0.2) -> None:
+    def __init__(
+        self, redis_client: Any, stream_key: str, retry_attempts: int = 3, retry_delay: float = 0.2
+    ) -> None:
         self.redis_client = redis_client
         self.stream_key = stream_key
         self.retry_attempts = retry_attempts
@@ -79,7 +83,9 @@ class AgentStreamPublisher:
         last_error: Exception | None = None
         for attempt in range(1, self.retry_attempts + 1):
             try:
-                stream_helpers.xadd_sync(self.redis_client, self.stream_key, {"data": json.dumps(payload)})
+                stream_helpers.xadd_sync(
+                    self.redis_client, self.stream_key, {"data": json.dumps(payload)}
+                )
                 return True
             except Exception as exc:
                 last_error = exc
@@ -92,7 +98,9 @@ class AgentStreamPublisher:
                 if attempt < self.retry_attempts:
                     time.sleep(self.retry_delay)
         if last_error:
-            logger.exception("Failed to publish event to stream %s", self.stream_key, exc_info=last_error)
+            logger.exception(
+                "Failed to publish event to stream %s", self.stream_key, exc_info=last_error
+            )
         return False
 
     def close(self) -> None:

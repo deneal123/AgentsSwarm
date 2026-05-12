@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 try:
@@ -21,7 +22,9 @@ def test_postgres_and_redis_connectivity():
     assert psycopg2 is not None, "psycopg2 is not installed"
     assert redis_lib is not None, "redis client is not installed"
 
-    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test_db")
+    database_url = os.getenv(
+        "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test_db"
+    )
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Connect to Postgres

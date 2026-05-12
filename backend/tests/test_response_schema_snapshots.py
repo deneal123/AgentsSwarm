@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
-from service.services.chat.presentation.routers.chat_api.schemas import MessageResponse, ThreadResponse
+from service.services.chat.presentation.routers.chat_api.schemas import (
+    MessageResponse,
+    ThreadResponse,
+)
 from service.services.jobs.presentation.routers.jobs_api.schemas import JobResponse
 
 
@@ -9,7 +12,9 @@ def _schema_signature(model) -> dict[str, object]:
     return {
         "title": model.__name__,
         "fields": sorted(model.model_fields.keys()),
-        "required": sorted(name for name, field in model.model_fields.items() if field.is_required()),
+        "required": sorted(
+            name for name, field in model.model_fields.items() if field.is_required()
+        ),
     }
 
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
-
 
 _ANONYMOUS_USER_IDS = {
     "",
@@ -37,7 +36,9 @@ class ChatWorkerRepository:
         except Exception:
             return None
 
-    async def resolve_memory_user(self, *, db_session: Any, user_id: Any, thread_id: str) -> str | None:
+    async def resolve_memory_user(
+        self, *, db_session: Any, user_id: Any, thread_id: str
+    ) -> str | None:
         raw_user_id = str(user_id).strip() if user_id is not None else None
         if self._is_memory_eligible_user(raw_user_id):
             return raw_user_id
@@ -66,7 +67,9 @@ class ChatWorkerRepository:
             return "assistant" if role == "agent" else role
 
         restored_items: list[dict[str, Any]] = []
-        raw_history = (session_data or {}).get("history") if isinstance(session_data, dict) else None
+        raw_history = (
+            (session_data or {}).get("history") if isinstance(session_data, dict) else None
+        )
 
         if isinstance(raw_history, list):
             for item in raw_history[-history_limit:]:
@@ -82,7 +85,7 @@ class ChatWorkerRepository:
                     {
                         "role": role,
                         "content": content,
-                        "ts": float(item.get("ts") or datetime.now(timezone.utc).timestamp()),
+                        "ts": float(item.get("ts") or datetime.now(UTC).timestamp()),
                     }
                 )
 
@@ -113,9 +116,13 @@ class ChatWorkerRepository:
             if not txt:
                 continue
             try:
-                ts = float(created_at.timestamp()) if created_at is not None else datetime.now(timezone.utc).timestamp()
+                ts = (
+                    float(created_at.timestamp())
+                    if created_at is not None
+                    else datetime.now(UTC).timestamp()
+                )
             except Exception:
-                ts = datetime.now(timezone.utc).timestamp()
+                ts = datetime.now(UTC).timestamp()
             restored_items.append({"role": role, "content": txt, "ts": ts})
 
         return restored_items

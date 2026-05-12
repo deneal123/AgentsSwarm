@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 
-from service.main import app
 from service.composition.state import get_analytics_service
-from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
+from service.main import app
 from service.services.analytics.application.analytics_service import AnalyticsService
+from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
 
 
 class FakeRedis:

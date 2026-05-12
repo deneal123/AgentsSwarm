@@ -1,16 +1,18 @@
 """Base classes for agent implementations."""
-from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Any, Optional
-import logging
-import asyncio
-import re
 
+import logging
+import re
+from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
+from typing import Any
+
+from service.services.agents.domain.client import (
+    create_chat_completion,
+    get_active_provider,
+    list_available_models,
+)
 from service.services.agents.domain.events import AgentEvent, EventType
 from service.services.agents.schemas.agents import UserContext
-
-# Import unified client facade to initialize configured provider (MWS/OpenAI)
-from service.services.agents import client as agents_client  # noqa: F401
-from service.services.agents.domain.client import create_chat_completion, list_available_models, get_active_provider
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +29,7 @@ class BaseAgent(ABC):
         self.model_settings = model_settings
 
     @abstractmethod
-    async def process(
-        self,
-        user_input: str,
-        context: UserContext
-    ) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         """Main entry point for agent processing.
 
         Must yield AgentEvent objects that describe what the agent is doing.
@@ -54,7 +52,7 @@ class SimpleStreamingAgent(BaseAgent):
         tools: list = None,
         input_guardrails: list = None,
         output_guardrails: list = None,
-        max_turns: int = 6
+        max_turns: int = 6,
     ):
         super().__init__(name, instructions, model_settings)
         self.tools = tools or []
@@ -96,7 +94,9 @@ class SimpleStreamingAgent(BaseAgent):
         if event is None:
             return None
 
-        event_type = getattr(event, "type", None) or (event.get("type") if isinstance(event, dict) else None)
+        event_type = getattr(event, "type", None) or (
+            event.get("type") if isinstance(event, dict) else None
+        )
 
         # Direct candidates on event
         for field in ("text", "delta", "content"):
@@ -115,55 +115,77 @@ class SimpleStreamingAgent(BaseAgent):
 
             # Responses API shapes
             if event_type == "raw_response_event":
-                r_type = getattr(raw, "type", None) if not isinstance(raw, dict) else raw.get("type")
+                r_type = (
+                    getattr(raw, "type", None) if not isinstance(raw, dict) else raw.get("type")
+                )
                 if r_type in {
                     "response.output_text.delta",
                     "response.refusal.delta",
                     "response.function_call_arguments.delta",
                 }:
-                    value = getattr(raw, "delta", None) if not isinstance(raw, dict) else raw.get("delta")
+                    value = (
+                        getattr(raw, "delta", None)
+                        if not isinstance(raw, dict)
+                        else raw.get("delta")
+                    )
                     if isinstance(value, str) and value:
                         return value
 
                 if r_type in {"response.output_text.done", "response.completed"}:
-                    value = getattr(raw, "text", None) if not isinstance(raw, dict) else raw.get("text")
+                    value = (
+                        getattr(raw, "text", None) if not isinstance(raw, dict) else raw.get("text")
+                    )
                     if isinstance(value, str) and value:
                         return value
 
             # message output item shape
             item = getattr(raw, "item", None) if not isinstance(raw, dict) else raw.get("item")
             if item is not None:
-                content = getattr(item, "content", None) if not isinstance(item, dict) else item.get("content")
+                content = (
+                    getattr(item, "content", None)
+                    if not isinstance(item, dict)
+                    else item.get("content")
+                )
                 if isinstance(content, list):
                     for c in content:
-                        text = getattr(c, "text", None) if not isinstance(c, dict) else c.get("text")
+                        text = (
+                            getattr(c, "text", None) if not isinstance(c, dict) else c.get("text")
+                        )
                         if isinstance(text, str) and text:
                             return text
 
-            response = getattr(raw, "response", None) if not isinstance(raw, dict) else raw.get("response")
+            response = (
+                getattr(raw, "response", None) if not isinstance(raw, dict) else raw.get("response")
+            )
             if response is not None:
-                output = getattr(response, "output", None) if not isinstance(response, dict) else response.get("output")
+                output = (
+                    getattr(response, "output", None)
+                    if not isinstance(response, dict)
+                    else response.get("output")
+                )
                 if isinstance(output, list):
                     for out in output:
-                        content = getattr(out, "content", None) if not isinstance(out, dict) else out.get("content")
+                        content = (
+                            getattr(out, "content", None)
+                            if not isinstance(out, dict)
+                            else out.get("content")
+                        )
                         if isinstance(content, list):
                             for c in content:
-                                text = getattr(c, "text", None) if not isinstance(c, dict) else c.get("text")
+                                text = (
+                                    getattr(c, "text", None)
+                                    if not isinstance(c, dict)
+                                    else c.get("text")
+                                )
                                 if isinstance(text, str) and text:
                                     return text
 
         return None
 
-    async def process(
-        self,
-        user_input: str,
-        context: UserContext
-    ) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         """Stream response with optional tool calls."""
         yield AgentEvent(
-            type=EventType.AGENT_START,
-            agent_name=self.name,
-            data=f"Starting {self.name}"
+            type=EventType.AGENT_START, agent_name=self.name, data=f"Starting {self.name}"
         )
 
         # MWS keys in this environment can be restricted for /responses,
@@ -174,14 +196,13 @@ class SimpleStreamingAgent(BaseAgent):
             return
 
         try:
-            from agents import Agent as SDKAgent, Runner as SDKRunner
+            from agents import Agent as SDKAgent
             from agents import RunContextWrapper
+            from agents import Runner as SDKRunner
         except ImportError:
             logger.exception("Failed to import agents SDK")
             yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data="Agent SDK not available"
+                type=EventType.ERROR, agent_name=self.name, data="Agent SDK not available"
             )
             return
 
@@ -199,21 +220,20 @@ class SimpleStreamingAgent(BaseAgent):
                 tools=self.tools,
                 input_guardrails=self.input_guardrails,
                 output_guardrails=self.output_guardrails,
-                model_settings=ms
+                model_settings=ms,
             )
 
             try:
-                ctx_payload = context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                ctx_payload = (
+                    context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                )
             except Exception:
                 ctx_payload = {"user_id": str(context.user_id)}
 
             wrapped_context = RunContextWrapper(ctx_payload)
 
             result = SDKRunner.run_streamed(
-                agent,
-                user_input,
-                context=wrapped_context,
-                max_turns=self.max_turns
+                agent, user_input, context=wrapped_context, max_turns=self.max_turns
             )
 
             seq = 0
@@ -239,7 +259,7 @@ class SimpleStreamingAgent(BaseAgent):
                                     type=EventType.TOOL_CALL_START,
                                     agent_name=self.name,
                                     data=f"Using tool: {tool_name}",
-                                    seq=seq
+                                    seq=seq,
                                 )
 
                 chunk_text = self._extract_text_from_sdk_event(event)
@@ -248,10 +268,7 @@ class SimpleStreamingAgent(BaseAgent):
                     collected_text += chunk_text
                     streamed_chunks += 1
                     yield AgentEvent(
-                        type=EventType.STREAM_CHUNK,
-                        agent_name=self.name,
-                        data=chunk_text,
-                        seq=seq
+                        type=EventType.STREAM_CHUNK, agent_name=self.name, data=chunk_text, seq=seq
                     )
 
             if streamed_chunks == 0:
@@ -270,9 +287,7 @@ class SimpleStreamingAgent(BaseAgent):
                     )
 
             yield AgentEvent(
-                type=EventType.AGENT_COMPLETE,
-                agent_name=self.name,
-                data=f"Completed {self.name}"
+                type=EventType.AGENT_COMPLETE, agent_name=self.name, data=f"Completed {self.name}"
             )
 
         except Exception as exc:
@@ -302,7 +317,9 @@ class SimpleStreamingAgent(BaseAgent):
                         max_tokens=900,
                     )
                     fallback_text = (
-                        getattr(getattr(fallback_response.choices[0], "message", None), "content", None)
+                        getattr(
+                            getattr(fallback_response.choices[0], "message", None), "content", None
+                        )
                         or ""
                     )
 
@@ -339,10 +356,10 @@ class SimpleStreamingAgent(BaseAgent):
                 type=EventType.ERROR,
                 agent_name=self.name,
                 data=error_msg,
-                metadata={"error_type": type(exc).__name__, "original_error": str(exc)}
+                metadata={"error_type": type(exc).__name__, "original_error": str(exc)},
             )
 
-    async def _run_direct_completion(self, user_input: str) -> AsyncGenerator[AgentEvent, None]:
+    async def _run_direct_completion(self, user_input: str) -> AsyncGenerator[AgentEvent]:
         """Run direct completion path without SDK Responses API."""
         try:
             selected_model = None
@@ -374,10 +391,7 @@ class SimpleStreamingAgent(BaseAgent):
                 temperature=0.7,
                 max_tokens=900,
             )
-            text = (
-                getattr(getattr(response.choices[0], "message", None), "content", None)
-                or ""
-            )
+            text = getattr(getattr(response.choices[0], "message", None), "content", None) or ""
 
             if not str(text).strip():
                 yield AgentEvent(
@@ -421,10 +435,14 @@ class SimpleStreamingAgent(BaseAgent):
     def _pick_chat_capable_model(models: list[str]) -> str | None:
         """Pick a model that is likely to support chat/completions."""
         blocked_markers = ("bge", "e5", "gte", "embed", "embedding", "rerank", "ranker")
-        filtered = [m for m in (models or []) if not any(marker in m.lower() for marker in blocked_markers)]
+        filtered = [
+            m for m in (models or []) if not any(marker in m.lower() for marker in blocked_markers)
+        ]
         if not filtered:
             filtered = models or []
-        text_re = re.compile(r"(gpt|qwen|llama|mistral|deepseek|yi|phi|glm|kimi|instruct|chat|alpha)", re.I)
+        text_re = re.compile(
+            r"(gpt|qwen|llama|mistral|deepseek|yi|phi|glm|kimi|instruct|chat|alpha)", re.I
+        )
         return next((m for m in filtered if text_re.search(m)), filtered[0] if filtered else None)
 
 
@@ -445,7 +463,7 @@ class CollectorGeneratorAgent(BaseAgent):
         tools: list,
         output_schema: Any = None,
         collector_max_turns: int = 4,
-        generator_max_turns: int = 3
+        generator_max_turns: int = 3,
     ):
         super().__init__(name, instructions, model_settings)
         self.tools = tools
@@ -453,18 +471,14 @@ class CollectorGeneratorAgent(BaseAgent):
         self.collector_max_turns = collector_max_turns
         self.generator_max_turns = generator_max_turns
 
-    async def process(
-        self,
-        user_input: str,
-        context: UserContext
-    ) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         """Two-phase processing: collector → generator."""
 
         yield AgentEvent(
             type=EventType.AGENT_START,
             agent_name=self.name,
             data="Starting collector phase",
-            metadata={"phase": "collector"}
+            metadata={"phase": "collector"},
         )
 
         collected_data = None
@@ -477,40 +491,34 @@ class CollectorGeneratorAgent(BaseAgent):
             type=EventType.AGENT_START,
             agent_name=self.name,
             data="Starting generator phase",
-            metadata={"phase": "generator"}
+            metadata={"phase": "generator"},
         )
 
         async for event in self._generator_phase(user_input, context, collected_data):
             yield event
 
         yield AgentEvent(
-            type=EventType.AGENT_COMPLETE,
-            agent_name=self.name,
-            data=f"Completed {self.name}"
+            type=EventType.AGENT_COMPLETE, agent_name=self.name, data=f"Completed {self.name}"
         )
 
     async def _collector_phase(
-        self,
-        user_input: str,
-        context: UserContext
-    ) -> AsyncGenerator[AgentEvent, None]:
+        self, user_input: str, context: UserContext
+    ) -> AsyncGenerator[AgentEvent]:
         """Phase 1: Collect data using tools, return structured output."""
         try:
-            from agents import Agent as SDKAgent, Runner as SDKRunner
-            from agents import RunContextWrapper, ModelSettings
+            from agents import Agent as SDKAgent
+            from agents import ModelSettings, RunContextWrapper
+            from agents import Runner as SDKRunner
         except ImportError:
             logger.exception("Failed to import agents SDK")
             yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data="Agent SDK not available"
+                type=EventType.ERROR, agent_name=self.name, data="Agent SDK not available"
             )
             return
 
         try:
             collector_instructions = (
-                self.instructions +
-                "\n\nФаза COLLECTOR (сбор данных): "
+                self.instructions + "\n\nФаза COLLECTOR (сбор данных): "
                 "используй инструменты целенаправленно, собирай проверяемые факты и структурируй результат. "
                 "Не пиши финальный пользовательский ответ. "
                 "Если данных недостаточно — явно укажи пробелы и что ещё нужно собрать."
@@ -526,21 +534,20 @@ class CollectorGeneratorAgent(BaseAgent):
                 instructions=collector_instructions,
                 tools=self.tools,
                 model_settings=ms,
-                output_type=self.output_schema
+                output_type=self.output_schema,
             )
 
             try:
-                ctx_payload = context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                ctx_payload = (
+                    context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                )
             except Exception:
                 ctx_payload = {"user_id": str(context.user_id)}
 
             wrapped_context = RunContextWrapper(ctx_payload)
 
             result = await SDKRunner.run(
-                collector,
-                user_input,
-                context=wrapped_context,
-                max_turns=self.collector_max_turns
+                collector, user_input, context=wrapped_context, max_turns=self.collector_max_turns
             )
 
             final_output = getattr(result, "final_output", None)
@@ -550,13 +557,13 @@ class CollectorGeneratorAgent(BaseAgent):
                     type=EventType.STRUCTURED_OUTPUT,
                     agent_name=self.name,
                     data=final_output,
-                    metadata={"phase": "collector"}
+                    metadata={"phase": "collector"},
                 )
             else:
                 yield AgentEvent(
                     type=EventType.STATUS_UPDATE,
                     agent_name=self.name,
-                    data="Collector phase completed with no output"
+                    data="Collector phase completed with no output",
                 )
 
         except Exception as exc:
@@ -565,32 +572,27 @@ class CollectorGeneratorAgent(BaseAgent):
                 type=EventType.ERROR,
                 agent_name=self.name,
                 data=f"Collector error: {str(exc)}",
-                metadata={"error_type": type(exc).__name__, "phase": "collector"}
+                metadata={"error_type": type(exc).__name__, "phase": "collector"},
             )
 
     async def _generator_phase(
-        self,
-        user_input: str,
-        context: UserContext,
-        collected_data: Any
-    ) -> AsyncGenerator[AgentEvent, None]:
+        self, user_input: str, context: UserContext, collected_data: Any
+    ) -> AsyncGenerator[AgentEvent]:
         """Phase 2: Stream human-friendly response using collected data."""
         try:
-            from agents import Agent as SDKAgent, Runner as SDKRunner
-            from agents import RunContextWrapper, ModelSettings
+            from agents import Agent as SDKAgent
+            from agents import ModelSettings, RunContextWrapper
+            from agents import Runner as SDKRunner
         except ImportError:
             logger.exception("Failed to import agents SDK")
             yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data="Agent SDK not available"
+                type=EventType.ERROR, agent_name=self.name, data="Agent SDK not available"
             )
             return
 
         try:
             generator_instructions = (
-                self.instructions +
-                "\n\nФаза GENERATOR (финальный ответ): "
+                self.instructions + "\n\nФаза GENERATOR (финальный ответ): "
                 "используй collected_data из контекста как единую фактическую базу. "
                 "НЕ вызывай инструменты. "
                 "Сформируй ясный, структурированный и практичный ответ для пользователя. "
@@ -606,11 +608,13 @@ class CollectorGeneratorAgent(BaseAgent):
                 name=f"{self.name}-Generator",
                 instructions=generator_instructions,
                 tools=[],
-                model_settings=ms
+                model_settings=ms,
             )
 
             try:
-                ctx_payload = context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                ctx_payload = (
+                    context.model_dump() if hasattr(context, "model_dump") else context.dict()
+                )
             except Exception:
                 ctx_payload = {"user_id": str(context.user_id)}
 
@@ -619,10 +623,7 @@ class CollectorGeneratorAgent(BaseAgent):
             wrapped_context = RunContextWrapper(ctx_payload)
 
             result = SDKRunner.run_streamed(
-                generator,
-                user_input,
-                context=wrapped_context,
-                max_turns=self.generator_max_turns
+                generator, user_input, context=wrapped_context, max_turns=self.generator_max_turns
             )
 
             seq = 0
@@ -642,7 +643,7 @@ class CollectorGeneratorAgent(BaseAgent):
                             agent_name=self.name,
                             data=delta,
                             seq=seq,
-                            metadata={"phase": "generator"}
+                            metadata={"phase": "generator"},
                         )
 
         except Exception as exc:
@@ -651,5 +652,5 @@ class CollectorGeneratorAgent(BaseAgent):
                 type=EventType.ERROR,
                 agent_name=self.name,
                 data=f"Generator error: {str(exc)}",
-                metadata={"error_type": type(exc).__name__, "phase": "generator"}
+                metadata={"error_type": type(exc).__name__, "phase": "generator"},
             )

@@ -19,6 +19,6 @@ class JobLogic(BaseModel):
 
     # Celery task tracking
     celery_task_id: str | None = None  # Link to Celery task
-    celery_status: str | None = None   # Celery task status
+    celery_status: str | None = None  # Celery task status
 
     model_config = ConfigDict(from_attributes=True)

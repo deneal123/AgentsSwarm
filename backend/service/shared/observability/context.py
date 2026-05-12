@@ -10,8 +10,8 @@ class CorrelationContext:
     trace_id: str | None = None
 
 
-_correlation_context: ContextVar[CorrelationContext] = ContextVar(
-    "correlation_context", default=CorrelationContext()
+_correlation_context: ContextVar[CorrelationContext | None] = ContextVar(
+    "correlation_context", default=None
 )
 
 

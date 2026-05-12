@@ -4,15 +4,21 @@ import logging
 import re
 from pathlib import Path
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
-from service.services.agents.client import list_available_models
-from service.settings import config
+from service.services.agents.domain.client import list_available_models
 from service.services.agents.tools.pptx import generate_pptx
 from service.services.agents.tools.web_search import parse_url, web_search
-from service.services.chat.application.use_cases.chat_use_cases import CreateThreadUseCase, PostMessageUseCase
-from service.services.chat.application.error_handling import map_to_http_exception, normalize_response_metadata
+from service.services.chat.application.error_handling import (
+    map_to_http_exception,
+    normalize_response_metadata,
+)
+from service.services.chat.application.use_cases.chat_use_cases import (
+    CreateThreadUseCase,
+    PostMessageUseCase,
+)
 from service.services.chat.domain.chat_service import ChatService
+from service.settings import config
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +33,11 @@ class ChatApplicationService:
     @staticmethod
     def filter_chat_models(models: list[str]) -> list[str]:
         blocked_markers = ("bge", "e5", "gte", "embed", "embedding", "rerank", "ranker")
-        return [m for m in (models or []) if not any(marker in str(m).lower() for marker in blocked_markers)]
+        return [
+            m
+            for m in (models or [])
+            if not any(marker in str(m).lower() for marker in blocked_markers)
+        ]
 
     async def post_message(self, thread_id: str, payload) -> dict:
         use_case = PostMessageUseCase(self.chat_service)
@@ -39,7 +49,9 @@ class ChatApplicationService:
         return {
             "reply": result.reply,
             "thread_id": result.thread_id,
-            "metadata": normalize_response_metadata(result.metadata.data, selected_model=payload.model),
+            "metadata": normalize_response_metadata(
+                result.metadata.data, selected_model=payload.model
+            ),
         }
 
     async def create_thread(self, user_id: str | None, title: str | None) -> dict:
@@ -56,7 +68,9 @@ class ChatApplicationService:
 
     async def get_thread_messages(self, thread_id: str, page: int, per_page: int) -> dict:
         try:
-            return await self.chat_service.get_messages(thread_id=thread_id, page=page, per_page=per_page)
+            return await self.chat_service.get_messages(
+                thread_id=thread_id, page=page, per_page=per_page
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid pagination parameters") from exc
         except Exception as exc:
@@ -69,7 +83,9 @@ class ChatApplicationService:
 
     async def list_threads(self, user_id: str | None, page: int, per_page: int) -> dict:
         try:
-            return await self.chat_service.list_threads(user_id=user_id, page=page, per_page=per_page)
+            return await self.chat_service.list_threads(
+                user_id=user_id, page=page, per_page=per_page
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid pagination parameters") from exc
         except Exception as exc:
@@ -111,7 +127,9 @@ class ChatApplicationService:
         raw = str(file_key or "").strip()
         if not raw:
             raise HTTPException(status_code=400, detail="file_key is required")
-        storage_root = (config.storage.root or ChatApplicationService.DEFAULT_STORAGE_ROOT).rstrip("/")
+        storage_root = (config.storage.root or ChatApplicationService.DEFAULT_STORAGE_ROOT).rstrip(
+            "/"
+        )
         if raw.startswith(f"{storage_root}/"):
             raw = raw[len(storage_root) + 1 :]
         elif raw.startswith(f"{ChatApplicationService.DEFAULT_STORAGE_ROOT}/"):
@@ -137,7 +155,7 @@ class ChatApplicationService:
             raise HTTPException(status_code=400, detail="URL is required")
         try:
             return await parse_url(url_value)
-        except Exception as exc:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             logger.exception("URL parsing failed")
             raise HTTPException(
                 status_code=502,
@@ -156,5 +174,7 @@ class ChatApplicationService:
             raise HTTPException(status_code=503, detail="No models available")
 
         pptx_bytes, _ = await generate_pptx(topic_value, model)
-        filename = re.sub(r"[^\w\s-]", "", topic_value)[:40].strip().replace(" ", "_") or "presentation"
+        filename = (
+            re.sub(r"[^\w\s-]", "", topic_value)[:40].strip().replace(" ", "_") or "presentation"
+        )
         return {"payload": pptx_bytes, "filename": f"{filename}.pptx"}

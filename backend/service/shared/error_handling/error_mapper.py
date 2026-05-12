@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from fastapi import HTTPException, status
 
+from service.shared.dto import AppErrorResponse, ErrorDetail
+from service.shared.error_handling.exceptions import ApplicationError
+from service.shared.observability.context import get_correlation_id, get_trace_id
 from service.shared.repositories.exceptions import (
     RepositoryError,
     RepositoryIntegrityError,
@@ -9,9 +12,6 @@ from service.shared.repositories.exceptions import (
     RepositoryNotFoundError,
     RepositoryOperationalError,
 )
-from service.shared.observability.context import get_correlation_id, get_trace_id
-from service.shared.dto import AppErrorResponse, ErrorDetail
-from service.shared.error_handling.exceptions import ApplicationError
 
 
 def map_exception_to_status(error: Exception) -> int:
@@ -32,7 +32,9 @@ def map_exception_to_status(error: Exception) -> int:
     return status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-def map_exception_to_error_response(error: Exception, default_message: str = "Internal server error") -> AppErrorResponse:
+def map_exception_to_error_response(
+    error: Exception, default_message: str = "Internal server error"
+) -> AppErrorResponse:
     if isinstance(error, HTTPException):
         detail = error.detail if isinstance(error.detail, dict) else {"message": str(error.detail)}
         message = detail.get("message", default_message)

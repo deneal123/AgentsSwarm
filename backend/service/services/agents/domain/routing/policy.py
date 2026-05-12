@@ -4,19 +4,23 @@
 от исполнения router-agent.
 """
 
-from typing import Optional
-
-
-_ALLOWED_FORCED_CATEGORIES = {"deep_research", "web_search", "audio_transcribe", "image_gen", "pptx_gen", "general"}
+_ALLOWED_FORCED_CATEGORIES = {
+    "deep_research",
+    "web_search",
+    "audio_transcribe",
+    "image_gen",
+    "pptx_gen",
+    "general",
+}
 
 
 def resolve_forced_category(
     *,
-    route_override: Optional[str],
-    input_type: Optional[str],
+    route_override: str | None,
+    input_type: str | None,
     web_search: bool,
     deep_research: bool,
-) -> Optional[str]:
+) -> str | None:
     """Return category forced by upstream flags/input type, if any."""
     if route_override and route_override in _ALLOWED_FORCED_CATEGORIES:
         return route_override
@@ -32,6 +36,6 @@ def resolve_forced_category(
     return None
 
 
-def finalize_category(llm_category: Optional[str]) -> str:
+def finalize_category(llm_category: str | None) -> str:
     """Finalize category with safe fallback."""
     return llm_category or "general"

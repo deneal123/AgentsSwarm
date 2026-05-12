@@ -2,11 +2,17 @@ import asyncio
 
 from service.services.agents.application.ports.interfaces import AgentExecutionPort, StreamPort
 from service.services.analytics.application.ports.interfaces import MemoryIntegrationPort
-from service.services.profile.application.ports.interfaces import ProfileCachePort, ProfileRepositoryPort
 from service.services.chat.application.ports.interfaces import ChatCommandPort
 from service.services.files.application.ports.interfaces import FileStoragePort, MessageBusPort
-from service.services.jobs.application.ports.interfaces import JobHandlePort, JobOrchestrationPort, JobQueuePort
-
+from service.services.jobs.application.ports.interfaces import (
+    JobHandlePort,
+    JobOrchestrationPort,
+    JobQueuePort,
+)
+from service.services.profile.application.ports.interfaces import (
+    ProfileCachePort,
+    ProfileRepositoryPort,
+)
 
 
 class FakeMessageBus:
@@ -95,7 +101,9 @@ class FakeProfileCache:
     def __init__(self):
         self.bucket = {}
 
-    async def set_json(self, namespace: str, key: str, value: dict, ttl_seconds: int | None = None) -> None:
+    async def set_json(
+        self, namespace: str, key: str, value: dict, ttl_seconds: int | None = None
+    ) -> None:
         self.bucket[(namespace, key)] = value
 
     async def get_json(self, namespace: str, key: str):
@@ -109,13 +117,19 @@ class FakeMemoryIntegration:
     async def get_memory_context(self, *, user_id: str, top_k: int = 5) -> str:
         return f"ctx:{user_id}:{top_k}"
 
-    async def save_messages(self, *, user_id: str, messages: list[dict], metadata: dict | None = None) -> None:
+    async def save_messages(
+        self, *, user_id: str, messages: list[dict], metadata: dict | None = None
+    ) -> None:
         return None
 
-    async def list_facts(self, *, user_id: str, query: str | None = None, top_k: int = 50) -> list[dict]:
+    async def list_facts(
+        self, *, user_id: str, query: str | None = None, top_k: int = 50
+    ) -> list[dict]:
         return [{"id": "1", "memory": "name:John"}]
 
-    async def add_fact(self, *, user_id: str, fact_type: str, fact_key: str, fact_value: str) -> dict:
+    async def add_fact(
+        self, *, user_id: str, fact_type: str, fact_key: str, fact_value: str
+    ) -> dict:
         return {"id": "1", "fact_key": fact_key, "memory": fact_value}
 
     async def delete_fact(self, *, user_id: str, fact_id: str) -> bool:
@@ -146,7 +160,9 @@ def test_file_storage_port_contract() -> None:
     assert isinstance(storage, FileStoragePort)
     key = storage.build_file_path("uploads", "CHAT", "a.txt")
     assert key == "uploads/CHAT/a.txt"
-    assert asyncio.run(storage.upload_file(file_key=key, file_data=b"x")) == "mem://uploads/CHAT/a.txt"
+    assert (
+        asyncio.run(storage.upload_file(file_key=key, file_data=b"x")) == "mem://uploads/CHAT/a.txt"
+    )
     asyncio.run(storage.delete_file(file_key=key))
 
 

@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 
 from service.services.files.application.file_scanner_service import BasicFileScanner
 

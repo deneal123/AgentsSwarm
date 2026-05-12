@@ -4,7 +4,6 @@ from pathlib import Path
 
 from fastapi import HTTPException, status
 
-from service.services.files.application.ports.interfaces import FileStoragePort, MessageBusPort
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
 from service.models.key_value import ServiceType
@@ -13,6 +12,7 @@ from service.services.files.application.dto import (
     FileMetadata,
     UploadResponse,
 )
+from service.services.files.application.ports.interfaces import FileStoragePort, MessageBusPort
 from service.services.files.persistence.file_repository import FileRepository
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,9 @@ class FileSaverService:
             raise ValueError("File not found")
         return FileMetadataLogic(file_id=user_file.id, file_url=user_file.file_url)
 
-    async def presign_upload(self, user_id, mode: ServiceType, file_name: str, expiry_sec: int | None = None) -> dict:
+    async def presign_upload(
+        self, user_id, mode: ServiceType, file_name: str, expiry_sec: int | None = None
+    ) -> dict:
         """Prepare a presigned upload URL and return temporary identifiers.
 
         Does not persist metadata; client must call callback to finalize.

@@ -4,9 +4,9 @@ Revision ID: 017_drop_phone
 Revises: 016_billing_idx_trgs
 Create Date: 2025-12-26 13:00:00.000000
 """
-from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -23,7 +23,7 @@ def upgrade() -> None:
     environments where the column might already be absent.
     """
     # Drop column if it exists (Postgres supports IF EXISTS)
-    op.execute("ALTER TABLE profile.\"user\" DROP COLUMN IF EXISTS phone;")
+    op.execute('ALTER TABLE profile."user" DROP COLUMN IF EXISTS phone;')
 
 
 def downgrade() -> None:

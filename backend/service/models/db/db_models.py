@@ -24,19 +24,21 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(500), unique=True, comment="User email address")
     password_hash: Mapped[str] = mapped_column(String(255), comment="Hashed user password")
-    available_launches: Mapped[int] = mapped_column(Integer, nullable=False, comment="Number of available launches")
+    available_launches: Mapped[int] = mapped_column(
+        Integer, nullable=False, comment="Number of available launches"
+    )
     first_name: Mapped[str | None] = mapped_column(String(50), comment="User first name")
     timezone: Mapped[str | None] = mapped_column(String(50), comment="Preferred timezone name")
     avatar_url: Mapped[str | None] = mapped_column(String(1000), comment="Public avatar URL")
 
-    user_launches: Mapped[list["UserLaunch"]] = relationship(
+    user_launches: Mapped[list[UserLaunch]] = relationship(
         cascade="all, delete-orphan",
         back_populates="user",
         lazy="selectin",
     )
 
     # Files owned by the user
-    user_files: Mapped[list["UserFile"]] = relationship(
+    user_files: Mapped[list[UserFile]] = relationship(
         cascade="all, delete-orphan",
         back_populates="user",
         lazy="selectin",
@@ -55,7 +57,9 @@ class UserLaunch(Base):
         index=True,
         comment="Reference to user",
     )
-    type: Mapped[ServiceType] = mapped_column(Enum(ServiceType, name="service_type", create_type=True), comment="Launch type")
+    type: Mapped[ServiceType] = mapped_column(
+        Enum(ServiceType, name="service_type", create_type=True), comment="Launch type"
+    )
     status: Mapped[ProcessingStatus] = mapped_column(String(50), comment="Launch status")
     payload: Mapped[dict | None] = mapped_column(
         JSONB, nullable=True, comment="Optional JSON payload with job parameters"
@@ -69,7 +73,7 @@ class UserLaunch(Base):
         String(50), nullable=True, comment="Celery task status"
     )
 
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         back_populates="user_launches",
         lazy="selectin",
     )
@@ -105,13 +109,15 @@ class UserFile(Base):
         index=True,
         comment="Reference to user",
     )
-    type: Mapped[ServiceType] = mapped_column(Enum(ServiceType, name="service_type", create_type=False), name="mode", comment="service type")
+    type: Mapped[ServiceType] = mapped_column(
+        Enum(ServiceType, name="service_type", create_type=False),
+        name="mode",
+        comment="service type",
+    )
     file_name: Mapped[str] = mapped_column(String(1000), comment="file name")
     file_url: Mapped[str] = mapped_column(String(1000), comment="file path or URL")
 
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         back_populates="user_files",
         lazy="selectin",
     )
-
-

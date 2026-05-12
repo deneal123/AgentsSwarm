@@ -1,11 +1,10 @@
 """Web search and URL parsing service using DuckDuckGo and httpx."""
 
+import base64
 import logging
 import re
-import base64
 from html import unescape
-from typing import List
-from urllib.parse import quote_plus, unquote, urlparse, parse_qs
+from urllib.parse import parse_qs, quote_plus, unquote, urlparse
 
 import httpx
 
@@ -70,7 +69,9 @@ def _normalize_result_url(raw_url: str) -> str:
                 u_val = u_val[2:]
             if u_val:
                 padding = "=" * ((4 - (len(u_val) % 4)) % 4)
-                decoded = base64.urlsafe_b64decode((u_val + padding).encode("utf-8")).decode("utf-8", "ignore")
+                decoded = base64.urlsafe_b64decode((u_val + padding).encode("utf-8")).decode(
+                    "utf-8", "ignore"
+                )
                 if decoded.startswith(("http://", "https://")):
                     url = decoded
         except Exception:
@@ -91,12 +92,12 @@ def _normalize_result_url(raw_url: str) -> str:
     return url
 
 
-async def web_search(query: str, num_results: int = 5) -> List[dict]:
+async def web_search(query: str, num_results: int = 5) -> list[dict]:
     """Search the web using DuckDuckGo HTML and return results.
 
     Returns list of {title, url, snippet}.
     """
-    results: List[dict] = []
+    results: list[dict] = []
 
     def _append_unique(url: str, title: str, snippet: str) -> None:
         normalized = _normalize_result_url(url)
@@ -153,7 +154,9 @@ async def web_search(query: str, num_results: int = 5) -> List[dict]:
         for block in blocks:
             if len(results) >= num_results:
                 break
-            link_match = re.search(r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', block, re.S | re.I)
+            link_match = re.search(
+                r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', block, re.S | re.I
+            )
             if not link_match:
                 continue
             raw_url = (link_match.group(1) or "").strip()
@@ -173,7 +176,9 @@ async def web_search(query: str, num_results: int = 5) -> List[dict]:
             return
 
         # Yandex SERP often keeps links inside h2.organic__title-wrapper a or plain h2 > a.
-        blocks = re.findall(r'<li[^>]+class="[^"]*(?:serp-item|organic)[^"]*"[^>]*>(.*?)</li>', html, re.S | re.I)
+        blocks = re.findall(
+            r'<li[^>]+class="[^"]*(?:serp-item|organic)[^"]*"[^>]*>(.*?)</li>', html, re.S | re.I
+        )
         for block in blocks:
             if len(results) >= num_results:
                 break
@@ -204,7 +209,11 @@ async def web_search(query: str, num_results: int = 5) -> List[dict]:
             if len(results) >= num_results:
                 break
 
-            end = web_positions[idx + 1] if idx + 1 < len(web_positions) else min(len(html), pos + 8000)
+            end = (
+                web_positions[idx + 1]
+                if idx + 1 < len(web_positions)
+                else min(len(html), pos + 8000)
+            )
             block = html[pos:end]
 
             link_match = re.search(r'<a[^>]+href="(https?://[^"]+)"[^>]*>', block, re.S | re.I)
@@ -238,7 +247,9 @@ async def web_search(query: str, num_results: int = 5) -> List[dict]:
 
         # Fallback: if structured blocks changed, still pick external anchors from page
         if not results:
-            for href, text in re.findall(r'<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', html, re.S | re.I):
+            for href, text in re.findall(
+                r'<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', html, re.S | re.I
+            ):
                 if len(results) >= num_results:
                     break
                 raw_url = (href or "").strip()
@@ -338,11 +349,11 @@ async def parse_url(url: str, max_chars: int = 5000) -> dict:
 
         content = ""
         for selector in [
-            r'<article[^>]*>(.*?)</article>',
-            r'<main[^>]*>(.*?)</main>',
+            r"<article[^>]*>(.*?)</article>",
+            r"<main[^>]*>(.*?)</main>",
             r'class="content"[^>]*>(.*?)</div>',
             r'class="post-content"[^>]*>(.*?)</div>',
-            r'<body[^>]*>(.*?)</body>',
+            r"<body[^>]*>(.*?)</body>",
         ]:
             match = re.search(selector, html, re.S | re.I)
             if match:

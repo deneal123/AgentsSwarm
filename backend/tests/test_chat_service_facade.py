@@ -17,7 +17,9 @@ class _FakeRoutingService:
 
 class _FakeOrchestration:
     async def execute(self, **kwargs):
-        return ChatReplyResult(reply="ok", thread_id="t1", metadata=ChatProcessingMetadata(data={"source": "job"}))
+        return ChatReplyResult(
+            reply="ok", thread_id="t1", metadata=ChatProcessingMetadata(data={"source": "job"})
+        )
 
 
 class _FakePersistence:
@@ -39,7 +41,9 @@ class _FakePersistence:
 
 class _FakeFallback:
     async def execute(self, **kwargs):
-        return ChatReplyResult(reply="fallback", thread_id="t1", metadata=ChatProcessingMetadata(data={}))
+        return ChatReplyResult(
+            reply="fallback", thread_id="t1", metadata=ChatProcessingMetadata(data={})
+        )
 
 
 @pytest.mark.asyncio

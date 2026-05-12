@@ -1,5 +1,6 @@
-import pytest
 import importlib
+
+import pytest
 
 
 class _FakeMessage:

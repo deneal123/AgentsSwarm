@@ -1,8 +1,9 @@
 import asyncio
+
 import pytest
 
-from tests.test_helpers import FakeAsyncRedis
 from service.infrastructure.messaging import worker_consumer
+from tests.test_helpers import FakeAsyncRedis
 
 
 class OneMessageRedis(FakeAsyncRedis):

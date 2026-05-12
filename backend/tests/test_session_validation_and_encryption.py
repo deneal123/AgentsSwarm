@@ -1,6 +1,6 @@
 import pytest
-from pydantic import ValidationError
 from cryptography.fernet import Fernet
+from pydantic import ValidationError
 
 from service.services.agents.infrastructure.sessions import PseudoSession, RedisSession
 

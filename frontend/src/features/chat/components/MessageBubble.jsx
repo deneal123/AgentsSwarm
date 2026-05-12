@@ -15,7 +15,9 @@ import {
   Image,
   Link
 } from '@chakra-ui/react';
-import { MotionBox } from '@shared/ui/lib/motionPrimitives';
+import { motion } from 'framer-motion';
+
+const MotionBox = motion(Box);
 import {
   FiCopy,
   FiMoreVertical,

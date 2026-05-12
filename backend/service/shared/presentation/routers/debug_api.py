@@ -34,7 +34,7 @@ async def get_session_by_token(token: str):
 
 
 @router.post("/emit")
-async def emit_stream_event(thread_id: str = Body(...), payload: dict = Body(...)):
+async def emit_stream_event(thread_id: str = Body(...), payload: dict = Body(...)):  # noqa: B008
     """Debug helper: emit a JSON payload into chat:{thread_id}:stream using the app's Redis client.
 
     This helps testing WS consumers using messages emitted from the same process.

@@ -1,6 +1,6 @@
-import pytest
-import pytest
 import json
+
+import pytest
 from prometheus_client import REGISTRY
 
 from service.services.chat.presentation.routers import chat_ws
@@ -47,7 +47,10 @@ def get_metric(name):
 async def test_chat_claimed_metrics(monkeypatch):
     fake_ws = FakeWebSocket(send_fail_on={"1-0"})
     fake_redis = FakeRedis()
-    claimed = [("1-0", {"data": json.dumps({"event": "one"})}), ("2-0", {"data": json.dumps({"event": "two"})})]
+    claimed = [
+        ("1-0", {"data": json.dumps({"event": "one"})}),
+        ("2-0", {"data": json.dumps({"event": "two"})}),
+    ]
 
     before_sent = get_metric("chat_claimed_sent_total")
     before_left = get_metric("chat_claimed_left_unacked_total")
@@ -73,7 +76,10 @@ async def test_jobs_claimed_metrics_and_xack_error(monkeypatch):
     fake_ws = FakeWebSocket(send_fail_on=set())
     fake_redis = FakeRedis()
     # include an entry that will cause xack to fail
-    claimed = [("good-1", {"data": json.dumps({"event": "ok"})}), ("bad-ack", {"data": json.dumps({"event": "failack"})})]
+    claimed = [
+        ("good-1", {"data": json.dumps({"event": "ok"})}),
+        ("bad-ack", {"data": json.dumps({"event": "failack"})}),
+    ]
 
     before_sent = get_metric("jobs_claimed_sent_total")
     before_left = get_metric("jobs_claimed_left_unacked_total")

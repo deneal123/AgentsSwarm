@@ -1,4 +1,5 @@
 """Minimal secret loader — reads encryption key from environment or settings."""
+
 import os
 
 

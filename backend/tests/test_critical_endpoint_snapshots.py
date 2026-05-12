@@ -37,7 +37,9 @@ def _collect_schema_refs(value: Any, refs: set[str]) -> None:
             _collect_schema_refs(nested, refs)
 
 
-def _collect_component_schemas(openapi_schema: dict[str, Any], root_refs: set[str]) -> dict[str, Any]:
+def _collect_component_schemas(
+    openapi_schema: dict[str, Any], root_refs: set[str]
+) -> dict[str, Any]:
     components = openapi_schema.get("components", {}).get("schemas", {})
     collected: dict[str, Any] = {}
     queue = list(root_refs)

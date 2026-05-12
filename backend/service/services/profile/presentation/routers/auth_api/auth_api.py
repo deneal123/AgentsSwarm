@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, Request, Response
 
 from service.composition.state import get_auth_service
+from service.services.profile.application.auth_service import AuthService
 from service.services.profile.presentation.routers.auth_api.schemas import (
     LoginRequest,
     LoginResponse,
     RegisterRequest,
     RegisterResponse,
 )
-from service.services.profile.application.auth_service import AuthService
 from service.settings import config
 
 logger = logging.getLogger(__name__)

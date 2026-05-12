@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from service.composition.models import InfraContainer, RepositoriesContainer, ServicesContainer
+from service.services.analytics.application.analytics_service import AnalyticsService
+from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
 from service.services.chat.composition import build_chat_components
 from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.services.chat.persistence.chat_repository import ChatRepository
-from service.services.analytics.application.analytics_service import AnalyticsService
-from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
 from service.services.files.application.file_saver_service import FileSaverService
 from service.services.jobs.application.job_processor import NewJobProcessor
 from service.services.jobs.application.job_service import JobService
@@ -24,9 +24,7 @@ def build_services(
         repos.profile_repository,
         cache=infra.redis_cache,
         cache_ttl_seconds=(
-            config.redis.profile_cache_ttl_seconds
-            if infra.redis_cache and config.redis
-            else None
+            config.redis.profile_cache_ttl_seconds if infra.redis_cache and config.redis else None
         ),
     )
     auth_service = AuthService(
@@ -47,9 +45,7 @@ def build_services(
         message_bus=infra.message_bus_port,
     )
 
-    analytics_service = AnalyticsService(
-        AnalyticsVitalsRepository(redis_client=infra.redis_client)
-    )
+    analytics_service = AnalyticsService(AnalyticsVitalsRepository(redis_client=infra.redis_client))
 
     process_chat_message_handler = ProcessChatMessageHandler(
         job_service=job_service,

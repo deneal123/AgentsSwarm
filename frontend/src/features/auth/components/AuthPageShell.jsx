@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@chakra-ui/react";
 import { Global } from "@emotion/react";
-import { AUTH_FONT_FAMILY, AUTH_THEME } from "@features/auth/constants";
+import { AUTH_FONT_FAMILY, AUTH_THEME } from "../constants";
 
 function AuthPageShell({ children, topGradient, bottomGradient, containerProps = {} }) {
   return (

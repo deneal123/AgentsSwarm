@@ -81,7 +81,9 @@ def collect_python_files(root: Path) -> list[Path]:
 
 
 def function_nodes(tree: ast.AST) -> list[ast.AST]:
-    return [node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    return [
+        node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
 
 
 def evaluate(root: Path, critical_dirs: list[Path], thresholds: Thresholds) -> None:

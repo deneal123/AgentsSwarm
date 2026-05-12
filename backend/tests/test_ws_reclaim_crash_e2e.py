@@ -1,5 +1,6 @@
-import pytest
 import json
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -60,7 +61,7 @@ async def test_ws_crash_then_reclaim_e2e():
         async def xautoclaim(self, stream, group, consumer, min_idle_ms, start_id, count=100):
             pend = self.pending.get(group, {})
             entries = []
-            for eid, (fields, orig_consumer) in list(pend.items()):
+            for eid, (fields, _orig_consumer) in list(pend.items()):
                 entries.append((eid, fields))
                 del pend[eid]
             return ("0-0", entries)
@@ -76,7 +77,15 @@ async def test_ws_crash_then_reclaim_e2e():
     id2 = fake.xadd(stream, {"data": json.dumps({"event": "two"})})
 
     # mark them pending by doing a read (simulates consumer reading but failing to ack)
-    await stream_helpers.worker_consume_once(fake, stream, group, consumer, lambda *_: (_ for _ in ()).throw(RuntimeError("fail")), count=10, block=0)
+    await stream_helpers.worker_consume_once(
+        fake,
+        stream,
+        group,
+        consumer,
+        lambda *_: (_ for _ in ()).throw(RuntimeError("fail")),
+        count=10,
+        block=0,
+    )
 
     pend = await stream_helpers.xpending(fake, stream, group)
     assert pend.get("count", 0) == 2
@@ -112,7 +121,9 @@ async def test_ws_crash_then_reclaim_e2e():
     async def good_proc(mid, fields):
         processed.append(mid)
 
-    cnt = await stream_helpers.reclaim_and_process(fake, stream, group, "reclaimer", good_proc, min_idle_ms=0, count=100)
+    cnt = await stream_helpers.reclaim_and_process(
+        fake, stream, group, "reclaimer", good_proc, min_idle_ms=0, count=100
+    )
     assert cnt == 1
     assert id2 in processed
     assert id2 in fake.acked

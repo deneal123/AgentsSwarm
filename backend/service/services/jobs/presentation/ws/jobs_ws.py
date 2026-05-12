@@ -4,13 +4,12 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, WebSocket, status
-
 from prometheus_client import Counter, Gauge
 
 from service.composition.state import get_optional_redis_client, get_optional_redis_session_store
 from service.infrastructure.messaging import stream_helpers
-from service.shared.security.auth_validation import AuthValidator
 from service.settings import config
+from service.shared.security.auth_validation import AuthValidator
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -22,7 +21,10 @@ _PEL_MIN_IDLE_MS = config.chat_ws.settings.pel_min_idle_ms
 try:
     JOBS_REPLAY_SENT_TOTAL = Counter("jobs_replay_sent_total", "Replay entries sent to jobs WS")
     JOBS_CLAIMED_SENT_TOTAL = Counter("jobs_claimed_sent_total", "Claimed entries sent to jobs WS")
-    JOBS_CLAIMED_LEFT_UNACKED_TOTAL = Counter("jobs_claimed_left_unacked_total", "Claimed entries left unacked in jobs WS")
+    JOBS_CLAIMED_LEFT_UNACKED_TOTAL = Counter(
+        "jobs_claimed_left_unacked_total",
+        "Claimed entries left unacked in jobs WS",
+    )
     JOBS_XACK_ERRORS_TOTAL = Counter("jobs_xack_errors_total", "xack errors in jobs WS")
     JOBS_XREAD_ERRORS_TOTAL = Counter("jobs_xread_errors_total", "xread_group errors in jobs WS")
     JOBS_CLAIMED_CURRENT = Gauge("jobs_claimed_current", "Currently claimed entries in jobs WS")
@@ -31,12 +33,13 @@ except Exception:
     JOBS_XACK_ERRORS_TOTAL = JOBS_XREAD_ERRORS_TOTAL = JOBS_CLAIMED_CURRENT = None
 
 
-def _parse_payload(fields: dict) -> dict:
+def _parse_payload(fields: dict) -> dict[str, Any]:
     data = fields.get("data") if isinstance(fields, dict) else fields
     try:
-        return json.loads(data) if isinstance(data, str) else data
+        parsed = json.loads(data) if isinstance(data, str) else data
     except Exception:
-        return data
+        parsed = data
+    return parsed if isinstance(parsed, dict) else {"value": parsed}
 
 
 def _inc(metric) -> None:
@@ -71,7 +74,11 @@ async def process_jobs_claimed_entries(
             _inc(JOBS_CLAIMED_SENT_TOTAL)
         except Exception:
             _inc(JOBS_CLAIMED_LEFT_UNACKED_TOTAL)
-            logger.debug("jobs_ws: failed to send claimed entry %s; leaving unacked", entry_id, exc_info=True)
+            logger.debug(
+                "jobs_ws: failed to send claimed entry %s; leaving unacked",
+                entry_id,
+                exc_info=True,
+            )
             continue
         try:
             await stream_helpers.xack(redis_client, stream_key, group, entry_id)

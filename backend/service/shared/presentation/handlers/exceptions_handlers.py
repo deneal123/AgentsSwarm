@@ -4,8 +4,8 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from service.shared.repositories.exceptions import RepositoryError
 from service.shared.error_mapper import map_exception_to_error_response, map_exception_to_status
+from service.shared.repositories.exceptions import RepositoryError
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,9 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(status_code=exc.status_code, content=payload.model_dump())
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     logger.warning(
         "Validation error occurred for request: %s %s - %s",
         request.method,
@@ -49,7 +51,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
     payload = map_exception_to_error_response(exception)
-    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=payload.model_dump())
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=payload.model_dump()
+    )
 
 
 async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:

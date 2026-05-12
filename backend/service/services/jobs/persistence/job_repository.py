@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class JobRepository(BaseRepository):
-
     @connection()
     async def create_job(self, job: JobLogic, session: AsyncSession | None = None) -> JobLogic:
         assert session is not None, "DB session is required"
@@ -110,9 +109,7 @@ class JobRepository(BaseRepository):
         await session.execute(update_stmt)
         await session.flush()
 
-        updated_result = await session.execute(
-            select(UserLaunch).where(UserLaunch.id.in_(job_ids))
-        )
+        updated_result = await session.execute(select(UserLaunch).where(UserLaunch.id.in_(job_ids)))
         jobs = [JobLogic.model_validate(job) for job in updated_result.scalars().all()]
         logger.debug(f"Fetched: {len(jobs)} jobs")
         return jobs
@@ -125,7 +122,7 @@ class JobRepository(BaseRepository):
         session: AsyncSession | None = None,
     ) -> list[JobLogic]:
         assert session is not None, "DB session is required"
-        cutoff = datetime.now(timezone.utc) - timedelta(seconds=stale_threshold_sec)
+        cutoff = datetime.now(UTC) - timedelta(seconds=stale_threshold_sec)
         logger.debug(f"Fetching stale PROCESSING jobs older than {cutoff}")
 
         stmt = (
@@ -149,7 +146,7 @@ class JobRepository(BaseRepository):
         session: AsyncSession | None = None,
     ) -> int:
         assert session is not None, "DB session is required"
-        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=retention_days)
         logger.debug(f"Deleting completed/failed jobs older than {cutoff}")
 
         stmt = (
@@ -181,9 +178,7 @@ class JobRepository(BaseRepository):
         logger.debug(f"Updating job celery_task_id: {job_id}")
 
         stmt = (
-            update(UserLaunch)
-            .where(UserLaunch.id == job_id)
-            .values(celery_task_id=celery_task_id)
+            update(UserLaunch).where(UserLaunch.id == job_id).values(celery_task_id=celery_task_id)
         )
         await session.execute(stmt)
         await session.flush()

@@ -2,12 +2,12 @@
 
 import base64
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from service.services.agents.domain.events import AgentEvent, EventType
-from service.services.agents.schemas.agents import UserContext
 from service.services.agents.domain.subagents.base import BaseSubAgent
 from service.services.agents.domain.subagents.utils import pick_text_model
+from service.services.agents.schemas.agents import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class PPTXGenerationAgent(BaseSubAgent):
             model_settings=model_settings,
         )
 
-    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         yield self.start_event("Создаю структуру презентации...")
 
         safety = await self.evaluate_input_safety(user_input)
@@ -75,7 +75,7 @@ class PPTXGenerationAgent(BaseSubAgent):
                     f"✅ **Презентация готова!** ({slide_count} слайдов)\n\n"
                     f"**Тема:** {structure.get('title', user_input)}\n\n"
                     + "\n".join(
-                        f"- **Слайд {i+1}:** {s.get('title', '')}"
+                        f"- **Слайд {i + 1}:** {s.get('title', '')}"
                         for i, s in enumerate(structure.get("slides", []))
                     )
                     + "\n\n📎 Файл доступен для скачивания ниже."

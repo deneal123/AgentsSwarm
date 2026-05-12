@@ -2,12 +2,12 @@
 
 import asyncio
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from service.services.agents.domain.events import AgentEvent, EventType
-from service.services.agents.schemas.agents import UserContext
 from service.services.agents.domain.subagents.base import BaseSubAgent
 from service.services.agents.domain.subagents.utils import pick_text_model
+from service.services.agents.schemas.agents import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class WebSearchAgent(BaseSubAgent):
             model_settings=model_settings,
         )
 
-    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         yield self.start_event("Запускаю веб-поиск")
 
         safety = await self.evaluate_input_safety(user_input)
@@ -46,15 +46,22 @@ class WebSearchAgent(BaseSubAgent):
             yield self.complete_event("Веб-поиск остановлен guardrails")
             return
 
-        yield AgentEvent(type=EventType.TOOL_CALL_START, agent_name=self.name, data="Выполняю поиск в интернете...")
+        yield AgentEvent(
+            type=EventType.TOOL_CALL_START,
+            agent_name=self.name,
+            data="Выполняю поиск в интернете...",
+        )
 
         try:
+            from service.services.agents.domain.client import (
+                create_chat_completion,
+                list_available_models,
+            )
             from service.services.agents.domain.tools.web_search import parse_url, web_search
-            from service.services.agents.domain.client import create_chat_completion, list_available_models
 
             try:
                 results = await asyncio.wait_for(web_search(user_input, num_results=5), timeout=16)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("web_search timeout for query: %s", user_input)
                 results = []
 
@@ -85,7 +92,7 @@ class WebSearchAgent(BaseSubAgent):
                     continue
                 try:
                     parsed = await asyncio.wait_for(parse_url(url, max_chars=2000), timeout=8)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.debug("parse_url timeout for %s", url)
                     parsed = {}
                 if parsed.get("content"):
@@ -97,7 +104,9 @@ class WebSearchAgent(BaseSubAgent):
                 search_data += f"   {r.get('snippet', '')}\n"
 
             for p in parsed_content:
-                search_data += f"\n### Содержимое: {p.get('title', '')}\n{p.get('content', '')[:1500]}\n"
+                search_data += (
+                    f"\n### Содержимое: {p.get('title', '')}\n{p.get('content', '')[:1500]}\n"
+                )
 
             models = await list_available_models()
             model = pick_text_model(models)
@@ -129,7 +138,7 @@ class WebSearchAgent(BaseSubAgent):
                         timeout=20,
                     )
                     reply = getattr(resp.choices[0].message, "content", "") or ""
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning("LLM synthesis timeout in web_search agent")
                     reply = (
                         "Не удалось дождаться итоговой генерации модели (таймаут). Ниже — собранные данные:\n\n"

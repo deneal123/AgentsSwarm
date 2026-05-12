@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from service.services.agents.domain.events import AgentEvent, EventType
 
@@ -23,9 +23,9 @@ class EventSequencer:
         self,
         *,
         type: EventType,
-        agent_name: Optional[str] = None,
+        agent_name: str | None = None,
         data: Any = None,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> AgentEvent:
         """Build and sequence a new event in one call."""
         event = AgentEvent(

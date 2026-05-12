@@ -45,9 +45,9 @@ _PLAN_PROMPT = """Ты — ведущий консультант по бизне
 def _build_pptx(structure: dict) -> bytes:
     """Build a PPTX file from structured content dict. Returns bytes."""
     from pptx import Presentation
-    from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
     from pptx.enum.text import PP_ALIGN
+    from pptx.util import Inches, Pt
 
     prs = Presentation()
     prs.slide_width = Inches(13.33)
@@ -207,7 +207,9 @@ async def generate_pptx(topic: str, model: str) -> tuple[bytes, dict]:
         if "Timeout" in err_name:
             logger.warning("LLM timeout while planning PPTX structure, using fallback template")
         else:
-            logger.warning("Failed to get PPTX structure from LLM (%s), using fallback template", err_name)
+            logger.warning(
+                "Failed to get PPTX structure from LLM (%s), using fallback template", err_name
+            )
         structure = {
             "title": topic,
             "slides": [

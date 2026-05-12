@@ -1,12 +1,12 @@
 """Deep research sub-agent."""
 
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from service.services.agents.domain.events import AgentEvent, EventType
-from service.services.agents.schemas.agents import UserContext
 from service.services.agents.domain.subagents.base import BaseSubAgent
 from service.services.agents.domain.subagents.utils import pick_text_model
+from service.services.agents.schemas.agents import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class DeepResearchAgent(BaseSubAgent):
             model_settings=model_settings,
         )
 
-    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         yield self.start_event("Запускаю глубокий ресерч")
 
         safety = await self.evaluate_input_safety(user_input)

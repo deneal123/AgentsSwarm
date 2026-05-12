@@ -4,19 +4,23 @@ from dataclasses import dataclass
 from typing import Any
 
 from service.infrastructure.database.postgresql import PgConnector
-from service.infrastructure.messaging.ports import CeleryJobQueuePort, RedisListMessageBusPort, RedisStreamPort
-from service.services.profile.persistence.auth_repository import AuthRepository
-from service.services.files.persistence.file_repository import FileRepository
-from service.services.jobs.persistence.job_repository import JobRepository
-from service.services.profile.persistence.profile_repository import ProfileRepository
+from service.infrastructure.messaging.ports import (
+    CeleryJobQueuePort,
+    RedisListMessageBusPort,
+    RedisStreamPort,
+)
+from service.services.analytics.application.analytics_service import AnalyticsService
 from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.services.files.application.file_saver_service import FileSaverService
 from service.services.files.application.file_scanner_service import BasicFileScanner
+from service.services.files.persistence.file_repository import FileRepository
 from service.services.jobs.application.job_processor import NewJobProcessor
 from service.services.jobs.application.job_service import JobService
+from service.services.jobs.persistence.job_repository import JobRepository
 from service.services.profile.application.auth_service import AuthService
 from service.services.profile.application.profile_service import ProfileService
-from service.services.analytics.application.analytics_service import AnalyticsService
+from service.services.profile.persistence.auth_repository import AuthRepository
+from service.services.profile.persistence.profile_repository import ProfileRepository
 from service.utils.background_task_manager import BackgroundTaskManager
 
 

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from agents import Agent, GuardrailFunctionOutput, RunContextWrapper, input_guardrail, output_guardrail
+from agents import (
+    Agent,
+    GuardrailFunctionOutput,
+    RunContextWrapper,
+    input_guardrail,
+    output_guardrail,
+)
 
 
 @input_guardrail
