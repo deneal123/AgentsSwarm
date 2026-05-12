@@ -1,32 +1,107 @@
 # workspace_isaac_simulation
 
+`workspace_isaac_simulation` — это ROS 2 workspace для запуска и тестирования Isaac Sim / Isaac ROS окружения с VDA5050 Mission Client.
+
+Проект поднимает контейнеризированную среду ROS 2, в которой уже настроены необходимые зависимости, workspace и клиент для взаимодействия с Mission Dispatch / Mission Control через VDA5050.
+
+Основной сценарий использования:
+
+- инициализация submodules;
+- сборка ROS 2 workspace под нужную версию ROS и Ubuntu;
+- запуск контейнера с подготовленным окружением;
+- вход в контейнер `vda5050_client`;
+- запуск и отладка ROS 2-ноды Mission Client для работы с Isaac Sim.
+
+Workspace внутри контейнера расположен по пути:
+
+```text
+~/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy_ws
+
 ## Первый запуск
 
+Перед первым запуском инициализируйте submodules и соберите ROS 2 workspace:
+
 ```bash
-git submodule update --init --recursive
-./build_ros.sh -d jazzy -v 24.04
+make first-start
+```
+
+При необходимости версии можно переопределить:
+
+```bash
+make first-start ROS_DISTRO=humble UBUNTU_VERSION=22.04
 ```
 
 ## Запуск контейнера
 
-```bash
-# Остановить старый контейнер
-docker compose -p workspace -f ./docker/docker-compose.ros2.yml down
-```
+Запустить контейнер в фоне:
 
 ```bash
-# Запустить новый
-docker compose -p workspace -f ./docker/docker-compose.ros2.yml up -d
+make up
 ```
+
+## Остановка контейнера
+
+Остановить текущий контейнер:
 
 ```bash
-## Войти в контейнер (всё уже настроено)
-docker exec -it vda5050_client /bin/bash
+make down
 ```
 
-*Workspace будет в: ~/{root}/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy_ws*
+## Перезапуск контейнера
 
-*Перед запуском убедиться, что правильно высталвен origin в map конфигурации относительно origin в симуляции isaac*
+Остановить старый контейнер и запустить новый:
+
+```bash
+make restart
+```
+
+## Вход в контейнер
+
+Войти в контейнер с уже настроенным окружением:
+
+```bash
+make shell
+```
+
+## Дополнительные команды
+
+Показать статус контейнеров:
+
+```bash
+make ps
+```
+
+Показать логи:
+
+```bash
+make logs
+```
+
+Остановить контейнер и удалить volumes:
+
+```bash
+make clean
+```
+
+## Расположение workspace
+
+Workspace внутри контейнера находится по пути:
+
+```text
+~/IsaacSim-ros_workspaces/build_ws/jazzy/jazzy_ws
+```
+
+Если workspace собирался под другую версию ROS, путь будет соответствовать выбранному `ROS_DISTRO`.
+
+Например для `humble`:
+
+```text
+~/IsaacSim-ros_workspaces/build_ws/humble/humble_ws
+```
+
+## Важное замечание
+
+Перед запуском навигации убедитесь, что `origin` в конфигурации карты корректно согласован с `origin` сцены в Isaac Sim.
 
 ## Запуск нескольких инстансов роботов
 
