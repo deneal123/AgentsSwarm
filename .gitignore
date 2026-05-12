@@ -255,3 +255,5 @@ COPILOT_SYSTEM.md
 infra/nginx
 infra/redis_data
 infra/storage
+
+MissionControl/waypoint_selection_ui/uploads
