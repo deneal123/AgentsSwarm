@@ -3,13 +3,13 @@ import logging
 from typing import Optional
 
 from service.services.agents.domain.base import BaseAgent
-from service.services.agents.routing import (
+from service.services.agents.domain.routing import (
     create_router_agent,
     finalize_category,
     resolve_category,
     resolve_forced_category,
 )
-from service.services.agents.subagents import build_subagents
+from service.services.agents.domain.subagents import build_subagents
 
 logger = logging.getLogger(__name__)
 

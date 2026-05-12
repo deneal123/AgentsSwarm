@@ -53,15 +53,7 @@ celery_app.conf.update(
             "queue": "agents",
             "priority": 5,  # High priority for agent messages
         },
-        "service.infrastructure.messaging.tasks.generate_calendar": {
-            "queue": "agents",
-            "priority": 5,  # High priority for calendar generation
-        },
-        "service.infrastructure.messaging.tasks.process_batch": {
-            "queue": "maintenance",
-            "priority": 1,  # Low priority for legacy batch processing
-        },
-        "service.infrastructure.messaging.tasks.cleanup_old_streams": {
+"service.infrastructure.messaging.tasks.cleanup_old_streams": {
             "queue": "maintenance",
             "priority": 1,  # Low priority for cleanup tasks
         },

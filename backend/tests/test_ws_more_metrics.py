@@ -19,7 +19,7 @@ class FakeWebSocket:
 
 @pytest.mark.asyncio()
 async def test_chat_claimed_and_replay_metrics_increment(monkeypatch):
-    from service.presentation.routers import chat_ws
+    from service.services.chat.presentation.routers import chat_ws
 
     # Resetting isn't necessary; we read values before/after to detect increment
     fake = FakeWebSocket(fail_on={"2"})
@@ -40,7 +40,7 @@ async def test_chat_claimed_and_replay_metrics_increment(monkeypatch):
 
 @pytest.mark.asyncio()
 async def test_jobs_replay_and_claimed_gauge(monkeypatch):
-    from service.presentation.routers import jobs_ws
+    from service.services.jobs.presentation.ws import jobs_ws
 
     fake = FakeWebSocket()
     entries = [("r1", {"data": '{"event":"replay1"}'}), ("r2", {"data": '{"event":"replay2"}'})]

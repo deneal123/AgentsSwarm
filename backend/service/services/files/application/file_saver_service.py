@@ -4,12 +4,11 @@ from pathlib import Path
 
 from fastapi import HTTPException, status
 
-from service.infrastructure.storage.local_file_storage import LocalFileStorage
 from service.services.files.application.ports.interfaces import FileStoragePort, MessageBusPort
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
 from service.models.key_value import ServiceType
-from service.services.files.presentation.routers.files_api.schemas import (
+from service.services.files.application.dto import (
     FetchUserFilesResponse,
     FileMetadata,
     UploadResponse,
@@ -24,10 +23,12 @@ class FileSaverService:
         self,
         repository: FileRepository,
         folder_name: str,
-        file_storage: FileStoragePort | None = None,
+        file_storage: FileStoragePort,
         message_bus: MessageBusPort | None = None,
     ) -> None:
-        self.storage = file_storage or LocalFileStorage()
+        if file_storage is None:
+            raise ValueError("file_storage is required for FileSaverService")
+        self.storage = file_storage
         self.message_bus = message_bus
         self.repository = repository
         self.folder = folder_name

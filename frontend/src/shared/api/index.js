@@ -4,4 +4,3 @@ export * from './chat';
 export * from './jobs';
 export * from './files';
 export * from './profile';
-export * from './platform';

@@ -4,7 +4,7 @@ from typing import AsyncGenerator, Optional, Any
 
 from service.services.agents.domain.events import AgentEvent
 from service.services.agents.application.orchestrator import Orchestrator
-from service.services.agents.pipeline.event_stream import EventSequencer
+from service.services.agents.domain.pipeline.event_stream import EventSequencer
 from service.services.agents.pipeline import (
     build_effective_input,
     build_processing_error_event,

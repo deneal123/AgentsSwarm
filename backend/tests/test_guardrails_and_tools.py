@@ -6,7 +6,7 @@ from service.services.agents.guardrails import (
     ensure_non_empty_response,
     fact_check_output,
 )
-from service.services.agents.tools.function_tools import fetch_runtime_context_tool, summarize_brief_tool
+from service.services.agents.domain.tools.function_tools import fetch_runtime_context_tool, summarize_brief_tool
 
 
 @pytest.mark.asyncio

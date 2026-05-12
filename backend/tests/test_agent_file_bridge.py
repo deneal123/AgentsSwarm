@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from service.repositories.exceptions import RepositoryIntegrityError
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.services.agents.application import agent_file_bridge as bridge
 
 

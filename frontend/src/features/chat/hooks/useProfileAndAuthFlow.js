@@ -2,20 +2,19 @@ import { useCallback } from 'react';
 import { useAuth } from '@app/providers';
 import { AuthModal, useAuthModal } from '@features/auth';
 import { useGuestSession } from '@features/chat';
-import { useProfileDrawer } from './useProfileDrawer';
+import { useProfileData } from '@features/profile';
 
 export function useProfileAndAuthFlow() {
   const { checkLimits, incrementRequests, remainingRequests } = useGuestSession();
   const { isAuthenticated, user, logout } = useAuth();
   const {
-    profileDisclosure,
+    disclosure: profileDisclosure,
     profileData,
-    profileQuota,
     profileMemoryCount,
     setProfileMemoryCount,
-    isProfileLoading,
-    resolveSessionUserId,
-  } = useProfileDrawer({ isAuthenticated, user });
+    isLoading: isProfileLoading,
+    resolveUserId: resolveSessionUserId,
+  } = useProfileData({ isAuthenticated, user });
   const { isOpen: isAuthModalOpen, onClose: onAuthModalClose, showAuthModal, modalData } = useAuthModal();
 
   const ensureGuestLimit = useCallback(() => {
@@ -38,7 +37,6 @@ export function useProfileAndAuthFlow() {
     remainingRequests,
     profileDisclosure,
     profileData,
-    profileQuota,
     profileMemoryCount,
     setProfileMemoryCount,
     isProfileLoading,

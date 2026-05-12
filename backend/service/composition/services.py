@@ -4,6 +4,8 @@ from service.composition.models import InfraContainer, RepositoriesContainer, Se
 from service.services.chat.composition import build_chat_components
 from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageHandler
 from service.services.chat.persistence.chat_repository import ChatRepository
+from service.services.analytics.application.analytics_service import AnalyticsService
+from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
 from service.services.files.application.file_saver_service import FileSaverService
 from service.services.jobs.application.job_processor import NewJobProcessor
 from service.services.jobs.application.job_service import JobService
@@ -35,7 +37,6 @@ def build_services(
     job_service = JobService(
         config.job,
         repos.job_repository,
-        profile_service,
         job_queue=infra.job_queue_port,
     )
 
@@ -44,6 +45,10 @@ def build_services(
         folder_name="uploads",
         file_storage=infra.storage,
         message_bus=infra.message_bus_port,
+    )
+
+    analytics_service = AnalyticsService(
+        AnalyticsVitalsRepository(redis_client=infra.redis_client)
     )
 
     process_chat_message_handler = ProcessChatMessageHandler(
@@ -67,6 +72,7 @@ def build_services(
         auth_service=auth_service,
         job_service=job_service,
         file_saver_service=file_saver_service,
+        analytics_service=analytics_service,
         process_chat_message_handler=process_chat_message_handler,
         new_job_processor=new_job_processor,
         chat_application_service=chat_components.application_service,

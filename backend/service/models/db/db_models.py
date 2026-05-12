@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -115,64 +115,3 @@ class UserFile(Base):
     )
 
 
-class Batch(Base):
-    __tablename__ = "batches"
-    __table_args__ = {"schema": "profile"}
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    batch_id: Mapped[str] = mapped_column(UUID, unique=True, nullable=False)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("profile.user.id", ondelete="SET NULL"), index=True, nullable=True
-    )
-    type: Mapped[str] = mapped_column(String(64), nullable=False)
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="queued")
-    size: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    progress: Mapped[dict | None] = mapped_column(JSONB, default=dict)
-
-    items: Mapped[list["BatchItem"]] = relationship(
-        back_populates="batch",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-
-
-class BatchItem(Base):
-    __tablename__ = "batch_items"
-    __table_args__ = {"schema": "profile"}
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    batch_id: Mapped[int] = mapped_column(ForeignKey("profile.batches.id", ondelete="CASCADE"), index=True)
-    item_index: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="queued")
-    result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-
-    batch: Mapped[Batch] = relationship(back_populates="items", lazy="selectin")
-
-
-class NutritionCalendar(Base):
-    __tablename__ = "nutrition_calendars"
-    __table_args__ = {"schema": "profile"}
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    calendar_id: Mapped[str] = mapped_column(UUID, unique=True, nullable=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profile.user.id", ondelete="CASCADE"), index=True)
-    name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    manifest: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    storage_uri: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-
-
-class NutritionCalendarVersion(Base):
-    __tablename__ = "nutrition_calendar_versions"
-    __table_args__ = {"schema": "profile"}
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    calendar_id: Mapped[int] = mapped_column(
-        ForeignKey("profile.nutrition_calendars.id", ondelete="CASCADE"),
-        index=True,
-    )
-    version: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    manifest: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    meta: Mapped[dict | None] = mapped_column(JSONB, name="metadata", default=dict)

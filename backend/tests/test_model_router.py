@@ -1,7 +1,7 @@
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from service.services.agents.tools.router import (
+from service.services.agents.domain.tools.router import (
     _parse_llm_response,
     _pick_router_model,
     route_model,
@@ -76,7 +76,7 @@ def test_route_model_keeps_manual_if_available():
 def test_route_model_uses_llm_router_result():
     llm_result = {"model": "qwen3-coder-480b-a35b", "tool": "none", "reason": "code task"}
 
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
         model, meta = asyncio.run(route_model(
             text="fix this python bug",
             selected_model=None,
@@ -94,7 +94,7 @@ def test_route_model_llm_receives_input_type():
     """input_type is passed through as-is (it's a fact, not a prediction)."""
     llm_result = {"model": "qwen-vl-72b", "tool": "none", "reason": "image analysis with VLM"}
 
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=llm_result)) as mock:
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=llm_result)) as mock:
         model, meta = asyncio.run(route_model(
             text="что на этой картинке?",
             selected_model=None,
@@ -116,7 +116,7 @@ def test_route_model_llm_receives_input_type():
 def test_route_model_llm_auto_web_search():
     llm_result = {"model": "mws-gpt-alpha", "tool": "web_search", "reason": "needs live data"}
 
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
         model, meta = asyncio.run(route_model(
             text="какой курс доллара сейчас?",
             selected_model=None,
@@ -132,7 +132,7 @@ def test_route_model_llm_auto_web_search():
 def test_route_model_llm_pptx_gen():
     llm_result = {"model": "mws-gpt-alpha", "tool": "pptx_gen", "reason": "presentation requested"}
 
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=llm_result)):
         model, meta = asyncio.run(route_model(
             text="сделай презентацию про ИИ",
             selected_model=None,
@@ -147,7 +147,7 @@ def test_route_model_llm_pptx_gen():
 # ── Integration: regex fallback when LLM returns None ────────────────────────
 
 def test_route_model_regex_fallback_on_llm_failure():
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=None)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=None)):
         model, meta = asyncio.run(route_model(
             text="```python\nimport os\nprint('hi')\n```\nfix bug",
             selected_model=None,
@@ -161,7 +161,7 @@ def test_route_model_regex_fallback_on_llm_failure():
 
 
 def test_route_model_regex_fallback_image_input_type():
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=None)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=None)):
         model, meta = asyncio.run(route_model(
             text="analyze attached image",
             selected_model=None,
@@ -175,7 +175,7 @@ def test_route_model_regex_fallback_image_input_type():
 
 
 def test_route_model_regex_fallback_audio_input_type_sets_audio_tool():
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=None)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=None)):
         model, meta = asyncio.run(route_model(
             text="распознай речь из аудио",
             selected_model=None,
@@ -189,7 +189,7 @@ def test_route_model_regex_fallback_audio_input_type_sets_audio_tool():
 
 
 def test_route_model_regex_fallback_high_complexity():
-    with patch("service.services.agents.tools.router._llm_route", new=AsyncMock(return_value=None)):
+    with patch("service.services.agents.domain.tools.router._llm_route", new=AsyncMock(return_value=None)):
         text = "\n".join([
             "Design an architecture with constraints and edge cases.",
             "Must optimize performance and reliability.",

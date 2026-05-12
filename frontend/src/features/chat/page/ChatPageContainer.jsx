@@ -32,7 +32,7 @@ import {
 import { getChatModels, sendChatMessage } from '@api/chat';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
-import BrandMark from '@shared/ui/layout';
+import { BrandMark } from '@shared/ui/layout';
 import {
   FiCopy,
   FiEye,
@@ -72,6 +72,7 @@ import ComposerActions from '../components/composer/ComposerActions';
 import ComposerAttachments from '../components/composer/ComposerAttachments';
 import ComposerVoiceControl from '../components/composer/ComposerVoiceControl';
 import { PROSE_SX } from './proseStyles';
+import { ProfileDrawer } from '@features/profile';
 
 const TracePanel = lazy(() => import('../components/trace/TracePanel'));
 
@@ -95,7 +96,7 @@ function ChatPageContainer() {
   const sideEffects = useChatSideEffects({ toast, navigate });
 
   const {
-    isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileQuota, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
+    isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
   } = useProfileAndAuthFlow();
 
   const drawers = useChatDrawersState(profileDisclosure);
@@ -1023,7 +1024,6 @@ function ChatPageContainer() {
 
   return (
     <ChatPageLayout>
-      <Box>
       {/* Animated aurora background */}
       <Box position="absolute" inset={0} pointerEvents="none" zIndex={0} overflow="hidden">
         <Box
@@ -1478,7 +1478,6 @@ function ChatPageContainer() {
               </HStack>
               </Box>
             </Box>
-          </Box>
         </VStack>
       </Flex>
 
@@ -1811,200 +1810,17 @@ function ChatPageContainer() {
         </DrawerContent>
       </Drawer>
 
-      {/* Profile Drawer */}
-      <Drawer isOpen={profileDisclosure.isOpen} placement="right" onClose={profileDisclosure.onClose} size="md">
-        <DrawerOverlay bg="rgba(0,0,0,0.6)" backdropFilter="blur(8px)" />
-        <DrawerContent
-          bg={CHAT_THEME.sidebarBg}
-          borderLeft={`1px solid ${CHAT_THEME.panelBorder}`}
-          sx={{
-            backgroundImage:
-              'radial-gradient(circle at 85% -10%, rgba(239,68,68,0.12), transparent 55%), radial-gradient(circle at 15% 110%, rgba(220,38,38,0.08), transparent 50%)',
-          }}
-        >
-          <DrawerCloseButton mt={2} color={CHAT_THEME.textSecondary} _hover={{ color: CHAT_THEME.textPrimary }} />
-          <DrawerHeader borderBottomWidth="1px" borderColor="rgba(255,255,255,0.08)" fontWeight="700" letterSpacing="-0.01em">
-            Профиль
-          </DrawerHeader>
-          <DrawerBody pt={5} sx={CHAT_SCROLLBAR_SX}>
-            <VStack spacing={5} align="stretch">
-              {/* Identity card */}
-              <Box
-                p={5}
-                borderRadius="16px"
-                bg="rgba(255,255,255,0.04)"
-                border={`1px solid ${CHAT_THEME.panelBorder}`}
-                position="relative"
-                overflow="hidden"
-              >
-                <Box
-                  position="absolute"
-                  top="-30%"
-                  right="-10%"
-                  w="50%"
-                  h="120%"
-                  background="radial-gradient(circle, rgba(239,68,68,0.16) 0%, transparent 65%)"
-                  filter="blur(30px)"
-                  pointerEvents="none"
-                />
-                <HStack spacing={4} align="center" position="relative">
-                  <Box
-                    p="2px"
-                    borderRadius="full"
-                    bg="linear-gradient(135deg, rgba(239,68,68,0.95), rgba(255,255,255,0.35))"
-                  >
-                    <Avatar
-                      size="lg"
-                      name={profileData?.first_name || user?.first_name || profileData?.email || user?.email}
-                      bg="rgba(14,14,14,1)"
-                      color={CHAT_THEME.textPrimary}
-                      fontWeight="700"
-                    />
-                  </Box>
-                  <VStack align="flex-start" spacing={0.5} flex="1" minW="0">
-                    <Text fontSize="18px" fontWeight="700" color={CHAT_THEME.textPrimary} letterSpacing="-0.01em" noOfLines={1}>
-                      {profileData?.first_name
-                        ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''}`
-                        : (user?.first_name || 'Пользователь')}
-                    </Text>
-                    <Text fontSize="12.5px" fontWeight="500" color={CHAT_THEME.textSecondary} noOfLines={1}>
-                      {profileData?.email || user?.email || '—'}
-                    </Text>
-                    {profileData?.company && (
-                      <Text fontSize="11.5px" fontWeight="500" color={CHAT_THEME.textTertiary} noOfLines={1}>
-                        {profileData.company}
-                      </Text>
-                    )}
-                    <HStack spacing={1.5} mt={1.5}>
-                      <Badge
-                        px={2}
-                        py={0.5}
-                        borderRadius="full"
-                        fontSize="10px"
-                        fontWeight="600"
-                        textTransform="none"
-                        bg="rgba(34,197,94,0.14)"
-                        color="rgba(134,239,172,0.95)"
-                        border="1px solid rgba(34,197,94,0.25)"
-                      >
-                        ● Активен
-                      </Badge>
-                      {profileData?.role && (
-                        <Badge
-                          px={2}
-                          py={0.5}
-                          borderRadius="full"
-                          fontSize="10px"
-                          fontWeight="600"
-                          textTransform="none"
-                          bg={CHAT_THEME.accentSoft}
-                          color="#fca5a5"
-                          border="1px solid rgba(239,68,68,0.3)"
-                        >
-                          {profileData.role}
-                        </Badge>
-                      )}
-                    </HStack>
-                  </VStack>
-                </HStack>
-              </Box>
-
-              {/* Quota */}
-              {profileQuota && (
-                <Box
-                  p={4}
-                  borderRadius="14px"
-                  bg="rgba(255,255,255,0.03)"
-                  border={`1px solid ${CHAT_THEME.panelBorder}`}
-                >
-                  <HStack justify="space-between" mb={2.5} align="baseline">
-                    <Text fontSize="12px" fontWeight="600" color={CHAT_THEME.textSecondary} letterSpacing="0.02em" textTransform="uppercase">
-                      Квота
-                    </Text>
-                    <Text fontSize="11px" fontWeight="500" color={CHAT_THEME.textTertiary}>
-                      {typeof profileQuota.used === 'number' && typeof profileQuota.limit === 'number'
-                        ? `${profileQuota.used.toLocaleString()} / ${profileQuota.limit.toLocaleString()}`
-                        : '—'}
-                    </Text>
-                  </HStack>
-                  {typeof profileQuota.used === 'number' && typeof profileQuota.limit === 'number' && profileQuota.limit > 0 && (
-                    <Progress
-                      value={Math.min(100, Math.round((profileQuota.used / profileQuota.limit) * 100))}
-                      size="sm"
-                      borderRadius="full"
-                      bg="rgba(255,255,255,0.06)"
-                      sx={{
-                        '& > div': {
-                          background: 'linear-gradient(90deg, rgba(248,113,113,0.85), rgba(239,68,68,0.98))',
-                        },
-                      }}
-                    />
-                  )}
-                  {profileQuota.resets_at && (
-                    <Text fontSize="11px" fontWeight="500" color={CHAT_THEME.textTertiary} mt={2}>
-                      Сброс: {new Date(profileQuota.resets_at).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  )}
-                </Box>
-              )}
-
-              {/* Stats grid */}
-              <SimpleGrid columns={2} spacing={3}>
-                {[
-                  { label: 'Чатов', value: recentThreads.length, icon: FiMessageSquare },
-                  { label: 'Память', value: profileMemoryCount ?? memoryFacts.length, icon: FiSliders },
-                ].map(({ label, value, icon: StatIcon }) => (
-                  <Box
-                    key={label}
-                    p={4}
-                    borderRadius="14px"
-                    bg="rgba(255,255,255,0.03)"
-                    border={`1px solid ${CHAT_THEME.panelBorder}`}
-                    transition="all 0.2s"
-                    _hover={{ bg: 'rgba(255,255,255,0.05)', borderColor: CHAT_THEME.panelBorderStrong }}
-                  >
-                    <HStack spacing={2} mb={1.5}>
-                      <Icon as={StatIcon} boxSize={3.5} color="rgba(239,68,68,0.75)" />
-                      <Text fontSize="10.5px" fontWeight="600" color={CHAT_THEME.textTertiary} letterSpacing="0.04em" textTransform="uppercase">
-                        {label}
-                      </Text>
-                    </HStack>
-                    <Text fontSize="22px" fontWeight="700" color={CHAT_THEME.textPrimary} letterSpacing="-0.02em" lineHeight="1.1">
-                      {value}
-                    </Text>
-                  </Box>
-                ))}
-              </SimpleGrid>
-
-              <Button
-                leftIcon={<FiLogOut />}
-                onClick={() => {
-                  profileDisclosure.onClose();
-                  logout();
-                }}
-                h="42px"
-                borderRadius="12px"
-                fontSize="13px"
-                fontWeight="600"
-                bg={CHAT_THEME.accentSoft}
-                color="#fca5a5"
-                border="1px solid rgba(239,68,68,0.3)"
-                _hover={{ bg: 'rgba(239,68,68,0.22)', borderColor: 'rgba(239,68,68,0.45)' }}
-              >
-                Выйти
-              </Button>
-
-              {isProfileLoading && (
-                <HStack spacing={2} justify="center" color={CHAT_THEME.textTertiary}>
-                  <Spinner size="xs" />
-                  <Text fontSize="11px">Загружаем данные…</Text>
-                </HStack>
-              )}
-            </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-      </Box>
+      <ProfileDrawer
+        isOpen={profileDisclosure.isOpen}
+        onClose={profileDisclosure.onClose}
+        profileData={profileData}
+        profileMemoryCount={profileMemoryCount}
+        isLoading={isProfileLoading}
+        user={user}
+        threadCount={recentThreads.length}
+        memoryFallbackCount={memoryFacts.length}
+        onLogout={logout}
+      />
     </ChatPageLayout>
   );
 }

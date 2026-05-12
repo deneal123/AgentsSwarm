@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any
 
-from service import container
+from service.composition import state as container
 
 logger = logging.getLogger(__name__)
 

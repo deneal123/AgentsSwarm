@@ -1,6 +1,6 @@
 import { Image } from "@chakra-ui/react";
 import logo from "./logo.svg";
-import { PROJECT_NAME } from "../../../constants";
+import { PROJECT_NAME } from "../../../../constants";
 
 const VARIANT_SOURCES = {
   solid: logo,

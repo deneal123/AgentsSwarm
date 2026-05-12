@@ -8,12 +8,12 @@ class FakeRedis:
         self.to_pop = to_pop or []
         self.published = []
 
-    def lpop(self, key):
+    async def lpop(self, key):
         if self.to_pop:
             return self.to_pop.pop(0)
         return None
 
-    def xadd(self, key, mapping):
+    async def xadd(self, key, mapping):
         self.published.append((key, mapping))
 
 

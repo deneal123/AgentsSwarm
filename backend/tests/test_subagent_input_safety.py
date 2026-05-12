@@ -1,7 +1,7 @@
 import pytest
 
 from service.services.agents.domain.events import EventType
-from service.services.agents.subagents.base import BaseSubAgent
+from service.services.agents.domain.subagents.base import BaseSubAgent
 
 
 class _DummySubAgent(BaseSubAgent):

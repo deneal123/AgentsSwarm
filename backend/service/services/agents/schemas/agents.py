@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FAQSearchResult(BaseModel):
@@ -34,16 +34,3 @@ class FetchContext(BaseModel):
     pass
 
 
-class MealEntry(BaseModel):
-    date: str = Field(..., description="Дата в формате YYYY-MM-DD")
-
-    class MealItem(BaseModel):
-        name: StrictStr = Field(..., description="Название блюда")
-        calories: int = Field(..., description="Калорийность в ккал")
-        ingredients: list[StrictStr] = Field(..., description="Список ингредиентов")
-
-    meals: list[MealItem] = Field(..., description="Список приёмов пищи с полями name, calories, ingredients")
-
-
-class MealCalendarOutput(BaseModel):
-    calendar: list[MealEntry] = Field(..., description="План питания — список дней и приёмов пищи")

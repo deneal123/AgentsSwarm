@@ -4,10 +4,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, UploadFile, status
 
-from service.presentation.dependencies import providers
+from service.composition.state import get_file_saver_service
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceType
-from service.presentation.dependencies.auth_checker import check_auth
+from service.shared.security.auth_checker import check_auth
 from service.services.files.presentation.routers.files_api.schemas import (
     FetchModesResponse,
     FetchUserFilesResponse,
@@ -44,7 +44,7 @@ async def fetch_available_modes(
 async def fetch_handler(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     mode: Annotated[ServiceType, Path(...)],
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> FetchUserFilesResponse:
     return await service.fetch_all_user_files(profile.user_id, mode)
 
@@ -59,7 +59,7 @@ async def upload_handler(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     mode: Annotated[ServiceType, Path(...)],
     file: UploadFile,
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> UploadResponse:
     if file_name := file.filename:
         lower_name = file_name.lower()
@@ -87,7 +87,7 @@ async def upload_handler(
 async def delete_handler(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     file_id: Annotated[UUID, Path(..., title="File ID")],
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> None:
     await service.delete(user_id=profile.user_id, file_id=file_id)
 
@@ -101,7 +101,7 @@ async def presign_upload(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     mode: Annotated[ServiceType, Path(...)],
     payload: PresignRequest,
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> PresignResponse:
     res = await service.presign_upload(
         user_id=profile.user_id,
@@ -126,7 +126,7 @@ async def upload_callback(
     file_id: Annotated[UUID, Path(..., title="File ID")],
     payload: CallbackRequest,
     profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> FileMetadata:
     res = await service.finalize_upload(
         user_id=profile.user_id,
@@ -145,7 +145,7 @@ async def upload_callback(
 async def get_file(
     file_id: Annotated[UUID, Path(..., title="File ID")],
     profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[FileSaverService, Depends(providers.get_file_saver_service)],
+    service: Annotated[FileSaverService, Depends(get_file_saver_service)],
 ) -> FileDetailResponse:
     meta = await service.fetch_file_metadata(profile.user_id, file_id)
     download = await service.get_presigned_url_by_key(

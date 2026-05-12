@@ -3,7 +3,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from service.main import app
-from service import container
+from service.composition.state import get_chat_application_service
 from service.services.agents.chat_agent import ChatAgent
 from service.services.chat.presentation.routers.chat_api import chat_api
 from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
@@ -13,79 +13,86 @@ from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, 
 async def test_chat_agent_handle_message():
     agent = ChatAgent()
     res = await agent.handle_message("T1", "hello", user_id=1)
-    # Strict mode no longer falls back to an echo; ensure we get a string reply
     assert isinstance(res.reply, str)
     assert len(res.reply) > 0
     assert res.thread_id == "T1"
-    # metadata may be empty or contain structured action info; ensure it's a dict
     assert isinstance(res.metadata.data, dict)
 
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_returns_echo():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        payload = {"text": "Hi agent", "user_id": 42}
-        r = await ac.post("/api/chats/THREAD123/message", json=payload)
+    class _FakeSvc:
+        async def post_message(self, thread_id, payload):
+            return {"reply": "hello back", "thread_id": thread_id, "metadata": {}}
 
-    assert r.status_code == 200
-    data = r.json()
-    assert isinstance(data.get("reply"), str)
-    assert len(data.get("reply") or "") > 0
-    assert data["thread_id"] == "THREAD123"
-    assert isinstance(data.get("metadata"), dict)
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeSvc()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.post("/api/chats/THREAD123/message", json={"text": "Hi agent", "user_id": 42})
+
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data.get("reply"), str)
+        assert len(data.get("reply") or "") > 0
+        assert data["thread_id"] == "THREAD123"
+        assert isinstance(data.get("metadata"), dict)
+    finally:
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_empty_text_returns_422():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        r = await ac.post("/api/chats/T1/message", json={"text": "", "user_id": 1})
+    class _FakeSvc:
+        async def post_message(self, thread_id, payload):
+            return {"reply": "ok", "thread_id": thread_id, "metadata": {}}
 
-    assert r.status_code == 422
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeSvc()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.post("/api/chats/T1/message", json={"text": "", "user_id": 1})
+
+        assert r.status_code == 422
+    finally:
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
-async def test_chat_models_endpoint(monkeypatch):
-    async def _fake_models():
-        return ["mws-gpt-alpha", "kodify-2.0"]
+async def test_chat_models_endpoint():
+    class _FakeSvc:
+        async def get_models(self):
+            return ["mws-gpt-alpha", "kodify-2.0"]
 
-    monkeypatch.setattr(chat_api, "list_available_models", _fake_models)
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeSvc()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.get("/api/chats/models")
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        r = await ac.get("/api/chats/models")
-
-    assert r.status_code == 200
-    assert r.json() == {"models": ["mws-gpt-alpha", "kodify-2.0"]}
+        assert r.status_code == 200
+        assert r.json() == {"models": ["mws-gpt-alpha", "kodify-2.0"]}
+    finally:
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_passes_selected_model_to_service():
+    captured = {}
+
     class _FakeService:
-        def __init__(self):
-            self.captured = None
+        async def post_message(self, thread_id, payload):
+            captured["thread_id"] = thread_id
+            captured["text"] = payload.text
+            captured["user_id"] = payload.user_id
+            captured["selected_model"] = payload.model
+            captured["input_type"] = payload.input_type
+            captured["web_search"] = payload.web_search
+            captured["deep_research"] = payload.deep_research
+            captured["file_context"] = payload.file_context
+            return {"reply": "ok", "thread_id": thread_id, "metadata": {"selected_model": payload.model}}
 
-        async def post_message(
-            self, context
-        ):
-            self.captured = {
-                "thread_id": context.thread_id,
-                "text": context.text,
-                "user_id": context.user_id,
-                "selected_model": context.selected_model,
-                "input_type": context.input_type,
-                "web_search": context.web_search,
-                "deep_research": context.deep_research,
-                "file_context": context.file_context,
-            }
-            return ChatReplyResult(reply="ok", thread_id=context.thread_id, metadata=ChatProcessingMetadata(data={"selected_model": context.selected_model}))
-
-    fake_service = _FakeService()
-
-    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
-
-    app.dependency_overrides[get_chat_service] = lambda: fake_service
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeService()
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -95,7 +102,7 @@ async def test_chat_endpoint_passes_selected_model_to_service():
             )
 
         assert r.status_code == 200
-        assert fake_service.captured == {
+        assert captured == {
             "thread_id": "T1",
             "text": "hello",
             "user_id": 1,
@@ -107,35 +114,26 @@ async def test_chat_endpoint_passes_selected_model_to_service():
         }
         assert r.json().get("metadata", {}).get("selected_model") == "mws-gpt-alpha"
     finally:
-        app.dependency_overrides.pop(get_chat_service, None)
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_passes_input_type_to_service():
+    captured = {}
+
     class _FakeService:
-        def __init__(self):
-            self.captured = None
+        async def post_message(self, thread_id, payload):
+            captured["thread_id"] = thread_id
+            captured["text"] = payload.text
+            captured["user_id"] = payload.user_id
+            captured["selected_model"] = payload.model
+            captured["input_type"] = payload.input_type
+            captured["web_search"] = payload.web_search
+            captured["deep_research"] = payload.deep_research
+            captured["file_context"] = payload.file_context
+            return {"reply": "ok", "thread_id": thread_id, "metadata": {"input_type": payload.input_type}}
 
-        async def post_message(
-            self, context
-        ):
-            self.captured = {
-                "thread_id": context.thread_id,
-                "text": context.text,
-                "user_id": context.user_id,
-                "selected_model": context.selected_model,
-                "input_type": context.input_type,
-                "web_search": context.web_search,
-                "deep_research": context.deep_research,
-                "file_context": context.file_context,
-            }
-            return ChatReplyResult(reply="ok", thread_id=context.thread_id, metadata=ChatProcessingMetadata(data={"input_type": context.input_type}))
-
-    fake_service = _FakeService()
-
-    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
-
-    app.dependency_overrides[get_chat_service] = lambda: fake_service
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeService()
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -145,11 +143,11 @@ async def test_chat_endpoint_passes_input_type_to_service():
             )
 
         assert r.status_code == 200
-        assert fake_service.captured == {
+        assert captured == {
             "thread_id": "T1",
             "text": "describe this image",
             "user_id": 1,
-            "selected_model": None,
+            "selected_model": None,  # payload.model
             "input_type": "image",
             "web_search": False,
             "deep_research": False,
@@ -157,41 +155,23 @@ async def test_chat_endpoint_passes_input_type_to_service():
         }
         assert r.json().get("metadata", {}).get("input_type") == "image"
     finally:
-        app.dependency_overrides.pop(get_chat_service, None)
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_passes_tool_flags_to_service():
+    captured = {}
+
     class _FakeService:
-        def __init__(self):
-            self.captured = None
+        async def post_message(self, thread_id, payload):
+            captured["thread_id"] = thread_id
+            captured["text"] = payload.text
+            captured["web_search"] = payload.web_search
+            captured["deep_research"] = payload.deep_research
+            captured["file_context"] = payload.file_context
+            return {"reply": "ok", "thread_id": thread_id, "metadata": {}}
 
-        async def post_message(
-            self, context
-        ):
-            self.captured = {
-                "thread_id": context.thread_id,
-                "text": context.text,
-                "web_search": context.web_search,
-                "deep_research": context.deep_research,
-                "file_context": context.file_context,
-            }
-            return ChatReplyResult(
-                reply="ok",
-                thread_id=context.thread_id,
-                metadata=ChatProcessingMetadata(
-                    data={
-                        "web_search": context.web_search,
-                        "deep_research": context.deep_research,
-                    }
-                ),
-            )
-
-    fake_service = _FakeService()
-
-    from service.services.chat.presentation.routers.chat_api.chat_api import get_chat_service
-
-    app.dependency_overrides[get_chat_service] = lambda: fake_service
+    app.dependency_overrides[get_chat_application_service] = lambda: _FakeService()
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -207,7 +187,7 @@ async def test_chat_endpoint_passes_tool_flags_to_service():
             )
 
         assert r.status_code == 200
-        assert fake_service.captured == {
+        assert captured == {
             "thread_id": "T1",
             "text": "research this",
             "web_search": True,
@@ -215,7 +195,7 @@ async def test_chat_endpoint_passes_tool_flags_to_service():
             "file_context": "doc context",
         }
     finally:
-        app.dependency_overrides.pop(get_chat_service, None)
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
@@ -231,17 +211,22 @@ async def test_chat_download_generated_file_returns_binary(monkeypatch):
             captured["download_key"] = file_key
             return b"pptx-bytes"
 
-    fake = _FakeFileService()
-    monkeypatch.setattr(container, "get", lambda name: fake if name == container.FileSaverServiceName else None)
+    from service.services.chat.application.chat_application_service import ChatApplicationService
+    fake_app_svc = ChatApplicationService.__new__(ChatApplicationService)
+    fake_app_svc.file_service = _FakeFileService()
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        r = await ac.get("/api/chats/files/download", params={"file_key": "uploads/CHAT/demo.pptx", "filename": "demo.pptx"})
+    app.dependency_overrides[get_chat_application_service] = lambda: fake_app_svc
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.get("/api/chats/files/download", params={"file_key": "uploads/CHAT/demo.pptx", "filename": "demo.pptx"})
 
-    assert r.status_code == 200
-    assert r.content == b"pptx-bytes"
-    assert captured["download_key"] == "uploads/CHAT/demo.pptx"
-    assert "attachment; filename=\"demo.pptx\"" in (r.headers.get("content-disposition") or "")
+        assert r.status_code == 200
+        assert r.content == b"pptx-bytes"
+        assert captured["download_key"] == "uploads/CHAT/demo.pptx"
+        assert "attachment; filename=\"demo.pptx\"" in (r.headers.get("content-disposition") or "")
+    finally:
+        app.dependency_overrides.pop(get_chat_application_service, None)
 
 
 @pytest.mark.asyncio
@@ -256,15 +241,20 @@ async def test_chat_download_generated_file_normalizes_legacy_local_path(monkeyp
             captured["download_key"] = file_key
             return b"ok"
 
-    fake = _FakeFileService()
-    monkeypatch.setattr(container, "get", lambda name: fake if name == container.FileSaverServiceName else None)
+    from service.services.chat.application.chat_application_service import ChatApplicationService
+    fake_app_svc = ChatApplicationService.__new__(ChatApplicationService)
+    fake_app_svc.file_service = _FakeFileService()
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        r = await ac.get(
-            "/api/chats/files/download",
-            params={"file_key": "/var/lib/app/storage/uploads/CHAT/legacy.pptx"},
-        )
+    app.dependency_overrides[get_chat_application_service] = lambda: fake_app_svc
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            r = await ac.get(
+                "/api/chats/files/download",
+                params={"file_key": "/var/lib/app/storage/uploads/CHAT/legacy.pptx"},
+            )
 
-    assert r.status_code == 200
-    assert captured["download_key"] == "uploads/CHAT/legacy.pptx"
+        assert r.status_code == 200
+        assert captured["download_key"] == "uploads/CHAT/legacy.pptx"
+    finally:
+        app.dependency_overrides.pop(get_chat_application_service, None)

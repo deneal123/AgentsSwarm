@@ -18,7 +18,7 @@ class ModelRoutingService:
         route_override: str | None,
     ) -> ChatRouteDecision:
         try:
-            from service.services.agents.tools.router import route_model
+            from service.services.agents.domain.tools.router import route_model
 
             effective_model, routing_meta = await route_model(
                 text=text,

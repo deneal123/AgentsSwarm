@@ -3,11 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from service.container import (
-    build_container,
-    get_current_container,
-    set_current_container,
-)
+from service.composition.container import build_container
+from service.composition.state import get_current_container, set_current_container
 from service.settings import Config
 
 logger = logging.getLogger(__name__)

@@ -1,13 +1,13 @@
-"""Sub-agents package."""
-
-from .audio_transcribe import AudioTranscriptionAgent
-from .base import BaseSubAgent
-from .deep_research import DeepResearchAgent
-from .factory import build_subagents
-from .general import GeneralAgent
-from .image_generation import ImageGenerationAgent
-from .pptx_generation import PPTXGenerationAgent
-from .web_search import WebSearchAgent
+from service.services.agents.domain.subagents import (
+    AudioTranscriptionAgent,
+    BaseSubAgent,
+    build_subagents,
+    DeepResearchAgent,
+    GeneralAgent,
+    ImageGenerationAgent,
+    PPTXGenerationAgent,
+    WebSearchAgent,
+)
 
 __all__ = [
     "BaseSubAgent",

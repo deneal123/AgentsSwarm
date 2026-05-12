@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Request, Response
 
-from service.presentation.dependencies import providers
+from service.composition.state import get_auth_service
 from service.services.profile.presentation.routers.auth_api.schemas import (
     LoginRequest,
     LoginResponse,
@@ -27,7 +27,7 @@ auth_router = APIRouter(prefix="/api/auth/v1")
 async def register(
     request_body: Annotated[RegisterRequest, Body],
     request: Request,
-    service: Annotated[AuthService, Depends(providers.get_auth_service)],
+    service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> RegisterResponse:
     user_agent = request.headers.get("user-agent", "unknown")
     return await service.register_user(user_agent, request_body)
@@ -43,7 +43,7 @@ async def login(
     request_body: Annotated[LoginRequest, Body],
     request: Request,
     response: Response,
-    service: Annotated[AuthService, Depends(providers.get_auth_service)],
+    service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> LoginResponse:
     user_agent = request.headers.get("user-agent", "unknown")
     user_jwt = await service.login(user_agent, request_body)

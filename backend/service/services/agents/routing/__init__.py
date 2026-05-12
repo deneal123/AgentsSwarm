@@ -1,8 +1,12 @@
-"""Routing package exports."""
-
-from .constants import ALLOWED_CATEGORIES, ROUTER_PROMPT
-from .policy import finalize_category, resolve_forced_category
-from .router_agent import create_router_agent, extract_category, resolve_category
+from service.services.agents.domain.routing import (
+    ALLOWED_CATEGORIES,
+    create_router_agent,
+    extract_category,
+    finalize_category,
+    resolve_category,
+    resolve_forced_category,
+    ROUTER_PROMPT,
+)
 
 __all__ = [
     "ROUTER_PROMPT",

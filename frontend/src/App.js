@@ -33,10 +33,11 @@ const childRoutesByLayout = ROUTE_CONFIG.reduce((acc, route) => {
   return acc;
 }, { [ROUTE_LAYOUTS.PUBLIC]: [], [ROUTE_LAYOUTS.PROTECTED]: [] });
 
+const FallbackPage = RoutePages[FALLBACK_ROUTE.page];
 const router = createBrowserRouter([
   { path: '/', element: layoutMap[ROUTE_LAYOUTS.PUBLIC], children: childRoutesByLayout[ROUTE_LAYOUTS.PUBLIC] },
   { path: '/', element: layoutMap[ROUTE_LAYOUTS.PROTECTED], children: childRoutesByLayout[ROUTE_LAYOUTS.PROTECTED] },
-  { path: FALLBACK_ROUTE.path, element: <RouteSuspenseBoundary><RoutePages[FALLBACK_ROUTE.page] /></RouteSuspenseBoundary> },
+  { path: FALLBACK_ROUTE.path, element: <RouteSuspenseBoundary><FallbackPage /></RouteSuspenseBoundary> },
 ]);
 
 function App() {

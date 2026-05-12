@@ -11,7 +11,7 @@ from service.settings import config
 from service.services.agents.tools.pptx import generate_pptx
 from service.services.agents.tools.web_search import parse_url, web_search
 from service.services.chat.application.use_cases.chat_use_cases import CreateThreadUseCase, PostMessageUseCase
-from service.services.chat.presentation.error_mapper import map_to_http_exception, normalize_response_metadata
+from service.services.chat.application.error_handling import map_to_http_exception, normalize_response_metadata
 from service.services.chat.domain.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class ChatApplicationService:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid pagination parameters") from exc
         except Exception as exc:
-            from service.repositories.exceptions import RepositoryNotFoundError
+            from service.shared.repositories.exceptions import RepositoryNotFoundError
 
             if isinstance(exc, RepositoryNotFoundError):
                 raise HTTPException(status_code=404, detail="Thread not found") from exc

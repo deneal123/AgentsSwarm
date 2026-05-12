@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from service.models.auth_models import AuthProfile
-from service.services.jobs.presentation.routers.jobs_api.schemas import StartJobRequest, TaskStatusResponse
+from service.services.jobs.application.dto import StartJobRequest, TaskStatusResponse
 from service.services.jobs.application.job_service import JobService
 
 logger = logging.getLogger(__name__)
@@ -63,12 +63,10 @@ class JobApplicationService:
 
     async def cancel_task(self, task_id: str) -> dict[str, str | bool]:
         try:
-            from celery.result import AsyncResult  # type: ignore[import]
-
-            from service.infrastructure.messaging.celery_app import celery_app
-
-            result = AsyncResult(task_id, app=celery_app)
-            result.revoke(terminate=True)
+            queue = self._job_service.job_queue
+            if queue is None:
+                raise RuntimeError("Job queue is disabled")
+            queue.cancel_task(task_id)
             return {"task_id": task_id, "cancelled": True}
         except Exception as exc:  # noqa: BLE001
             logger.exception("Celery task cancel failed for %s: %s", task_id, exc)

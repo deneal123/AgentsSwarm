@@ -78,5 +78,3 @@ export const mapChatUploadResponse = (data = {}) => {
 export const mapModelsResponse = (data = {}) => data?.models || [];
 export const mapProfileDto = (data = {}) => ({ ...data });
 export const mapJobDto = (data = {}) => ({ ...data });
-export const mapPlatformStatsDto = (data = {}) => ({ ...data });
-export const mapFileDownloadDto = (data = {}) => ({ ...data });

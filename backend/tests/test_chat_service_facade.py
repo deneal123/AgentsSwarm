@@ -10,24 +10,52 @@ from service.services.chat.domain.chat_exceptions import JobExecutionError
 from service.services.chat.domain.chat_service import ChatService
 
 
-@pytest.mark.asyncio
-async def test_post_message_uses_orchestrator_and_persists(monkeypatch: pytest.MonkeyPatch) -> None:
-    service = ChatService()
-
-    async def _resolve_route(**kwargs):
+class _FakeRoutingService:
+    async def resolve_route(self, **kwargs):
         return ChatRouteDecision(selected_model="m1", routing_metadata={"tool": "none"})
 
-    async def _execute_job(**kwargs):
+
+class _FakeOrchestration:
+    async def execute(self, **kwargs):
         return ChatReplyResult(reply="ok", thread_id="t1", metadata=ChatProcessingMetadata(data={"source": "job"}))
 
+
+class _FakePersistence:
+    async def persist_messages(self, thread_id, user_text, agent_reply, user_id):
+        pass
+
+    async def create_thread(self, **kwargs):
+        return {"thread_id": "t1", "title": None}
+
+    async def get_thread_messages(self, **kwargs):
+        return {"thread_id": "t1", "messages": []}
+
+    async def list_threads(self, **kwargs):
+        return {"threads": []}
+
+    async def delete_thread(self, thread_id):
+        return True
+
+
+class _FakeFallback:
+    async def execute(self, **kwargs):
+        return ChatReplyResult(reply="fallback", thread_id="t1", metadata=ChatProcessingMetadata(data={}))
+
+
+@pytest.mark.asyncio
+async def test_post_message_uses_orchestrator_and_persists(monkeypatch: pytest.MonkeyPatch) -> None:
     captured = {"persist": False}
 
-    async def _persist(thread_id, user_text, agent_reply, user_id):
-        captured["persist"] = (thread_id, user_text, agent_reply, user_id)
+    class _Persistence(_FakePersistence):
+        async def persist_messages(self, thread_id, user_text, agent_reply, user_id):
+            captured["persist"] = (thread_id, user_text, agent_reply, user_id)
 
-    monkeypatch.setattr(service.routing_service, "resolve_route", _resolve_route)
-    monkeypatch.setattr(service.job_orchestrator, "execute", _execute_job)
-    monkeypatch.setattr(service.persistence_service, "persist_messages", _persist)
+    service = ChatService(
+        routing_service=_FakeRoutingService(),
+        orchestration_service=_FakeOrchestration(),
+        persistence_service=_Persistence(),
+        fallback_service=_FakeFallback(),
+    )
 
     result = await service.post_message(ChatRequestContext(thread_id="t1", text="hello", user_id=1))
 
@@ -40,24 +68,16 @@ async def test_post_message_uses_orchestrator_and_persists(monkeypatch: pytest.M
 
 @pytest.mark.asyncio
 async def test_post_message_fallback_adds_error_code(monkeypatch: pytest.MonkeyPatch) -> None:
-    service = ChatService()
+    class _FailingOrchestration:
+        async def execute(self, **kwargs):
+            raise JobExecutionError("boom")
 
-    async def _resolve_route(**kwargs):
-        return ChatRouteDecision(selected_model="m1")
-
-    async def _execute_job(**kwargs):
-        raise JobExecutionError("boom")
-
-    async def _fallback(**kwargs):
-        return ChatReplyResult(reply="fallback", thread_id="t1", metadata=ChatProcessingMetadata(data={}))
-
-    async def _persist(*args, **kwargs):
-        return None
-
-    monkeypatch.setattr(service.routing_service, "resolve_route", _resolve_route)
-    monkeypatch.setattr(service.job_orchestrator, "execute", _execute_job)
-    monkeypatch.setattr(service.fallback_service, "execute", _fallback)
-    monkeypatch.setattr(service.persistence_service, "persist_messages", _persist)
+    service = ChatService(
+        routing_service=_FakeRoutingService(),
+        orchestration_service=_FailingOrchestration(),
+        persistence_service=_FakePersistence(),
+        fallback_service=_FakeFallback(),
+    )
 
     result = await service.post_message(ChatRequestContext(thread_id="t1", text="hello", user_id=1))
 

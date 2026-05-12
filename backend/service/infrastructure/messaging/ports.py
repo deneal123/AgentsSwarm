@@ -26,16 +26,21 @@ class CeleryJobQueuePort(JobQueuePort):
     def enqueue_process_agent_message(self, **kwargs: Any) -> JobHandlePort:
         return CeleryJobHandle(tasks.process_agent_message.delay(**kwargs))
 
+    def enqueue_agent_message(self, **kwargs: Any) -> str | None:
+        task = tasks.process_agent_message.apply_async(kwargs=kwargs)
+        return str(task.id) if task and task.id else None
+
     async def process_agent_message(self, **kwargs: Any) -> dict[str, Any]:
         return await tasks.process_agent_message_async(**kwargs)
-
-    def enqueue_calendar_generation(self, args: list[Any]) -> str | None:
-        task = tasks.generate_calendar.apply_async(args=args)
-        return str(task.id) if task and task.id else None
 
     def get_task_state(self, task_id: str) -> tuple[bool, bool, Any, Any, str]:
         result = AsyncResult(task_id, app=celery_app)
         return result.ready(), result.successful(), result.result, result.info or {}, result.state
+
+    def cancel_task(self, task_id: str) -> bool:
+        result = AsyncResult(task_id, app=celery_app)
+        result.revoke(terminate=True)
+        return True
 
 
 class RedisListMessageBusPort(MessageBusPort):

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from service.repositories.exceptions import RepositoryNotFoundError
+from service.shared.repositories.exceptions import RepositoryNotFoundError
 from service.services.chat.persistence.chat_persistence_service import ChatPersistenceService
 
 

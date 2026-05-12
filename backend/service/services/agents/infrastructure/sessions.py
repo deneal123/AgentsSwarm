@@ -12,6 +12,7 @@ import logging
 
 from cryptography.fernet import Fernet, InvalidToken
 from service.services.agents.schemas.sessions import SessionItem
+from service.services.agents.domain.sessions import PseudoSession
 
 from service.settings import config as service_config
 from service.infrastructure.secrets import secret_loader
@@ -19,61 +20,12 @@ from service.infrastructure.secrets import secret_loader
 logger = logging.getLogger(__name__)
 
 
-def record_session_items_added(_session_id: str, _count: int) -> None:
-    """Best-effort session metrics hook (no-op by default)."""
-    return None
+def record_session_items_added(session_id: str, count: int) -> None:
+    pass
 
 
-def record_session_length(_session_id: str, _length: int) -> None:
-    """Best-effort session size gauge hook (no-op by default)."""
-    return None
-
-
-class PseudoSession:
-    """In-memory session with optional TTL and max_items trimming."""
-
-    def __init__(self, session_id: str, ttl_seconds: Optional[int] = None, max_items: Optional[int] = None):
-        self.session_id = session_id
-        self._items: List[Dict] = []
-        self._lock = asyncio.Lock()
-        self._ttl = ttl_seconds
-        self._max_items = max_items
-
-    async def get_items(self, limit: Optional[int] = None) -> List[Dict]:
-        async with self._lock:
-            items = list(self._items)
-
-        if self._ttl is not None:
-            cutoff = (datetime.now(timezone.utc).timestamp() - self._ttl)
-            items = [it for it in items if float(it.get("ts", datetime.now(timezone.utc).timestamp())) >= cutoff]
-
-        if limit is not None:
-            items = items[-limit:]
-        return items
-
-    async def add_items(self, items: List[Dict]) -> None:
-        async with self._lock:
-            self._items.extend(items)
-            if self._max_items is not None and len(self._items) > self._max_items:
-                self._items = self._items[-self._max_items:]
-
-    async def pop_item(self) -> Optional[Dict]:
-        async with self._lock:
-            if not self._items:
-                return None
-            item = self._items.pop()
-
-        try:
-            current_len = len(await self.get_items())
-            record_session_length(self.session_id, current_len)
-        except Exception:
-            logger.debug("Failed to update session length metric after pop", exc_info=True)
-        return item
-
-    async def clear_session(self) -> None:
-        async with self._lock:
-            self._items.clear()
-        record_session_length(self.session_id, 0)
+def record_session_length(session_id: str, length: int) -> None:
+    pass
 
 
 class RedisSession:
@@ -92,7 +44,7 @@ class RedisSession:
         prefix: Optional[str] = None,
     ):
         try:
-            from service.container import get_current_container
+            from service.composition.state import get_current_container
             if client is None:
                 client = get_current_container().infra.redis_client
         except Exception:
@@ -168,7 +120,7 @@ class RedisSession:
 
     @classmethod
     def from_container(cls, session_id: str, max_items: Optional[int] = None, ttl_seconds: Optional[int] = None):
-        from service.container import get_current_container
+        from service.composition.state import get_current_container
 
         client = get_current_container().infra.redis_client
         cfg = service_config.redis

@@ -1,13 +1,15 @@
 import asyncio
 import json
 import logging
+from typing import Annotated, Any
 
-from fastapi import APIRouter, WebSocket, status
+from fastapi import APIRouter, Depends, WebSocket, status
+
 from prometheus_client import Counter, Gauge
 
-from service import container
+from service.composition.state import get_optional_redis_client, get_optional_redis_session_store
 from service.infrastructure.messaging import stream_helpers
-from service.security import AuthValidator
+from service.shared.security.auth_validation import AuthValidator
 from service.settings import config
 
 logger = logging.getLogger(__name__)
@@ -71,7 +73,6 @@ async def process_jobs_claimed_entries(
             _inc(JOBS_CLAIMED_LEFT_UNACKED_TOTAL)
             logger.debug("jobs_ws: failed to send claimed entry %s; leaving unacked", entry_id, exc_info=True)
             continue
-
         try:
             await stream_helpers.xack(redis_client, stream_key, group, entry_id)
         except Exception:
@@ -80,14 +81,14 @@ async def process_jobs_claimed_entries(
 
 
 @router.websocket("/api/jobs/v1/{job_id}/ws")
-async def jobs_ws(websocket: WebSocket, job_id: str) -> None:
+async def jobs_ws(
+    websocket: WebSocket,
+    job_id: str,
+    session_store: Annotated[Any, Depends(get_optional_redis_session_store)],
+    redis_client: Annotated[Any, Depends(get_optional_redis_client)],
+) -> None:
     """WebSocket endpoint for job/calendar streaming using Redis Streams."""
     try:
-        try:
-            session_store = container.get_current_container().infra.redis_session_store
-        except Exception:
-            session_store = None
-
         auth_validator = AuthValidator(config.auth)
         session = await auth_validator.authenticate_websocket(websocket, session_store)
         if not session:
@@ -97,9 +98,7 @@ async def jobs_ws(websocket: WebSocket, job_id: str) -> None:
 
         await websocket.accept()
 
-        try:
-            redis_client = container.get_current_container().infra.redis_client
-        except Exception:
+        if redis_client is None:
             await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
             return
 

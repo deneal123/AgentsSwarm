@@ -20,11 +20,14 @@ class JobQueuePort(Protocol):
     def enqueue_process_agent_message(self, **kwargs: Any) -> JobHandlePort:
         ...
 
+    def enqueue_agent_message(self, **kwargs: Any) -> str | None:
+        ...
+
     async def process_agent_message(self, **kwargs: Any) -> dict[str, Any]:
         ...
 
-    def enqueue_calendar_generation(self, args: list[Any]) -> str | None:
+    def get_task_state(self, task_id: str) -> tuple[bool, bool, Any, Any, str]:
         ...
 
-    def get_task_state(self, task_id: str) -> tuple[bool, bool, Any, Any, str]:
+    def cancel_task(self, task_id: str) -> bool:
         ...

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from service.services.chat.presentation.routers.chat_api.schemas import MessageResponse, ThreadResponse
-from service.presentation.routers.jobs_api.schemas import JobResponse
+from service.services.jobs.presentation.routers.jobs_api.schemas import JobResponse
 
 
 def _schema_signature(model) -> dict[str, object]:

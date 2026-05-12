@@ -10,9 +10,16 @@ def test_task_wrapper_calls_handler(monkeypatch):
             called["thread_id"] = command.thread_id
             return {"status": "success", "reply": "ok", "metadata": {}}
 
-    import service.container as container
+    class _FakeServices:
+        process_chat_message_handler = _FakeHandler()
 
-    monkeypatch.setattr(container, "get", lambda name: _FakeHandler())
+    class _FakeContainer:
+        services = _FakeServices()
+
+    monkeypatch.setattr(
+        "service.composition.state.get_current_container",
+        lambda: _FakeContainer(),
+    )
 
     result = process_agent_message.run(
         job_id="job-1",

@@ -48,6 +48,9 @@ class FakeQueue:
     def enqueue_process_agent_message(self, **kwargs):
         return FakeHandle({"status": "success", **kwargs})
 
+    def enqueue_agent_message(self, **kwargs):
+        return "task-123"
+
     async def process_agent_message(self, **kwargs):
         return {"status": "success", **kwargs}
 
@@ -56,6 +59,9 @@ class FakeQueue:
 
     def get_task_state(self, task_id: str):
         return True, True, {"calendar_id": "c-1"}, {"progress": 100}, "SUCCESS"
+
+    def cancel_task(self, task_id: str):
+        return True
 
 
 class FakeChatCommand:
@@ -152,6 +158,7 @@ def test_job_queue_port_contract() -> None:
     assert handle.get(timeout=1.0)["status"] == "success"
     worker_result = asyncio.run(queue.process_agent_message(job_id="1"))
     assert worker_result["status"] == "success"
+    assert queue.enqueue_agent_message(job_id="1") == "task-123"
     assert queue.enqueue_calendar_generation(["a"]) == "task-1"
     ready, successful, payload, meta, state = queue.get_task_state("task-1")
     assert ready is True
@@ -159,6 +166,7 @@ def test_job_queue_port_contract() -> None:
     assert payload["calendar_id"] == "c-1"
     assert meta["progress"] == 100
     assert state == "SUCCESS"
+    assert queue.cancel_task("task-1") is True
 
 
 def test_chat_command_port_contract() -> None:

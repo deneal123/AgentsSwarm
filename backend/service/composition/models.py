@@ -16,6 +16,7 @@ from service.services.jobs.application.job_processor import NewJobProcessor
 from service.services.jobs.application.job_service import JobService
 from service.services.profile.application.auth_service import AuthService
 from service.services.profile.application.profile_service import ProfileService
+from service.services.analytics.application.analytics_service import AnalyticsService
 from service.utils.background_task_manager import BackgroundTaskManager
 
 
@@ -49,6 +50,7 @@ class ServicesContainer:
     auth_service: AuthService
     job_service: JobService
     file_saver_service: FileSaverService
+    analytics_service: AnalyticsService
     process_chat_message_handler: ProcessChatMessageHandler
     new_job_processor: NewJobProcessor
     chat_application_service: Any

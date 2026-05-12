@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from service.repositories.exceptions import RepositoryNotFoundError
+from service.shared.repositories.exceptions import RepositoryNotFoundError
 
 
 class ChatPersistenceService:

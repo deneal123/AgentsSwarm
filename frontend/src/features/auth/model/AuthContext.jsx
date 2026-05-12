@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import useLocalStorage from "@hooks/useLocalStorage";
 import { fetchProfile, logoutLocal } from "@api";
 import extractErrorInfo from "@utils/errorHandler";
-import { registerUnauthorizedHandler } from "@api/client";
+import { registerUnauthorizedHandler } from "@api/httpClient";
 import { APP_ROUTES } from "@app/router";
 
 const AuthSessionContext = createContext(null);

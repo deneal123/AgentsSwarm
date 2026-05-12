@@ -18,14 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 def process_chat_message_core(thread_id: str, message_id: str, text: str, user_id: int | None = None) -> dict:
-    from service import container as svc_container
+    from service.composition import state as svc_container
     from service.infrastructure.messaging import stream_helpers as stream_helpers_module
-    from service.services.chat.domain.chat_service import ChatService
-
-    service = ChatService()
 
     try:
-        res = asyncio.run(service.post_message(ChatRequestContext(thread_id=thread_id, text=text, user_id=user_id)))
+        chat_svc = svc_container.get_current_container().services.chat_application_service
+        res = asyncio.run(chat_svc.post_message(thread_id=thread_id, payload=type("P", (), {"text": text, "user_id": user_id, "model": None, "input_type": None, "web_search": False, "deep_research": False, "file_context": "", "route_override": None, "file_ids": []})()))
+        res = ChatReplyResult(reply=res.get("reply", ""), thread_id=res.get("thread_id", thread_id), metadata=ChatProcessingMetadata(data=res.get("metadata") or {}))
     except Exception:
         logger.exception("process_chat_message_core failed")
         res = ChatReplyResult(reply="", thread_id=thread_id, metadata=ChatProcessingMetadata(data={}))
@@ -42,30 +41,6 @@ def process_chat_message_core(thread_id: str, message_id: str, text: str, user_i
             stream_helpers_module.xadd_sync(redis_client, f"chat:{thread_id}:stream", {"data": json.dumps(payload)})
         except Exception:
             logger.exception("Failed to publish agent reply")
-
-    try:
-        meta = res.metadata.data
-        action = meta.get("action") if isinstance(meta, dict) and isinstance(meta.get("action"), dict) else None
-        if action and action.get("type") == "calendar.create":
-            cal_req = action.get("payload") or {}
-            job_service = svc_container.get_current_container().services.job_service
-            job_res = asyncio.run(
-                job_service.create_calendar_job(
-                    user_id=str(user_id or "0"),
-                    name=cal_req.get("name"),
-                    period_start=cal_req.get("period_start"),
-                    period_end=cal_req.get("period_end"),
-                    manifest=cal_req.get("manifest"),
-                )
-            )
-            if redis_client:
-                stream_helpers_module.xadd_sync(
-                    redis_client,
-                    f"chat:{thread_id}:stream",
-                    {"data": json.dumps({"type": "calendar_job_enqueued", "job_id": str(job_res.job_id), "status": str(job_res.status)})},
-                )
-    except Exception:
-        logger.exception("Error handling calendar request")
 
     return res.to_dict()
 

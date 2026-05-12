@@ -1,5 +1,4 @@
 import asyncio
-import json
 import pytest
 
 from service.services.agents.infrastructure.sessions import RedisSession
@@ -18,7 +17,6 @@ class FakeRedis:
 
     async def ltrim(self, key, start, end):
         arr = self.data.get(key, [])
-        # negative indices handling similar to redis
         if start < 0:
             start = max(len(arr) + start, 0)
         if end < 0:
@@ -26,7 +24,6 @@ class FakeRedis:
         self.data[key] = arr[start:end]
 
     async def expire(self, key, seconds):
-        # no-op for test
         pass
 
     async def rpop(self, key):
@@ -49,7 +46,6 @@ async def test_redis_session_add_get_pop_limit():
     await s.add_items([{"role": "user", "content": "c"}])
     await s.add_items([{"role": "assistant", "content": "d"}])
 
-    # max_items=3 should keep only last 3
     items = await s.get_items()
     assert len(items) == 3
     assert items[0]["content"] == "b"
@@ -58,7 +54,6 @@ async def test_redis_session_add_get_pop_limit():
     last = await s.pop_item()
     assert last["content"] == "d"
 
-    # clear
     await s.clear_session()
     assert await s.get_items() == []
 
@@ -67,13 +62,22 @@ async def test_redis_session_add_get_pop_limit():
 async def test_redis_session_from_container(monkeypatch):
     r = FakeRedis()
 
-    def fake_get(name: str):
-        return r
+    class FakeInfra:
+        redis_client = r
 
-    monkeypatch.setattr("service.container.get", lambda name: r)
+    class FakeContainer:
+        infra = FakeInfra()
+
+    monkeypatch.setattr(
+        "service.composition.state.get_current_container",
+        lambda: FakeContainer(),
+    )
 
     s = RedisSession.from_container("sid2", max_items=2)
-    # client should work via container
-    await s.add_items([{"role": "user", "content": "x"}, {"role": "assistant", "content": "y"}, {"role": "user", "content": "z"}])
+    await s.add_items([
+        {"role": "user", "content": "x"},
+        {"role": "assistant", "content": "y"},
+        {"role": "user", "content": "z"},
+    ])
     items = await s.get_items()
     assert len(items) == 2

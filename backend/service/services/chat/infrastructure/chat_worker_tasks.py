@@ -16,7 +16,7 @@ from service.services.chat.infrastructure.chat_worker import (
 )
 from service.services.chat.persistence.chat_worker_repository import ChatWorkerRepository
 from service.services.chat.application.use_cases.chat_use_cases import PersistChatMessagesUseCase
-from service.services.chat.presentation.error_mapper import map_to_worker_error_payload, normalize_response_metadata
+from service.services.chat.application.error_handling import map_to_worker_error_payload, normalize_response_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ async def process_agent_message_async(
     dependency_factory: ChatWorkerDependencyFactory | None = None,
     agent_execution: AgentExecutionPort | None = None,
 ) -> dict:
-    from service import container
+    from service.composition import state as container
     from service.models.key_value import ProcessingStatus
     from service.services.files.persistence.file_repository import FileRepository
     from service.services.jobs.persistence.job_repository import JobRepository
@@ -198,7 +198,7 @@ def process_agent_message(
     deep_research: bool = False,
     file_context: str = "",
 ) -> dict:
-    from service import container
+    from service.composition import state as container
     from service.services.chat.domain.process_chat_message_handler import ProcessChatMessageCommand, ProcessChatMessageFlags, ProcessChatMessageModelSettings
 
     handler = container.get_current_container().services.process_chat_message_handler

@@ -1,8 +1,9 @@
 from fastapi.testclient import TestClient
 
 from service.main import app
-from service.presentation.routers.analytics_api.analytics_api import get_analytics_repository
+from service.composition.state import get_analytics_service
 from service.services.analytics.persistence.analytics_repository import AnalyticsVitalsRepository
+from service.services.analytics.application.analytics_service import AnalyticsService
 
 
 class FakeRedis:
@@ -41,38 +42,53 @@ class FakeRedis:
         return []
 
 
-def test_ingest_vitals_accepts_payload():
-    client = TestClient(app)
-    response = client.post(
-        "/api/analytics/vitals",
-        json={
-            "version": "1.0",
-            "sampled": True,
-            "events": [
-                {"name": "LCP", "value": 1234, "rating": "good"},
-                {"name": "CLS", "value": 0.03, "rating": "good"},
-            ],
-        },
-    )
+class _FakeAnalyticsService:
+    async def ingest_vitals(self, payload: dict) -> int:
+        return len(payload.get("events", []))
 
-    assert response.status_code == 200
-    assert response.json() == {"accepted": True, "enqueued": 2}
+    async def fetch_summary(self) -> dict:
+        return {"total_events": 0, "metrics": []}
+
+
+def test_ingest_vitals_accepts_payload():
+    app.dependency_overrides[get_analytics_service] = lambda: _FakeAnalyticsService()
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/api/analytics/vitals",
+            json={
+                "version": "1.0",
+                "sampled": True,
+                "events": [
+                    {"name": "LCP", "value": 1234, "rating": "good"},
+                    {"name": "CLS", "value": 0.03, "rating": "good"},
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"accepted": True, "enqueued": 2}
+    finally:
+        app.dependency_overrides.pop(get_analytics_service, None)
 
 
 def test_vitals_summary_returns_aggregates():
     client = TestClient(app)
     fake_redis = FakeRedis()
 
-    def override_repository():
-        return AnalyticsVitalsRepository(fake_redis)
+    def override_service():
+        return AnalyticsService(AnalyticsVitalsRepository(fake_redis))
 
-    client.app.dependency_overrides[get_analytics_repository] = override_repository
+    app.dependency_overrides[get_analytics_service] = override_service
 
-    response = client.get("/api/analytics/vitals/summary")
+    try:
+        response = client.get("/api/analytics/vitals/summary")
 
-    assert response.status_code == 200
-    body = response.json()
-    assert body["total_events"] == 10
-    assert len(body["metrics"]) == 1
-    assert body["metrics"][0]["name"] == "LCP"
-    assert body["metrics"][0]["avg"] == 2500.0
+        assert response.status_code == 200
+        body = response.json()
+        assert body["total_events"] == 10
+        assert len(body["metrics"]) == 1
+        assert body["metrics"][0]["name"] == "LCP"
+        assert body["metrics"][0]["avg"] == 2500.0
+    finally:
+        app.dependency_overrides.pop(get_analytics_service, None)

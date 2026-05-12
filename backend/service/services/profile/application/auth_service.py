@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from service.models.db.db_models import UserSession
 from service.models.key_value import SessionStatus, UserTypes
 from service.models.profile_models import UserProfileLogic
-from service.services.profile.presentation.routers.auth_api.schemas import (
+from service.services.profile.application.dto import (
     LoginRequest,
     LoginResponse,
     RegisterRequest,

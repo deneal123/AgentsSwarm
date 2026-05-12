@@ -93,14 +93,14 @@ services/
 
 | What | Where |
 |------|-------|
-| Base repository class | `service/repositories/base_repository.py` |
-| Repository exceptions | `service/repositories/exceptions.py` |
-| DB session decorator | `service/repositories/decorators/session_processor.py` |
-| Cross-cutting DI providers | `service/presentation/dependencies/providers.py` |
-| Auth checker | `service/presentation/dependencies/auth_checker.py` |
+| Base repository class | `service/shared/repositories/base_repository.py` |
+| Repository exceptions | `service/shared/repositories/exceptions.py` |
+| DB session decorator | `service/shared/repositories/decorators/session_processor.py` |
+| Auth checker | `service/shared/security/auth_checker.py` |
 | Error mapping utilities | `service/shared/error_mapper.py` |
-| Global exception handler | `service/presentation/handlers/exceptions_handlers.py` |
-| WS message schemas | `service/presentation/routers/ws_schemas.py` |
+| Global exception handler | `service/shared/presentation/handlers/exceptions_handlers.py` |
+| WS message schemas | `service/shared/presentation/routers/ws_schemas.py` |
+| Cross-cutting DI providers | `service/composition/state.py` |
 
 ---
 

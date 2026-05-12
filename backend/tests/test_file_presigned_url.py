@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from service.models.auth_models import AuthProfile
 from service.models.db.db_models import UserFile
 from service.models.key_value import ServiceType, UserTypes
-from service.presentation.dependencies.auth_checker import check_auth
+from service.shared.security.auth_checker import check_auth
 
 
 class _FakeFileRepo:
@@ -91,7 +91,7 @@ def _build_app(presigned: str | None):
     record = UserFile(
         id=file_id,
         user_id=user_id,
-        type=ServiceType.CALENDAR,
+        type=ServiceType.CHAT,
         file_name="uploads/DEFAULT/abc.csv",
         file_url="/abs/uploads/DEFAULT/abc.csv",
     )

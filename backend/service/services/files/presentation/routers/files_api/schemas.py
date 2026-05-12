@@ -4,19 +4,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from service.models.key_value import ServiceType
-
-
-class FileMetadata(BaseModel):
-    file_id: Annotated[UUID, Field(..., description="Unique file identifier")]
-    file_url: Annotated[str, Field(..., description="URL to access the file")]
-
-
-class UploadResponse(FileMetadata):
-    file_key: str | None = None
-
-
-class FetchUserFilesResponse(BaseModel):
-    files: Annotated[list[FileMetadata], Field(..., description="List of user's uploaded files")]
+from service.services.files.application.dto import (
+    FetchUserFilesResponse,
+    FileMetadata,
+    UploadResponse,
+)
 
 
 class FetchModesResponse(BaseModel):
@@ -46,3 +38,15 @@ class FileDetailResponse(BaseModel):
     file_id: Annotated[UUID, Field(..., description="File id")]
     file_url: Annotated[str, Field(..., description="Stored file URL")]
     download_url: Annotated[str | None, Field(None, description="Presigned download URL if available")]
+
+
+__all__ = [
+    "FileMetadata",
+    "UploadResponse",
+    "FetchUserFilesResponse",
+    "FetchModesResponse",
+    "PresignRequest",
+    "PresignResponse",
+    "CallbackRequest",
+    "FileDetailResponse",
+]

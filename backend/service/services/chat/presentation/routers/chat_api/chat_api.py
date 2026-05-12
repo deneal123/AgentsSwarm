@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from fastapi.responses import RedirectResponse, Response
 
 from service.services.chat.application.chat_application_service import ChatApplicationService
-from service.presentation.dependencies.providers import get_chat_application_service
+from service.composition.state import get_chat_application_service
 from service.services.chat.presentation.http.upload_api import upload_router
 
 from service.services.chat.presentation.routers.chat_api.schemas import (
@@ -92,7 +92,9 @@ async def list_threads(
 
 @chat_router.delete("/{thread_id}", status_code=204)
 async def delete_thread(thread_id: str, service: ChatApplicationService = Depends(get_chat_application_service)):
-    await service.delete_thread(thread_id)
+    found = await service.delete_thread(thread_id)
+    if found is False:
+        raise HTTPException(status_code=404, detail="Thread not found")
     return None
 
 

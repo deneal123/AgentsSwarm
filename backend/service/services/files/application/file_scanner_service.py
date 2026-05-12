@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-from service.infrastructure.storage.abstract_file_storage import AbstractFileStorage
+from service.services.files.application.ports.interfaces import FileStoragePort
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class BasicFileScanner(FileScanner):
     content analysis pipeline and produce structured results.
     """
 
-    def __init__(self, storage: AbstractFileStorage):
+    def __init__(self, storage: FileStoragePort):
         self.storage = storage
 
     async def scan(self, file_key: str) -> dict:

@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from service.models.auth_models import AuthProfile
 from service.models.key_value import UserTypes
-from service.models.profile_models import UserProfileLogic
+from service.services.profile.application.dto import ProfileOverviewResult
 from service.services.profile.presentation.routers.profile_api import profile_api as profile_module
 from service.services.profile.presentation.routers.profile_api.profile_api import (
     get_profile_service,
@@ -21,31 +21,32 @@ def _fake_auth() -> AuthProfile:
 class _FakeProfileService:
     def __init__(self) -> None:
         now = datetime.now(UTC)
-        self.profile = UserProfileLogic(
-            id=uuid.uuid4(),
+        self._uid = uuid.uuid4()
+        self.overview = ProfileOverviewResult(
+            id=self._uid,
             email="user@example.com",
-            password_hash="hash",
             first_name="Alex",
-            company="MLservice",
             timezone="Europe/Moscow",
             avatar_url=None,
             created_at=now,
             updated_at=now,
         )
-        self.update_calls: list[tuple[uuid.UUID, dict]] = []
-        self.deleted_chat_history_calls: list[uuid.UUID] = []
+        self.update_calls: list = []
+        self.deleted_chat_history_calls: list = []
 
-    async def get_profile_overview(self, user_id):  # noqa: D401
-        return self.profile
+    async def get_profile_overview(self, query):
+        return self.overview
 
-    async def update_profile_details(self, user_id, updates):  # noqa: D401
-        self.update_calls.append((user_id, updates))
-        for key, value in updates.items():
-            setattr(self.profile, key, value)
-        return self.profile
+    async def update_profile_details(self, command):
+        self.update_calls.append(command)
+        if command.first_name is not None:
+            self.overview = self.overview.model_copy(update={"first_name": command.first_name})
+        if command.timezone is not None:
+            self.overview = self.overview.model_copy(update={"timezone": command.timezone})
+        return self.overview
 
-    async def delete_chat_history(self, user_id):
-        self.deleted_chat_history_calls.append(user_id)
+    async def delete_chat_history(self, command):
+        self.deleted_chat_history_calls.append(command.user_id)
 
 
 def _make_app(fake_service: _FakeProfileService) -> TestClient:
@@ -68,7 +69,6 @@ def test_get_profile_returns_overview():
     payload = resp.json()
     assert payload["email"] == "user@example.com"
     assert payload["first_name"] == "Alex"
-    assert payload["company"] == "MLservice"
 
 
 def test_patch_profile_updates_fields():
@@ -84,8 +84,9 @@ def test_patch_profile_updates_fields():
     assert payload["timezone"] == "Europe/Berlin"
 
     assert len(fake_service.update_calls) == 1
-    _, updates = fake_service.update_calls[0]
-    assert updates == new_payload
+    cmd = fake_service.update_calls[0]
+    assert cmd.first_name == "Nika"
+    assert cmd.timezone == "Europe/Berlin"
 
 
 def test_delete_chat_history_returns_204():

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from service.infrastructure.messaging.agent_streaming import ReplyAssembler
+from service.services.agents.application.reply_assembler import ReplyAssembler
 from service.services.agents.application.ports.interfaces import AgentExecutionPort
 from service.services.agents.application.use_cases.agent_execution_use_cases import (
     PersistSessionHistoryUseCase,

@@ -1,14 +1,1 @@
-"""Helpers for sub-agent model selection."""
-
-import re
-from typing import Optional
-
-
-def pick_text_model(models: list[str]) -> Optional[str]:
-    text_re = re.compile(r"(gpt|qwen|llama|mistral|alpha|instruct|chat)", re.I)
-    return next((m for m in models if text_re.search(m)), models[0] if models else None)
-
-
-def pick_image_model(models: list[str]) -> Optional[str]:
-    image_re = re.compile(r"(image|dall|stable|flux|kandinsky|sdxl)", re.I)
-    return next((m for m in models if image_re.search(m)), None)
+from service.services.agents.domain.subagents.utils import *  # noqa: F401,F403

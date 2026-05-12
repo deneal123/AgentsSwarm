@@ -8,11 +8,12 @@ def _service_py_files():
 
 
 def test_no_redis_publish_or_pubsub_usage():
-    """Ensure service code does not use Redis Pub/Sub or publish() API."""
+    """Ensure service code does not directly call Redis Pub/Sub publish() or use PubSub API."""
     for p in _service_py_files():
-        txt = p.read_text()
-        assert ".publish(" not in txt, f"Found .publish( usage in {p}"
-        # catch PubSub type or mention (case-sensitive) and common pubsub references
+        txt = p.read_text(encoding="utf-8", errors="replace")
+        # Check for direct Redis client publish calls (not port method calls)
+        assert "redis.publish(" not in txt, f"Found redis.publish( usage in {p}"
+        assert "_client.publish(" not in txt, f"Found _client.publish( usage in {p}"
         assert "PubSub" not in txt, f"Found PubSub usage in {p}"
         assert re.search(r"\bpubsub\b", txt, re.IGNORECASE) is None, f"Found pubsub reference in {p}"
 

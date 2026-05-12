@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 
 from service.models.auth_models import AuthProfile
-from service.presentation.dependencies import providers
-from service.presentation.dependencies.auth_checker import check_auth
+from service.composition.state import get_job_service
+from service.shared.security.auth_checker import check_auth
 from service.services.jobs.presentation.routers.jobs_api.schemas import (
     JobResponse,
     StartJobRequest,
@@ -19,7 +19,7 @@ jobs_router = APIRouter(prefix="/api/jobs/v1")
 
 
 def get_job_application_service(
-    service: Annotated["JobService", Depends(providers.get_job_service)],
+    service: Annotated["JobService", Depends(get_job_service)],
 ) -> JobApplicationService:
     return JobApplicationService(job_service=service)
 

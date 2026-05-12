@@ -19,7 +19,7 @@ class _FakeResponse:
 
 @pytest.mark.asyncio
 async def test_deep_research_uses_snippet_when_parse_url_has_no_content(monkeypatch):
-    dr = importlib.import_module("service.services.agents.tools.deep_research")
+    dr = importlib.import_module("service.services.agents.domain.tools.deep_research")
 
     async def fake_create_chat_completion(messages, model, temperature, max_tokens):
         system_content = str(messages[0].get("content", ""))

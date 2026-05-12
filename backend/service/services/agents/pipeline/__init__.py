@@ -1,15 +1,14 @@
-"""Agent pipeline helpers."""
-
-from .context_enricher import (
+from service.services.agents.domain.pipeline import (
     build_effective_input,
+    build_processing_error_event,
+    build_user_context,
+    EventSequencer,
     load_memory_context,
     load_session_history_context,
+    resolve_agent_route,
+    run_post_response_hooks,
     schedule_memory_extraction,
 )
-from .error_handling import build_processing_error_event
-from .event_stream import EventSequencer
-from .postprocess import run_post_response_hooks
-from .processor_flow import build_user_context, resolve_agent_route
 
 __all__ = [
     "load_memory_context",

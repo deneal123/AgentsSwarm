@@ -1,8 +1,8 @@
 import pytest
 
 from service.infrastructure.messaging.tasks import _resolve_memory_user_id
-from service.services.agents.integration.base import BaseIntegration, BaseMemoryIntegration
-from service.services.agents.integration.memory import Mem0MemoryIntegration
+from service.services.agents.infrastructure.integration.base import BaseIntegration, BaseMemoryIntegration
+from service.services.agents.infrastructure.integration.memory import Mem0MemoryIntegration
 from service.services.analytics.application.memory_service import MemoryService
 
 

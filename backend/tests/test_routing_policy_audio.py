@@ -1,4 +1,4 @@
-from service.services.agents.routing.policy import resolve_forced_category
+from service.services.agents.domain.routing.policy import resolve_forced_category
 
 
 def test_resolve_forced_category_audio_input_prioritizes_audio_transcribe():

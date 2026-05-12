@@ -1,4 +1,307 @@
 {
+  "paths": {
+    "GET /api/chats/{thread_id}": {
+      "operationId": "get_thread_messages_api_chats__thread_id__get",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "thread_id",
+          "required": true,
+          "schema": {
+            "title": "Thread Id",
+            "type": "string"
+          }
+        },
+        {
+          "in": "query",
+          "name": "page",
+          "required": false,
+          "schema": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        {
+          "in": "query",
+          "name": "per_page",
+          "required": false,
+          "schema": {
+            "default": 50,
+            "title": "Per Page",
+            "type": "integer"
+          }
+        }
+      ],
+      "requestBody": null,
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "GET /api/jobs/v1/result/{job_id}": {
+      "operationId": "fetch_result_api_jobs_v1_result__job_id__get",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "job_id",
+          "required": true,
+          "schema": {
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        {
+          "in": "cookie",
+          "name": "auth_token",
+          "required": false,
+          "schema": {
+            "title": "Auth Token",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": null,
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/auth/v1/login": {
+      "operationId": "login_api_auth_v1_login_post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/auth/v1/register": {
+      "operationId": "register_api_auth_v1_register_post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RegisterRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/chats/": {
+      "operationId": "create_thread_api_chats__post",
+      "parameters": [],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ThreadCreate"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "201": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/chats/{thread_id}/message": {
+      "operationId": "post_message_api_chats__thread_id__message_post",
+      "parameters": [
+        {
+          "in": "path",
+          "name": "thread_id",
+          "required": true,
+          "schema": {
+            "title": "Thread Id",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MessageRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    },
+    "POST /api/jobs/v1/start": {
+      "operationId": "start_processing_job_api_jobs_v1_start_post",
+      "parameters": [
+        {
+          "in": "cookie",
+          "name": "auth_token",
+          "required": false,
+          "schema": {
+            "title": "Auth Token",
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StartJobRequest"
+            }
+          }
+        },
+        "required": true
+      },
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobResponse"
+              }
+            }
+          },
+          "description": "Successful Response"
+        },
+        "422": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HTTPValidationError"
+              }
+            }
+          },
+          "description": "Validation Error"
+        }
+      }
+    }
+  },
   "components": {
     "HTTPValidationError": {
       "properties": {
@@ -310,7 +613,6 @@
     },
     "ServiceType": {
       "enum": [
-        "CALENDAR",
         "CHAT"
       ],
       "title": "ServiceType",
@@ -449,309 +751,6 @@
       ],
       "title": "ValidationError",
       "type": "object"
-    }
-  },
-  "paths": {
-    "GET /api/chats/{thread_id}": {
-      "operationId": "get_thread_messages_api_chats__thread_id__get",
-      "parameters": [
-        {
-          "in": "path",
-          "name": "thread_id",
-          "required": true,
-          "schema": {
-            "title": "Thread Id",
-            "type": "string"
-          }
-        },
-        {
-          "in": "query",
-          "name": "page",
-          "required": false,
-          "schema": {
-            "default": 1,
-            "title": "Page",
-            "type": "integer"
-          }
-        },
-        {
-          "in": "query",
-          "name": "per_page",
-          "required": false,
-          "schema": {
-            "default": 50,
-            "title": "Per Page",
-            "type": "integer"
-          }
-        }
-      ],
-      "requestBody": null,
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "GET /api/jobs/v1/result/{job_id}": {
-      "operationId": "fetch_result_api_jobs_v1_result__job_id__get",
-      "parameters": [
-        {
-          "in": "path",
-          "name": "job_id",
-          "required": true,
-          "schema": {
-            "title": "Job Id",
-            "type": "string"
-          }
-        },
-        {
-          "in": "cookie",
-          "name": "auth_token",
-          "required": false,
-          "schema": {
-            "title": "Auth Token",
-            "type": "string"
-          }
-        }
-      ],
-      "requestBody": null,
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JobResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "POST /api/auth/v1/login": {
-      "operationId": "login_api_auth_v1_login_post",
-      "parameters": [],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/LoginRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "POST /api/auth/v1/register": {
-      "operationId": "register_api_auth_v1_register_post",
-      "parameters": [],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/RegisterRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "POST /api/chats/": {
-      "operationId": "create_thread_api_chats__post",
-      "parameters": [],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ThreadCreate"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "201": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ThreadResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "POST /api/chats/{thread_id}/message": {
-      "operationId": "post_message_api_chats__thread_id__message_post",
-      "parameters": [
-        {
-          "in": "path",
-          "name": "thread_id",
-          "required": true,
-          "schema": {
-            "title": "Thread Id",
-            "type": "string"
-          }
-        }
-      ],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/MessageRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MessageResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
-    },
-    "POST /api/jobs/v1/start": {
-      "operationId": "start_processing_job_api_jobs_v1_start_post",
-      "parameters": [
-        {
-          "in": "cookie",
-          "name": "auth_token",
-          "required": false,
-          "schema": {
-            "title": "Auth Token",
-            "type": "string"
-          }
-        }
-      ],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/StartJobRequest"
-            }
-          }
-        },
-        "required": true
-      },
-      "responses": {
-        "200": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JobResponse"
-              }
-            }
-          },
-          "description": "Successful Response"
-        },
-        "422": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HTTPValidationError"
-              }
-            }
-          },
-          "description": "Validation Error"
-        }
-      }
     }
   }
 }

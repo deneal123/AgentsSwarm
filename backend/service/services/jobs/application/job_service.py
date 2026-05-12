@@ -5,16 +5,13 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from service.models.jobs_models import JobLogic
-from service.models.key_value import ProcessingStatus
-from service.models.profile_models import UserProfileLogic
-from service.services.jobs.presentation.routers.jobs_api.schemas import StartJobRequest
-from service.repositories.exceptions import RepositoryIntegrityError
+from service.models.key_value import ProcessingStatus, ServiceType
+from service.services.jobs.application.dto import StartJobRequest
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.services.jobs.persistence.job_repository import JobRepository
-from service.services.profile.application.profile_service import ProfileService
 from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 from service.settings import JobConfig, config
 from service.services.chat.domain.chat_contracts import JobExecutionResult
-from service.models.key_value import ServiceType
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +23,10 @@ class JobService(JobOrchestrationPort):
         self,
         config: JobConfig,
         repository: JobRepository,
-        profile_source: ProfileService,
         job_queue: JobQueuePort | None = None,
     ) -> None:
         self.config = config
         self.repository = repository
-        self.profile_source = profile_source
         self.job_queue = job_queue
 
     @staticmethod
@@ -147,8 +142,6 @@ class JobService(JobOrchestrationPort):
             status=ProcessingStatus.NEW,
             payload=payload or None,
         )
-        # TODO: If new ServiceType enum values are added (e.g., CALENDAR), ensure an alembic revision
-        # updates the database enum / constraints accordingly so DB doesn't reject new values.
         created_job = await self.repository.create_job(new_job)
 
         logger.info(f"Job created with ID: {created_job.id} for user: {user_id}")
@@ -165,58 +158,6 @@ class JobService(JobOrchestrationPort):
 
     def _resolve_wait_time(self, job_type: ServiceType) -> int:
         return self.config.settings.wait_time_sec
-
-    async def create_calendar_job(
-        self,
-        user_id: UUID,
-        name: str | None = None,
-        period_start: str | None = None,
-        period_end: str | None = None,
-        manifest: dict | None = None,
-    ) -> JobExecutionResult:
-        """Create a Job of type CALENDAR and enqueue calendar generation (Celery) or run synchronously."""
-
-        payload = {"name": name, "period_start": period_start, "period_end": period_end, "manifest": manifest}
-
-        new_job = JobLogic(
-            user_id=user_id,
-            type=ServiceType.CALENDAR,
-            status=ProcessingStatus.PROCESSING,
-            payload=payload,
-        )
-        created_job = await self.repository.create_job(new_job)
-
-        try:
-            if self.job_queue:
-                task_id = self.job_queue.enqueue_calendar_generation(
-                    [str(created_job.id), str(user_id), name, period_start, period_end, manifest]
-                )
-                if task_id:
-                    created_job.payload = created_job.payload or {}
-                    created_job.payload["celery_task_id"] = task_id
-                    updated = await self.repository.update_job_status(created_job)
-                    return JobExecutionResult(
-                        job_id=updated.id,
-                        status=updated.status,
-                        result_file_url=None,
-                        wait_time_sec=self.config.settings.wait_time_sec,
-                        celery_task_id=task_id,
-                    )
-
-            created_job.status = ProcessingStatus.SUCCESS
-            updated = await self.repository.update_job_status(created_job)
-            return JobExecutionResult(
-                job_id=updated.id,
-                status=updated.status,
-                result_file_url=None,
-                wait_time_sec=self.config.settings.wait_time_sec,
-                celery_task_id=None,
-            )
-        except Exception as exc:
-            logger.exception("Failed to create or enqueue calendar job: %s", exc)
-            created_job.status = ProcessingStatus.FAILURE
-            await self.repository.update_job_status(created_job)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create calendar job")
 
     async def create_chat_job(
         self,
@@ -348,32 +289,11 @@ class JobService(JobOrchestrationPort):
                     logger.info(
                         f"Celery task {celery_task_id} completed, updating job {job.id} to SUCCESS"
                     )
-                    # if the task produced a calendar_id or result, store it
-                    try:
-                        res = result_payload if isinstance(result_payload, dict) else None
-                        if res and "calendar_id" in res:
-                            job.payload = job.payload or {}
-                            job.payload["calendar_id"] = res["calendar_id"]
-                    except Exception:
-                        logger.debug("Failed to extract result payload for job %s", job.id, exc_info=True)
-                    try:
-                        from service.monitoring import metrics as monmetrics
-                        if monmetrics.is_enabled():
-                            monmetrics.CALENDAR_JOBS_COMPLETED_TOTAL.inc()
-                    except Exception:
-                        logger.debug("Failed to record calendar completed metric", exc_info=True)
                 else:
                     job.status = ProcessingStatus.FAILURE
                     logger.warning(
                         f"Celery task {celery_task_id} failed, updating job {job.id} to FAILURE"
                     )
-                    try:
-                        from service.monitoring import metrics as monmetrics
-                        if monmetrics.is_enabled():
-                            monmetrics.CALENDAR_JOBS_FAILED_TOTAL.inc()
-                    except Exception:
-                        logger.debug("Failed to record calendar failed metric", exc_info=True)
-
                 updated_job = await self.repository.update_job_status(job)
                 if updated_job:
                     return updated_job

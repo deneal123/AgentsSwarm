@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from service.models.db.db_models import User
 from service.models.profile_models import UserProfileLogic
-from service.repositories.base_repository import BaseRepository
-from service.repositories.decorators.session_processor import connection
-from service.repositories.exceptions import RepositoryNotFoundError
+from service.shared.repositories.base_repository import BaseRepository
+from service.shared.repositories.decorators.session_processor import connection
+from service.shared.repositories.exceptions import RepositoryNotFoundError
 
 logger = logging.getLogger(__name__)
 

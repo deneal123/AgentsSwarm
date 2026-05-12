@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
-from service.models.key_value import ProcessingStatus, ServiceType
+from service.models.key_value import ServiceType
 
 
 class StartJobRequest(BaseModel):

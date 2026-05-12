@@ -9,6 +9,7 @@ from service.services.files.application.file_saver_service import FileSaverServi
 from service.services.jobs.application.job_service import JobService
 from service.services.profile.application.auth_service import AuthService
 from service.services.profile.application.profile_service import ProfileService
+from service.services.analytics.application.analytics_service import AnalyticsService
 
 _CURRENT_CONTAINER: AppContainer | None = None
 
@@ -45,6 +46,10 @@ def get_profile_service(request: Request) -> ProfileService:
 
 def get_file_saver_service(request: Request) -> FileSaverService:
     return get_app_container(request).services.file_saver_service
+
+
+def get_analytics_service(request: Request) -> AnalyticsService:
+    return get_app_container(request).services.analytics_service
 
 
 def get_optional_redis_client(request: Request) -> Any:

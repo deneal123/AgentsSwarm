@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from service.models.auth_models import AuthProfile
-from service.presentation.dependencies.auth_checker import check_auth
+from service.shared.security.auth_checker import check_auth
 from service.services.analytics.presentation.routers.memory_api.schemas import (
     AddMemoryFactRequest,
     AddMemoryFactResponse,

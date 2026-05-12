@@ -6,7 +6,7 @@ from service.settings import config
 
 def test_create_session_backend_sqlite(monkeypatch):
     config.sessions.backend = "sqlite"
-    config.sessions.sqlite_db_path = ":memory:"  # sqlite in memory
+    config.sessions.sqlite_db_path = ":memory:"
 
     s = create_session("s_sqlite")
     assert isinstance(s, SQLiteSession)
@@ -20,11 +20,20 @@ def test_create_session_backend_pseudo(monkeypatch):
 
 def test_create_session_backend_redis(monkeypatch):
     config.sessions.backend = "redis"
+
     class FakeRedis:
         pass
 
-    import service.container as di
-    monkeypatch.setattr(di, "get", lambda name: FakeRedis())
+    class FakeInfra:
+        redis_client = FakeRedis()
+
+    class FakeContainer:
+        infra = FakeInfra()
+
+    monkeypatch.setattr(
+        "service.composition.state.get_current_container",
+        lambda: FakeContainer(),
+    )
 
     s = create_session("s_r")
     assert isinstance(s, RedisSession)

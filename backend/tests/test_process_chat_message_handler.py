@@ -17,7 +17,7 @@ def test_normalize_result_payload_adds_selected_model_and_keeps_reply_format() -
 
     assert normalized.reply == "Hello"
     assert normalized.thread_id == "thread-1"
-    assert normalized.metadata == {
+    assert normalized.metadata.data == {
         "source": "worker",
         "selected_model": "mws-gpt-alpha",
     }

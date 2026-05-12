@@ -8,7 +8,7 @@ async def test_ws_crash_then_reclaim_e2e():
     then run reclaim_and_process to ensure it gets processed and acked by the reclaimer.
     """
     from service.infrastructure.messaging import stream_helpers
-    from service.presentation.routers import chat_ws
+    from service.services.chat.presentation.routers import chat_ws
 
     class FakeRedisReclaim:
         def __init__(self):

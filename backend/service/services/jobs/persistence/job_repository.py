@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from service.models.db.db_models import UserLaunch
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
-from service.repositories.base_repository import BaseRepository
-from service.repositories.decorators.session_processor import connection
+from service.shared.repositories.base_repository import BaseRepository
+from service.shared.repositories.decorators.session_processor import connection
 
 logger = logging.getLogger(__name__)
 

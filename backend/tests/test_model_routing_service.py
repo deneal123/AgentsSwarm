@@ -12,9 +12,9 @@ async def test_resolve_route_enables_web_search(monkeypatch: pytest.MonkeyPatch)
     async def _fake_route_model(**kwargs):
         return "m1", {"tool": "web_search"}
 
-    fake_router_module = types.ModuleType("service.services.agents.tools.router")
+    fake_router_module = types.ModuleType("service.services.agents.domain.tools.router")
     fake_router_module.route_model = _fake_route_model
-    monkeypatch.setitem(sys.modules, "service.services.agents.tools.router", fake_router_module)
+    monkeypatch.setitem(sys.modules, "service.services.agents.domain.tools.router", fake_router_module)
 
     service = ModelRoutingService()
     decision = await service.resolve_route(
@@ -37,9 +37,9 @@ async def test_resolve_route_raises_domain_error(monkeypatch: pytest.MonkeyPatch
     async def _fake_route_model(**kwargs):
         raise RuntimeError("boom")
 
-    fake_router_module = types.ModuleType("service.services.agents.tools.router")
+    fake_router_module = types.ModuleType("service.services.agents.domain.tools.router")
     fake_router_module.route_model = _fake_route_model
-    monkeypatch.setitem(sys.modules, "service.services.agents.tools.router", fake_router_module)
+    monkeypatch.setitem(sys.modules, "service.services.agents.domain.tools.router", fake_router_module)
 
     service = ModelRoutingService()
     with pytest.raises(ModelRoutingError):

@@ -2,7 +2,7 @@ import logging
 
 from fastapi import WebSocket, status
 
-from service.security import AuthValidator
+from service.shared.security.auth_validation import AuthValidator
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import types
 
 import pytest
 
-from service.services.agents.client import mws_client
+from service.services.agents.domain.client import mws_client
 
 
 class _FakeModel:

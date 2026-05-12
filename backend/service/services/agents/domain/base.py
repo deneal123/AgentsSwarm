@@ -10,7 +10,7 @@ from service.services.agents.schemas.agents import UserContext
 
 # Import unified client facade to initialize configured provider (MWS/OpenAI)
 from service.services.agents import client as agents_client  # noqa: F401
-from service.services.agents.client import create_chat_completion, list_available_models, get_active_provider
+from service.services.agents.domain.client import create_chat_completion, list_available_models, get_active_provider
 
 logger = logging.getLogger(__name__)
 

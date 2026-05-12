@@ -183,6 +183,7 @@ class AuthConfig(BaseSettings):
 
 
 class ProfileConfig(BaseSettings):
+    base_available_launches: int = 10
     model_config = SettingsConfigDict(env_prefix="PROFILE__")
 
 
@@ -251,6 +252,9 @@ class Sessions(BaseModel):
 
 class SessionsConfig(BaseSettings):
     settings: Sessions = Sessions()
+    backend: Optional[str] = None  # "redis" | "sqlite" | "pseudo" | "auto"
+    sqlite_db_path: Optional[str] = None
+    encryption_key: Optional[str] = None
     model_config = SettingsConfigDict(env_prefix="SESSIONS__")
 
 
@@ -361,6 +365,7 @@ class Config(BaseSettings):
     storage: StorageConfig = Field(default_factory=StorageConfig)
     file: FileConfig = Field(default_factory=FileConfig)
     celery: CeleryConfig = Field(default_factory=CeleryConfig)
+    chat_retention_days: int = 365
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     chat_ws: ChatWsConfig = Field(default_factory=ChatWsConfig)
 

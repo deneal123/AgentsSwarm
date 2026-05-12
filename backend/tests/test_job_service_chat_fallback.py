@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from service.models.key_value import ProcessingStatus
-from service.repositories.exceptions import RepositoryIntegrityError
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.services.jobs.application.job_service import ANON_USER_UUID, JobService
 from service.settings import JobConfig, config
 
@@ -27,7 +27,7 @@ async def test_create_chat_job_prefers_admin_for_anonymous_user(monkeypatch: pyt
     monkeypatch.setattr(config.service, "admin_user_ids", [str(admin_uuid)])
 
     repo = _FakeJobRepository(fail_user_ids={ANON_USER_UUID})
-    service = JobService(JobConfig(), repo, profile_source=None)
+    service = JobService(JobConfig(), repo)
 
     await service.create_chat_job(user_id=None, thread_id="thread-1", text="hello")
 
@@ -42,7 +42,7 @@ async def test_create_chat_job_fallbacks_to_admin_when_primary_fails(monkeypatch
     monkeypatch.setattr(config.service, "admin_user_ids", [str(admin_uuid)])
 
     repo = _FakeJobRepository(fail_user_ids={user_uuid})
-    service = JobService(JobConfig(), repo, profile_source=None)
+    service = JobService(JobConfig(), repo)
 
     await service.create_chat_job(user_id=user_uuid, thread_id="thread-2", text="hello")
 

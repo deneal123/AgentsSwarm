@@ -5,7 +5,8 @@ def test_build_container_smoke_required_dependencies() -> None:
     pytest.importorskip("fastapi")
     pytest.importorskip("sqlalchemy")
 
-    from service.container import AppContainer, build_container
+    from service.composition.container import build_container
+    from service.composition.models import AppContainer
     from service.settings import Config
 
     app_container = build_container(Config())
@@ -32,7 +33,7 @@ def test_create_app_accepts_container_override() -> None:
     pytest.importorskip("fastapi")
     pytest.importorskip("sqlalchemy")
 
-    from service.container import build_container
+    from service.composition.container import build_container
     from service.main import create_app
     from service.settings import Config
 

@@ -4,9 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from service.presentation.dependencies import providers
+from service.composition.state import get_profile_service
 from service.models.auth_models import AuthProfile
-from service.presentation.dependencies.auth_checker import check_auth
+from service.shared.security.auth_checker import check_auth
 from service.services.profile.presentation.routers.profile_api.mappers import (
     to_delete_chat_history_command,
     to_get_profile_query,
@@ -25,7 +25,7 @@ profile_router = APIRouter(prefix="/api/profile")
 @profile_router.get("/me", response_model=ProfileResponse)
 async def get_profile(
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
+    service: Annotated[ProfileService, Depends(get_profile_service)],
 ) -> ProfileResponse:
     try:
         result = await service.get_profile_overview(to_get_profile_query(auth_profile.user_id))
@@ -42,7 +42,7 @@ async def get_profile(
 async def update_profile(
     payload: ProfileUpdateRequest,
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
+    service: Annotated[ProfileService, Depends(get_profile_service)],
 ) -> ProfileResponse:
     try:
         overview = await service.update_profile_details(
@@ -60,7 +60,7 @@ async def update_profile(
 @profile_router.delete("/me/chat-history", status_code=204)
 async def delete_my_chat_history(
     auth_profile: Annotated[AuthProfile, Depends(check_auth)],
-    service: Annotated[ProfileService, Depends(providers.get_profile_service)],
+    service: Annotated[ProfileService, Depends(get_profile_service)],
 ) -> None:
     try:
         await service.delete_chat_history(to_delete_chat_history_command(auth_profile.user_id))

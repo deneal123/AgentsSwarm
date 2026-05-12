@@ -1,7 +1,15 @@
+import os
 import warnings
 import pytest
 
 from tests.test_helpers import FakeDBSession, FakeConnector, FakeRedis, FakeAsyncRedis
+
+# Set required env vars before any service module is imported so AuthConfig
+# validators can apply dev-mode defaults.
+os.environ.setdefault("AUTH__AUTH_MODE", "dev")
+os.environ.setdefault("AUTH__SECRET", "test-secret-key-at-least-32-chars!!")
+os.environ.setdefault("AUTH__ALGORITHM", "HS256")
+os.environ.setdefault("AUTH__JWT_EXP_HOURS", "24")
 
 
 # Suppress noisy deprecation/warning messages during tests (pydantic/stopit/starlette)

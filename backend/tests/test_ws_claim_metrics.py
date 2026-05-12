@@ -3,7 +3,8 @@ import pytest
 import json
 from prometheus_client import REGISTRY
 
-from service.presentation.routers import chat_ws, jobs_ws
+from service.services.chat.presentation.routers import chat_ws
+from service.services.jobs.presentation.ws import jobs_ws
 
 
 class FakeWebSocket:

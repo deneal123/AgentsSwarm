@@ -2,7 +2,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from service.presentation.routers import ws_schemas
+from service.shared.presentation.routers import ws_schemas
 
 
 def test_chat_models_valid_and_invalid():

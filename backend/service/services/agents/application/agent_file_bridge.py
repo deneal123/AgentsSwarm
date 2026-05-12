@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from service.models.key_value import ServiceType
-from service.repositories.exceptions import RepositoryIntegrityError
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.settings import config
 
 logger = logging.getLogger(__name__)
