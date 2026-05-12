@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 
 # Configuration
-BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8005/v1")
+BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8073/v1")
 API_KEY = os.environ.get("VLLM_API_KEY", "")
 MODEL = os.environ.get("VLLM_MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
 

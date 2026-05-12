@@ -121,7 +121,7 @@ check_env() {
 build() {
     print_banner
     echo -e "${YELLOW}Building Docker image...${NC}"
-    $COMPOSE_CMD build
+    $COMPOSE_CMD build --no-cache
     echo -e "${GREEN}Build complete!${NC}"
 }
 
