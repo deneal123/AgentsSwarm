@@ -174,18 +174,6 @@ function ChatPageContainer() {
   const orchestrator = useOrchestratorState();
   const orchestratorAnchorIdRef = useRef(null);
 
-  // Capture anchor message ID when orchestrator first becomes active
-  useEffect(() => {
-    if (orchestrator.isActive && !orchestratorAnchorIdRef.current) {
-      const lastUserMsg = [...visibleMessages].reverse().find((m) => m.type === 'user');
-      if (lastUserMsg) {
-        orchestratorAnchorIdRef.current = lastUserMsg.id;
-      }
-    } else if (!orchestrator.isActive) {
-      orchestratorAnchorIdRef.current = null;
-    }
-  }, [orchestrator.isActive, visibleMessages]);
-
   // Reset orchestrator state on new message (when trace sessions are reset)
   const prevTraceSessionCountRef = useRef(0);
   useEffect(() => {
@@ -333,6 +321,18 @@ function ChatPageContainer() {
       return message.content && message.content.trim();
     });
   }, [messages]);
+
+  // Capture anchor message ID when orchestrator first becomes active
+  useEffect(() => {
+    if (orchestrator.isActive && !orchestratorAnchorIdRef.current) {
+      const lastUserMsg = [...visibleMessages].reverse().find((m) => m.type === 'user');
+      if (lastUserMsg) {
+        orchestratorAnchorIdRef.current = lastUserMsg.id;
+      }
+    } else if (!orchestrator.isActive) {
+      orchestratorAnchorIdRef.current = null;
+    }
+  }, [orchestrator.isActive, visibleMessages]);
 
   const providerStatus = useMemo(() => {
     const latestAgentMessage = [...messages].reverse().find((candidate) => candidate?.type === 'agent');
