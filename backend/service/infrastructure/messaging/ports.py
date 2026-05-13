@@ -26,7 +26,9 @@ class CeleryJobQueuePort(JobQueuePort):
         return CeleryJobHandle(tasks.process_agent_message.delay(**kwargs))
 
     def enqueue_agent_message(self, **kwargs: Any) -> str | None:
-        task = tasks.process_agent_message.apply_async(kwargs=kwargs)
+        queue = kwargs.pop("queue", None)
+        routing = {"queue": queue} if queue else {}
+        task = tasks.process_agent_message.apply_async(kwargs=kwargs, **routing)
         return str(task.id) if task and task.id else None
 
     async def process_agent_message(self, **kwargs: Any) -> dict[str, Any]:

@@ -52,7 +52,17 @@ class StreamChatResponseUseCase:
     chat_service: ChatService
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
-        result = await self.chat_service._direct_agent_call(**kwargs)
-        metadata = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
-        result["metadata"] = metadata
-        return result
+        context = ChatRequestContext(
+            thread_id=kwargs["thread_id"],
+            text=kwargs["text"],
+            user_id=kwargs.get("user_id"),
+            selected_model=kwargs.get("selected_model"),
+            input_type=kwargs.get("input_type"),
+            web_search=bool(kwargs.get("web_search", False)),
+            deep_research=bool(kwargs.get("deep_research", False)),
+            file_context=kwargs.get("file_context") or "",
+            route_override=kwargs.get("route_override"),
+        )
+        result = await self.chat_service.post_message(context)
+        metadata = result.metadata.data if hasattr(result.metadata, "data") else {}
+        return {"reply": result.reply, "thread_id": result.thread_id, "file_url": result.file_url, "metadata": metadata}
