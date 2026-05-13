@@ -208,8 +208,20 @@ class SwarmOrchestratorAgent(BaseAgent):
 
                 # ── Streaming agent text deltas ──────────────────────────────
                 if sdk_event == "raw_response_event" and message:
+                    # Skip pure JSON chunks — these are tool call arg leakages, not user text
+                    stripped = message.strip()
+                    is_pure_json = (
+                        (stripped.startswith("{") and stripped.endswith("}"))
+                        or (stripped.startswith("[") and stripped.endswith("]"))
+                    )
+                    if is_pure_json:
+                        try:
+                            json.loads(stripped)
+                            continue
+                        except (json.JSONDecodeError, ValueError):
+                            pass
                     accumulated_agent_text.append(message)
-                    # Don't emit as STATUS_UPDATE — accumulate for final STREAM_CHUNK
+                    # Accumulate for final STREAM_CHUNK, do not emit as STATUS_UPDATE
                     continue
 
                 # ── Plan updates on step events ──────────────────────────────

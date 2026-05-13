@@ -172,12 +172,26 @@ function ChatPageContainer() {
 
 
   const orchestrator = useOrchestratorState();
+  const orchestratorAnchorIdRef = useRef(null);
+
+  // Capture anchor message ID when orchestrator first becomes active
+  useEffect(() => {
+    if (orchestrator.isActive && !orchestratorAnchorIdRef.current) {
+      const lastUserMsg = [...visibleMessages].reverse().find((m) => m.type === 'user');
+      if (lastUserMsg) {
+        orchestratorAnchorIdRef.current = lastUserMsg.id;
+      }
+    } else if (!orchestrator.isActive) {
+      orchestratorAnchorIdRef.current = null;
+    }
+  }, [orchestrator.isActive, visibleMessages]);
 
   // Reset orchestrator state on new message (when trace sessions are reset)
   const prevTraceSessionCountRef = useRef(0);
   useEffect(() => {
     if (traceSessions.length < prevTraceSessionCountRef.current) {
       orchestrator.actions.reset();
+      orchestratorAnchorIdRef.current = null;
     }
     prevTraceSessionCountRef.current = traceSessions.length;
   }, [traceSessions.length, orchestrator.actions]);
@@ -1149,8 +1163,8 @@ function ChatPageContainer() {
                         </Suspense>
                       )
                       : null}
-                    {/* Show orchestrator panel below the last user message while active */}
-                    {message.type === 'user' && idx === visibleMessages.length - 1 && orchestrator.isActive
+                    {/* Show orchestrator panel anchored to the triggering user message */}
+                    {message.type === 'user' && message.id === orchestratorAnchorIdRef.current
                       ? (
                         <OrchestratorPanel
                           orchestratorState={orchestrator.state}
