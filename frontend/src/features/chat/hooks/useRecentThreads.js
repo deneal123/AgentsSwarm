@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
+import { useAppToast } from "@shared/hooks/useAppToast";
 
-export function useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages, toast }) {
+export function useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages }) {
+  const toast = useAppToast();
   const [recentThreads, setRecentThreads] = useState([]);
   const [deletingThreadId, setDeletingThreadId] = useState(null);
 
@@ -49,7 +51,7 @@ export function useRecentThreads({ navigate, resolveSessionUserId, threadId, set
     } finally {
       setDeletingThreadId(null);
     }
-  }, [deletingThreadId, navigate, resolveSessionUserId, setMessages, threadId, toast]);
+  }, [deletingThreadId, navigate, resolveSessionUserId, setMessages, threadId, toast]); // toast is stable (useAppToast)
 
   return {
     recentThreads,

@@ -170,7 +170,7 @@ function ChatPageContainer() {
     deletingThreadId,
     upsertRecentThread,
     handleDeleteThread,
-  } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages: replaceMessages, toast });
+  } = useRecentThreads({ navigate, resolveSessionUserId, threadId, setMessages: replaceMessages });
   const { sidebarSearch, setSidebarSearch, isSidebarCollapsed, setIsSidebarCollapsed, filteredRecentThreads } = useSidebarState({ recentThreads });
 
 
