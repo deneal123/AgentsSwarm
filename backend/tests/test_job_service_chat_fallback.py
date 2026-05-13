@@ -4,9 +4,9 @@ from types import SimpleNamespace
 import pytest
 
 from service.models.key_value import ProcessingStatus
-from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.services.jobs.application.job_service import ANON_USER_UUID, JobService
 from service.settings import JobConfig, config
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 
 
 class _FakeJobRepository:
@@ -22,7 +22,9 @@ class _FakeJobRepository:
 
 
 @pytest.mark.asyncio
-async def test_create_chat_job_prefers_admin_for_anonymous_user(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_create_chat_job_prefers_admin_for_anonymous_user(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     admin_uuid = uuid.uuid4()
     monkeypatch.setattr(config.service, "admin_user_ids", [str(admin_uuid)])
 
@@ -36,7 +38,9 @@ async def test_create_chat_job_prefers_admin_for_anonymous_user(monkeypatch: pyt
 
 
 @pytest.mark.asyncio
-async def test_create_chat_job_fallbacks_to_admin_when_primary_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_create_chat_job_fallbacks_to_admin_when_primary_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     user_uuid = uuid.uuid4()
     admin_uuid = uuid.uuid4()
     monkeypatch.setattr(config.service, "admin_user_ids", [str(admin_uuid)])

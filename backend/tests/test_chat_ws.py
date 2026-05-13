@@ -1,12 +1,13 @@
 import json
 
 from fastapi.testclient import TestClient
-from service.settings import config
+
 from service.composition.state import (
     get_app_container,
     get_optional_redis_client,
     get_optional_redis_session_store,
 )
+from service.settings import config
 
 
 class _FakeChatSvc:
@@ -16,6 +17,7 @@ class _FakeChatSvc:
 class _FakeAppSvc:
     class _S:
         chat_service = _FakeChatSvc()
+
     services = _S()
 
 
@@ -157,7 +159,12 @@ def test_jobs_ws_session_and_stream(monkeypatch):
             if self._called == 0:
                 self._called += 1
                 stream_key = next(iter(streams.keys()))
-                return [(stream_key, [("1-0", {"data": json.dumps({"event": "progress", "progress": 30})})])]
+                return [
+                    (
+                        stream_key,
+                        [("1-0", {"data": json.dumps({"event": "progress", "progress": 30})})],
+                    )
+                ]
             return []
 
         async def xack(self, stream, group, message_id):

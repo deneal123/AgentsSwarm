@@ -53,7 +53,7 @@ celery_app.conf.update(
             "queue": "agents",
             "priority": 5,  # High priority for agent messages
         },
-"service.infrastructure.messaging.tasks.cleanup_old_streams": {
+        "service.infrastructure.messaging.tasks.cleanup_old_streams": {
             "queue": "maintenance",
             "priority": 1,  # Low priority for cleanup tasks
         },

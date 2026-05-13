@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from service.services.chat.domain.chat_contracts import ChatReplyResult, ChatRequestContext, JobExecutionResult
+from service.services.chat.domain.chat_contracts import (
+    ChatReplyResult,
+    ChatRequestContext,
+    JobExecutionResult,
+)
 
 
 class ChatMessageProcessorPort(Protocol):
@@ -10,10 +14,16 @@ class ChatMessageProcessorPort(Protocol):
 
 
 class ChatPersistencePort(Protocol):
-    async def create_thread(self, user_id: str | int | None, title: str | None, thread_id: str | None = None) -> dict: ...
-    async def persist_messages(self, thread_id: str, user_text: str, assistant_text: str, user_id: str | int | None = None) -> None: ...
+    async def create_thread(
+        self, user_id: str | int | None, title: str | None, thread_id: str | None = None
+    ) -> dict: ...
+    async def persist_messages(
+        self, thread_id: str, user_text: str, assistant_text: str, user_id: str | int | None = None
+    ) -> None: ...
     async def get_messages(self, thread_id: str, page: int = 1, per_page: int = 50) -> dict: ...
-    async def list_threads(self, user_id: str | int | None = None, page: int = 1, per_page: int = 50) -> dict: ...
+    async def list_threads(
+        self, user_id: str | int | None = None, page: int = 1, per_page: int = 50
+    ) -> dict: ...
     async def delete_thread(self, thread_id: str) -> bool: ...
 
 

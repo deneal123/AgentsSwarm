@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
 
 revision: str = "<revision_id>"
 down_revision: str | Sequence[str] | None = "<down_revision_id>"
@@ -37,7 +38,11 @@ def _alter_column_to_enum(schema: str, table: str, column: str, enum_name: str) 
 
 
 def _alter_column_to_text(schema: str, table: str, column: str) -> None:
-    op.execute(sa.text(f"ALTER TABLE {schema}.{table} ALTER COLUMN {column} TYPE text USING {column}::text"))
+    op.execute(
+        sa.text(
+            f"ALTER TABLE {schema}.{table} ALTER COLUMN {column} TYPE text USING {column}::text"
+        )
+    )
 
 
 def _add_backfill() -> None:

@@ -11,7 +11,7 @@ def test_worker_consume_once_calls_process_and_acks(monkeypatch):
 
     async def fake_xread_group(redis_client, group, consumer, streams, count=10, block=0):
         # Return a single message for the requested stream
-        return [(list(streams.keys())[0], [("1-0", {"data": "{\"event\": \"test\"}"})])]
+        return [(list(streams.keys())[0], [("1-0", {"data": '{"event": "test"}'})])]
 
     async def fake_xack(redis_client, stream, group, message_id):
         acks.append((stream, group, message_id))
@@ -23,7 +23,11 @@ def test_worker_consume_once_calls_process_and_acks(monkeypatch):
     monkeypatch.setattr(stream_helpers, "xack", fake_xack)
 
     # run the coroutine
-    res = asyncio.run(stream_helpers.worker_consume_once(None, "mystream", "mygroup", "mycons", process_func, count=1, block=0))
+    res = asyncio.run(
+        stream_helpers.worker_consume_once(
+            None, "mystream", "mygroup", "mycons", process_func, count=1, block=0
+        )
+    )
 
     assert res == 1
     assert len(called) == 1

@@ -1,18 +1,20 @@
 from dataclasses import dataclass, field
 from typing import Any
-
-from service.services.chat.application.ports.interfaces import ChatCommandPort
-from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
-
 from uuid import UUID
 
-from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, build_provider_unavailable_reply
+from service.services.chat.application.ports.interfaces import ChatCommandPort
+from service.services.chat.domain.chat_contracts import (
+    ChatProcessingMetadata,
+    ChatReplyResult,
+    build_provider_unavailable_reply,
+)
 from service.services.chat.domain.chat_exceptions import (
     JobCreationError,
     JobEnqueueError,
     JobExecutionError,
     JobServiceUnavailableError,
 )
+from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
 
 
 @dataclass(slots=True)
@@ -36,7 +38,9 @@ class ProcessChatMessageCommand:
     user_id: str | int | None
     text: str
     flags: ProcessChatMessageFlags = field(default_factory=ProcessChatMessageFlags)
-    model_settings: ProcessChatMessageModelSettings = field(default_factory=ProcessChatMessageModelSettings)
+    model_settings: ProcessChatMessageModelSettings = field(
+        default_factory=ProcessChatMessageModelSettings
+    )
     file_context: str = ""
     session_data: dict[str, Any] | None = None
 
@@ -59,7 +63,9 @@ class ProcessChatMessageHandler(ChatCommandPort):
             return None
 
     @staticmethod
-    def normalize_result_payload(result: dict[str, Any], *, thread_id: str, selected_model: str | None) -> ChatReplyResult:
+    def normalize_result_payload(
+        result: dict[str, Any], *, thread_id: str, selected_model: str | None
+    ) -> ChatReplyResult:
         reply = str(result.get("reply") or "")
         metadata = result.get("metadata") if isinstance(result.get("metadata"), dict) else {}
         if selected_model and "selected_model" not in metadata:
@@ -75,7 +81,9 @@ class ProcessChatMessageHandler(ChatCommandPort):
             metadata=ChatProcessingMetadata(data=metadata),
         )
 
-    async def dispatch_and_wait(self, command: ProcessChatMessageCommand, *, timeout_sec: float = 30.0) -> ChatReplyResult:
+    async def dispatch_and_wait(
+        self, command: ProcessChatMessageCommand, *, timeout_sec: float = 30.0
+    ) -> ChatReplyResult:
         if self.job_service is None:
             raise JobServiceUnavailableError("JobService unavailable")
 
@@ -119,7 +127,9 @@ class ProcessChatMessageHandler(ChatCommandPort):
             selected_model=command.model_settings.selected_model,
         )
 
-    async def process_for_worker(self, job_id: str, command: ProcessChatMessageCommand) -> dict[str, Any]:
+    async def process_for_worker(
+        self, job_id: str, command: ProcessChatMessageCommand
+    ) -> dict[str, Any]:
         return await self.job_queue.process_agent_message(
             job_id=job_id,
             thread_id=command.thread_id,

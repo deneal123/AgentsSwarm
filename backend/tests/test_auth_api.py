@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import uuid
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
@@ -11,7 +11,7 @@ from service.settings import config
 
 class FakeProfileService:
     def __init__(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self.user = UserProfileLogic(
             id=uuid.uuid4(),
             email="user@example.com",
@@ -39,6 +39,7 @@ def test_login_sets_cookie():
             class R:
                 jwt = "token-123"
                 available_attempts = 3
+
             return R()
 
     client = TestClient(app)
@@ -46,7 +47,9 @@ def test_login_sets_cookie():
     app.dependency_overrides[get_profile_service] = lambda: fake_profile_service
 
     try:
-        resp = client.post("/api/auth/v1/login", json={"email": "user@example.com", "password": "pass"})
+        resp = client.post(
+            "/api/auth/v1/login", json={"email": "user@example.com", "password": "pass"}
+        )
         assert resp.status_code == 200
         assert "auth_token" in resp.cookies
         ck = resp.headers.get("set-cookie")

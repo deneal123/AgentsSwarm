@@ -1,8 +1,7 @@
 import React from "react";
 import { Box, HStack, Icon, Text, VStack } from "@chakra-ui/react";
-import Logo from "@shared/ui/assets/common/Logo";
 import { borderRadius } from "@theme/tokens";
-import { AUTH_BRAND_LABEL, AUTH_THEME } from "@features/auth/constants";
+import { AUTH_BRAND_LABEL, AUTH_THEME } from "../constants";
 
 function AuthPageHeader({ icon, title, description }) {
   return (
@@ -11,7 +10,7 @@ function AuthPageHeader({ icon, title, description }) {
         {AUTH_BRAND_LABEL}
       </Text>
       <HStack spacing={3} align="center">
-        <Logo boxSize="28px" priority />
+        <Box boxSize="28px" borderRadius="md" bg="rgba(239,68,68,0.18)" display="flex" alignItems="center" justifyContent="center"><Text fontSize="xs" color="white" fontWeight="700">AI</Text></Box>
         <Box p={2} borderRadius={borderRadius.md} border="1px solid rgba(239, 68, 68, 0.45)" bg="rgba(239, 68, 68, 0.12)">
           <Icon as={icon} color={AUTH_THEME.accent} boxSize={4} />
         </Box>

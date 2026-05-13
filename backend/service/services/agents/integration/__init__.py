@@ -1,9 +1,9 @@
 from service.services.agents.infrastructure.integration import (
     BaseIntegration,
     BaseMemoryIntegration,
-    get_memory_integration,
     Mem0MemoryIntegration,
     NoopMemoryIntegration,
+    get_memory_integration,
 )
 
 __all__ = [

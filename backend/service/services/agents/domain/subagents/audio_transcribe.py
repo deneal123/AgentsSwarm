@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from service.services.agents.domain.events import AgentEvent, EventType
-from service.services.agents.schemas.agents import UserContext
 from service.services.agents.domain.subagents.base import BaseSubAgent
 from service.services.agents.domain.subagents.utils import pick_text_model
+from service.services.agents.schemas.agents import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class AudioTranscriptionAgent(BaseSubAgent):
             model_settings=model_settings,
         )
 
-    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         yield self.start_event("Запускаю обработку аудио и распознавание речи")
 
         safety = await self.evaluate_input_safety(user_input)
@@ -107,10 +107,19 @@ class AudioTranscriptionAgent(BaseSubAgent):
         base_output = f"### Распознанный текст\n\n{transcript}"
 
         normalized_task = (user_task or "").strip().lower()
-        pure_transcribe_request = any(
-            marker in normalized_task
-            for marker in ("распознай", "транскриб", "speech to text", "stt", "переведи в текст")
-        ) and len(normalized_task) < 180
+        pure_transcribe_request = (
+            any(
+                marker in normalized_task
+                for marker in (
+                    "распознай",
+                    "транскриб",
+                    "speech to text",
+                    "stt",
+                    "переведи в текст",
+                )
+            )
+            and len(normalized_task) < 180
+        )
 
         if not normalized_task or pure_transcribe_request:
             async for chunk_event in self.stream_text_chunks(base_output):
@@ -119,7 +128,10 @@ class AudioTranscriptionAgent(BaseSubAgent):
             return
 
         try:
-            from service.services.agents.domain.client import create_chat_completion, list_available_models
+            from service.services.agents.domain.client import (
+                create_chat_completion,
+                list_available_models,
+            )
 
             models = await list_available_models()
             model = pick_text_model(models)
@@ -143,8 +155,7 @@ class AudioTranscriptionAgent(BaseSubAgent):
                     {
                         "role": "user",
                         "content": (
-                            f"Запрос пользователя:\n{user_task}\n\n"
-                            f"Транскрипт:\n{transcript}"
+                            f"Запрос пользователя:\n{user_task}\n\nТранскрипт:\n{transcript}"
                         ),
                     },
                 ],

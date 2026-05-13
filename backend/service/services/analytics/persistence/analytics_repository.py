@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from service.infrastructure.messaging import stream_helpers
@@ -19,7 +19,7 @@ class AnalyticsVitalsRepository:
         if not self._redis_client:
             return
 
-        ts = datetime.now(timezone.utc).isoformat()
+        ts = datetime.now(UTC).isoformat()
         await stream_helpers.xadd(
             self._redis_client,
             self._stream_name,
@@ -52,7 +52,7 @@ class AnalyticsVitalsRepository:
 
     async def fetch_summary(self) -> dict[str, Any]:
         if not self._redis_client:
-            return {"updated_at": datetime.now(timezone.utc), "total_events": 0, "metrics": []}
+            return {"updated_at": datetime.now(UTC), "total_events": 0, "metrics": []}
 
         metrics: list[dict[str, Any]] = []
         total_events = 0
@@ -77,7 +77,7 @@ class AnalyticsVitalsRepository:
             updated_at = (
                 datetime.fromisoformat(normalized["updated_at"])
                 if normalized.get("updated_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             )
 
             if latest_update is None or updated_at > latest_update:
@@ -98,7 +98,7 @@ class AnalyticsVitalsRepository:
             )
 
         return {
-            "updated_at": latest_update or datetime.now(timezone.utc),
+            "updated_at": latest_update or datetime.now(UTC),
             "total_events": total_events,
             "metrics": metrics,
         }

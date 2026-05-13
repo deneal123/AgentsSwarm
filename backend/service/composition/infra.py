@@ -6,7 +6,11 @@ from typing import Any
 
 from service.composition.models import InfraContainer
 from service.infrastructure.database.postgresql import PgConnector
-from service.infrastructure.messaging.ports import CeleryJobQueuePort, RedisListMessageBusPort, RedisStreamPort
+from service.infrastructure.messaging.ports import (
+    CeleryJobQueuePort,
+    RedisListMessageBusPort,
+    RedisStreamPort,
+)
 from service.services.files.application.file_scanner_service import BasicFileScanner
 from service.settings import Config
 from service.utils.background_task_manager import BackgroundTaskManager
@@ -57,7 +61,9 @@ def build_infra(config: Config) -> InfraContainer:
             storage = LocalFileStorage()
             logger.info("Initialized Local storage backend")
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Failed to initialize %s storage backend, falling back to local: %s", backend, exc)
+        logger.warning(
+            "Failed to initialize %s storage backend, falling back to local: %s", backend, exc
+        )
         from service.infrastructure.storage.local_file_storage import LocalFileStorage
 
         storage = LocalFileStorage()
@@ -73,7 +79,9 @@ def build_infra(config: Config) -> InfraContainer:
     celery_app = None
     if os.getenv("CELERY_BROKER_URL"):
         try:
-            from service.infrastructure.messaging.celery_app import celery_app as initialized_celery_app
+            from service.infrastructure.messaging.celery_app import (
+                celery_app as initialized_celery_app,
+            )
 
             celery_app = initialized_celery_app
             logger.info("Initialized Celery app for background task processing")

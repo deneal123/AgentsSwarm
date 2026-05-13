@@ -15,7 +15,9 @@ def test_no_redis_publish_or_pubsub_usage():
         assert "redis.publish(" not in txt, f"Found redis.publish( usage in {p}"
         assert "_client.publish(" not in txt, f"Found _client.publish( usage in {p}"
         assert "PubSub" not in txt, f"Found PubSub usage in {p}"
-        assert re.search(r"\bpubsub\b", txt, re.IGNORECASE) is None, f"Found pubsub reference in {p}"
+        assert re.search(r"\bpubsub\b", txt, re.IGNORECASE) is None, (
+            f"Found pubsub reference in {p}"
+        )
 
 
 def test_uses_redis_streams_xadd():

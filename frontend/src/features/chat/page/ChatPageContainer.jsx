@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { keyframes } from '@emotion/react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -9,7 +10,6 @@ import {
   Box,
   Button,
   Center,
-  Progress,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -21,7 +21,6 @@ import {
   HStack,
   Icon,
   IconButton,
-  SimpleGrid,
   Spinner,
   Switch,
   Text,
@@ -32,7 +31,6 @@ import {
 import { getChatModels, sendChatMessage } from '@api/chat';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
-import { BrandMark } from '@shared/ui/layout';
 import {
   FiCopy,
   FiEye,
@@ -40,16 +38,14 @@ import {
   FiRotateCcw,
   FiSearch,
   FiZap,
-  FiLogOut,
   FiMenu,
   FiMessageSquare,
   FiPaperclip,
   FiPlus,
   FiSettings,
-  FiSliders,
   FiX,
 } from 'react-icons/fi';
-import MessageRenderer from '@features/chat/components/MessageRenderer';
+import MessageRenderer from '../components/MessageRenderer';
 import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
@@ -75,6 +71,32 @@ import { PROSE_SX } from './proseStyles';
 import { ProfileDrawer } from '@features/profile';
 
 const TracePanel = lazy(() => import('../components/trace/TracePanel'));
+
+const dotPulse = keyframes`
+  0%, 80%, 100% { opacity: 0.35; transform: scale(0.92); }
+  40% { opacity: 1; transform: scale(1); }
+`;
+
+const bgAuroraA = keyframes`
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(18px,-14px,0) scale(1.06); }
+`;
+
+const bgAuroraB = keyframes`
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(-14px,16px,0) scale(1.04); }
+`;
+
+const bgAuroraC = keyframes`
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(10px,12px,0) scale(1.05); }
+`;
+
+const traceRingSpin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 
 /**
  * ChatPage - Страница чата с AI агентом
@@ -110,7 +132,7 @@ function ChatPageContainer() {
   const { setLoading: setIsLoading, setError, clearError, addMessage, clearMessages, replaceMessages, setCurrentJob, clearCurrentJob } = domainActions;
   const [availableModels, setAvailableModels] = useState([]);
   const composer = useComposerController({ onSubmit: (value) => handleSendMessageRef.current?.(value), onCancelSubmit: () => {}, disabled: isLoading });
-  const { inputRef, fileInputRef, inputValue, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
+  const { inputRef, fileInputRef, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
 
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
@@ -158,7 +180,6 @@ function ChatPageContainer() {
   const { wsCallbacks } = streamingLifecycle.actions;
 
   const {
-    isConnected,
     connectionState,
     agentStatus,
     sendMessage: wsSendMessage,
@@ -174,7 +195,7 @@ function ChatPageContainer() {
       setError(message);
       sideEffects.notify({ title: 'Ошибка отмены', description: message, status: 'error', duration: 4000 });
     }
-  }, [cancelJob, sideEffects]);
+  }, [cancelJob, setError, sideEffects]);
 
   useEffect(() => {
     const container = messagesScrollRef.current;
@@ -202,7 +223,7 @@ function ChatPageContainer() {
     };
     loadThreads();
     return () => { cancelled = true; };
-  }, []);
+  }, [setRecentThreads]);
 
   // Load message history when navigating to an existing thread
   useEffect(() => {
@@ -231,7 +252,7 @@ function ChatPageContainer() {
     };
     loadHistory();
     return () => { cancelled = true; };
-  }, [routeThreadId, initialMessage]);
+  }, [initialMessage, replaceMessages, routeThreadId]);
 
   const lastUsedModel = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -311,7 +332,7 @@ function ChatPageContainer() {
     return () => {
       window.clearTimeout(collapseTimer);
     };
-  }, [activeOrLatestTraceSession, showTracePanel, traceSessions.length]);
+  }, [activeOrLatestTraceSession, setTracePanelsExpanded, showTracePanel, traceSessions.length]);
 
   const handleSendMessageRef = useRef(null);
   const { copyMessage, regenerateMessage } = useMessageActions({ messages, actions: { truncateAfter: (count) => replaceMessages(messages.slice(0, count)) }, handleSendMessageRef });
@@ -336,7 +357,7 @@ function ChatPageContainer() {
           <Box maxW={{ base: '96%', md: '80%', lg: '72%' }} w={isUser ? 'fit-content' : '100%'}>
             {!isUser && (
               <HStack spacing={2} mb={2} pl={1} align="center">
-                <BrandMark size="sm" iconOnly />
+                <Text fontWeight="700" color="white">AI</Text>
                 <Text fontSize="13px" fontWeight="650" color={CHAT_THEME.textPrimary} letterSpacing="-0.005em">
                   {modelLabel}
                 </Text>
@@ -609,7 +630,7 @@ function ChatPageContainer() {
       finalizeTraceSession('error', options.traceSessionId);
     }
     setIsLoading(false);
-  }, [appendTraceEvent, finalizeTraceSession, incrementRequests, isAuthenticated, resolveSessionUserId, threadId]);
+  }, [addMessage, appendTraceEvent, finalizeTraceSession, incrementRequests, isAuthenticated, resolveSessionUserId, setIsLoading, threadId]);
 
   const handleSendMessage = useCallback(async (message, sendOptions = {}) => {
     const skipUserAppend = !!sendOptions.skipUserAppend;
@@ -766,7 +787,7 @@ function ChatPageContainer() {
       finalizeTraceSession('error', traceSessionId);
       setIsLoading(false);
     }
-  }, [appendTraceEvent, attachedFile, connectionState, deepResearchEnabled, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel, isAuthenticated, selectedModelOverride, sendViaRest, showAuthModal, startTraceSession, threadId, sideEffects, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
+  }, [addMessage, appendTraceEvent, attachedFile, clearError, connectionState, deepResearchEnabled, ensureGuestLimit, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel,  selectedModelOverride, sendViaRest, setAttachedFile, setError, setInputValue, setIsLoading, setSidebarSearch, showAuthModal, startTraceSession, threadId, sideEffects, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
 
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
@@ -787,11 +808,11 @@ function ChatPageContainer() {
     initialManualModel,
     initialMessage,
     navigate,
+    sideEffects,
     threadId,
   ]);
 
   const startNewChat = useCallback(() => {
-    setFallbackThreadId(createThreadId());
     clearMessages();
     setInputValue('');
     setSidebarSearch('');
@@ -800,7 +821,7 @@ function ChatPageContainer() {
     resetTraceSessions();
     setTracePanelsExpanded({});
     navigate('/');
-  }, [navigate]);
+  }, [clearError, clearMessages, navigate, resetTraceSessions, setAttachedFile, setInputValue, setSidebarSearch, setTracePanelsExpanded]);
 
   const openMemoryPanel = useCallback(async () => {
     if (!isAuthenticated) {
@@ -839,7 +860,7 @@ function ChatPageContainer() {
         duration: 2500,
       });
     }
-  }, [isAuthenticated, memoryDisclosure, resolveSessionUserId, showAuthModal, toast]);
+  }, [isAuthenticated, memoryDisclosure, resolveSessionUserId, setMemoryFacts, setProfileMemoryCount, showAuthModal, sideEffects]);
 
   const resetUiSettings = useCallback(() => {
     resetPersistedUiSettings();
@@ -848,13 +869,13 @@ function ChatPageContainer() {
       status: 'success',
       duration: 1600,
     });
-  }, [resetPersistedUiSettings, toast]);
+  }, [resetPersistedUiSettings, sideEffects]);
 
   const sidebar = (
     <VStack h="full" align="stretch" spacing={0} p={4}>
       {/* Logo */}
       <Box mb={5}>
-        <BrandMark size="sm" />
+        <Text fontWeight="700" color="white">AI Assistant</Text>
       </Box>
 
       {/* New chat button */}
@@ -1240,7 +1261,7 @@ function ChatPageContainer() {
               <Center minH="60vh">
                 <VStack spacing={3} align="center" maxW="420px" textAlign="center">
                   <Box mb={1}>
-                    <BrandMark />
+                    <Text fontWeight="700" color="white">AI Assistant</Text>
                   </Box>
                   <Text color={CHAT_THEME.textSecondary} fontSize="14px" lineHeight="1.6">
                     Задайте вопрос, прикрепите файл или включите веб-поиск — и начнём.

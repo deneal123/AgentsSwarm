@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
 export const useChatUiState = (externalContainer = null) => {
-  const container = externalContainer || useChatStateContainer();
+  const internalContainer = useChatStateContainer();
+  const container = externalContainer ?? internalContainer;
   const { state, dispatch } = container;
 
   const setLoading = useCallback((value) => dispatch({ type: CHAT_ACTIONS.SET_LOADING, payload: value }), [dispatch]);
@@ -12,7 +13,7 @@ export const useChatUiState = (externalContainer = null) => {
   const clearError = useCallback(() => dispatch({ type: CHAT_ACTIONS.CLEAR_ERROR }), [dispatch]);
 
   const scopedState = useMemo(() => ({ loading: state.loading, error: state.error, connectionState: state.connectionState }), [state.connectionState, state.error, state.loading]);
-  const actions = useMemo(() => ({ setLoading, setError, clearError, setConnectionState }), [clearError]);
+  const actions = useMemo(() => ({ setLoading, setError, clearError, setConnectionState }), [clearError, setConnectionState, setError, setLoading]);
 
   return { state: scopedState, actions, container };
 };

@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 from service.services.agents.domain.events import AgentEvent, EventType
 from service.services.agents.schemas.agents import UserContext
 
 
-def build_user_context(*, user_id: Optional[int], session: Optional[Any], thread_id: str) -> UserContext:
+def build_user_context(*, user_id: int | None, session: Any | None, thread_id: str) -> UserContext:
     """Build normalized user context for downstream agents."""
     return UserContext(
         user_id=str(user_id or ""),
-        request_time=datetime.now(timezone.utc),
+        request_time=datetime.now(UTC),
         session=session,
         thread_id=thread_id,
     )
@@ -24,11 +24,11 @@ async def resolve_agent_route(
     orchestrator,
     user_input: str,
     thread_id: str,
-    route_override: Optional[str],
-    input_type: Optional[str],
+    route_override: str | None,
+    input_type: str | None,
     web_search: bool,
     deep_research: bool,
-) -> Tuple[str, AgentEvent, AgentEvent]:
+) -> tuple[str, AgentEvent, AgentEvent]:
     """Resolve route and return route events (without sequence numbers)."""
     routing_start = AgentEvent(
         type=EventType.ROUTING_START,

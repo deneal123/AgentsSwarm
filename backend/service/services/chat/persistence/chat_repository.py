@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional, Tuple
 from uuid import uuid4
 
 from sqlalchemy import text
@@ -24,14 +23,20 @@ class ChatRepository:
             return self._connector
         return pgmod.PgConnector(config.pg)
 
-    async def create_thread(self, user_id: Optional[int], title: Optional[str], thread_id: Optional[str] = None) -> str:
+    async def create_thread(
+        self,
+        user_id: int | None,
+        title: str | None,
+        thread_id: str | None = None,
+    ) -> tuple[str, object | None]:
         thread_uuid = thread_id or str(uuid4())
         connector = self._get_connector()
         async with connector.get_session_context() as session:
             # Use RETURNING created_at so callers can return a proper timestamp
             res = await session.execute(
                 text(
-                    "INSERT INTO profile.chat_threads (thread_id, user_id, title, created_at, updated_at) "
+                    "INSERT INTO profile.chat_threads "
+                    "(thread_id, user_id, title, created_at, updated_at) "
                     "VALUES (:thread_id, :user_id, :title, NOW(), NOW()) RETURNING created_at"
                 ),
                 {"thread_id": thread_uuid, "user_id": user_id, "title": title},
@@ -43,7 +48,7 @@ class ChatRepository:
         # Return a tuple (thread_uuid, created_at) so callers can decide how to format
         return thread_uuid, created_at
 
-    async def get_thread_pk(self, thread_id: str) -> Optional[int]:
+    async def get_thread_pk(self, thread_id: str) -> int | None:
         connector = self._get_connector()
         async with connector.get_session_context() as session:
             # SQLAlchemy 2.0 requires textual SQL to be wrapped with text(...)
@@ -59,14 +64,15 @@ class ChatRepository:
         thread_pk: int,
         sender: str,
         content: str,
-        message_id: Optional[str] = None,
-        user_id: Optional[int] = None,
+        message_id: str | None = None,
+        user_id: int | None = None,
     ) -> None:
         connector = self._get_connector()
         async with connector.get_session_context() as session:
             await session.execute(
                 text(
-                    "INSERT INTO profile.chat_messages (message_id, thread_id, user_id, sender, content, created_at) "
+                    "INSERT INTO profile.chat_messages "
+                    "(message_id, thread_id, user_id, sender, content, created_at) "
                     "VALUES (:mid, :tpk, :uid, :sender, :content, NOW())"
                 ),
                 {
@@ -79,7 +85,12 @@ class ChatRepository:
             )
             await session.commit()
 
-    async def fetch_messages(self, thread_pk: int, limit: int, offset: int) -> List[Tuple[str, str, Optional[str]]]:
+    async def fetch_messages(
+        self,
+        thread_pk: int,
+        limit: int,
+        offset: int,
+    ) -> list[tuple[str, str, str | None]]:
         connector = self._get_connector()
         async with connector.get_session_context() as session:
             res = await session.execute(
@@ -91,20 +102,24 @@ class ChatRepository:
             )
             return res.fetchall()
 
-    async def list_threads(self, user_id: Optional[int], limit: int, offset: int):
+    async def list_threads(self, user_id: int | None, limit: int, offset: int):
         connector = self._get_connector()
         async with connector.get_session_context() as session:
             if user_id is None:
                 res = await session.execute(
                     text(
-                        "SELECT thread_id, title, created_at, updated_at FROM profile.chat_threads ORDER BY updated_at DESC NULLS LAST LIMIT :lim OFFSET :off"
+                        "SELECT thread_id, title, created_at, updated_at "
+                        "FROM profile.chat_threads "
+                        "ORDER BY updated_at DESC NULLS LAST LIMIT :lim OFFSET :off"
                     ),
                     {"lim": limit, "off": offset},
                 )
             else:
                 res = await session.execute(
                     text(
-                        "SELECT thread_id, title, created_at, updated_at FROM profile.chat_threads WHERE user_id = :uid ORDER BY updated_at DESC NULLS LAST LIMIT :lim OFFSET :off"
+                        "SELECT thread_id, title, created_at, updated_at "
+                        "FROM profile.chat_threads WHERE user_id = :uid "
+                        "ORDER BY updated_at DESC NULLS LAST LIMIT :lim OFFSET :off"
                     ),
                     {"lim": limit, "off": offset, "uid": user_id},
                 )

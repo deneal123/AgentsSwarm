@@ -39,8 +39,12 @@ class PostMessageUseCase:
 class PersistChatMessagesUseCase:
     chat_service: ChatService
 
-    async def execute(self, *, thread_id: str, user_text: str, assistant_text: str, user_id: str | None) -> None:
-        await self.chat_service.persistence_service.persist_messages(thread_id, user_text, assistant_text, user_id)
+    async def execute(
+        self, *, thread_id: str, user_text: str, assistant_text: str, user_id: str | None
+    ) -> None:
+        await self.chat_service.persistence_service.persist_messages(
+            thread_id, user_text, assistant_text, user_id
+        )
 
 
 @dataclass(slots=True)

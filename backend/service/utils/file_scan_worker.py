@@ -53,7 +53,9 @@ async def process_scan_once(redis_client: Any, scanner: Any) -> int:
                     await _sh.xadd(redis_client, f"file:{file_key}:stream", {"data": payload_json})
                     published = True
                 except Exception:
-                    logger.debug("stream_helpers.xadd failed, falling back to direct xadd", exc_info=True)
+                    logger.debug(
+                        "stream_helpers.xadd failed, falling back to direct xadd", exc_info=True
+                    )
 
             # best-effort: try direct xadd if available (some clients are sync) only if we didn't publish
             if not published:
@@ -62,6 +64,7 @@ async def process_scan_once(redis_client: Any, scanner: Any) -> int:
                     if callable(client_stream_add):
                         res = client_stream_add(f"file:{file_key}:stream", {"data": payload_json})
                         import inspect
+
                         if inspect.isawaitable(res):
                             await res
                 except Exception:

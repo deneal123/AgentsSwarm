@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import UUID
 
@@ -35,7 +35,7 @@ class RedisSessionStore:
 
     async def store_session(self, session: UserSession) -> None:
         ttl_seconds = max(
-            int((session.expires_at - datetime.now(timezone.utc)).total_seconds()),
+            int((session.expires_at - datetime.now(UTC)).total_seconds()),
             1,
         )
         payload = {
@@ -54,7 +54,9 @@ class RedisSessionStore:
 
         await cast(Any, self._client.set(session_key, json.dumps(payload), ex=ttl_seconds))
         await cast(Any, self._client.sadd(user_key, str(session.id)))
-        await cast(Any, self._client.expire(user_key, max(ttl_seconds, self._config.session_ttl_seconds)))
+        await cast(
+            Any, self._client.expire(user_key, max(ttl_seconds, self._config.session_ttl_seconds))
+        )
 
         if session.token:
             await self._client.set(token_key, str(session.id), ex=ttl_seconds)

@@ -1,8 +1,8 @@
-import pytest
 from fastapi.testclient import TestClient
+
 from service.main import app
-from service.services.jobs.presentation.routers.jobs_api.jobs_api import get_job_application_service
 from service.services.jobs.application.dto import TaskStatusResponse
+from service.services.jobs.presentation.routers.jobs_api.jobs_api import get_job_application_service
 
 
 def test_get_task_status_custom_state():
@@ -17,9 +17,9 @@ def test_get_task_status_custom_state():
                 error=None,
             )
 
-    from service.shared.security.auth_checker import check_auth
     from service.models.auth_models import AuthProfile
     from service.models.key_value import UserTypes
+    from service.shared.security.auth_checker import check_auth
 
     app.dependency_overrides[get_job_application_service] = lambda: _FakeAppService()
     app.dependency_overrides[check_auth] = lambda: AuthProfile(

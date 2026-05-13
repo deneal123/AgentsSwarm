@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
 export const useChatMessagesState = (externalContainer = null) => {
-  const container = externalContainer || useChatStateContainer();
+  const internalContainer = useChatStateContainer();
+  const container = externalContainer ?? internalContainer;
   const { state, dispatch } = container;
 
   const addMessage = useCallback((message) => {
@@ -26,7 +27,7 @@ export const useChatMessagesState = (externalContainer = null) => {
   }, [dispatch]);
 
   const scopedState = useMemo(() => ({ messages: state.messages, currentJob: state.currentJob }), [state.currentJob, state.messages]);
-  const actions = useMemo(() => ({ addMessage, updateMessage, removeMessage, clearMessages, setCurrentJob }), [addMessage, updateMessage, removeMessage, clearMessages]);
+  const actions = useMemo(() => ({ addMessage, updateMessage, removeMessage, clearMessages, setCurrentJob }), [addMessage, updateMessage, removeMessage, clearMessages, setCurrentJob]);
 
   return { state: scopedState, actions, container };
 };

@@ -5,7 +5,9 @@ from service.services.agents.domain.subagents.audio_transcribe import AudioTrans
 
 
 @pytest.mark.asyncio
-async def test_audio_transcribe_agent_returns_transcript_block(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_audio_transcribe_agent_returns_transcript_block(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     agent = AudioTranscriptionAgent(model_settings={})
 
     async def _safe_guardrails(_text: str):
@@ -37,7 +39,9 @@ async def test_audio_transcribe_agent_returns_transcript_block(monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_audio_transcribe_agent_returns_error_when_file_context_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_audio_transcribe_agent_returns_error_when_file_context_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     agent = AudioTranscriptionAgent(model_settings={})
 
     async def _safe_guardrails(_text: str):

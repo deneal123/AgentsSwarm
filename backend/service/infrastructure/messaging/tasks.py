@@ -4,6 +4,10 @@ import logging
 
 from celery import shared_task
 
+from service.services.chat.domain.chat_contracts import (
+    ChatProcessingMetadata,
+    ChatReplyResult,
+)
 from service.services.chat.infrastructure.chat_worker_tasks import (
     _persist_chat_turn,
     _resolve_memory_user_id,
@@ -12,22 +16,48 @@ from service.services.chat.infrastructure.chat_worker_tasks import (
     process_agent_message,
     process_agent_message_async,
 )
-from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult, ChatRequestContext
 
 logger = logging.getLogger(__name__)
 
 
-def process_chat_message_core(thread_id: str, message_id: str, text: str, user_id: int | None = None) -> dict:
+def process_chat_message_core(
+    thread_id: str, message_id: str, text: str, user_id: int | None = None
+) -> dict:
     from service.composition import state as svc_container
     from service.infrastructure.messaging import stream_helpers as stream_helpers_module
 
     try:
         chat_svc = svc_container.get_current_container().services.chat_application_service
-        res = asyncio.run(chat_svc.post_message(thread_id=thread_id, payload=type("P", (), {"text": text, "user_id": user_id, "model": None, "input_type": None, "web_search": False, "deep_research": False, "file_context": "", "route_override": None, "file_ids": []})()))
-        res = ChatReplyResult(reply=res.get("reply", ""), thread_id=res.get("thread_id", thread_id), metadata=ChatProcessingMetadata(data=res.get("metadata") or {}))
+        res = asyncio.run(
+            chat_svc.post_message(
+                thread_id=thread_id,
+                payload=type(
+                    "P",
+                    (),
+                    {
+                        "text": text,
+                        "user_id": user_id,
+                        "model": None,
+                        "input_type": None,
+                        "web_search": False,
+                        "deep_research": False,
+                        "file_context": "",
+                        "route_override": None,
+                        "file_ids": [],
+                    },
+                )(),
+            )
+        )
+        res = ChatReplyResult(
+            reply=res.get("reply", ""),
+            thread_id=res.get("thread_id", thread_id),
+            metadata=ChatProcessingMetadata(data=res.get("metadata") or {}),
+        )
     except Exception:
         logger.exception("process_chat_message_core failed")
-        res = ChatReplyResult(reply="", thread_id=thread_id, metadata=ChatProcessingMetadata(data={}))
+        res = ChatReplyResult(
+            reply="", thread_id=thread_id, metadata=ChatProcessingMetadata(data={})
+        )
 
     redis_client = None
     try:
@@ -36,9 +66,16 @@ def process_chat_message_core(thread_id: str, message_id: str, text: str, user_i
         redis_client = None
 
     if redis_client:
-        payload = {"type": "agent_reply", "id": message_id, "reply": res.reply, "metadata": res.metadata.data}
+        payload = {
+            "type": "agent_reply",
+            "id": message_id,
+            "reply": res.reply,
+            "metadata": res.metadata.data,
+        }
         try:
-            stream_helpers_module.xadd_sync(redis_client, f"chat:{thread_id}:stream", {"data": json.dumps(payload)})
+            stream_helpers_module.xadd_sync(
+                redis_client, f"chat:{thread_id}:stream", {"data": json.dumps(payload)}
+            )
         except Exception:
             logger.exception("Failed to publish agent reply")
 
@@ -46,7 +83,9 @@ def process_chat_message_core(thread_id: str, message_id: str, text: str, user_i
 
 
 @shared_task(bind=True, name="service.infrastructure.messaging.tasks.process_chat_message")
-def process_chat_message(self, thread_id: str, message_id: str, text: str, user_id: int | None = None) -> dict:
+def process_chat_message(
+    self, thread_id: str, message_id: str, text: str, user_id: int | None = None
+) -> dict:
     try:
         result = process_chat_message_core(thread_id, message_id, text, user_id)
         return {"status": "ok", "result": result}
@@ -69,7 +108,11 @@ def cleanup_old_streams():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            trimmed = loop.run_until_complete(stream_helpers.cleanup_old_streams(redis_client, pattern="chat:*:stream", maxlen=1000))
+            trimmed = loop.run_until_complete(
+                stream_helpers.cleanup_old_streams(
+                    redis_client, pattern="chat:*:stream", maxlen=1000
+                )
+            )
             return {"status": "success", "trimmed": trimmed}
         finally:
             loop.close()

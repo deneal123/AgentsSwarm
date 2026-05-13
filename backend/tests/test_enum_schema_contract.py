@@ -4,9 +4,9 @@ import ast
 import re
 from pathlib import Path
 
-import service.models.db.db_models as db_models
 from sqlalchemy import Enum as SqlEnum
 
+import service.models.db.db_models as db_models
 from service.models.db.base_db_model import Base
 
 _ = db_models
@@ -166,4 +166,6 @@ def test_sqlalchemy_enums_are_in_sync_with_alembic_revisions() -> None:
         if metadata_values != revision_values:
             mismatches.append((enum_name, metadata_values, revision_values))
 
-    assert not mismatches, f"Enum value mismatch between metadata and Alembic revisions: {mismatches}"
+    assert not mismatches, (
+        f"Enum value mismatch between metadata and Alembic revisions: {mismatches}"
+    )

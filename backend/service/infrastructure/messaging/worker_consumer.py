@@ -1,5 +1,6 @@
 import asyncio
-from typing import Callable, Any, Dict
+from collections.abc import Callable
+from typing import Any
 
 
 async def consume_once(
@@ -7,7 +8,7 @@ async def consume_once(
     stream: str,
     group: str,
     consumer: str,
-    process_func: Callable[[str, Dict[str, Any]], Any],
+    process_func: Callable[[str, dict[str, Any]], Any],
     count: int = 1,
     timeout: int = 1000,
 ):
@@ -22,13 +23,13 @@ async def consume_once(
     records = await redis_client.xread_group(
         group=group,
         consumer=consumer,
-        streams={stream: '>'},
+        streams={stream: ">"},
         count=count,
         timeout=timeout,
     )
     processed = 0
     # records expected format: [(stream_key, [(id, {k: v}), ...])]
-    for stream_key, messages in records:
+    for _stream_key, messages in records:
         for message_id, mapping in messages:
             try:
                 ok = await process_func(message_id, mapping)
@@ -46,7 +47,7 @@ async def consume_loop(
     stream: str,
     group: str,
     consumer: str,
-    process_func: Callable[[str, Dict[str, Any]], Any],
+    process_func: Callable[[str, dict[str, Any]], Any],
     poll_interval: float = 0.5,
 ):
     """Run consume_once in a loop until cancelled.
@@ -81,22 +82,22 @@ async def reclaim_pending(
     Uses XAUTOCLAIM/XAUTOCLAIM-like interface. Returns list of claimed (id, mapping).
     """
     # Some redis clients expose different names; try both
-    if hasattr(redis_client, 'xauto_claim'):
+    if hasattr(redis_client, "xauto_claim"):
         res = await redis_client.xauto_claim(
             stream,
             group,
             consumer,
             min_idle_ms,
-            '0-0',
+            "0-0",
             count=count,
         )
-    elif hasattr(redis_client, 'xautoclaim'):
+    elif hasattr(redis_client, "xautoclaim"):
         res = await redis_client.xautoclaim(
             stream,
             group,
             consumer,
             min_idle_ms,
-            '0-0',
+            "0-0",
             count=count,
         )
     else:

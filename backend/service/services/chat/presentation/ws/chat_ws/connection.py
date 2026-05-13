@@ -41,9 +41,13 @@ class ChatWsConnectionService:
             if last_id:
                 await self._stream_consumer.handle_replay(websocket, stream_key, last_id)
 
-            is_anonymous = str(session.get("user_id") or "") == "00000000-0000-0000-0000-000000000000"
+            is_anonymous = (
+                str(session.get("user_id") or "") == "00000000-0000-0000-0000-000000000000"
+            )
             if not is_anonymous:
-                await self._stream_consumer.handle_pending_messages(websocket, stream_key, group, consumer)
+                await self._stream_consumer.handle_pending_messages(
+                    websocket, stream_key, group, consumer
+                )
 
             consumer_task = asyncio.create_task(
                 self._stream_consumer.consume_events(
@@ -73,6 +77,8 @@ class ChatWsConnectionService:
         while True:
             try:
                 await asyncio.sleep(self._settings.heartbeat_interval)
-                await websocket.send_json({"type": "heartbeat", "timestamp": datetime.now().isoformat()})
+                await websocket.send_json(
+                    {"type": "heartbeat", "timestamp": datetime.now().isoformat()}
+                )
             except Exception:
                 return

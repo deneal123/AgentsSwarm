@@ -1,11 +1,14 @@
 from uuid import UUID
 
-from service.services.profile.presentation.routers.profile_api.schemas import ProfileResponse, ProfileUpdateRequest
 from service.services.profile.application.dto import (
     DeleteChatHistoryCommand,
     GetProfileOverviewQuery,
     ProfileOverviewResult,
     UpdateProfileCommand,
+)
+from service.services.profile.presentation.routers.profile_api.schemas import (
+    ProfileResponse,
+    ProfileUpdateRequest,
 )
 
 

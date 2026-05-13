@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -13,7 +14,6 @@ from service.settings import config as app_config
 # access to the values within the .ini file in use.
 config = context.config
 
-import logging
 logger = logging.getLogger(__name__)
 
 url = app_config.pg.dsn

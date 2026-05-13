@@ -1,7 +1,12 @@
 import json
 
 from fastapi.testclient import TestClient
-from service.composition.state import get_app_container, get_optional_redis_client, get_optional_redis_session_store
+
+from service.composition.state import (
+    get_app_container,
+    get_optional_redis_client,
+    get_optional_redis_session_store,
+)
 from service.settings import config
 
 
@@ -19,6 +24,7 @@ class _FakeChatService:
 class _FakeChatAppService:
     class _Services:
         chat_service = _FakeChatService()
+
     services = _Services()
 
 
@@ -61,7 +67,9 @@ def test_replay_with_last_id(monkeypatch):
 
     try:
         client = TestClient(app)
-        with client.websocket_connect("/api/chats/thread-replay/ws?token=good-token&last_id=0-0") as ws:
+        with client.websocket_connect(
+            "/api/chats/thread-replay/ws?token=good-token&last_id=0-0"
+        ) as ws:
             msg = ws.receive_json()
             assert msg.get("type") == "replay"
             assert msg.get("data", {}).get("event") == "replay"

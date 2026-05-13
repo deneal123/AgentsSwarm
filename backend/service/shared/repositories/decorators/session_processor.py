@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import Any, Callable, Coroutine, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 from sqlalchemy.exc import IntegrityError, MultipleResultsFound, NoResultFound, OperationalError
 
@@ -20,9 +21,9 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def connection() -> (
-    Callable[[Callable[P, Coroutine[Any, Any, R]]], Callable[P, Coroutine[Any, Any, R]]]
-):
+def connection() -> Callable[
+    [Callable[P, Coroutine[Any, Any, R]]], Callable[P, Coroutine[Any, Any, R]]
+]:
     def decorator(
         func: Callable[P, Coroutine[Any, Any, R]],
     ) -> Callable[P, Coroutine[Any, Any, R]]:
@@ -33,7 +34,7 @@ def connection() -> (
             if not hasattr(self_instance, "connector"):
                 raise AttributeError("Instance must have 'connector' attribute")
 
-            connector: PgConnector = getattr(self_instance, "connector")
+            connector: PgConnector = self_instance.connector
 
             async with connector.get_session_context() as session:
                 try:

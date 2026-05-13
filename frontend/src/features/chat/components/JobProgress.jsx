@@ -27,8 +27,10 @@ import {
   FiAlertCircle,
   FiInfo
 } from 'react-icons/fi';
-import { MotionBox } from '@shared/ui/lib/motionPrimitives';
+import { motion } from 'framer-motion';
 import { colors, borderRadius } from '@theme/tokens';
+
+const MotionBox = motion(Box);
 
 /**
  * JobProgress - Компонент для отображения прогресса выполнения задач

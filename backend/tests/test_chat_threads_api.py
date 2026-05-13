@@ -1,15 +1,26 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
-from service.main import app
 from service.composition.state import get_chat_application_service
+from service.main import app
 
 
 @pytest.mark.asyncio
 async def test_list_threads_returns_threads():
     class _FakeSvc:
         async def list_threads(self, user_id, page, per_page):
-            return {"page": page, "per_page": per_page, "threads": [{"thread_id": "T1", "title": "Hello", "created_at": "2025-01-01T00:00:00Z", "updated_at": None}]}
+            return {
+                "page": page,
+                "per_page": per_page,
+                "threads": [
+                    {
+                        "thread_id": "T1",
+                        "title": "Hello",
+                        "created_at": "2025-01-01T00:00:00Z",
+                        "updated_at": None,
+                    }
+                ],
+            }
 
     app.dependency_overrides[get_chat_application_service] = lambda: _FakeSvc()
     try:

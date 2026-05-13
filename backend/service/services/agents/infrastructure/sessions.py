@@ -4,18 +4,17 @@ PseudoSession: in-memory (no external dependency).
 RedisSession:  Redis-backed, requires configured Redis client.
 SQLiteSession: SQLite-backed, for lightweight long-term storage.
 """
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
-import asyncio
+
 import json
 import logging
+from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
-from service.services.agents.schemas.sessions import SessionItem
-from service.services.agents.domain.sessions import PseudoSession
 
-from service.settings import config as service_config
 from service.infrastructure.secrets import secret_loader
+from service.services.agents.domain.sessions import PseudoSession
+from service.services.agents.schemas.sessions import SessionItem
+from service.settings import config as service_config
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +36,15 @@ class RedisSession:
     def __init__(
         self,
         session_id: str,
-        client: Optional[Any] = None,
+        client: Any | None = None,
         *,
-        ttl_seconds: Optional[int] = None,
-        max_items: Optional[int] = None,
-        prefix: Optional[str] = None,
+        ttl_seconds: int | None = None,
+        max_items: int | None = None,
+        prefix: str | None = None,
     ):
         try:
             from service.composition.state import get_current_container
+
             if client is None:
                 client = get_current_container().infra.redis_client
         except Exception:
@@ -60,7 +60,7 @@ class RedisSession:
     def _key(self) -> str:
         return f"{self._prefix}:{self.session_id}"
 
-    async def get_items(self, limit: Optional[int] = None) -> list[dict]:
+    async def get_items(self, limit: int | None = None) -> list[dict]:
         if self._client is None:
             raise RuntimeError("Redis client not configured for RedisSession")
 
@@ -69,9 +69,11 @@ class RedisSession:
         for item in raw:
             try:
                 if getattr(self, "_encryption_key", None):
-                    txt = _maybe_decrypt(item, getattr(self, "_encryption_key"))
+                    txt = _maybe_decrypt(item, self._encryption_key)
                 else:
-                    txt = item.decode("utf-8") if isinstance(item, (bytes, bytearray)) else str(item)
+                    txt = (
+                        item.decode("utf-8") if isinstance(item, (bytes, bytearray)) else str(item)
+                    )
                 items.append(json.loads(txt))
             except Exception:
                 logger.warning("Invalid JSON found in session list; skipping", exc_info=True)
@@ -93,7 +95,7 @@ class RedisSession:
             await self._client.ltrim(self._key(), -self._max_items, -1)
         await self._client.expire(self._key(), max(int(self._ttl), 1))
 
-    async def pop_item(self) -> Optional[dict]:
+    async def pop_item(self) -> dict | None:
         if self._client is None:
             raise RuntimeError("Redis client not configured for RedisSession")
 
@@ -119,12 +121,19 @@ class RedisSession:
         record_session_length(self.session_id, 0)
 
     @classmethod
-    def from_container(cls, session_id: str, max_items: Optional[int] = None, ttl_seconds: Optional[int] = None):
+    def from_container(
+        cls, session_id: str, max_items: int | None = None, ttl_seconds: int | None = None
+    ):
         from service.composition.state import get_current_container
 
         client = get_current_container().infra.redis_client
         cfg = service_config.redis
-        inst = cls(session_id, client=client, ttl_seconds=ttl_seconds or cfg.session_ttl_seconds, max_items=max_items)
+        inst = cls(
+            session_id,
+            client=client,
+            ttl_seconds=ttl_seconds or cfg.session_ttl_seconds,
+            max_items=max_items,
+        )
         keycfg = getattr(service_config, "sessions", None)
         if keycfg and getattr(keycfg, "encryption_key", None):
             inst._encryption_key = keycfg.encryption_key.encode("utf-8")
@@ -146,8 +155,8 @@ class SQLiteSession:
         session_id: str,
         db_path: str = "sessions.db",
         *,
-        max_items: Optional[int] = None,
-        encryption_key: Optional[bytes] = None,
+        max_items: int | None = None,
+        encryption_key: bytes | None = None,
     ):
         import sqlite3
 
@@ -158,7 +167,7 @@ class SQLiteSession:
         if self._encryption_key is None:
             global_key = getattr(service_config, "sessions", None)
             if global_key and getattr(global_key, "encryption_key", None):
-                self._encryption_key = getattr(global_key, "encryption_key").encode("utf-8")
+                self._encryption_key = global_key.encryption_key.encode("utf-8")
         self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
         self._conn.execute(
             """
@@ -172,7 +181,7 @@ class SQLiteSession:
         )
         self._conn.commit()
 
-    async def get_items(self, limit: Optional[int] = None) -> list[dict]:
+    async def get_items(self, limit: int | None = None) -> list[dict]:
         cur = self._conn.execute(
             "SELECT payload FROM sessions WHERE session_id = ? ORDER BY id ASC", (self.session_id,)
         )
@@ -216,7 +225,7 @@ class SQLiteSession:
         ).fetchone()[0]
         record_session_length(self.session_id, items_len)
 
-    async def pop_item(self) -> Optional[dict]:
+    async def pop_item(self) -> dict | None:
         cur = self._conn.execute(
             "SELECT id, payload FROM sessions WHERE session_id = ? ORDER BY id DESC LIMIT 1",
             (self.session_id,),
@@ -256,6 +265,7 @@ class SQLiteSession:
 
 # Validation helpers -------------------------------------------------------
 
+
 def _validate_items(items: list[dict]) -> list[dict]:
     return [SessionItem(**it).model_dump() for it in items]
 
@@ -269,7 +279,7 @@ async def _redis_add_items_with_validation(self, items: list[dict]) -> None:
     valid = _validate_items(items)
     payloads = [json.dumps(it, default=str) for it in valid]
     if getattr(self, "_encryption_key", None):
-        payloads = [_maybe_encrypt(p, getattr(self, "_encryption_key")) for p in payloads]
+        payloads = [_maybe_encrypt(p, self._encryption_key) for p in payloads]
     await self._client.rpush(self._key(), *payloads)
     if self._max_items:
         await self._client.ltrim(self._key(), -self._max_items, -1)
@@ -289,7 +299,7 @@ async def _pseudo_add_items_with_validation(self, items: list[dict]) -> None:
     async with self._lock:
         self._items.extend(valid)
         if self._max_items is not None and len(self._items) > self._max_items:
-            self._items = self._items[-self._max_items:]
+            self._items = self._items[-self._max_items :]
     record_session_items_added(self.session_id, len(valid))
     record_session_length(self.session_id, len(await self.get_items()))
 
@@ -299,17 +309,20 @@ PseudoSession.add_items = _pseudo_add_items_with_validation
 
 # Convenience constructors -------------------------------------------------
 
-def redis_session_with_key(session_id: str, key: Optional[bytes], **kwargs) -> RedisSession:
+
+def redis_session_with_key(session_id: str, key: bytes | None, **kwargs) -> RedisSession:
     s = RedisSession(session_id, **kwargs)
     s._encryption_key = key
     return s
 
 
-def sqlite_session_with_key(session_id: str, file_path: str, key: Optional[bytes], **kwargs) -> SQLiteSession:
+def sqlite_session_with_key(
+    session_id: str, file_path: str, key: bytes | None, **kwargs
+) -> SQLiteSession:
     return SQLiteSession(session_id, db_path=file_path, encryption_key=key, **kwargs)
 
 
-def create_session(session_id: str, backend: Optional[str] = None, **kwargs):
+def create_session(session_id: str, backend: str | None = None, **kwargs):
     """Factory to create a session instance based on configuration.
 
     backend: 'redis' | 'sqlite' | 'pseudo' | 'auto'
@@ -322,7 +335,9 @@ def create_session(session_id: str, backend: Optional[str] = None, **kwargs):
     if not b or b == "auto":
         if getattr(service_config, "redis", None) and service_config.redis.enabled:
             b = "redis"
-        elif getattr(service_config, "sessions", None) and getattr(service_config.sessions, "sqlite_db_path", None):
+        elif getattr(service_config, "sessions", None) and getattr(
+            service_config.sessions, "sqlite_db_path", None
+        ):
             b = "sqlite"
         else:
             b = "pseudo"
@@ -335,25 +350,32 @@ def create_session(session_id: str, backend: Optional[str] = None, **kwargs):
             getattr(service_config, "sessions", None)
             and getattr(service_config.sessions, "sqlite_db_path", None)
         )
-        return SQLiteSession.from_file(session_id, path or "sessions.db", max_items=kwargs.get("max_items"))
+        return SQLiteSession.from_file(
+            session_id, path or "sessions.db", max_items=kwargs.get("max_items")
+        )
 
-    return PseudoSession(session_id, ttl_seconds=kwargs.get("ttl_seconds"), max_items=kwargs.get("max_items"))
+    return PseudoSession(
+        session_id, ttl_seconds=kwargs.get("ttl_seconds"), max_items=kwargs.get("max_items")
+    )
 
 
 # Encryption helpers -------------------------------------------------------
 
-def _maybe_encrypt(payload: str, key: Optional[bytes]) -> bytes:
+
+def _maybe_encrypt(payload: str, key: bytes | None) -> bytes:
     if not key:
         return payload.encode("utf-8")
     f = Fernet(key)
     return f.encrypt(payload.encode("utf-8"))
 
 
-def _maybe_decrypt(raw: bytes | str, key: Optional[bytes]) -> str:
+def _maybe_decrypt(raw: bytes | str, key: bytes | None) -> str:
     if not key:
         return raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else str(raw)
     f = Fernet(key)
     try:
-        return f.decrypt(raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8")).decode("utf-8")
+        return f.decrypt(
+            raw if isinstance(raw, (bytes, bytearray)) else raw.encode("utf-8")
+        ).decode("utf-8")
     except InvalidToken:
         raise ValueError("Decryption failed: invalid key or corrupt payload")

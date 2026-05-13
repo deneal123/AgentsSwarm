@@ -11,7 +11,9 @@ class ReplyAssembler:
         self.metadata: dict[str, Any] = {}
         self.structured_output: Any = None
 
-    def consume(self, *, event: Any, stream_chunk_type: Any, error_type: Any, structured_output_type: Any) -> None:
+    def consume(
+        self, *, event: Any, stream_chunk_type: Any, error_type: Any, structured_output_type: Any
+    ) -> None:
         if event.metadata:
             self.metadata.update(event.metadata)
         if event.type == stream_chunk_type and event.data is not None:

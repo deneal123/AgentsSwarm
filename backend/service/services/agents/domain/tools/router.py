@@ -9,8 +9,12 @@ logger = logging.getLogger(__name__)
 
 InputType = Literal["text", "image", "audio", "video"]
 
-_TEXT_FAMILY_RE = re.compile(r"(gpt|qwen|llama|mistral|gemma|deepseek|yi|phi|glm|kimi|instruct|chat|alpha)", re.I)
-_CODE_FAMILY_RE = re.compile(r"(kodify|code|coder|codestral|starcoder|deepseek.*coder|qwen.*coder)", re.I)
+_TEXT_FAMILY_RE = re.compile(
+    r"(gpt|qwen|llama|mistral|gemma|deepseek|yi|phi|glm|kimi|instruct|chat|alpha)", re.I
+)
+_CODE_FAMILY_RE = re.compile(
+    r"(kodify|code|coder|codestral|starcoder|deepseek.*coder|qwen.*coder)", re.I
+)
 _IMAGE_FAMILY_RE = re.compile(r"(image|vision|vl|multimodal|dall-e|sdxl|flux)", re.I)
 _AUDIO_FAMILY_RE = re.compile(r"(whisper|audio|speech|asr|stt)", re.I)
 _VIDEO_FAMILY_RE = re.compile(r"(video|vision|vl|multimodal)", re.I)
@@ -24,10 +28,22 @@ def _is_chat_capable_model(model_id: str | None) -> bool:
     if not low:
         return False
     blocked_markers = (
-        "bge", "e5", "gte", "embed", "embedding", "rerank", "ranker",
-        "whisper", "asr", "stt", "tts", "speech-to-text", "text-to-speech",
+        "bge",
+        "e5",
+        "gte",
+        "embed",
+        "embedding",
+        "rerank",
+        "ranker",
+        "whisper",
+        "asr",
+        "stt",
+        "tts",
+        "speech-to-text",
+        "text-to-speech",
     )
     return not any(marker in low for marker in blocked_markers)
+
 
 _ROUTER_SYSTEM = """\
 Ты — высокоточный роутер GPTHub.
@@ -102,7 +118,15 @@ def _pick_router_model(models: list[str]) -> str | None:
     return models[0] if models else None
 
 
-_VALID_TOOLS = {"none", "web_search", "deep_research", "audio_transcribe", "image_gen", "pptx_gen", "general"}
+_VALID_TOOLS = {
+    "none",
+    "web_search",
+    "deep_research",
+    "audio_transcribe",
+    "image_gen",
+    "pptx_gen",
+    "general",
+}
 
 
 def _parse_llm_response(raw: str, available_models: list[str]) -> dict:
@@ -178,7 +202,10 @@ def _detect_input_type(text: str, input_type: str | None) -> InputType:
 
 def _detect_text_kind(text: str) -> Literal["general", "code"]:
     low = (text or "").lower()
-    if re.search(r"```|\bdef\b|\bclass\b|\bimport\b|\bfunction\b|\bconst\b|\bvar\b|\btraceback\b|\bstack trace\b", low):
+    if re.search(
+        r"```|\bdef\b|\bclass\b|\bimport\b|\bfunction\b|\bconst\b|\bvar\b|\btraceback\b|\bstack trace\b",
+        low,
+    ):
         return "code"
     return "general"
 

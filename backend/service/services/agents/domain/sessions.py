@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,36 +21,36 @@ def record_session_length(_session_id: str, _length: int) -> None:
 class PseudoSession:
     """In-memory session with optional TTL and max_items trimming."""
 
-    def __init__(self, session_id: str, ttl_seconds: Optional[int] = None, max_items: Optional[int] = None):
+    def __init__(
+        self, session_id: str, ttl_seconds: int | None = None, max_items: int | None = None
+    ):
         self.session_id = session_id
-        self._items: List[Dict[str, Any]] = []
+        self._items: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
         self._ttl = ttl_seconds
         self._max_items = max_items
 
-    async def get_items(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def get_items(self, limit: int | None = None) -> list[dict[str, Any]]:
         async with self._lock:
             items = list(self._items)
 
         if self._ttl is not None:
-            cutoff = datetime.now(timezone.utc).timestamp() - self._ttl
+            cutoff = datetime.now(UTC).timestamp() - self._ttl
             items = [
-                it
-                for it in items
-                if float(it.get("ts", datetime.now(timezone.utc).timestamp())) >= cutoff
+                it for it in items if float(it.get("ts", datetime.now(UTC).timestamp())) >= cutoff
             ]
 
         if limit is not None:
             items = items[-limit:]
         return items
 
-    async def add_items(self, items: List[Dict[str, Any]]) -> None:
+    async def add_items(self, items: list[dict[str, Any]]) -> None:
         async with self._lock:
             self._items.extend(items)
             if self._max_items is not None and len(self._items) > self._max_items:
                 self._items = self._items[-self._max_items :]
 
-    async def pop_item(self) -> Optional[Dict[str, Any]]:
+    async def pop_item(self) -> dict[str, Any] | None:
         async with self._lock:
             if not self._items:
                 return None

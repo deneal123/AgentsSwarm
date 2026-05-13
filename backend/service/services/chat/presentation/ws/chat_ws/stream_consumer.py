@@ -20,13 +20,17 @@ class ChatStreamConsumer:
 
     async def handle_replay(self, websocket, stream_key: str, last_id: str) -> None:
         replay_count = min(self._settings.max_replay, 100)
-        entries = await stream_helpers.xrange(self._redis_client, stream_key, last_id, "+", count=replay_count)
+        entries = await stream_helpers.xrange(
+            self._redis_client, stream_key, last_id, "+", count=replay_count
+        )
         for entry_id, fields in entries:
             payload = self.parse_payload(fields)
             await websocket.send_json({"type": "replay", "id": entry_id, "data": payload})
             self._metrics.inc("replay_sent_total")
 
-    async def process_claimed_entries(self, websocket, stream_key: str, group: str, claimed: list) -> None:
+    async def process_claimed_entries(
+        self, websocket, stream_key: str, group: str, claimed: list
+    ) -> None:
         for entry_id, fields in claimed:
             payload = self.parse_payload(fields)
             try:
@@ -43,7 +47,9 @@ class ChatStreamConsumer:
                 self._metrics.inc("xack_errors_total")
                 logger.debug("Failed xack for claimed entry %s", entry_id, exc_info=True)
 
-    async def handle_pending_messages(self, websocket, stream_key: str, group: str, consumer: str) -> None:
+    async def handle_pending_messages(
+        self, websocket, stream_key: str, group: str, consumer: str
+    ) -> None:
         pending = await stream_helpers.xpending(self._redis_client, stream_key, group)
         pending_count = pending.get("count", 0) if pending else 0
         if pending_count <= 0:
@@ -60,7 +66,9 @@ class ChatStreamConsumer:
         )
         await self.process_claimed_entries(websocket, stream_key, group, claimed)
 
-    async def consume_events(self, websocket, stream_key: str, group: str, consumer: str, start_from_latest: bool = False) -> None:
+    async def consume_events(
+        self, websocket, stream_key: str, group: str, consumer: str, start_from_latest: bool = False
+    ) -> None:
         last_id = "$" if start_from_latest else "0"
         while True:
             try:

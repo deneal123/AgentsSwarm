@@ -3,7 +3,9 @@ __all__ = ["DefaultAgentExecutionService", "AgentSessionService", "ModelRoutingS
 
 def __getattr__(name: str):
     if name == "DefaultAgentExecutionService":
-        from service.services.agents.application.agent_execution_service import DefaultAgentExecutionService
+        from service.services.agents.application.agent_execution_service import (
+            DefaultAgentExecutionService,
+        )
 
         return DefaultAgentExecutionService
     if name == "AgentSessionService":

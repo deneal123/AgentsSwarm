@@ -7,7 +7,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { FiFile, FiTrash2 } from 'react-icons/fi';
-import { CHAT_SCROLLBAR_SX, CHAT_THEME } from '@features/chat/constants/theme';
+import { CHAT_SCROLLBAR_SX, CHAT_THEME } from '../../chat/constants/theme';
 
 function formatBytes(bytes) {
   if (!bytes) return '—';

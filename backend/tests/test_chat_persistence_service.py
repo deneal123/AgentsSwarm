@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from service.shared.repositories.exceptions import RepositoryNotFoundError
 from service.services.chat.persistence.chat_persistence_service import ChatPersistenceService
+from service.shared.repositories.exceptions import RepositoryNotFoundError
 
 
 class _Repo:

@@ -16,7 +16,7 @@ class _Handler:
 
 @pytest.mark.asyncio
 async def test_execute_success() -> None:
-    from service.services.chat.domain.chat_contracts import ChatReplyResult, ChatProcessingMetadata
+    from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
     handler = _Handler(
         {

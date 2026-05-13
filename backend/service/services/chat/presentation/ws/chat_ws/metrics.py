@@ -8,17 +8,32 @@ class ChatWsMetrics:
         try:
             from prometheus_client import Counter, Gauge
 
-            self.connections_active = Gauge("chat_connections_active", "Number of active chat WebSocket connections")
-            self.messages_received_total = Counter("chat_messages_received_total", "Number of messages received via WebSocket")
-            self.events_sent_total = Counter("chat_events_sent_total", "Number of events sent to WebSocket clients")
-            self.replay_sent_total = Counter("chat_replay_sent_total", "Number of replay entries sent to websocket")
-            self.claimed_sent_total = Counter("chat_claimed_sent_total", "Number of claimed entries successfully sent to websocket")
+            self.connections_active = Gauge(
+                "chat_connections_active", "Number of active chat WebSocket connections"
+            )
+            self.messages_received_total = Counter(
+                "chat_messages_received_total", "Number of messages received via WebSocket"
+            )
+            self.events_sent_total = Counter(
+                "chat_events_sent_total", "Number of events sent to WebSocket clients"
+            )
+            self.replay_sent_total = Counter(
+                "chat_replay_sent_total", "Number of replay entries sent to websocket"
+            )
+            self.claimed_sent_total = Counter(
+                "chat_claimed_sent_total",
+                "Number of claimed entries successfully sent to websocket",
+            )
             self.claimed_left_unacked_total = Counter(
                 "chat_claimed_left_unacked_total",
                 "Number of claimed entries that couldn't be sent and left unacked (chat)",
             )
-            self.xack_errors_total = Counter("chat_xack_errors_total", "Number of xack errors in chat websocket")
-            self.connection_errors_total = Counter("chat_connection_errors_total", "Number of WebSocket connection errors")
+            self.xack_errors_total = Counter(
+                "chat_xack_errors_total", "Number of xack errors in chat websocket"
+            )
+            self.connection_errors_total = Counter(
+                "chat_connection_errors_total", "Number of WebSocket connection errors"
+            )
         except Exception:
             self.connections_active = None
             self.messages_received_total = None

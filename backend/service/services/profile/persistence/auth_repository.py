@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class AuthRepository(BaseRepository):
-
     def __init__(
         self,
         connector,
@@ -74,13 +73,17 @@ class AuthRepository(BaseRepository):
         return user_session
 
     @connection()
-    async def fetch_user_session(self, token: str, session: AsyncSession | None = None) -> UserSession | None:
+    async def fetch_user_session(
+        self, token: str, session: AsyncSession | None = None
+    ) -> UserSession | None:
         assert session is not None, "DB session is required"
         result = await session.execute(select(UserSession).where(UserSession.token == token))
         return result.scalar_one_or_none()
 
     @connection()
-    async def insert_user_session(self, user_session: UserSession, session: AsyncSession | None = None) -> UserSession:
+    async def insert_user_session(
+        self, user_session: UserSession, session: AsyncSession | None = None
+    ) -> UserSession:
         assert session is not None, "DB session is required"
         session.add(user_session)
         await session.flush()

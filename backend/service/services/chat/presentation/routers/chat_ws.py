@@ -17,8 +17,8 @@ from service.services.chat.presentation.ws.chat_ws import (
     ChatWsConnectionService,
     ChatWsMetrics,
 )
-from service.shared.security.auth_validation import AuthValidator
 from service.settings import config
+from service.shared.security.auth_validation import AuthValidator
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -47,8 +47,15 @@ def get_chat_ws_connection_service(
     ws_settings = config.chat_ws.settings
     auth_service = ChatWsAuthService(AuthValidator(config.auth), session_store)
     stream_consumer = ChatStreamConsumer(redis_client, ws_settings, _metrics)
-    message_handler = ChatMessageHandler(job_service, file_service, _metrics, app_container.services.chat_application_service.services.chat_service)
-    return ChatWsConnectionService(auth_service, stream_consumer, message_handler, ws_settings, _metrics)
+    message_handler = ChatMessageHandler(
+        job_service,
+        file_service,
+        _metrics,
+        app_container.services.chat_application_service.services.chat_service,
+    )
+    return ChatWsConnectionService(
+        auth_service, stream_consumer, message_handler, ws_settings, _metrics
+    )
 
 
 @router.websocket("/api/chats/{thread_id}/ws")
@@ -70,6 +77,8 @@ async def chat_ws(
             pass
 
 
-async def process_claimed_entries(websocket, redis_client, stream_key: str, group: str, claimed: list):
+async def process_claimed_entries(
+    websocket, redis_client, stream_key: str, group: str, claimed: list
+):
     consumer = ChatStreamConsumer(redis_client, config.chat_ws.settings, _metrics)
     await consumer.process_claimed_entries(websocket, stream_key, group, claimed)

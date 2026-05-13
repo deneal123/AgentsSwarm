@@ -1,6 +1,6 @@
-import pytest
-import asyncio
 import json
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -63,12 +63,11 @@ async def test_reclaim_e2e_flow():
             # return all pending entries for the group as claimed and remove them from pending
             pend = self.pending.get(group, {})
             entries = []
-            for eid, (fields, orig_consumer) in list(pend.items()):
+            for eid, (fields, _orig_consumer) in list(pend.items()):
                 entries.append((eid, fields))
                 del pend[eid]
             # mimic (next_start, entries) signature
             return ("0-0", entries)
-
 
     fake = FakeRedisReclaim()
 

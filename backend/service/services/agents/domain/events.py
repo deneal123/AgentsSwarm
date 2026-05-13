@@ -1,9 +1,9 @@
 """Event protocol for unified agent streaming system."""
-from enum import Enum
-from typing import Any, Optional
+
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
-
 
 LEGACY_GUARDRIALS_KEY = "guardrials"
 GUARDRAILS_KEY = "guardrails"
@@ -22,7 +22,7 @@ def _add_legacy_guardrials_key(metadata: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """Types of events emitted by agent system."""
 
     ROUTING_START = "routing_start"
@@ -52,7 +52,7 @@ class AgentEvent(BaseModel):
     """
 
     type: EventType = Field(..., description="Event type")
-    agent_name: Optional[str] = Field(None, description="Name of the agent emitting this event")
+    agent_name: str | None = Field(None, description="Name of the agent emitting this event")
     data: Any = Field(None, description="Event payload (can be string, dict, list, etc)")
     metadata: dict = Field(default_factory=dict, description="Additional metadata")
     seq: int = Field(0, description="Sequence number for ordering")

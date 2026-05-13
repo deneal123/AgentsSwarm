@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from agents import FunctionTool, RunContextWrapper
 
@@ -30,7 +30,7 @@ def _context_dict(ctx: RunContextWrapper) -> dict:
 async def fetch_runtime_context_tool(ctx: RunContextWrapper, args: str) -> str:
     """Return normalized runtime context metadata for the current request."""
     payload = _context_dict(ctx)
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     result = {
         "timestamp_utc": now,
         "user_id": payload.get("user_id"),

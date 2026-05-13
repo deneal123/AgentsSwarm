@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Box, Button, Progress, Text, VStack } from '@chakra-ui/react';
 import { FiUpload } from 'react-icons/fi';
-import { CHAT_THEME } from '@features/chat/constants/theme';
+import { CHAT_THEME } from '../../chat/constants/theme';
 
 export function FileUploadButton({
   onUpload,

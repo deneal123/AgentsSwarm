@@ -4,8 +4,8 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from service.infrastructure.messaging.agent_streaming import AgentStreamPublisher, EventSerializer
 from service.infrastructure.messaging import stream_helpers
+from service.infrastructure.messaging.agent_streaming import AgentStreamPublisher, EventSerializer
 from service.services.chat.persistence.chat_worker_repository import ChatWorkerRepository
 
 
@@ -13,8 +13,12 @@ from service.services.chat.persistence.chat_worker_repository import ChatWorkerR
 class ChatWorkerConversationService:
     repository: ChatWorkerRepository
 
-    async def resolve_memory_user(self, *, db_session: Any, user_id: Any, thread_id: str) -> str | None:
-        return await self.repository.resolve_memory_user(db_session=db_session, user_id=user_id, thread_id=thread_id)
+    async def resolve_memory_user(
+        self, *, db_session: Any, user_id: Any, thread_id: str
+    ) -> str | None:
+        return await self.repository.resolve_memory_user(
+            db_session=db_session, user_id=user_id, thread_id=thread_id
+        )
 
     async def restore_thread_history(
         self,
@@ -61,7 +65,9 @@ class WorkerStreamPublisherService:
     redis_client: Any
 
     def __post_init__(self) -> None:
-        self.publisher = AgentStreamPublisher(redis_client=self.redis_client, stream_key=self.stream_key)
+        self.publisher = AgentStreamPublisher(
+            redis_client=self.redis_client, stream_key=self.stream_key
+        )
         self.serializer = EventSerializer()
 
     def publish_payload(self, payload: dict[str, Any]) -> bool:

@@ -1,7 +1,7 @@
 """Base class for specialized sub-agents."""
 
 from abc import abstractmethod
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from service.services.agents.domain.base import BaseAgent
 from service.services.agents.domain.events import AgentEvent, EventType
@@ -31,7 +31,10 @@ class BaseSubAgent(BaseAgent):
             "message": str | None,
         }
         """
-        from service.services.agents.domain.guardrails import check_appropriate_language, check_forbidden_topics
+        from service.services.agents.domain.guardrails import (
+            check_appropriate_language,
+            check_forbidden_topics,
+        )
 
         text = str(user_input or "")
         lowered = text.lower()
@@ -128,7 +131,7 @@ class BaseSubAgent(BaseAgent):
         metadata: dict | None = None,
         *,
         chunk_size: int = 220,
-    ) -> AsyncGenerator[AgentEvent, None]:
+    ) -> AsyncGenerator[AgentEvent]:
         """Yield multiple guarded stream chunks to emulate token streaming UX."""
         source = str(text or "")
         if not source.strip():
@@ -156,5 +159,5 @@ class BaseSubAgent(BaseAgent):
             yield await self.stream_text_event(remaining, metadata=metadata)
 
     @abstractmethod
-    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent, None]:
+    async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         raise NotImplementedError

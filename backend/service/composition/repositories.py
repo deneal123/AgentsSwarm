@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from service.composition.models import InfraContainer, RepositoriesContainer
-from service.services.profile.persistence.auth_repository import AuthRepository
 from service.services.files.persistence.file_repository import FileRepository
 from service.services.jobs.persistence.job_repository import JobRepository
+from service.services.profile.persistence.auth_repository import AuthRepository
 from service.services.profile.persistence.profile_repository import ProfileRepository
 
 

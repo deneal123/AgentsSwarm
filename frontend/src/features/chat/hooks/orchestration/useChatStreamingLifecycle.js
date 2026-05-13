@@ -31,7 +31,7 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
     }
     setCurrentJob(incomingJobId ? { id: incomingJobId, status: 'processing', progress: 0 } : null);
     setIsLoading(true);
-  }, [resolveWsEventJobId, setIsLoading]);
+  }, [resolveWsEventJobId, setCurrentJob, setIsLoading]);
 
   const onComplete = useCallback(() => { clearCurrentJob(); setIsLoading(false); }, [clearCurrentJob, setIsLoading]);
 
@@ -53,7 +53,7 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
     if (!isLoadingRef.current || shouldIgnoreWsEvent(data) || !data?.data?.trim()) return;
     const chunkMeta = data.metadata || {};
     appendStreamChunk(data.data, chunkMeta);
-  }, [completeLastAgentMessage, shouldIgnoreWsEvent]);
+  }, [appendStreamChunk, shouldIgnoreWsEvent]);
 
   const onAgentReply = useCallback((data) => {
     if (shouldIgnoreWsEvent(data)) return;

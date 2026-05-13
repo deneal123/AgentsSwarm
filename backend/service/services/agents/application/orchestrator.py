@@ -1,6 +1,6 @@
 """GPTHub Orchestrator — LLM-first per-message intent routing."""
+
 import logging
-from typing import Optional
 
 from service.services.agents.domain.base import BaseAgent
 from service.services.agents.domain.routing import (
@@ -23,7 +23,7 @@ class Orchestrator:
       3. safe fallback -> general
     """
 
-    def __init__(self, model_settings: Optional[dict] = None):
+    def __init__(self, model_settings: dict | None = None):
         self.model_settings = model_settings or {}
         self._agents: dict[str, BaseAgent] = build_subagents(self.model_settings)
         self._router_agent = create_router_agent(self.model_settings, logger)
@@ -33,10 +33,10 @@ class Orchestrator:
     async def route(
         self,
         user_input: str,
-        thread_id: Optional[str] = None,
+        thread_id: str | None = None,
         *,
-        route_override: Optional[str] = None,
-        input_type: Optional[str] = None,
+        route_override: str | None = None,
+        input_type: str | None = None,
         web_search: bool = False,
         deep_research: bool = False,
     ) -> str:
