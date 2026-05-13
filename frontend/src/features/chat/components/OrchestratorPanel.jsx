@@ -78,6 +78,17 @@ const DEFAULT_SOURCE_CFG = { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,2
 
 // ─── Message humanizer ────────────────────────────────────────────────────────
 
+const AGENT_NAMES = {
+  RobotInfo:        'Информация о роботах',
+  Navigation:       'Навигация',
+  Charging:         'Зарядка',
+  Patrol:           'Патрулирование',
+  Inspection:       'Инспекция',
+  FleetOps:         'Управление флотом',
+  SwarmCoordinator: 'Координатор роя',
+  General:          'Общий ассистент',
+};
+
 const MSG_RULES = [
   // Orchestrator lifecycle
   [/^Processing started$/i,                             () => 'Оркестратор запущен, обрабатываю задачу'],
@@ -94,12 +105,14 @@ const MSG_RULES = [
   [/^Plan step (\d+) completed$/i,                      (_, n) => `Шаг ${n} выполнен`],
   [/^Plan step (\d+) failed$/i,                         (_, n) => `Шаг ${n} завершился с ошибкой`],
 
-  // Agent handoffs
-  [/^Handoff to (\w+)\s*\(attempt (\d+)\)$/i,           (_, agent, attempt) =>
-    attempt === '1'
-      ? `Передаю управление агенту ${agent}`
-      : `Повторная передача агенту ${agent} (попытка ${attempt})`],
-  [/^Handoff to (\w+)$/i,                               (_, agent) => `Передаю управление агенту ${agent}`],
+  // Agent handoffs — with human-readable agent names
+  [/^Handoff to (\w+)\s*\(attempt (\d+)\)$/i, (_, agent, attempt) => {
+    const name = AGENT_NAMES[agent] || agent;
+    return attempt === '1'
+      ? `Передаю задачу агенту: ${name}`
+      : `Повторная передача агенту ${name} (попытка ${attempt})`;
+  }],
+  [/^Handoff to (\w+)$/i, (_, agent) => `Передаю задачу агенту: ${AGENT_NAMES[agent] || agent}`],
 
   // SDK events
   [/^tool_called$/i,                                    () => 'Вызов инструмента'],
