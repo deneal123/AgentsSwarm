@@ -92,10 +92,6 @@ const bgAuroraC = keyframes`
   50% { transform: translate3d(10px,12px,0) scale(1.05); }
 `;
 
-const traceRingSpin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
 
 
 /**

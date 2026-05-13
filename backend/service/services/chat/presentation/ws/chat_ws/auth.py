@@ -24,6 +24,7 @@ class ChatWsAuthService:
         except Exception as exc:
             logger.exception("Authentication failed: %s", exc)
             try:
+                await websocket.accept()
                 await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
             except Exception:
                 pass

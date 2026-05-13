@@ -44,18 +44,21 @@ def get_chat_ws_connection_service(
     file_service: Annotated[Any, Depends(get_optional_file_service)],
     app_container: Annotated[AppContainer, Depends(get_app_container)],
 ) -> ChatWsConnectionService:
-    ws_settings = config.chat_ws.settings
-    auth_service = ChatWsAuthService(AuthValidator(config.auth), session_store)
-    stream_consumer = ChatStreamConsumer(redis_client, ws_settings, _metrics)
-    message_handler = ChatMessageHandler(
-        job_service,
-        file_service,
-        _metrics,
-        app_container.services.chat_application_service.chat_service,
-    )
-    return ChatWsConnectionService(
-        auth_service, stream_consumer, message_handler, ws_settings, _metrics
-    )
+    try:
+        ws_settings = config.chat_ws.settings
+        auth_service = ChatWsAuthService(AuthValidator(config.auth), session_store)
+        stream_consumer = ChatStreamConsumer(redis_client, ws_settings, _metrics)
+        message_handler = ChatMessageHandler(
+            job_service,
+            file_service,
+            _metrics,
+            app_container.services.chat_application_service.chat_service,
+        )
+        return ChatWsConnectionService(
+            auth_service, stream_consumer, message_handler, ws_settings, _metrics
+        )
+    except Exception:
+        logger.exception("Failed to build ChatWsConnectionService")
 
 
 @router.websocket("/api/chats/{thread_id}/ws")
