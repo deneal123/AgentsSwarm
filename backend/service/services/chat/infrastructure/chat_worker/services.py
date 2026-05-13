@@ -63,6 +63,8 @@ class ChatWorkerConversationService:
 class WorkerStreamPublisherService:
     stream_key: str
     redis_client: Any
+    publisher: Any = None
+    serializer: Any = None
 
     def __post_init__(self) -> None:
         self.publisher = AgentStreamPublisher(

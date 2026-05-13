@@ -271,8 +271,12 @@ export function useWebSocketChat(threadId, callbacks = {}) {
   const cancelJob = useCallback(async () => {
     const targetTaskId = currentJob?.celeryTaskId;
     if (targetTaskId) {
-      const { cancelTask } = await import('@api/jobs');
-      await cancelTask(targetTaskId);
+      try {
+        const { cancelTask } = await import('@api/jobs');
+        await cancelTask(targetTaskId);
+      } catch (_) {
+        // task may already be done — still clear local state
+      }
     }
     setCurrentJob((prev) => (prev ? { ...prev, status: 'cancelled' } : prev));
   }, [currentJob]);

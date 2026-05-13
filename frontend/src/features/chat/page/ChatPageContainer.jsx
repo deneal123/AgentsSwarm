@@ -194,14 +194,14 @@ function ChatPageContainer() {
   const handleCancelJob = useCallback(async (jobId) => {
     try {
       await cancelJob(jobId);
-      setIsLoading(false);
-      clearCurrentJob();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Не удалось отменить задачу';
-      setError(message);
-      sideEffects.notify({ title: 'Ошибка отмены', description: message, status: 'error', duration: 4000 });
+      sideEffects.notify({ title: 'Ошибка отмены', description: message, status: 'warning', duration: 3000 });
+    } finally {
+      setIsLoading(false);
+      clearCurrentJob();
     }
-  }, [cancelJob, clearCurrentJob, setError, setIsLoading, sideEffects]);
+  }, [cancelJob, clearCurrentJob, setIsLoading, sideEffects]);
 
   useEffect(() => {
     const container = messagesScrollRef.current;
