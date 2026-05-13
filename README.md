@@ -134,10 +134,21 @@ graph TB
 
     Router -->|"robot_info"| RobotInfo
     Router -->|"navigation"| Navigation
+    Router -->|"charging"| Charging
+    Router -->|"patrol"| Patrol
+    Router -->|"inspection"| Inspection
+    Router -->|"fleet_ops"| FleetOps
     Router -->|"swarm_coord"| Swarm
     Router -->|"general"| General
 
+    Charging["Charging Agent"]
+    Patrol["Patrol Agent"]
+    Inspection["Inspection Agent"]
+    FleetOps["FleetOps Agent"]
+
     Navigation -->|"wait_mission()"| BgPoller
+    Charging -->|"wait_mission()"| BgPoller
+    Patrol -->|"wait_mission()"| BgPoller
     BgPoller -->|"mission_complete event"| StreamCollector
 
     MapAnalyst -->|"GET /api/v1/map"| MissionControlAPI
@@ -145,6 +156,14 @@ graph TB
     RobotInfo -->|"MCP"| RosMSP
     Navigation -->|"MCP"| MissionControl
     Navigation -->|"MCP"| MissionDispatch
+    Charging -->|"MCP"| MissionControl
+    Charging -->|"MCP"| MissionDispatch
+    Patrol -->|"MCP"| MissionControl
+    Patrol -->|"MCP"| MissionDispatch
+    Inspection -->|"MCP"| MissionControl
+    Inspection -->|"MCP"| MissionDispatch
+    FleetOps -->|"MCP"| MissionControl
+    FleetOps -->|"MCP"| MissionDispatch
     Swarm -->|"MCP"| RosMSP
     Swarm -->|"MCP"| MissionControl
     Swarm -->|"MCP"| MissionDispatch
@@ -174,6 +193,10 @@ graph TB
     style MapAnalyst fill:none,stroke:#1890ff,stroke-width:2px,color:#fff
     style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style Charging fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style Patrol fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style Inspection fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style FleetOps fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style Swarm fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style General fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style RosMSP fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
@@ -342,13 +365,26 @@ Navigation и SwarmCoordinator дополнены встроенными functio
 | Сценарий | Агент(ы) | Инструменты |
 | --- | --- | --- |
 | Статус роботов (батарея, позиция) | RobotInfo | `get_robot_status`, `get_fleet_summary` |
+| Диагностика флота | RobotInfo | `check_robot_health`, `get_recent_failures` |
+| ROS2-топики и ноды | RobotInfo | `get_topics`, `get_nodes`, `subscribe_once` |
 | Навигация одного робота в точку | MapAnalyst → Navigation | `check_proximity`, `dispatch_mission`, `wait_mission` |
 | Навигация по маршруту / кругосветка | MapAnalyst → Navigation | `dispatch_route`, `wait_mission` |
-| Отстыковка робота от дока | Navigation | `cancel_active_missions`, `submit_undock_mission` |
+| Навигация в случайные координаты | Navigation | `get_map_info`, `dispatch_mission`, `wait_mission` |
 | Отмена миссий робота | Navigation | `cancel_active_missions`, `cancel_mission` |
+| Зарядка одного робота | Charging | `cancel_active_missions`, `submit_charging_mission`, `wait_mission` |
+| Зарядка всех с низким зарядом | Charging | `check_robot_health`, `submit_charging_mission` |
+| Отстыковка от зарядной станции | Charging | `get_robot_status`, `submit_undock_mission` |
+| Патрулирование периметра | Patrol | `get_map_info`, `visualize_route`, `dispatch_route`, `wait_mission` |
+| Циклический маршрут (N точек) | Patrol | `dispatch_route` (waypoints с возвратом в старт) |
+| Повторяющийся маршрут × N раз | Patrol | `submit_navigation_mission(iterations=N)` |
+| Что видит камера робота | Inspection | `get_detected_objects`, `get_detected_apriltags` |
+| Найти и подъехать к объекту | Inspection | `get_detected_objects`, `dispatch_mission`, `wait_mission` |
+| Навигация к AprilTag-метке | Inspection | `get_detected_apriltags`, `dispatch_mission`, `wait_mission` |
+| Отмена всех миссий флота | FleetOps | `get_robots_on_missions`, `cancel_active_missions` |
+| Зарядить весь флот | FleetOps | `check_robot_health`, `submit_charging_mission` |
+| Отчёт по флоту / аналитика | FleetOps | `get_fleet_summary`, `get_recent_failures`, `get_mission_status` |
+| Диагностика системы | FleetOps | `test_mission_control_connection`, `check_robot_health`, `get_mission_queue` |
 | Координация нескольких роботов | MapAnalyst → SwarmCoordinator | `dispatch_mission`, `wait_mission` |
-| Опрос очереди и статуса миссий | RobotInfo | `get_mission_status`, `get_fleet_summary` |
-| ROS2-топики и ноды | RobotInfo / Swarm | `get_topics`, `get_nodes`, `subscribe_once` |
 | Общий вопрос без инструментов | General | — |
 
 ---
@@ -405,16 +441,18 @@ step.description += f"\n\nКонтекст карты:\n{map_analyst_result}"
 
 | Инструмент | Описание |
 | --- | --- |
-| `submit_navigation_mission` | Навигация по маршрутным точкам (waypoints) |
+| `submit_navigation_mission` | Навигация по маршрутным точкам (waypoints, iterations) |
+| `submit_charging_mission` | Отправить робота на зарядную станцию (dock_id опционален) |
 | `submit_undock_mission` | Отстыковка от дока |
 | `visualize_route` | Получить PNG-визуализацию маршрута |
-| `get_map_info` | Метаданные текущей карты |
+| `get_map_info` | Метаданные текущей карты (resolution, origin, width, height) |
 | `list_available_maps` | Список загруженных карт |
 | `select_map` | Активировать карту |
 | `deploy_map_to_robot` | Загрузить карту на робота |
-| `get_detected_objects` | Объекты из камеры робота |
+| `get_detected_objects` | Объекты, обнаруженные камерой робота |
+| `get_detected_apriltags` | AprilTag-метки в поле зрения камеры |
 | `submit_objective` | Behavior tree objective |
-| `submit_pick_and_place` | Миссия манипулятора |
+| `submit_pick_and_place` | Миссия манипулятора (pick & place) |
 
 ### ros-msp
 
@@ -534,11 +572,15 @@ orchestrator/
 
 ### Агенты
 
-| Агент | Назначение | MCP-серверы |
-| --- | --- | --- |
-| **Router** | Классификация запроса, handoff к нужному агенту | — |
-| **RobotInfo** | Статус роботов, ROS2-диагностика | ros-msp, mission-dispatch-mcp |
-| **MapAnalyst** | Анализ карты, генерация маршрутов, сравнение через vision LLM | Прямой HTTP к Mission Control |
-| **Navigation** | Навигация одного робота, маршруты, отмена миссий | mission-control-mcp, mission-dispatch-mcp |
-| **SwarmCoordinator** | Координация нескольких роботов параллельно | все три MCP |
-| **General** | Ответы на вопросы без инструментов | — |
+| Агент | Категория роутера | Назначение | MCP-серверы |
+| --- | --- | --- | --- |
+| **Router** | — | Классификация запроса (8 категорий), handoff к нужному агенту | — |
+| **RobotInfo** | `robot_info` | Статус роботов, батарея, позиция, ROS2-диагностика | ros-msp, mission-dispatch-mcp |
+| **MapAnalyst** | _(авто)_ | Анализ карты, генерация маршрутов, сравнение через vision LLM | Прямой HTTP к Mission Control |
+| **Navigation** | `navigation` | Навигация одного робота в точку или по маршруту, случайные координаты | mission-control-mcp, mission-dispatch-mcp |
+| **Charging** | `charging` | Зарядка одного или нескольких роботов, отстыковка от дока | mission-control-mcp, mission-dispatch-mcp |
+| **Patrol** | `patrol` | Патрулирование периметра, циклические и повторяющиеся маршруты | mission-control-mcp, mission-dispatch-mcp |
+| **Inspection** | `inspection` | Обнаружение объектов и AprilTag-меток, подъезд к найденному объекту | mission-control-mcp, mission-dispatch-mcp |
+| **FleetOps** | `fleet_ops` | Массовые операции над флотом, аналитика миссий, диагностика системы | mission-control-mcp, mission-dispatch-mcp |
+| **SwarmCoordinator** | `swarm_coord` | Координация нескольких роботов параллельно | все три MCP |
+| **General** | `general` | Ответы на вопросы без инструментов | — |

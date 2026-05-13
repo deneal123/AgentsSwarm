@@ -15,10 +15,14 @@ from orchestrator.agents.mcp import (
 
 # Placeholder structures; replace with Agents SDK types when available.
 HANDOFF_LABELS = {
-    "robot_info": "RobotInfo",
-    "navigation": "Navigation",
+    "robot_info":  "RobotInfo",
+    "navigation":  "Navigation",
+    "charging":    "Charging",
+    "patrol":      "Patrol",
+    "inspection":  "Inspection",
+    "fleet_ops":   "FleetOps",
     "swarm_coord": "SwarmCoordinator",
-    "general": "General",
+    "general":     "General",
 }
 
 
@@ -31,13 +35,31 @@ def get_router_config() -> dict:
             {
                 "name": HANDOFF_LABELS["robot_info"],
                 "instructions": prompts.ROBOT_INFO_PROMPT,
-                # ros-msp: ROS2 topics / nodes / parameters via rosbridge
-                # mission-dispatch: fleet status, battery, mission history
                 "mcp_servers": [ros_msp_server(), mission_dispatch_server()],
             },
             {
                 "name": HANDOFF_LABELS["navigation"],
                 "instructions": prompts.NAVIGATION_PROMPT,
+                "mcp_servers": [mission_control_server(), mission_dispatch_server()],
+            },
+            {
+                "name": HANDOFF_LABELS["charging"],
+                "instructions": prompts.CHARGING_PROMPT,
+                "mcp_servers": [mission_control_server(), mission_dispatch_server()],
+            },
+            {
+                "name": HANDOFF_LABELS["patrol"],
+                "instructions": prompts.PATROL_PROMPT,
+                "mcp_servers": [mission_control_server(), mission_dispatch_server()],
+            },
+            {
+                "name": HANDOFF_LABELS["inspection"],
+                "instructions": prompts.INSPECTION_PROMPT,
+                "mcp_servers": [mission_control_server(), mission_dispatch_server()],
+            },
+            {
+                "name": HANDOFF_LABELS["fleet_ops"],
+                "instructions": prompts.FLEET_OPS_PROMPT,
                 "mcp_servers": [mission_control_server(), mission_dispatch_server()],
             },
             {
@@ -55,14 +77,43 @@ def get_router_config() -> dict:
             "robot_info": [
                 "Покажи статус carter01",
                 "Сколько роботов сейчас онлайн",
+                "Какая батарея у carter01?",
             ],
             "navigation": [
                 "Отправь carter01 на склад А",
                 "Перемести робота в точку (1,2)",
+                "Перемести carter01 в случайные координаты",
+                "Отправь carter01 в произвольную точку",
+            ],
+            "charging": [
+                "Зарядить carter01",
+                "Отправь carter01 на зарядку",
+                "Отстыкуй carter01 от базы",
+                "Зарядить всех роботов с низким зарядом",
+            ],
+            "patrol": [
+                "Патрулировать периметр склада",
+                "Запусти обход зоны на carter01",
+                "Циклический маршрут по четырём точкам",
+                "Carter01 должен объезжать зону каждые 10 минут",
+            ],
+            "inspection": [
+                "Что видит камера carter01?",
+                "Найди AprilTag ID=3",
+                "Какие объекты обнаружил carter01?",
+                "Подъедь к ящику который видит carter01",
+            ],
+            "fleet_ops": [
+                "Отмени все миссии",
+                "Зарядить весь флот",
+                "Отчёт по флоту",
+                "Диагностика системы",
+                "Сколько миссий завершилось сегодня?",
             ],
             "swarm_coord": [
                 "Организуй встречу carter01 и carter02 в центре",
                 "Пусть три робота обследуют зону",
+                "Отправь рой роботов к цели",
             ],
             "general": [
                 "Привет",
