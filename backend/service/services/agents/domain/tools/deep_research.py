@@ -2,12 +2,8 @@
 
 import asyncio
 import logging
-<<<<<<< HEAD
-from collections.abc import Callable
-from typing import AsyncGenerator, Optional
-=======
-from collections.abc import AsyncGenerator
->>>>>>> 768598397002f0ab034484bd966612234d78ea3c
+from collections.abc import AsyncGenerator, Callable
+from typing import Optional
 
 from service.services.agents.domain.client import create_chat_completion
 from service.services.agents.domain.tools.web_search import parse_url, web_search
@@ -56,13 +52,8 @@ _SYNTHESIS_PROMPT = """Ты — ведущий аналитик и автор и
 async def deep_research(
     topic: str,
     model: str,
-<<<<<<< HEAD
     on_status: Optional[Callable] = None,
 ) -> AsyncGenerator[str, None]:
-=======
-    on_status: callable | None = None,
-) -> AsyncGenerator[str]:
->>>>>>> 768598397002f0ab034484bd966612234d78ea3c
     """Perform multi-step deep research on a topic.
 
     Yields status updates and the final report as markdown chunks.

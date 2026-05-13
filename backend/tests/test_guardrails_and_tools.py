@@ -4,7 +4,7 @@ from service.services.agents.domain.tools.function_tools import (
     fetch_runtime_context_tool,
     summarize_brief_tool,
 )
-from service.services.agents.guardrails import (
+from service.services.agents.domain.guardrails import (
     check_appropriate_language,
     check_forbidden_topics,
     ensure_non_empty_response,

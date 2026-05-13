@@ -181,11 +181,10 @@ function ChatPageContainer() {
 
   const {
     connectionState,
-    agentStatus,
     sendMessage: wsSendMessage,
     cancelJob,
     useWebSocket,
-  } = useChatTransport({ threadId, callbacks: wsCallbacks, isAuthenticated });
+  } = useChatTransport({ threadId, callbacks: wsCallbacks });
 
   const handleCancelJob = useCallback(async (jobId) => {
     try {
@@ -204,7 +203,7 @@ function ChatPageContainer() {
     if (distanceFromBottom < 260) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages, agentStatus]);
+  }, [messages]);
 
   // Load recent threads for sidebar
   useEffect(() => {
@@ -1465,31 +1464,11 @@ function ChatPageContainer() {
                 </HStack>
 
                 <HStack spacing={3}>
-                  {agentStatus?.message && (
-                    <HStack spacing={1.5}>
-                      <Box
-                        w="11px"
-                        h="11px"
-                        borderRadius="full"
-                        flexShrink={0}
-                        sx={{
-                          border: '1.8px solid rgba(239,68,68,0.22)',
-                          borderTopColor: 'rgba(248,113,113,0.95)',
-                          animation: `${traceRingSpin} 0.8s linear infinite`,
-                        }}
-                      />
-                      <Text fontSize="12px" color={CHAT_THEME.textTertiary} noOfLines={1} maxW="220px">
-                        {agentStatus.message}
-                      </Text>
-                    </HStack>
-                  )}
-                  {!agentStatus && (
-                    <Text fontSize="12px" color={CHAT_THEME.textTertiary}>
-                      {lastUsedModel
-                        ? `Модель: ${lastUsedModel}`
-                        : (selectedModelOverride ? `Модель: ${selectedModelOverride}` : 'Модель: Auto')}
-                    </Text>
-                  )}
+                  <Text fontSize="12px" color={CHAT_THEME.textTertiary}>
+                    {lastUsedModel
+                      ? `Модель: ${lastUsedModel}`
+                      : (selectedModelOverride ? `Модель: ${selectedModelOverride}` : 'Модель: Auto')}
+                  </Text>
                   {!isAuthenticated && (
                     <Text fontSize="12px" color={CHAT_THEME.textTertiary}>
                       {remainingRequests} запросов

@@ -20,8 +20,10 @@ def set_correlation_context(correlation_id: str | None, trace_id: str | None) ->
 
 
 def get_correlation_id() -> str | None:
-    return _correlation_context.get().correlation_id
+    ctx = _correlation_context.get()
+    return ctx.correlation_id if ctx is not None else None
 
 
 def get_trace_id() -> str | None:
-    return _correlation_context.get().trace_id
+    ctx = _correlation_context.get()
+    return ctx.trace_id if ctx is not None else None

@@ -7,15 +7,14 @@ from typing import Any
 from service.services.agents.application.orchestrator import Orchestrator
 from service.services.agents.domain.events import AgentEvent
 from service.services.agents.domain.pipeline.event_stream import EventSequencer
-from service.services.agents.pipeline import (
+from service.services.agents.domain.pipeline.context_enricher import (
     build_effective_input,
-    build_processing_error_event,
-    build_user_context,
     load_memory_context,
     load_session_history_context,
-    resolve_agent_route,
-    run_post_response_hooks,
 )
+from service.services.agents.domain.pipeline.error_handling import build_processing_error_event
+from service.services.agents.domain.pipeline.postprocess import run_post_response_hooks
+from service.services.agents.domain.pipeline.processor_flow import build_user_context, resolve_agent_route
 from service.settings import config
 
 logger = logging.getLogger(__name__)

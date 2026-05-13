@@ -39,7 +39,8 @@ async def test_list_threads_returns_threads():
 async def test_delete_thread_returns_404_when_not_found():
     class _FakeSvc:
         async def delete_thread(self, thread_id):
-            return False
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Thread not found")
 
     app.dependency_overrides[get_chat_application_service] = lambda: _FakeSvc()
     try:

@@ -7,8 +7,8 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from service.services.agents.domain.client import list_available_models
-from service.services.agents.tools.pptx import generate_pptx
-from service.services.agents.tools.web_search import parse_url, web_search
+from service.services.agents.domain.tools.pptx import generate_pptx
+from service.services.agents.domain.tools.web_search import parse_url, web_search
 from service.services.chat.application.error_handling import (
     map_to_http_exception,
     normalize_response_metadata,

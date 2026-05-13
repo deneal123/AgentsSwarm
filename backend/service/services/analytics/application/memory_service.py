@@ -10,7 +10,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from service.services.agents.integration import get_memory_integration
+from service.services.agents.infrastructure.integration import get_memory_integration
 from service.services.analytics.application.ports.interfaces import MemoryIntegrationPort
 
 logger = logging.getLogger(__name__)

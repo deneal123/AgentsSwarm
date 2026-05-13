@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from service.shared.error_mapper import map_exception_to_error_response, map_exception_to_status
+from service.shared.error_handling.error_mapper import map_exception_to_error_response, map_exception_to_status
 from service.shared.repositories.exceptions import RepositoryError
 
 logger = logging.getLogger(__name__)

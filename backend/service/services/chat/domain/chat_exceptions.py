@@ -1,4 +1,4 @@
-from service.shared.exceptions import ApplicationError
+from service.shared.error_handling.exceptions import ApplicationError
 
 
 class ChatDomainError(ApplicationError):
