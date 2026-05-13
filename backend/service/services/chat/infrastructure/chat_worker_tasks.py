@@ -279,32 +279,24 @@ def process_agent_message(
     deep_research: bool = False,
     file_context: str = "",
 ) -> dict:
-    from service.composition import state as container
-    from service.services.chat.domain.process_chat_message_handler import (
-        ProcessChatMessageCommand,
-        ProcessChatMessageFlags,
-        ProcessChatMessageModelSettings,
-    )
-
-    handler = container.get_current_container().services.process_chat_message_handler
-    command = ProcessChatMessageCommand(
-        thread_id=thread_id,
-        user_id=user_id,
-        text=text,
-        flags=ProcessChatMessageFlags(
-            web_search=web_search,
-            deep_research=deep_research,
-            route_override=route_override,
-            input_type=input_type,
-        ),
-        model_settings=ProcessChatMessageModelSettings(selected_model=selected_model),
-        file_context=file_context,
-        session_data=session_data,
-    )
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        return loop.run_until_complete(handler.process_for_worker(job_id=job_id, command=command))
+        return loop.run_until_complete(
+            process_agent_message_async(
+                job_id=job_id,
+                thread_id=thread_id,
+                text=text,
+                user_id=str(user_id) if user_id is not None else None,
+                session_data=session_data,
+                selected_model=selected_model,
+                route_override=route_override,
+                input_type=input_type,
+                web_search=web_search,
+                deep_research=deep_research,
+                file_context=file_context or "",
+            )
+        )
     finally:
         loop.close()
 
