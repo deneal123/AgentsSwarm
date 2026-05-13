@@ -142,6 +142,7 @@ class SwarmOrchestratorAgent(BaseAgent):
         # Step 4 — stream events via REST polling
         final_status = "completed"
         accumulated_agent_text: list[str] = []
+        orchestrator_summary_messages: list[str] = []  # meaningful orchestrator-source messages
         plan_step_agents_seen: set = set()
 
         try:
@@ -249,6 +250,10 @@ class SwarmOrchestratorAgent(BaseAgent):
                     except Exception:
                         pass
 
+                # ── Capture orchestrator summary messages as reply candidate ──
+                if source == "orchestrator" and message and message not in {"Processing started"}:
+                    orchestrator_summary_messages.append(message)
+
                 # ── Live event for frontend timeline ─────────────────────────
                 yield AgentEvent(
                     type=EventType.STATUS_UPDATE,
@@ -278,21 +283,31 @@ class SwarmOrchestratorAgent(BaseAgent):
         except Exception:
             pass
 
-        # Build reply: prefer accumulated streaming text, fall back to task logs
+        # Build reply: prefer accumulated streaming text → orchestrator summary → task logs
         reply_text = ""
         if accumulated_agent_text:
             reply_text = "".join(accumulated_agent_text).strip()
 
+        if not reply_text and orchestrator_summary_messages:
+            # Use the last (most complete) orchestrator summary message
+            reply_text = orchestrator_summary_messages[-1].strip()
+
         if not reply_text:
             try:
                 logs = await self._get_task_logs(task_id)
-                # Take last meaningful log entries (agent output, not system lines)
-                meaningful = [
-                    l for l in logs
-                    if l and not l.startswith("[info] api:") and not l.startswith("[info] planner: Plan")
-                ]
+                # Extract only orchestrator-source lines and strip the log prefix
+                meaningful = []
+                for line in logs:
+                    if not line:
+                        continue
+                    for prefix in ("[info] orchestrator: ", "[warning] orchestrator: ", "[error] orchestrator: "]:
+                        if line.startswith(prefix):
+                            content = line[len(prefix):].strip()
+                            if content and content not in {"Processing started"}:
+                                meaningful.append(content)
+                            break
                 if meaningful:
-                    reply_text = "\n".join(meaningful[-5:])
+                    reply_text = "\n\n".join(meaningful[-3:])
             except Exception:
                 pass
 

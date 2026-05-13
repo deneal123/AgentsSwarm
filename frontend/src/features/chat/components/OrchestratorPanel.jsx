@@ -76,6 +76,45 @@ const SOURCE_CFG = {
 };
 const DEFAULT_SOURCE_CFG = { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.06)', icon: FiCpu, label: 'sys' };
 
+// ─── Message humanizer ────────────────────────────────────────────────────────
+
+const MSG_RULES = [
+  // Orchestrator lifecycle
+  [/^Processing started$/i,                             () => 'Оркестратор запущен, обрабатываю задачу'],
+  [/^Task accepted$/i,                                  () => 'Задача принята оркестратором'],
+  [/^Plan created$/i,                                   () => 'План выполнения сформирован'],
+  [/^Task completed$/i,                                 () => 'Задача выполнена успешно'],
+  [/^Task failed$/i,                                    () => 'Задача завершилась с ошибкой'],
+  [/^Task canceled$/i,                                  () => 'Задача отменена'],
+
+  // Plan steps
+  [/^Plan step (\d+) started(?::\s*(.+))?$/i,           (_, n, desc) => desc
+    ? `Шаг ${n}: ${desc}`
+    : `Шаг ${n} начат`],
+  [/^Plan step (\d+) completed$/i,                      (_, n) => `Шаг ${n} выполнен`],
+  [/^Plan step (\d+) failed$/i,                         (_, n) => `Шаг ${n} завершился с ошибкой`],
+
+  // Agent handoffs
+  [/^Handoff to (\w+)\s*\(attempt (\d+)\)$/i,           (_, agent, attempt) =>
+    attempt === '1'
+      ? `Передаю управление агенту ${agent}`
+      : `Повторная передача агенту ${agent} (попытка ${attempt})`],
+  [/^Handoff to (\w+)$/i,                               (_, agent) => `Передаю управление агенту ${agent}`],
+
+  // SDK events
+  [/^tool_called$/i,                                    () => 'Вызов инструмента'],
+  [/^SDK event:\s*(.+)$/i,                              (_, e) => `SDK: ${e}`],
+];
+
+function humanizeMessage(msg) {
+  if (!msg) return msg;
+  for (const [re, fn] of MSG_RULES) {
+    const m = msg.match(re);
+    if (m) return fn(...m);
+  }
+  return msg;
+}
+
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
 function Spinner({ size = '14px' }) {
@@ -191,6 +230,8 @@ function EventRow({ ev }) {
     ? new Date(ev.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : '';
 
+  const displayMessage = humanizeMessage(ev.message);
+
   // Detect completion / error keywords for subtle emphasis
   const msgLower = (ev.message || '').toLowerCase();
   const isComplete = msgLower.includes('completed') || msgLower.includes('завершен');
@@ -233,7 +274,7 @@ function EventRow({ ev }) {
 
       {/* Message */}
       <Text fontSize="12.5px" color={msgColor} lineHeight="1.5" flex="1" wordBreak="break-word">
-        {ev.message}
+        {displayMessage}
       </Text>
     </HStack>
   );
