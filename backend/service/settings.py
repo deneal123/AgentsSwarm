@@ -309,6 +309,7 @@ class AgentsConfig(BaseSettings):
     openrouter_base_url: str = Field(default_factory=str)
     openrouter_timeout_sec: float = 20.0
     openrouter_models_cache_ttl_sec: int = 180
+    orchestrator_url: str = Field(default="http://localhost:8100")
     model_config = SettingsConfigDict(env_prefix="AGENTS__")
 
     @field_validator("proxy_port", mode="before")

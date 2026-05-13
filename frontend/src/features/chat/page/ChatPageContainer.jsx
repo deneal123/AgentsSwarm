@@ -58,6 +58,8 @@ import { clampTraceDetail } from '../utils/trace';
 import ModelSelector from '../components/ModelSelector';
 import ChatComposerPanel from '../components/composer/ChatComposerPanel';
 import ChatSidebarPanel from '../components/ChatSidebarPanel';
+import OrchestratorPanel from '../components/OrchestratorPanel';
+import { useOrchestratorState } from '../hooks/useOrchestratorState';
 import { PROSE_SX } from './proseStyles';
 import { ProfileDrawer } from '@features/profile';
 
@@ -169,6 +171,17 @@ function ChatPageContainer() {
   const { sidebarSearch, setSidebarSearch, isSidebarCollapsed, setIsSidebarCollapsed, filteredRecentThreads } = useSidebarState({ recentThreads });
 
 
+  const orchestrator = useOrchestratorState();
+
+  // Reset orchestrator state on new message (when trace sessions are reset)
+  const prevTraceSessionCountRef = useRef(0);
+  useEffect(() => {
+    if (traceSessions.length < prevTraceSessionCountRef.current) {
+      orchestrator.actions.reset();
+    }
+    prevTraceSessionCountRef.current = traceSessions.length;
+  }, [traceSessions.length, orchestrator.actions]);
+
   const streamingLifecycle = useChatStreamingLifecycle({
     isLoading,
     setIsLoading,
@@ -182,6 +195,7 @@ function ChatPageContainer() {
     setCurrentJob,
     clearCurrentJob,
     setInputValue: clearInput,
+    onOrchestratorEvent: orchestrator.actions.handleOrchestratorAgentEvent,
   });
   const { wsCallbacks } = streamingLifecycle.actions;
 
@@ -1133,6 +1147,15 @@ function ChatPageContainer() {
                             onToggleExpanded={(id, expanded) => setTracePanelsExpanded((prev) => ({ ...prev, [id]: expanded }))}
                           />
                         </Suspense>
+                      )
+                      : null}
+                    {/* Show orchestrator panel below the last user message while active */}
+                    {message.type === 'user' && idx === visibleMessages.length - 1 && orchestrator.isActive
+                      ? (
+                        <OrchestratorPanel
+                          orchestratorState={orchestrator.state}
+                          isExpanded
+                        />
                       )
                       : null}
                   </React.Fragment>

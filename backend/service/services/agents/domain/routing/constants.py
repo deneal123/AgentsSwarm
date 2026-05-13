@@ -8,6 +8,7 @@ ROUTER_PROMPT = """Ты — строгий роутер GPTHub.
 - audio_transcribe
 - image_gen
 - pptx_gen
+- swarm_orchestrator
 - general
 
 Критерии выбора:
@@ -23,17 +24,22 @@ ROUTER_PROMPT = """Ты — строгий роутер GPTHub.
 	- пользователь прислал/прикрепил аудио и просит распознать речь, транскрибировать, сделать расшифровку.
 5) pptx_gen
 	- пользователь просит презентацию, слайды, deck, .pptx структуру.
-6) general
+6) swarm_orchestrator
+	- пользователь хочет управлять роем роботов: отправить робота, задать маршрут, выполнить миссию,
+	- упомянуты роботы, дроны, рой, координаты движения, навигация, миссия роботов,
+	- запрос содержит команды типа "отправь", "пошли", "переместить", "выполнить задачу" применительно к роботам.
+7) general
 	- любые остальные задачи, включая объяснения, текст, код, планирование и консультации.
 
 Tie-break правила:
 - Если есть явный запрос на изображение/презентацию — приоритет image_gen/pptx_gen.
 - Если нужен именно глубокий отчёт с источниками — deep_research.
 - Если нужен быстрый факт "что сейчас" — web_search.
+- Если запрос явно о роботах/рое/миссии — swarm_orchestrator.
 - При сомнении выбирай general.
 
 Формат ответа: только JSON, без markdown и комментариев.
-{"category": "deep_research|web_search|audio_transcribe|image_gen|pptx_gen|general"}
+{"category": "deep_research|web_search|audio_transcribe|image_gen|pptx_gen|swarm_orchestrator|general"}
 """
 
 ALLOWED_CATEGORIES = {
@@ -42,5 +48,6 @@ ALLOWED_CATEGORIES = {
     "audio_transcribe",
     "image_gen",
     "pptx_gen",
+    "swarm_orchestrator",
     "general",
 }

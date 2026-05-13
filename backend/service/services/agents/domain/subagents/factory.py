@@ -6,6 +6,7 @@ from service.services.agents.domain.subagents.deep_research import DeepResearchA
 from service.services.agents.domain.subagents.general import GeneralAgent
 from service.services.agents.domain.subagents.image_generation import ImageGenerationAgent
 from service.services.agents.domain.subagents.pptx_generation import PPTXGenerationAgent
+from service.services.agents.domain.subagents.swarm_orchestrator import SwarmOrchestratorAgent
 from service.services.agents.domain.subagents.web_search import WebSearchAgent
 
 
@@ -21,4 +22,5 @@ def build_subagents(model_settings: dict | None = None) -> dict[str, BaseAgent]:
         "deep_research": DeepResearchAgent(settings),
         "image_gen": ImageGenerationAgent(settings),
         "pptx_gen": PPTXGenerationAgent(settings),
+        "swarm_orchestrator": SwarmOrchestratorAgent(settings),
     }

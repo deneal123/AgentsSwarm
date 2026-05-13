@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { clampTraceDetail } from '../../utils/trace';
 
-export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, addMessage, appendStreamChunk, completeLastAgentMessage, finalizeStreamWithContent, setCurrentJob, clearCurrentJob, setInputValue }) {
+export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, addMessage, appendStreamChunk, completeLastAgentMessage, finalizeStreamWithContent, setCurrentJob, clearCurrentJob, setInputValue, onOrchestratorEvent }) {
   const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
@@ -90,6 +90,26 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
 
   const onAgentEvent = useCallback((event) => {
     if (!event?.type || shouldIgnoreWsEvent(event)) return;
+
+    // Dispatch orchestrator-specific events to orchestrator state manager
+    if (event.type === 'status_update' && event.metadata?.event_type?.startsWith('orchestrator_')) {
+      onOrchestratorEvent?.(event);
+      // Also show a trace entry for key milestones
+      const orchEventType = event.metadata.event_type;
+      if (orchEventType === 'orchestrator_task_created') {
+        appendTraceEvent({ kind: 'done', title: `Задача роя создана: ${event.metadata.task_id || ''}`, detail: 'Оркестратор принял задачу, начинается выполнение', timestamp: event.timestamp });
+      } else if (orchEventType === 'orchestrator_synthesizing') {
+        appendTraceEvent({ kind: 'info', title: 'Формирую инструкцию для роя роботов', detail: 'Анализирую многомодальный контекст', timestamp: event.timestamp });
+      }
+      return;
+    }
+
+    // structured_output with orchestrator images → dispatch to orchestrator state
+    if (event.type === 'structured_output' && event.metadata?.event_type === 'orchestrator_images') {
+      onOrchestratorEvent?.(event);
+      return;
+    }
+
     if (event.type === 'tool_call_complete') {
       appendTraceEvent({ kind: 'done', title: `Инструмент завершен: ${event.tool_name || 'external_tool'}`, detail: clampTraceDetail(event.result), timestamp: event.timestamp });
       return;
@@ -103,9 +123,9 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
       error: { kind: 'error', title: 'Ошибка во время обработки', detail: event.error || 'Неизвестная ошибка' },
     };
     if (mapping[event.type]) appendTraceEvent({ ...mapping[event.type], timestamp: event.timestamp });
-  }, [appendTraceEvent, shouldIgnoreWsEvent]);
+  }, [appendTraceEvent, onOrchestratorEvent, shouldIgnoreWsEvent]);
 
-  const wsCallbacks = useMemo(() => ({ onMessage: () => {}, onJobCreated, onComplete, onError, onStreamChunk, onAgentReply, onAgentComplete, onAgentEvent }), [onAgentComplete, onAgentEvent, onAgentReply, onComplete, onError, onJobCreated, onStreamChunk]);
+  const wsCallbacks = useMemo(() => ({ onMessage: () => {}, onJobCreated, onComplete, onError, onStreamChunk, onAgentReply, onAgentComplete, onAgentEvent }), [onAgentComplete, onAgentEvent, onAgentReply, onComplete, onError, onJobCreated, onStreamChunk, onOrchestratorEvent]);
 
   return { state: {}, actions: { wsCallbacks } };
 }
