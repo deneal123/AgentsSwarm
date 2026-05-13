@@ -6,8 +6,8 @@ const MAX_RECONNECT_DELAY_MS = 30000;
 
 function buildJobWsUrl(jobId, lastId) {
   const rawBase =
-    import.meta.env?.VITE_WS_BASE_URL ||
-    import.meta.env?.VITE_API_BASE_URL ||
+    process.env.REACT_APP_WS_BASE_URL ||
+    process.env.REACT_APP_API_BASE_URL ||
     '';
 
   let base = rawBase.trim().replace(/\/$/, '');

@@ -9,8 +9,8 @@ const HEARTBEAT_CHECK_INTERVAL_MS = 10000;
 
 function buildWsUrl(threadId, lastId) {
   const rawBase =
-    import.meta.env?.VITE_WS_BASE_URL ||
-    import.meta.env?.VITE_API_BASE_URL ||
+    process.env.REACT_APP_WS_BASE_URL ||
+    process.env.REACT_APP_API_BASE_URL ||
     '';
 
   let base = rawBase.trim().replace(/\/$/, '');

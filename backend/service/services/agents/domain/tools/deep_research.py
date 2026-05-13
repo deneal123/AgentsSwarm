@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from collections.abc import Callable
 from typing import AsyncGenerator, Optional
 
 from service.services.agents.domain.client import create_chat_completion
@@ -51,7 +52,7 @@ _SYNTHESIS_PROMPT = """Ты — ведущий аналитик и автор и
 async def deep_research(
     topic: str,
     model: str,
-    on_status: Optional[callable] = None,
+    on_status: Optional[Callable] = None,
 ) -> AsyncGenerator[str, None]:
     """Perform multi-step deep research on a topic.
 
