@@ -25,7 +25,6 @@ import {
   Text,
   VStack,
   useBreakpointValue,
-  useToast,
 } from '@chakra-ui/react';
 import { getChatModels, sendChatMessage } from '@api/chat';
 import { colors } from '@theme/tokens';
@@ -117,8 +116,7 @@ function ChatPageContainer() {
   const { setSelectedModelOverride } = init.actions;
   const navigate = useNavigate();
   useChatThreadRouting({ routeThreadId, initialMessage, threadId, navigate });
-  const toast = useToast();
-  const sideEffects = useChatSideEffects({ toast, navigate });
+  const sideEffects = useChatSideEffects({ navigate });
 
   const {
     isAuthenticated, user, logout, incrementRequests, remainingRequests, profileDisclosure, profileData, profileMemoryCount, setProfileMemoryCount, isProfileLoading, resolveSessionUserId, isAuthModalOpen, onAuthModalClose, showAuthModal, modalData, AuthModal, ensureGuestLimit,
@@ -238,7 +236,7 @@ function ChatPageContainer() {
 
   // Load message history when navigating to an existing thread
   useEffect(() => {
-    if (!routeThreadId || initialMessage) return;
+    if (!routeThreadId || initialMessage || !isAuthenticated) return;
     let cancelled = false;
     const loadHistory = async () => {
       try {
@@ -266,7 +264,7 @@ function ChatPageContainer() {
     };
     loadHistory();
     return () => { cancelled = true; };
-  }, [initialMessage, navigate, replaceMessages, routeThreadId, setRecentThreads]);
+  }, [initialMessage, isAuthenticated, navigate, replaceMessages, routeThreadId, setRecentThreads]);
 
   const lastUsedModel = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -1340,6 +1338,11 @@ function ChatPageContainer() {
                         return;
                       }
                       try {
+                        const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+                        if (!isSecure || !navigator.mediaDevices) {
+                          sideEffects.notify({ title: 'Микрофон недоступен', description: 'Требуется HTTPS-соединение для доступа к микрофону.', status: 'warning', duration: 4000 });
+                          return;
+                        }
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         const mediaRecorder = new MediaRecorder(stream);
                         const chunks = [];

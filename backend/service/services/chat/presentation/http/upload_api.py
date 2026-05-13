@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from service.composition.state import get_chat_application_service
+from service.models.auth_models import AuthProfile
 from service.services.chat.application.use_cases.upload_file_use_case import UploadFileUseCase
 from service.services.chat.infrastructure.media.openai_media_analysis_adapter import (
     OpenAIMediaAnalysisAdapter,
 )
 from service.services.chat.presentation.routers.chat_api.schemas import UploadFileResponse
+from service.shared.security.auth_checker import check_auth
 
 upload_router = APIRouter()
 
@@ -21,9 +25,9 @@ def get_upload_use_case(file_service) -> UploadFileUseCase:
 
 @upload_router.post("/upload", response_model=UploadFileResponse)
 async def upload_file_to_chat(
+    profile: Annotated[AuthProfile, Depends(check_auth)],
     file: UploadFile = File(...),  # noqa: B008
     thread_id: str = Form(""),
-    user_id: str | None = Form(None),
     chat_application_service=Depends(get_chat_application_service),  # noqa: B008
 ) -> UploadFileResponse:
     if not file.filename:
@@ -34,7 +38,7 @@ async def upload_file_to_chat(
             content_type=file.content_type,
             content_bytes=await file.read(),
             thread_id=thread_id,
-            user_id=user_id,
+            user_id=str(profile.user_id),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

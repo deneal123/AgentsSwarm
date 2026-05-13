@@ -53,9 +53,7 @@ function ProtectedLayout() {
         />
 
         {/* Header */}
-        <Box position="sticky" top={0} zIndex={100}>
-          <Header />
-        </Box>
+        <Header />
 
         {/* Main content - uses CSS animation instead of framer-motion */}
         <Box

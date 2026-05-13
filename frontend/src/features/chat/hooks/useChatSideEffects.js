@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
+import { useAppToast } from '@shared/hooks/useAppToast';
 
-export function useChatSideEffects({ toast, navigate }) {
+export function useChatSideEffects({ navigate }) {
+  const appToast = useAppToast();
   const notify = useCallback((options) => {
-    toast(options);
-  }, [toast]);
+    appToast(options);
+  }, [appToast]);
 
   const saveSessionUserId = useCallback((userId) => {
     if (typeof window === 'undefined' || !userId) {
