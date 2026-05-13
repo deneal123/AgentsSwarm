@@ -205,6 +205,12 @@ class SwarmOrchestratorAgent(BaseAgent):
                     continue
                 if not message or message in {"Task accepted", "Plan created"}:
                     continue
+                # Skip noisy agent-sdk internal events (raw_response_event already handled above)
+                if source == "agent-sdk" and sdk_event not in {"tool_called"}:
+                    continue
+                # Skip Python repr of dicts that slipped through as messages
+                if message and message.startswith("{'") and message.endswith("}"):
+                    continue
 
                 # ── Streaming agent text deltas ──────────────────────────────
                 if sdk_event == "raw_response_event" and message:
@@ -309,6 +315,14 @@ class SwarmOrchestratorAgent(BaseAgent):
                 )
         except Exception:
             pass
+
+        # Notify frontend of the terminal status before AGENT_COMPLETE
+        yield AgentEvent(
+            type=EventType.STATUS_UPDATE,
+            agent_name=self.name,
+            data=f"Задача завершена: {final_status}",
+            metadata={"event_type": "orchestrator_status", "status": final_status, "task_id": task_id},
+        )
 
         yield AgentEvent(
             type=EventType.AGENT_COMPLETE,

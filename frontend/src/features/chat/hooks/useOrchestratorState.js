@@ -142,6 +142,10 @@ export function useOrchestratorState() {
         break;
       }
 
+      case 'orchestrator_status':
+        dispatch({ type: 'SET_STATUS', status: event.metadata?.status || 'completed' });
+        break;
+
       // STRUCTURED_OUTPUT events arrive here when event.type === 'structured_output'
       // and metadata.event_type === 'orchestrator_images'
       case 'orchestrator_images': {

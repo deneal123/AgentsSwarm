@@ -29,9 +29,12 @@ import {
   FiClock,
   FiCpu,
   FiImage,
+  FiLayers,
   FiMapPin,
   FiMessageSquare,
+  FiTool,
   FiXCircle,
+  FiZap,
 } from 'react-icons/fi';
 import { traceRingPulse, traceRingSpin } from '../styles/keyframes';
 
@@ -62,7 +65,16 @@ const STEP_CFG = {
   canceled:  { color: 'orange.400',spinning: false, icon: FiXCircle     },
 };
 
-const LEVEL_COLOR = { info: 'rgba(255,255,255,0.7)', warning: '#fbbf24', error: '#f87171' };
+const LEVEL_COLOR = { info: 'rgba(255,255,255,0.78)', warning: '#fbbf24', error: '#f87171' };
+
+const SOURCE_CFG = {
+  orchestrator: { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)',  icon: FiCpu,     label: 'orchestrator' },
+  planner:      { color: '#b794f4', bg: 'rgba(183,148,244,0.12)', icon: FiLayers,  label: 'planner'      },
+  agent:        { color: '#68d391', bg: 'rgba(104,211,145,0.12)', icon: FiZap,     label: 'agent'        },
+  runner:       { color: '#76e4f7', bg: 'rgba(118,228,247,0.12)', icon: FiZap,     label: 'runner'       },
+  'agent-sdk':  { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.06)', icon: FiTool, label: 'sdk' },
+};
+const DEFAULT_SOURCE_CFG = { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.06)', icon: FiCpu, label: 'sys' };
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -173,15 +185,56 @@ function PlanStep({ step }) {
 // ─── Event row ────────────────────────────────────────────────────────────────
 
 function EventRow({ ev }) {
-  const color = LEVEL_COLOR[ev.level] || LEVEL_COLOR.info;
+  const msgColor = LEVEL_COLOR[ev.level] || LEVEL_COLOR.info;
+  const src = SOURCE_CFG[ev.source] || DEFAULT_SOURCE_CFG;
   const ts = ev.ts
     ? new Date(ev.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : '';
+
+  // Detect completion / error keywords for subtle emphasis
+  const msgLower = (ev.message || '').toLowerCase();
+  const isComplete = msgLower.includes('completed') || msgLower.includes('завершен');
+  const isError = ev.level === 'error' || msgLower.includes('failed') || msgLower.includes('error');
+
   return (
-    <HStack spacing={2} align="flex-start" py={0.5}>
-      <Text fontSize="10px" color="rgba(255,255,255,0.25)" flexShrink={0} mt="1px" fontFamily="mono">{ts}</Text>
-      <Text fontSize="10px" color="rgba(99,179,237,0.65)" flexShrink={0} fontFamily="mono">{ev.source || 'sys'}</Text>
-      <Text fontSize="12px" color={color} lineHeight="1.45" flex="1" wordBreak="break-word">{ev.message}</Text>
+    <HStack
+      spacing={0}
+      align="flex-start"
+      py={1.5}
+      px={2}
+      borderRadius="8px"
+      borderLeft={isComplete ? '2px solid rgba(104,211,145,0.5)' : isError ? '2px solid rgba(248,113,113,0.5)' : '2px solid transparent'}
+      bg={isComplete ? 'rgba(104,211,145,0.04)' : isError ? 'rgba(248,113,113,0.04)' : 'transparent'}
+      _hover={{ bg: 'rgba(255,255,255,0.03)' }}
+      transition="background 0.1s"
+      gap={2}
+    >
+      {/* Timestamp */}
+      <Text fontSize="10px" color="rgba(255,255,255,0.22)" flexShrink={0} mt="2px" fontFamily="mono" minW="54px">
+        {ts}
+      </Text>
+
+      {/* Source chip */}
+      <HStack
+        spacing={1}
+        px={1.5}
+        py={0.5}
+        borderRadius="5px"
+        bg={src.bg}
+        flexShrink={0}
+        minW="80px"
+        justify="center"
+      >
+        <Icon as={src.icon} boxSize={2.5} color={src.color} flexShrink={0} />
+        <Text fontSize="9px" fontWeight="700" color={src.color} letterSpacing="0.04em" textTransform="uppercase">
+          {src.label}
+        </Text>
+      </HStack>
+
+      {/* Message */}
+      <Text fontSize="12.5px" color={msgColor} lineHeight="1.5" flex="1" wordBreak="break-word">
+        {ev.message}
+      </Text>
     </HStack>
   );
 }
@@ -198,11 +251,11 @@ function EventFeed({ events }) {
     }
   }, [events.length]);
 
-  const visible = events.slice(-50);
+  const visible = events.slice(-60);
 
   return (
-    <Box ref={scrollRef} bg="rgba(0,0,0,0.22)" border="1px solid rgba(255,255,255,0.05)"
-      borderRadius="10px" px={3} py={2} maxH="200px" overflowY="auto"
+    <Box ref={scrollRef} bg="rgba(0,0,0,0.18)" border="1px solid rgba(255,255,255,0.06)"
+      borderRadius="12px" px={1} py={1.5} maxH="260px" overflowY="auto"
       sx={{
         '&::-webkit-scrollbar': { w: '3px' },
         '&::-webkit-scrollbar-track': { bg: 'transparent' },
