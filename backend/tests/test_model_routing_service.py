@@ -3,8 +3,8 @@ import types
 
 import pytest
 
-from service.services.chat.domain.chat_exceptions import ModelRoutingError
 from service.services.agents.application.model_routing_service import ModelRoutingService
+from service.services.chat.domain.chat_exceptions import ModelRoutingError
 
 
 @pytest.mark.asyncio
@@ -14,7 +14,9 @@ async def test_resolve_route_enables_web_search(monkeypatch: pytest.MonkeyPatch)
 
     fake_router_module = types.ModuleType("service.services.agents.domain.tools.router")
     fake_router_module.route_model = _fake_route_model
-    monkeypatch.setitem(sys.modules, "service.services.agents.domain.tools.router", fake_router_module)
+    monkeypatch.setitem(
+        sys.modules, "service.services.agents.domain.tools.router", fake_router_module
+    )
 
     service = ModelRoutingService()
     decision = await service.resolve_route(
@@ -39,7 +41,9 @@ async def test_resolve_route_raises_domain_error(monkeypatch: pytest.MonkeyPatch
 
     fake_router_module = types.ModuleType("service.services.agents.domain.tools.router")
     fake_router_module.route_model = _fake_route_model
-    monkeypatch.setitem(sys.modules, "service.services.agents.domain.tools.router", fake_router_module)
+    monkeypatch.setitem(
+        sys.modules, "service.services.agents.domain.tools.router", fake_router_module
+    )
 
     service = ModelRoutingService()
     with pytest.raises(ModelRoutingError):

@@ -1,5 +1,4 @@
 import logging
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from argon2 import PasswordHasher
@@ -12,7 +11,10 @@ from service.services.profile.application.dto import (
     UpdateProfileCommand,
 )
 from service.services.profile.application.mappers import to_profile_overview_result
-from service.services.profile.application.ports.interfaces import ProfileCachePort, ProfileRepositoryPort
+from service.services.profile.application.ports.interfaces import (
+    ProfileCachePort,
+    ProfileRepositoryPort,
+)
 from service.settings import ProfileConfig
 
 logger = logging.getLogger(__name__)
@@ -113,9 +115,7 @@ class ProfileService:
 
         return user_profile
 
-    async def get_profile_overview(
-        self, query: GetProfileOverviewQuery
-    ) -> ProfileOverviewResult:
+    async def get_profile_overview(self, query: GetProfileOverviewQuery) -> ProfileOverviewResult:
         profile = await self.fetch_user_profile(query.user_id)
         return to_profile_overview_result(profile)
 
@@ -153,11 +153,11 @@ class ProfileService:
         except Exception:
             return False
 
-    async def update_profile_details(
-        self, command: UpdateProfileCommand
-    ) -> ProfileOverviewResult:
+    async def update_profile_details(self, command: UpdateProfileCommand) -> ProfileOverviewResult:
         updates = command.model_dump(exclude={"user_id"}, exclude_unset=True)
-        logger.info("Updating profile for user_id=%s with fields=%s", command.user_id, list(updates.keys()))
+        logger.info(
+            "Updating profile for user_id=%s with fields=%s", command.user_id, list(updates.keys())
+        )
 
         fields_to_apply = {k: v for k, v in updates.items() if k in PROFILE_MUTABLE_FIELDS}
         if not fields_to_apply:

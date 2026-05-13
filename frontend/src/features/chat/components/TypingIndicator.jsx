@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Box, HStack, Text, VStack } from '@chakra-ui/react';
-import { MotionBox } from '@shared/ui/lib/motionPrimitives';
+import { motion } from 'framer-motion';
 import { colors, borderRadius } from '@theme/tokens';
+
+const MotionBox = motion(Box);
 
 /**
  * TypingIndicator - Индикатор печати AI агента

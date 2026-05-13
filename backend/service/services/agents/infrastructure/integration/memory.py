@@ -95,13 +95,17 @@ class Mem0MemoryIntegration(BaseMemoryIntegration):
 
         try:
             query = "user preferences profile facts goals constraints recent context"
-            payload = await asyncio.to_thread(self._search_memories_sync, client, query, user_id, top_k)
+            payload = await asyncio.to_thread(
+                self._search_memories_sync, client, query, user_id, top_k
+            )
             memories = self._extract_memory_texts(payload)
             if not memories:
                 self._log_operation_success("mem0.get_memory_context", started, memories=0)
                 return ""
 
-            formatted = "## Контекст из памяти пользователя:\n" + "\n".join(f"- {item}" for item in memories)
+            formatted = "## Контекст из памяти пользователя:\n" + "\n".join(
+                f"- {item}" for item in memories
+            )
             self._log_operation_success("mem0.get_memory_context", started, memories=len(memories))
             return formatted
         except Exception as exc:  # pragma: no cover - defensive provider boundary
@@ -147,7 +151,9 @@ class Mem0MemoryIntegration(BaseMemoryIntegration):
                 user_id,
                 metadata,
             )
-            self._log_operation_success("mem0.save_messages", started, saved=len(normalized_messages))
+            self._log_operation_success(
+                "mem0.save_messages", started, saved=len(normalized_messages)
+            )
         except Exception as exc:  # pragma: no cover - defensive provider boundary
             self._log_operation_failure("mem0.save_messages", started, exc)
 
@@ -181,7 +187,9 @@ class Mem0MemoryIntegration(BaseMemoryIntegration):
                     top_k,
                 )
             else:
-                payload = await asyncio.to_thread(self._get_all_memories_sync, client, user_id, top_k)
+                payload = await asyncio.to_thread(
+                    self._get_all_memories_sync, client, user_id, top_k
+                )
 
             facts = self._extract_memory_items(payload)
             self._log_operation_success("mem0.list_facts", started, facts=len(facts))
@@ -215,7 +223,9 @@ class Mem0MemoryIntegration(BaseMemoryIntegration):
         messages = [{"role": "user", "content": f"{fact_key.strip()}: {fact_value.strip()}"}]
 
         try:
-            payload = await asyncio.to_thread(self._add_memories_sync, client, messages, user_id, metadata)
+            payload = await asyncio.to_thread(
+                self._add_memories_sync, client, messages, user_id, metadata
+            )
             created = payload if isinstance(payload, dict) else {}
             self._log_operation_success("mem0.add_fact", started)
             return created

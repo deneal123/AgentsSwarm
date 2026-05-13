@@ -46,6 +46,6 @@ def test_process_chat_message_core_publishes_agent_reply(monkeypatch):
         for s, m in fake_redis.added
         if s == "chat:T1:stream" and "data" in m
     ]
-    assert any(
-        msg.get("type") == "agent_reply" for msg in agent_messages
-    ), f"Expected agent_reply in redis stream; got: {fake_redis.added}"
+    assert any(msg.get("type") == "agent_reply" for msg in agent_messages), (
+        f"Expected agent_reply in redis stream; got: {fake_redis.added}"
+    )

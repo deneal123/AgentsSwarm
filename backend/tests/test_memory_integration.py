@@ -1,7 +1,10 @@
 import pytest
 
 from service.infrastructure.messaging.tasks import _resolve_memory_user_id
-from service.services.agents.infrastructure.integration.base import BaseIntegration, BaseMemoryIntegration
+from service.services.agents.infrastructure.integration.base import (
+    BaseIntegration,
+    BaseMemoryIntegration,
+)
 from service.services.agents.infrastructure.integration.memory import Mem0MemoryIntegration
 from service.services.analytics.application.memory_service import MemoryService
 
@@ -41,13 +44,19 @@ class _FakeIntegration(BaseMemoryIntegration):
     async def get_memory_context(self, *, user_id: str, top_k: int = 5) -> str:
         return f"memory-for-{user_id}-k{top_k}"
 
-    async def save_messages(self, *, user_id: str, messages: list[dict], metadata: dict | None = None) -> None:
+    async def save_messages(
+        self, *, user_id: str, messages: list[dict], metadata: dict | None = None
+    ) -> None:
         self.saved.append({"user_id": user_id, "messages": messages, "metadata": metadata})
 
-    async def list_facts(self, *, user_id: str, query: str | None = None, top_k: int = 50) -> list[dict]:
+    async def list_facts(
+        self, *, user_id: str, query: str | None = None, top_k: int = 50
+    ) -> list[dict]:
         return []
 
-    async def add_fact(self, *, user_id: str, fact_type: str, fact_key: str, fact_value: str) -> dict:
+    async def add_fact(
+        self, *, user_id: str, fact_type: str, fact_key: str, fact_value: str
+    ) -> dict:
         return {}
 
     async def delete_fact(self, *, user_id: str, fact_id: str) -> bool:
@@ -128,7 +137,9 @@ class _FakeDbSession:
 async def test_resolve_memory_user_id_prefers_explicit_user() -> None:
     db = _FakeDbSession("from-thread")
 
-    resolved = await _resolve_memory_user_id(db_session=db, user_id="real-user", thread_id="thread-1")
+    resolved = await _resolve_memory_user_id(
+        db_session=db, user_id="real-user", thread_id="thread-1"
+    )
 
     assert resolved == "real-user"
 

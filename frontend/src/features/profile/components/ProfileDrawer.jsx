@@ -17,7 +17,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { FiLogOut, FiMessageSquare, FiSliders } from 'react-icons/fi';
-import { CHAT_SCROLLBAR_SX, CHAT_THEME } from '@features/chat/constants/theme';
+import { CHAT_SCROLLBAR_SX, CHAT_THEME } from '../../chat/constants/theme';
 
 export function ProfileDrawer({
   isOpen,

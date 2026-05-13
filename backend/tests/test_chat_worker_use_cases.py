@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
-from service.services.chat.persistence.chat_worker_repository import ChatWorkerRepository
 from service.services.chat.infrastructure.chat_worker.services import ChatWorkerConversationService
+from service.services.chat.persistence.chat_worker_repository import ChatWorkerRepository
 
 
 class _FakePseudoSession:
@@ -40,7 +40,7 @@ class _FakeDbSession:
         if "SELECT user_id FROM profile.chat_threads" in sql:
             return _FakeResult(scalar_value="thread-owner")
         if "SELECT m.sender" in sql:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             return _FakeResult(rows=[("agent", "hello", now), ("user", "hi", now)])
         if "SELECT id FROM profile.chat_threads" in sql:
             return _FakeResult(rows=[(11,)]) if self.thread_exists else _FakeResult(rows=[])

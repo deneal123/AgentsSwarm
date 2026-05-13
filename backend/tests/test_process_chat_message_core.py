@@ -1,8 +1,6 @@
 import json
-from types import SimpleNamespace
 
 import service.infrastructure.messaging.tasks as tasks
-from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
 
 def test_process_chat_message_core_publishes_agent_reply(monkeypatch):

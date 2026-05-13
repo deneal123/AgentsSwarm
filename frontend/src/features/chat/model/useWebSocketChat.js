@@ -268,7 +268,7 @@ export function useWebSocketChat(threadId, callbacks = {}) {
     }
   }, [onError]);
 
-  const cancelJob = useCallback(async (jobId) => {
+  const cancelJob = useCallback(async () => {
     const targetTaskId = currentJob?.celeryTaskId;
     if (targetTaskId) {
       const { cancelTask } = await import('@api/jobs');

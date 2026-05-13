@@ -6,16 +6,17 @@ Create Date: 2026-05-12 00:00:00.000000
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
+from alembic import op
+
 revision: str = "008_drop_legacy_tables"
-down_revision: Union[str, Sequence[str], None] = "7152f9af9647"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "7152f9af9647"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -39,7 +40,9 @@ def downgrade() -> None:
         "batches",
         sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("batch_id", UUID(), unique=True, nullable=False),
-        sa.Column("user_id", UUID(), sa.ForeignKey("profile.user.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "user_id", UUID(), sa.ForeignKey("profile.user.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("type", sa.String(64), nullable=False),
         sa.Column("status", sa.String(32), nullable=False, server_default="queued"),
         sa.Column("size", sa.BigInteger(), nullable=True),
@@ -49,7 +52,9 @@ def downgrade() -> None:
     op.create_table(
         "batch_items",
         sa.Column("id", sa.BigInteger(), primary_key=True),
-        sa.Column("batch_id", sa.BigInteger(), sa.ForeignKey("profile.batches.id", ondelete="CASCADE")),
+        sa.Column(
+            "batch_id", sa.BigInteger(), sa.ForeignKey("profile.batches.id", ondelete="CASCADE")
+        ),
         sa.Column("item_index", sa.BigInteger(), nullable=False),
         sa.Column("payload", JSONB(), nullable=False),
         sa.Column("status", sa.String(32), nullable=False, server_default="queued"),
@@ -71,7 +76,11 @@ def downgrade() -> None:
     op.create_table(
         "nutrition_calendar_versions",
         sa.Column("id", sa.BigInteger(), primary_key=True),
-        sa.Column("calendar_id", sa.BigInteger(), sa.ForeignKey("profile.nutrition_calendars.id", ondelete="CASCADE")),
+        sa.Column(
+            "calendar_id",
+            sa.BigInteger(),
+            sa.ForeignKey("profile.nutrition_calendars.id", ondelete="CASCADE"),
+        ),
         sa.Column("version", sa.BigInteger(), nullable=False),
         sa.Column("manifest", JSONB(), nullable=True),
         sa.Column("metadata", JSONB(), nullable=True),

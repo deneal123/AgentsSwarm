@@ -2,8 +2,12 @@
 
 import asyncio
 import logging
+<<<<<<< HEAD
 from collections.abc import Callable
 from typing import AsyncGenerator, Optional
+=======
+from collections.abc import AsyncGenerator
+>>>>>>> 768598397002f0ab034484bd966612234d78ea3c
 
 from service.services.agents.domain.client import create_chat_completion
 from service.services.agents.domain.tools.web_search import parse_url, web_search
@@ -52,8 +56,13 @@ _SYNTHESIS_PROMPT = """Ты — ведущий аналитик и автор и
 async def deep_research(
     topic: str,
     model: str,
+<<<<<<< HEAD
     on_status: Optional[Callable] = None,
 ) -> AsyncGenerator[str, None]:
+=======
+    on_status: callable | None = None,
+) -> AsyncGenerator[str]:
+>>>>>>> 768598397002f0ab034484bd966612234d78ea3c
     """Perform multi-step deep research on a topic.
 
     Yields status updates and the final report as markdown chunks.
@@ -87,7 +96,13 @@ async def deep_research(
             queries = [topic, f"{topic} обзор", f"{topic} анализ"]
     except Exception:
         logger.warning("Failed to parse research plan, using topic-derived queries")
-        queries = [topic, f"{topic} обзор", f"{topic} анализ", f"{topic} критика", f"{topic} примеры"]
+        queries = [
+            topic,
+            f"{topic} обзор",
+            f"{topic} анализ",
+            f"{topic} критика",
+            f"{topic} примеры",
+        ]
 
     queries = queries[:4]
 
@@ -100,10 +115,10 @@ async def deep_research(
 
     all_results = []
     for i, query in enumerate(queries):
-        yield f"🔍 Поиск {i+1}/{len(queries)}: «{query}»\n"
+        yield f"🔍 Поиск {i + 1}/{len(queries)}: «{query}»\n"
         try:
             results = await asyncio.wait_for(web_search(query, num_results=4), timeout=16)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("web_search timeout for %r", query)
             results = []
         except Exception as exc:
@@ -128,7 +143,7 @@ async def deep_research(
         yield f"📄 Читаю: {r.get('title', url)[:60]}...\n"
         try:
             parsed = await asyncio.wait_for(parse_url(url, max_chars=2200), timeout=8)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.info("parse_url timeout for %s", url)
             parsed = {}
             parse_failures += 1
@@ -196,8 +211,14 @@ async def deep_research(
         try:
             synthesis_resp = await create_chat_completion(
                 messages=[
-                    {"role": "system", "content": _SYNTHESIS_PROMPT.format(topic=topic, data=trimmed)},
-                    {"role": "user", "content": f"Составь подробный аналитический отчёт по теме: {topic}"},
+                    {
+                        "role": "system",
+                        "content": _SYNTHESIS_PROMPT.format(topic=topic, data=trimmed),
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Составь подробный аналитический отчёт по теме: {topic}",
+                    },
                 ],
                 model=model,
                 temperature=0.4,

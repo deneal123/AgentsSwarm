@@ -1,8 +1,8 @@
 from service.services.agents.domain.pipeline import (
+    EventSequencer,
     build_effective_input,
     build_processing_error_event,
     build_user_context,
-    EventSequencer,
     load_memory_context,
     load_session_history_context,
     resolve_agent_route,

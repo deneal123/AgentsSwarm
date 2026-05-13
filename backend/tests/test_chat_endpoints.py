@@ -1,16 +1,18 @@
-import pytest
+from datetime import UTC
 
+import pytest
 from httpx import AsyncClient
 from httpx._transports.asgi import ASGITransport
 
-from service.main import app
 from service.composition.state import get_chat_application_service
+from service.main import app
 
 
 @pytest.mark.asyncio
 async def test_create_thread_persists():
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc)
+    from datetime import datetime
+
+    now = datetime.now(UTC)
     created = {"called": False}
 
     class _FakeSvc:
@@ -27,7 +29,11 @@ async def test_create_thread_persists():
         assert resp.status_code == 201
         assert created["called"] is True
         body = resp.json()
-        assert "created_at" in body and isinstance(body["created_at"], str) and body["created_at"] != ""
+        assert (
+            "created_at" in body
+            and isinstance(body["created_at"], str)
+            and body["created_at"] != ""
+        )
     finally:
         app.dependency_overrides.pop(get_chat_application_service, None)
 

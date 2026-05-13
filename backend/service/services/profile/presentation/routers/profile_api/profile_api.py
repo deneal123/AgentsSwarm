@@ -1,4 +1,5 @@
 """Profile API: user overview, updates, quota preview."""
+
 import logging
 from typing import Annotated
 
@@ -6,16 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from service.composition.state import get_profile_service
 from service.models.auth_models import AuthProfile
-from service.shared.security.auth_checker import check_auth
+from service.services.profile.application.profile_service import ProfileService
 from service.services.profile.presentation.routers.profile_api.mappers import (
     to_delete_chat_history_command,
     to_get_profile_query,
     to_profile_response,
     to_update_profile_command,
 )
-from service.services.profile.presentation.routers.profile_api.schemas import ProfileResponse, ProfileUpdateRequest
-from service.services.profile.application.profile_service import ProfileService
+from service.services.profile.presentation.routers.profile_api.schemas import (
+    ProfileResponse,
+    ProfileUpdateRequest,
+)
 from service.settings import config
+from service.shared.security.auth_checker import check_auth
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +33,8 @@ async def get_profile(
 ) -> ProfileResponse:
     try:
         result = await service.get_profile_overview(to_get_profile_query(auth_profile.user_id))
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found") from exc
 
     permissions: list[str] = []
     if str(result.id).lower() in config.service.admin_user_ids_set:
@@ -48,8 +52,8 @@ async def update_profile(
         overview = await service.update_profile_details(
             to_update_profile_command(auth_profile.user_id, payload)
         )
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found") from exc
 
     permissions: list[str] = []
     if str(overview.id).lower() in config.service.admin_user_ids_set:
@@ -64,6 +68,6 @@ async def delete_my_chat_history(
 ) -> None:
     try:
         await service.delete_chat_history(to_delete_chat_history_command(auth_profile.user_id))
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found") from exc
     return None

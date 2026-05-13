@@ -1,19 +1,24 @@
 """LLM router-agent helpers."""
 
-from typing import Any, Optional
+from typing import Any
 
 from service.services.agents.domain.client import get_active_provider
-from service.services.agents.schemas.agents import RoutingDecision
 from service.services.agents.domain.routing.constants import ALLOWED_CATEGORIES, ROUTER_PROMPT
 from service.services.agents.domain.tools.router import route_model
+from service.services.agents.schemas.agents import RoutingDecision
 
 
-def create_router_agent(model_settings: Optional[dict], logger) -> Any:
+def create_router_agent(model_settings: dict | None, logger) -> Any:
     """Build SDK router agent or return None if SDK is unavailable."""
     try:
-        from agents import Agent as SDKAgent, ModelSettings
+        from agents import Agent as SDKAgent
+        from agents import ModelSettings
 
-        ms = ModelSettings(**(model_settings or {})) if isinstance(model_settings, dict) else model_settings
+        ms = (
+            ModelSettings(**(model_settings or {}))
+            if isinstance(model_settings, dict)
+            else model_settings
+        )
         return SDKAgent(
             name="router",
             instructions=ROUTER_PROMPT,
@@ -25,7 +30,7 @@ def create_router_agent(model_settings: Optional[dict], logger) -> Any:
         return None
 
 
-def extract_category(obj: Any) -> Optional[str]:
+def extract_category(obj: Any) -> str | None:
     """Extract route category from dict/object-like router output."""
     if obj is None:
         return None
@@ -36,7 +41,7 @@ def extract_category(obj: Any) -> Optional[str]:
     return category if isinstance(category, str) else None
 
 
-async def resolve_category(router_agent: Any, user_input: str, logger) -> Optional[str]:
+async def resolve_category(router_agent: Any, user_input: str, logger) -> str | None:
     """Resolve category by running router agent once."""
     # MWS in this project can reject SDK /responses while allowing chat/completions.
     # Route directly via chat-completions-based helper to avoid 403 noise and latency.

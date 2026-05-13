@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
@@ -22,6 +22,7 @@ except Exception:
 
     def set_tracing_disabled(*, disabled: bool):
         return None
+
 
 DEFAULT_MWS_TIMEOUT_SEC = 20.0
 DEFAULT_MODELS_CACHE_TTL_SEC = 180
@@ -73,11 +74,13 @@ def _make_http_client() -> httpx.AsyncClient:
         return httpx.AsyncClient(timeout=timeout)
 
 
-def create_mws_client() -> Optional[AsyncOpenAI]:
+def create_mws_client() -> AsyncOpenAI | None:
     api_key = _resolve_mws_api_key()
     base_url = _resolve_mws_base_url()
     if not api_key or not base_url:
-        logger.warning("MWS GPT client is not configured: missing AGENTS__MWS_API_KEY or AGENTS__MWS_BASE_URL")
+        logger.warning(
+            "MWS GPT client is not configured: missing AGENTS__MWS_API_KEY or AGENTS__MWS_BASE_URL"
+        )
         return None
 
     try:
@@ -95,7 +98,7 @@ def create_mws_client() -> Optional[AsyncOpenAI]:
         return None
 
 
-def get_openai_client() -> Optional[AsyncOpenAI]:
+def get_openai_client() -> AsyncOpenAI | None:
     return OPENAI_CLIENT
 
 
@@ -118,7 +121,7 @@ def _normalize_model_list(raw_items: Any) -> list[str]:
 
 
 async def list_available_models(
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
     force_refresh: bool = False,
 ) -> list[str]:
     target_client = client or OPENAI_CLIENT
@@ -156,12 +159,12 @@ async def create_chat_completion(
     messages: list[dict[str, str]],
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    n: Optional[int] = None,
-    presence_penalty: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    n: int | None = None,
+    presence_penalty: float | None = None,
+    frequency_penalty: float | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call MWS chat completions endpoint (/v1/chat/completions)."""
     target_client = client or OPENAI_CLIENT
@@ -190,13 +193,13 @@ async def create_completion(
     prompt: str,
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    top_p: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    presence_penalty: Optional[float] = None,
-    stop: Optional[list[str]] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    top_p: float | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    stop: list[str] | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call MWS completions endpoint (/v1/completions)."""
     target_client = client or OPENAI_CLIENT
@@ -227,7 +230,7 @@ async def create_embedding(
     text: str,
     model: str,
     *,
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call MWS embeddings endpoint (/v1/embeddings)."""
     target_client = client or OPENAI_CLIENT

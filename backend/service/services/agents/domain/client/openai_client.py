@@ -8,12 +8,12 @@
 import asyncio
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
-from agents import set_default_openai_key, set_default_openai_client, set_tracing_disabled
 
+from agents import set_default_openai_client, set_default_openai_key, set_tracing_disabled
 from service.settings import config
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ OPENAI_API_KEY = config.agents.openai_api_key
 BASE_URL = config.agents.openai_base_url
 
 
-def create_openai_client() -> Optional[AsyncOpenAI]:
+def create_openai_client() -> AsyncOpenAI | None:
     """Create AsyncOpenAI client for the native OpenAI endpoint.
 
     По умолчанию также настраивает OpenAI Agents SDK на использование этого
@@ -94,7 +94,7 @@ def _normalize_model_list(raw_items: Any) -> list[str]:
 
 
 async def list_available_models(
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
     force_refresh: bool = False,
 ) -> list[str]:
     """List models from the OpenAI API (cached, MWS-compatible signature)."""
@@ -132,12 +132,12 @@ async def create_chat_completion(
     messages: list[dict[str, str]],
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    n: Optional[int] = None,
-    presence_penalty: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    n: int | None = None,
+    presence_penalty: float | None = None,
+    frequency_penalty: float | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenAI chat completions endpoint (/v1/chat/completions)."""
     target_client = client or OPENAI_CLIENT
@@ -166,13 +166,13 @@ async def create_completion(
     prompt: str,
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    top_p: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    presence_penalty: Optional[float] = None,
-    stop: Optional[list[str]] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    top_p: float | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    stop: list[str] | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenAI completions endpoint (/v1/completions)."""
     target_client = client or OPENAI_CLIENT
@@ -203,7 +203,7 @@ async def create_embedding(
     text: str,
     model: str,
     *,
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenAI embeddings endpoint (/v1/embeddings)."""
     target_client = client or OPENAI_CLIENT

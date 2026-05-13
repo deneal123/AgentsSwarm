@@ -23,13 +23,15 @@ Rollout steps for production:
 3. Run the migration (alembic upgrade head).
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 # revision identifiers, used by Alembic.
-revision = '005_user_launch_type_to_enum'
-down_revision = '004_add_calendar_service_type_check'
+revision = "005_user_launch_type_to_enum"
+down_revision = "004_add_calendar_service_type_check"
 branch_labels = None
 depends_on = None
 
@@ -52,7 +54,9 @@ def upgrade() -> None:
 
     # 2) Drop old check constraint if present (added by previous migration)
     try:
-        op.drop_constraint("ck_profile_user_launch_type_allowed", "user_launch", schema="profile", type_="check")
+        op.drop_constraint(
+            "ck_profile_user_launch_type_allowed", "user_launch", schema="profile", type_="check"
+        )
     except Exception:
         # Ignore if it doesn't exist
         pass
@@ -63,7 +67,7 @@ def upgrade() -> None:
 
     # 4) Alter column type to the new enum
     op.execute(
-        "ALTER TABLE profile.user_launch ALTER COLUMN type TYPE %s USING type::text::%s" % (ENUM_NAME, ENUM_NAME)
+        f"ALTER TABLE profile.user_launch ALTER COLUMN type TYPE {ENUM_NAME} USING type::text::{ENUM_NAME}"
     )
 
 

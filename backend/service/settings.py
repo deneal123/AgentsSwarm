@@ -1,8 +1,6 @@
 import os
-import json
 
 import dotenv
-from typing import Optional
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -67,7 +65,7 @@ class PgConfig(BaseSettings):
     user: str = "postgres"
     password: str = "password"
     db: str = "main"
-    settings: Optional[Postgresql] = Postgresql()
+    settings: Postgresql | None = Postgresql()
     model_config = SettingsConfigDict(env_prefix="PG__")
 
     @property
@@ -181,7 +179,6 @@ class AuthConfig(BaseSettings):
         return value
 
 
-
 class ProfileConfig(BaseSettings):
     base_available_launches: int = 10
     model_config = SettingsConfigDict(env_prefix="PROFILE__")
@@ -245,16 +242,16 @@ class RedisConfig(BaseSettings):
 
 
 class Sessions(BaseModel):
-    encryption_key: Optional[str] = None
+    encryption_key: str | None = None
     backend: str = "redis"
-    sqlite_db_path: Optional[str] = None
+    sqlite_db_path: str | None = None
 
 
 class SessionsConfig(BaseSettings):
     settings: Sessions = Sessions()
-    backend: Optional[str] = None  # "redis" | "sqlite" | "pseudo" | "auto"
-    sqlite_db_path: Optional[str] = None
-    encryption_key: Optional[str] = None
+    backend: str | None = None  # "redis" | "sqlite" | "pseudo" | "auto"
+    sqlite_db_path: str | None = None
+    encryption_key: str | None = None
     model_config = SettingsConfigDict(env_prefix="SESSIONS__")
 
 
@@ -276,7 +273,7 @@ class FileConfig(BaseSettings):
 
 class Celery(BaseModel):
     chat_retention_days: int = 365
-    
+
 
 class CeleryConfig(BaseSettings):
     broker_url: str = Field(default_factory=str)
@@ -338,7 +335,6 @@ class AgentsConfig(BaseSettings):
         return max(parsed, 0)
 
 
-
 class ChatWs(BaseModel):
     max_replay: int = 200
     max_claim: int = 100
@@ -352,7 +348,6 @@ class ChatWsConfig(BaseSettings):
 
 
 class Config(BaseSettings):
-
     service: ServiceConfig = Field(default_factory=ServiceConfig)
     auth: AuthConfig = Field(default_factory=AuthConfig)
     profile: ProfileConfig = Field(default_factory=ProfileConfig)
@@ -396,5 +391,6 @@ def redact_config_for_logging(config: Config) -> dict:
             "backend": config.storage.backend,
         },
     }
+
 
 config = _get_config()

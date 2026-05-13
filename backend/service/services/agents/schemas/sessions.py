@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import Literal, Optional
+from datetime import UTC, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -9,13 +9,13 @@ class SessionItem(BaseModel):
 
     role: Literal["user", "assistant"] = Field(..., description="role in conversation")
     content: str = Field(..., description="message content")
-    ts: Optional[float] = Field(None, description="timestamp (unix float)")
+    ts: float | None = Field(None, description="timestamp (unix float)")
 
     @field_validator("ts", mode="before")
     @classmethod
     def normalize_ts(cls, v):
         if v is None:
-            return datetime.now(timezone.utc).timestamp()
+            return datetime.now(UTC).timestamp()
         if isinstance(v, (int, float)):
             return float(v)
         if isinstance(v, str):

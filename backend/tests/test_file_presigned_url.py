@@ -31,9 +31,7 @@ class _FakeFileRepo:
     async def delete_file_metadata(self, user_id, file_id, session=None):  # noqa: D401
         self.deleted_ids.append((user_id, file_id))
 
-    async def delete_file_metadata_by_name(
-        self, user_id, file_name, session=None
-    ):  # noqa: D401
+    async def delete_file_metadata_by_name(self, user_id, file_name, session=None):  # noqa: D401
         self.deleted_names.append((user_id, file_name))
 
 
@@ -65,7 +63,7 @@ class _FakeSaver:
         self.storage = storage
 
     async def get_presigned_url_by_key(self, *, file_key: str, expiry_sec: int = 3600):
-        getter = getattr(self.storage, "get_presigned_url")
+        getter = self.storage.get_presigned_url
         return await getter(file_key=file_key, expiry_sec=expiry_sec)
 
 
@@ -86,6 +84,7 @@ def _build_app(presigned: str | None):
 
     def _auth():
         return AuthProfile(user_id=user_id, fingerprint=None, type=UserTypes.REGISTERED)
+
     app.dependency_overrides[check_auth] = _auth
     file_id = uuid4()
     record = UserFile(
@@ -100,8 +99,9 @@ def _build_app(presigned: str | None):
     app.dependency_overrides[get_file_saver] = lambda: _FakeSaver(_FakeStorage(presigned))
 
     # Minimal router to emulate ML file endpoints used in tests
-    from fastapi import APIRouter, Depends, HTTPException, Response
     from uuid import UUID as _UUID
+
+    from fastapi import APIRouter, Depends, HTTPException, Response
 
     router = APIRouter(prefix="/api/ml")
 
@@ -109,9 +109,9 @@ def _build_app(presigned: str | None):
     async def download_url(
         file_id: str,
         expiry_sec: int = 3600,
-        profile: AuthProfile = Depends(check_auth),
-        repo=Depends(get_file_repo),
-        saver=Depends(get_file_saver),
+        profile: AuthProfile = Depends(check_auth),  # noqa: B008
+        repo=Depends(get_file_repo),  # noqa: B008
+        saver=Depends(get_file_saver),  # noqa: B008
     ):
         file_rec = await repo.fetch_user_file_by_id(profile.user_id, _UUID(file_id))
         if not file_rec:
@@ -122,20 +122,29 @@ def _build_app(presigned: str | None):
             url = await saver.get_presigned_url_by_key(
                 file_key=file_rec.file_name, expiry_sec=expiry_sec
             )
-            return {"file_id": str(file_rec.id), "url": url, "expiry_sec": expiry_sec, "backend": "minio"}
+            return {
+                "file_id": str(file_rec.id),
+                "url": url,
+                "expiry_sec": expiry_sec,
+                "backend": "minio",
+            }
 
         # local fallback
         storage_root = os.environ.get("STORAGE_ROOT")
         if storage_root:
-            return {"file_id": str(file_rec.id), "url": f"/api/ml/v1/files/{file_rec.id}/download", "backend": "local"}
+            return {
+                "file_id": str(file_rec.id),
+                "url": f"/api/ml/v1/files/{file_rec.id}/download",
+                "backend": "local",
+            }
 
         raise HTTPException(status_code=500, detail="No storage configured")
 
     @router.get("/v1/files/{file_id}/download")
     async def download(
         file_id: str,
-        profile: AuthProfile = Depends(check_auth),
-        repo=Depends(get_file_repo),
+        profile: AuthProfile = Depends(check_auth),  # noqa: B008
+        repo=Depends(get_file_repo),  # noqa: B008
     ):
         file_rec = await repo.fetch_user_file_by_id(profile.user_id, _UUID(file_id))
         if not file_rec:

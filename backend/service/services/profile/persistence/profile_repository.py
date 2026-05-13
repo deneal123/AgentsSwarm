@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import select, update, text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from service.models.db.db_models import User
@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileRepository(BaseRepository):
-
     @connection()
     async def create_user(
         self,
@@ -87,12 +86,7 @@ class ProfileRepository(BaseRepository):
             "avatar_url": payload.get("avatar_url"),
         }
 
-        stmt = (
-            update(User)
-            .where(User.id == payload["id"])
-            .values(**update_values)
-            .returning(User)
-        )
+        stmt = update(User).where(User.id == payload["id"]).values(**update_values).returning(User)
         result = await session.execute(stmt)
         db_user = result.scalar_one_or_none()
 

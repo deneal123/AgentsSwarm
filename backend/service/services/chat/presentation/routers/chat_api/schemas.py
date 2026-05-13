@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -6,31 +6,36 @@ from pydantic import BaseModel, Field
 class MessageRequest(BaseModel):
     # require non-empty text
     text: str = Field(..., min_length=1)
-    user_id: Optional[int | str] = None
-    model: Optional[str] = None
-    input_type: Optional[Literal["text", "image", "audio", "video"]] = None
+    user_id: int | str | None = None
+    model: str | None = None
+    input_type: Literal["text", "image", "audio", "video"] | None = None
     web_search: bool = False
     deep_research: bool = False
-    route_override: Optional[Literal["general", "web_search", "deep_research", "audio_transcribe", "image_gen", "pptx_gen"]] = None
+    route_override: (
+        Literal[
+            "general", "web_search", "deep_research", "audio_transcribe", "image_gen", "pptx_gen"
+        ]
+        | None
+    ) = None
     file_context: str = ""
     file_ids: list[str] = Field(default_factory=list)
 
 
 class MessageResponse(BaseModel):
     reply: str
-    thread_id: Optional[str] = None
-    metadata: Optional[dict] = None
+    thread_id: str | None = None
+    metadata: dict | None = None
 
 
 class ThreadCreate(BaseModel):
-    user_id: Optional[int] = None
-    title: Optional[str] = None
+    user_id: int | None = None
+    title: str | None = None
 
 
 class ThreadResponse(BaseModel):
     thread_id: str
-    title: Optional[str] = None
-    created_at: Optional[str] = None
+    title: str | None = None
+    created_at: str | None = None
 
 
 class ModelsResponse(BaseModel):

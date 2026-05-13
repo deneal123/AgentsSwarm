@@ -9,10 +9,12 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon, LockIcon } from "@chakra-ui/icons";
-import { MotionBox } from "@shared/ui/lib/motionPrimitives";
+import { motion } from "framer-motion";
 import { tokens } from "@theme/tokens";
 
 const AUTH_ACCENT = "#ef4444";
+
+const MotionBox = motion(Box);
 
 /**
  * PasswordInput - поле ввода пароля с переключателем видимости

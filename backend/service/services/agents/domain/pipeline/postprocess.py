@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
-
 from .context_enricher import schedule_memory_extraction
 
 
 def run_post_response_hooks(
     *,
-    user_id: Optional[Union[int, str]],
+    user_id: int | str | None,
     thread_id: str,
     user_input: str,
     logger,

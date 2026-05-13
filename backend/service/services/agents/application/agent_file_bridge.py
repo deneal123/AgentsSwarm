@@ -4,15 +4,17 @@ from typing import Any
 from uuid import UUID
 
 from service.models.key_value import ServiceType
-from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.settings import config
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 
 logger = logging.getLogger(__name__)
 
 ANON_USER_UUID = UUID("00000000-0000-0000-0000-000000000000")
 
 
-def resolve_user_uuid(user_id: str | int | UUID | None, *, anonymous_fallback: bool = True) -> UUID | None:
+def resolve_user_uuid(
+    user_id: str | int | UUID | None, *, anonymous_fallback: bool = True
+) -> UUID | None:
     if isinstance(user_id, UUID):
         return user_id
     if user_id is None:
@@ -132,7 +134,9 @@ async def persist_generated_artifacts(
                     continue
 
             if saved is None:
-                raise RepositoryIntegrityError("No valid user candidate for PPTX artifact persistence")
+                raise RepositoryIntegrityError(
+                    "No valid user candidate for PPTX artifact persistence"
+                )
 
             generated_files.append(
                 {
@@ -178,7 +182,9 @@ async def persist_generated_artifacts(
                     continue
 
             if saved is None:
-                raise RepositoryIntegrityError("No valid user candidate for image artifact persistence")
+                raise RepositoryIntegrityError(
+                    "No valid user candidate for image artifact persistence"
+                )
 
             generated_files.append(
                 {

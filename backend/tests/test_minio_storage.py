@@ -69,9 +69,7 @@ class TestMinioFileStorageInit:
             _ = MinioFileStorage(mock_minio_config)
 
             # Verify bucket creation was called
-            mock_client.make_bucket.assert_called_once_with(
-                "test-bucket", location="us-east-1"
-            )
+            mock_client.make_bucket.assert_called_once_with("test-bucket", location="us-east-1")
 
     def test_init_skips_bucket_creation_if_exists(self, mock_minio_config):
         """Test that bucket creation is skipped if bucket exists"""

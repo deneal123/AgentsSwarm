@@ -1,17 +1,17 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
 
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus, ServiceType
-from service.services.jobs.application.dto import StartJobRequest
-from service.shared.repositories.exceptions import RepositoryIntegrityError
-from service.services.jobs.persistence.job_repository import JobRepository
-from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
-from service.settings import JobConfig, config
 from service.services.chat.domain.chat_contracts import JobExecutionResult
+from service.services.jobs.application.dto import StartJobRequest
+from service.services.jobs.application.ports.interfaces import JobOrchestrationPort, JobQueuePort
+from service.services.jobs.persistence.job_repository import JobRepository
+from service.settings import JobConfig, config
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +63,7 @@ class JobService(JobOrchestrationPort):
         return candidates
 
     async def create_job(self, user_id: UUID, request_body: StartJobRequest) -> JobExecutionResult:
-        logger.info(
-            f"Creating job for user: {user_id} with params: {request_body.type}"
-        )
+        logger.info(f"Creating job for user: {user_id} with params: {request_body.type}")
 
         user_ongoing_jobs = await self.repository.fetch_jobs_by_user_id(
             user_id, [ProcessingStatus.NEW, ProcessingStatus.PROCESSING]
@@ -74,7 +72,7 @@ class JobService(JobOrchestrationPort):
         # Defensive cleanup: if there are PROCESSING jobs that are stale (processing
         # started long ago), mark them as FAILURE so they don't block the user forever.
         if user_ongoing_jobs:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             stale_threshold = max(self.config.settings.processing_timeout_sec, 60)
             stale_jobs = []
             for j in user_ongoing_jobs:
@@ -83,7 +81,7 @@ class JobService(JobOrchestrationPort):
                     if ts is None:
                         continue
                     if ts.tzinfo is None:
-                        ts = ts.replace(tzinfo=timezone.utc)
+                        ts = ts.replace(tzinfo=UTC)
                     age = (now - ts).total_seconds()
                     logger.debug(
                         "Job %s: status=%s, updated_at=%s, age=%.0fs, threshold=%ds",
@@ -160,10 +158,7 @@ class JobService(JobOrchestrationPort):
         return self.config.settings.wait_time_sec
 
     async def create_chat_job(
-        self,
-        user_id: UUID | None,
-        thread_id: str,
-        text: str
+        self, user_id: UUID | None, thread_id: str, text: str
     ) -> JobExecutionResult:
         """Create a job for agent chat message processing.
 
@@ -180,7 +175,7 @@ class JobService(JobOrchestrationPort):
         payload = {
             "thread_id": thread_id,
             "text": text,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         created_job = None
@@ -210,7 +205,9 @@ class JobService(JobOrchestrationPort):
                 continue
 
         if created_job is None:
-            logger.error("Failed to create chat job for user_id=%s: no valid user candidate", user_id)
+            logger.error(
+                "Failed to create chat job for user_id=%s: no valid user candidate", user_id
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create chat job",
@@ -255,8 +252,8 @@ class JobService(JobOrchestrationPort):
         if job.status == ProcessingStatus.PROCESSING and job.created_at:
             created_ts = job.created_at
             if created_ts.tzinfo is None:
-                created_ts = created_ts.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                created_ts = created_ts.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
             elapsed_seconds = int((now - created_ts).total_seconds())
             wait_time_sec = elapsed_seconds
 
@@ -273,7 +270,9 @@ class JobService(JobOrchestrationPort):
         try:
             if not self.job_queue:
                 return job
-            ready, successful, result_payload, meta, state = self.job_queue.get_task_state(celery_task_id)
+            ready, successful, result_payload, meta, state = self.job_queue.get_task_state(
+                celery_task_id
+            )
             if meta:
                 # persist meta into job.payload for observability
                 job.payload = job.payload or {}

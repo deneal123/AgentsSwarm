@@ -3,25 +3,23 @@
 Provides thin wrappers used by the WebSocket consumer and workers. These are
 kept small to make unit-testing (with fakes) straightforward.
 """
-from typing import Any, Dict, List, Tuple, Optional
-import inspect
+
 import asyncio
+import inspect
 import logging
+from typing import Any
+
 from prometheus_client import Counter, Gauge
 
 logger = logging.getLogger(__name__)
 
 # Redis Streams metrics
-REDIS_STREAM_LENGTH = Gauge(
-    "redis_stream_length",
-    "Redis Stream length",
-    ["stream_key"]
-)
+REDIS_STREAM_LENGTH = Gauge("redis_stream_length", "Redis Stream length", ["stream_key"])
 
 REDIS_CONSUMER_LAG = Gauge(
     "redis_consumer_lag",
     "Redis Consumer lag (pending messages)",
-    ["stream_key", "group", "consumer"]
+    ["stream_key", "group", "consumer"],
 )
 
 
@@ -54,7 +52,7 @@ async def xrange(
     start: str,
     end: str,
     count: int = 100,
-) -> List[Tuple[str, Dict[str, Any]]]:
+) -> list[tuple[str, dict[str, Any]]]:
     """Return entries in range [start, end].
 
     Expected return: List[(id, {field: value})]
@@ -77,7 +75,7 @@ async def xrange(
 
 async def xread(
     redis_client,
-    streams: Dict[str, str],
+    streams: dict[str, str],
     count: int = 10,
     block: int = 0,
 ):
@@ -110,7 +108,7 @@ async def xread_group(
     redis_client,
     group: str,
     consumer: str,
-    streams: Dict[str, str],
+    streams: dict[str, str],
     count: int = 10,
     block: int = 0,
 ):
@@ -119,8 +117,10 @@ async def xread_group(
     Returns the raw aioredis result: list of (stream, [(id, fields), ...])
     """
     # aioredis: xread_group(groupname, consumername, streams=..., count=..., timeout=...)
-    fn = getattr(redis_client, "xread_group", None) or getattr(redis_client, "xreadgroup", None) or getattr(
-        redis_client, "xread_group", None
+    fn = (
+        getattr(redis_client, "xread_group", None)
+        or getattr(redis_client, "xreadgroup", None)
+        or getattr(redis_client, "xread_group", None)
     )
     if not fn:
         return []
@@ -154,7 +154,7 @@ async def xack(redis_client, stream: str, group: str, message_id: str):
         await asyncio.to_thread(fn, stream, group, message_id)
 
 
-async def xpending(redis_client, stream: str, group: str) -> Dict[str, Any]:
+async def xpending(redis_client, stream: str, group: str) -> dict[str, Any]:
     """Return summary of pending messages for the group.
 
     We return at least {'count': int}. Implementations may return more.
@@ -190,7 +190,9 @@ async def xauto_claim(
         # aioredis may expose xautoclaim or xauto_claim
         if hasattr(redis_client, "xautoclaim") or hasattr(redis_client, "xauto_claim"):
             # prefer async method if present
-            fn = getattr(redis_client, "xautoclaim", None) or getattr(redis_client, "xauto_claim", None)
+            fn = getattr(redis_client, "xautoclaim", None) or getattr(
+                redis_client, "xauto_claim", None
+            )
             if not fn:
                 return []
             try:
@@ -204,7 +206,9 @@ async def xauto_claim(
             if inspect.isawaitable(res):
                 res = await res
             else:
-                res = await asyncio.to_thread(fn, stream, group, consumer, min_idle_ms, start_id, count)
+                res = await asyncio.to_thread(
+                    fn, stream, group, consumer, min_idle_ms, start_id, count
+                )
             # xautoclaim returns (next_start, entries)
             if isinstance(res, tuple) and len(res) == 2:
                 return res[1] or []
@@ -222,7 +226,7 @@ async def xauto_claim(
         return []
 
 
-async def xadd(redis_client, stream: str, mapping: Dict[str, Any]):
+async def xadd(redis_client, stream: str, mapping: dict[str, Any]):
     """Unified async xadd wrapper.
 
     Supports both async and sync redis clients. If the client's xadd returns an
@@ -244,7 +248,7 @@ async def xadd(redis_client, stream: str, mapping: Dict[str, Any]):
         raise
 
 
-def xadd_sync(redis_client, stream: str, mapping: Dict[str, Any]):
+def xadd_sync(redis_client, stream: str, mapping: dict[str, Any]):
     """Synchronous helper for xadd usable in non-async contexts (e.g. Celery tasks).
 
     If the client's xadd returns an awaitable, it will be executed inside a
@@ -294,7 +298,7 @@ async def worker_consume_loop(
         if not res:
             # nothing to do, continue
             continue
-        for sname, messages in res:
+        for _sname, messages in res:
             for message_id, fields in messages:
                 try:
                     await process_func(message_id, fields)
@@ -326,7 +330,7 @@ async def worker_consume_once(
     if not res:
         return 0
     processed = 0
-    for sname, messages in res:
+    for _sname, messages in res:
         for message_id, fields in messages:
             try:
                 await process_func(message_id, fields)
@@ -382,20 +386,24 @@ async def reclaim_and_process(
 try:
     # follow Prometheus naming convention with _total suffix for counters
     XADD_ERRORS = Counter("stream_xadd_errors_total", "Number of errors while performing XADD")
-    XAUTOCLAIM_FAILED = Counter("stream_xautoclaim_failed_total", "Number of failures calling XAUTOCLAIM/XAUTCLAIM")
-    RECLAIMED_PROCESSED = Counter("stream_reclaimed_processed_total", "Number of entries processed after reclaim")
+    XAUTOCLAIM_FAILED = Counter(
+        "stream_xautoclaim_failed_total", "Number of failures calling XAUTOCLAIM/XAUTCLAIM"
+    )
+    RECLAIMED_PROCESSED = Counter(
+        "stream_reclaimed_processed_total", "Number of entries processed after reclaim"
+    )
 except Exception:
     # If prometheus is not available in import-time, fall back silently.
     XADD_ERRORS = XAUTOCLAIM_FAILED = RECLAIMED_PROCESSED = None
 
 
-async def get_stream_info(redis_client, stream: str) -> Dict[str, Any]:
+async def get_stream_info(redis_client, stream: str) -> dict[str, Any]:
     """Get stream information (length, groups, consumers)."""
     try:
         # Support both async and sync clients
         fn = getattr(redis_client, "xinfo_stream", None)
         if not fn:
-            logger.warning(f"get_stream_info: xinfo_stream method not found on redis_client")
+            logger.warning("get_stream_info: xinfo_stream method not found on redis_client")
             return {}
 
         method = getattr(type(redis_client), "xinfo_stream", None)
@@ -425,20 +433,20 @@ async def get_stream_info(redis_client, stream: str) -> Dict[str, Any]:
             "groups": len(groups) if groups else 0,
             "first_entry": info.get("first-entry"),
             "last_entry": info.get("last-entry"),
-            "groups_info": groups
+            "groups_info": groups,
         }
     except Exception as e:
         logger.warning(f"Failed to get stream info for {stream}: {e}")
         return {}
 
 
-async def get_consumer_lag(redis_client, stream: str, group: str, consumer: str) -> Optional[int]:
+async def get_consumer_lag(redis_client, stream: str, group: str, consumer: str) -> int | None:
     """Get consumer lag (number of pending messages for consumer)."""
     try:
         # Support both async and sync clients
         fn = getattr(redis_client, "xpending", None)
         if not fn:
-            logger.warning(f"get_consumer_lag: xpending method not found on redis_client")
+            logger.warning("get_consumer_lag: xpending method not found on redis_client")
             return None
 
         method = getattr(type(redis_client), "xpending", None)
@@ -453,11 +461,7 @@ async def get_consumer_lag(redis_client, stream: str, group: str, consumer: str)
             # Legacy format or different client
             lag = len(pending_info) if pending_info else 0
 
-        REDIS_CONSUMER_LAG.labels(
-            stream_key=stream,
-            group=group,
-            consumer=consumer
-        ).set(lag)
+        REDIS_CONSUMER_LAG.labels(stream_key=stream, group=group, consumer=consumer).set(lag)
 
         return lag
     except Exception as e:
@@ -471,7 +475,7 @@ async def trim_stream(redis_client, stream: str, maxlen: int = 1000):
         # Support both async and sync clients
         fn = getattr(redis_client, "xtrim", None)
         if not fn:
-            logger.warning(f"trim_stream: xtrim method not found on redis_client")
+            logger.warning("trim_stream: xtrim method not found on redis_client")
             return
 
         method = getattr(type(redis_client), "xtrim", None)
@@ -485,13 +489,15 @@ async def trim_stream(redis_client, stream: str, maxlen: int = 1000):
         logger.warning(f"Failed to trim stream {stream}: {e}")
 
 
-async def cleanup_old_streams(redis_client, pattern: str = "chat:*:stream", maxlen: int = 1000) -> int:
+async def cleanup_old_streams(
+    redis_client, pattern: str = "chat:*:stream", maxlen: int = 1000
+) -> int:
     """Cleanup old streams by trimming them to maxlen entries."""
     try:
         # Support both async and sync clients
         scan_fn = getattr(redis_client, "scan", None)
         if not scan_fn:
-            logger.warning(f"cleanup_old_streams: scan method not found on redis_client")
+            logger.warning("cleanup_old_streams: scan method not found on redis_client")
             return 0
 
         scan_method = getattr(type(redis_client), "scan", None)
@@ -502,7 +508,9 @@ async def cleanup_old_streams(redis_client, pattern: str = "chat:*:stream", maxl
             if inspect.iscoroutinefunction(scan_method):
                 cursor, keys = await scan_fn(cursor, match=pattern, count=100)
             else:
-                cursor, keys = await asyncio.to_thread(lambda: scan_fn(cursor, match=pattern, count=100))
+                cursor, keys = await asyncio.to_thread(
+                    lambda current_cursor=cursor: scan_fn(current_cursor, match=pattern, count=100)
+                )
 
             for key in keys:
                 try:

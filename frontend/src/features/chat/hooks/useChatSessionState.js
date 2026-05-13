@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { CHAT_ACTIONS, useChatStateContainer } from '../model/chatStateContainer';
 
 export const useChatSessionState = (externalContainer = null) => {
-  const container = externalContainer || useChatStateContainer();
+  const internalContainer = useChatStateContainer();
+  const container = externalContainer ?? internalContainer;
   const { state, dispatch } = container;
 
   const addAttachment = useCallback((attachment) => {

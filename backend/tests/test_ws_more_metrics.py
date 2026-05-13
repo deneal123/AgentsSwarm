@@ -1,6 +1,4 @@
-import asyncio
 import pytest
-
 from prometheus_client import REGISTRY
 
 

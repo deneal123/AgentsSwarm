@@ -1,7 +1,7 @@
+from service import settings
 from service.infrastructure.messaging import tasks
 from service.services.chat.infrastructure.chat_worker.factory import ChatWorkerDependencyFactory
 from tests.test_helpers import FakeConnector, FakeDBSession
-from service import settings
 
 
 def test_delete_old_chat_history_uses_config_and_commits(monkeypatch):

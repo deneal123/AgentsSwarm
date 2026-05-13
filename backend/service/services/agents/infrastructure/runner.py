@@ -1,4 +1,5 @@
 """Thin wrapper around the OpenAI Agents SDK runner — infrastructure adapter."""
+
 from agents import Runner as ExternalRunner
 
 

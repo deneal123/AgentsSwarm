@@ -5,12 +5,11 @@ from typing import Any
 
 from celery.result import AsyncResult  # type: ignore[import]
 
-from service.infrastructure.messaging import stream_helpers
+from service.infrastructure.messaging import stream_helpers, tasks
 from service.infrastructure.messaging.celery_app import celery_app
-from service.infrastructure.messaging import tasks
-from service.services.jobs.application.ports.interfaces import JobHandlePort, JobQueuePort
-from service.services.files.application.ports.interfaces import MessageBusPort
 from service.services.agents.application.ports.interfaces import StreamPort
+from service.services.files.application.ports.interfaces import MessageBusPort
+from service.services.jobs.application.ports.interfaces import JobHandlePort, JobQueuePort
 
 
 class CeleryJobHandle(JobHandlePort):

@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 
 from service.services.agents.infrastructure.sessions import RedisSession
@@ -74,10 +73,12 @@ async def test_redis_session_from_container(monkeypatch):
     )
 
     s = RedisSession.from_container("sid2", max_items=2)
-    await s.add_items([
-        {"role": "user", "content": "x"},
-        {"role": "assistant", "content": "y"},
-        {"role": "user", "content": "z"},
-    ])
+    await s.add_items(
+        [
+            {"role": "user", "content": "x"},
+            {"role": "assistant", "content": "y"},
+            {"role": "user", "content": "z"},
+        ]
+    )
     items = await s.get_items()
     assert len(items) == 2

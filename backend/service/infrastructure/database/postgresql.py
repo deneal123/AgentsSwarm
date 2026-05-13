@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import TYPE_CHECKING, AsyncGenerator, Union
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # PgConnector accepts either PgConfig (from composition) or the inner Postgresql
 # settings model. Both expose .dsn and .settings attributes used below.
-_PgConfigT = Union[PgConfig, Postgresql]
+_PgConfigT = PgConfig | Postgresql
 
 
 class PgConnector:
@@ -85,7 +86,7 @@ class PgConnector:
             )
         return PgConnector._session_maker
 
-    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(self) -> AsyncGenerator[AsyncSession]:
         """Get database session for use as FastAPI dependency"""
         if self._session_maker is None:
             logger.error("Attempted to get session but sessionmaker is not initialized")

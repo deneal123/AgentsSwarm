@@ -1,12 +1,15 @@
 import pytest
 
+from service.services.agents.domain.tools.function_tools import (
+    fetch_runtime_context_tool,
+    summarize_brief_tool,
+)
 from service.services.agents.guardrails import (
     check_appropriate_language,
     check_forbidden_topics,
     ensure_non_empty_response,
     fact_check_output,
 )
-from service.services.agents.domain.tools.function_tools import fetch_runtime_context_tool, summarize_brief_tool
 
 
 @pytest.mark.asyncio
@@ -17,13 +20,17 @@ async def test_check_appropriate_language_failure():
 
 @pytest.mark.asyncio
 async def test_check_appropriate_language_success():
-    res = await check_appropriate_language.guardrail_function(None, None, "Привет, помоги с задачей")
+    res = await check_appropriate_language.guardrail_function(
+        None, None, "Привет, помоги с задачей"
+    )
     assert res.tripwire_triggered is False
 
 
 @pytest.mark.asyncio
 async def test_check_forbidden_topics():
-    res = await check_forbidden_topics.guardrail_function(None, None, "Я хочу узнать про самоубийство")
+    res = await check_forbidden_topics.guardrail_function(
+        None, None, "Я хочу узнать про самоубийство"
+    )
     assert res.tripwire_triggered is True
 
 

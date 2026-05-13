@@ -7,19 +7,19 @@ from fastapi import APIRouter, Depends, HTTPException, Path, UploadFile, status
 from service.composition.state import get_file_saver_service
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceType
-from service.shared.security.auth_checker import check_auth
+from service.services.files.application.file_saver_service import FileSaverService
 from service.services.files.presentation.routers.files_api.schemas import (
+    CallbackRequest,
     FetchModesResponse,
     FetchUserFilesResponse,
-    UploadResponse,
+    FileDetailResponse,
     FileMetadata,
     PresignRequest,
     PresignResponse,
-    FileDetailResponse,
-    CallbackRequest,
+    UploadResponse,
 )
-from service.services.files.application.file_saver_service import FileSaverService
 from service.settings import config
+from service.shared.security.auth_checker import check_auth
 
 logger = logging.getLogger(__name__)
 files_router = APIRouter(prefix="/api/service")
@@ -63,7 +63,9 @@ async def upload_handler(
 ) -> UploadResponse:
     if file_name := file.filename:
         lower_name = file_name.lower()
-        if not any(lower_name.endswith(ext.lower()) for ext in config.file.settings.allowed_extensions):
+        if not any(
+            lower_name.endswith(ext.lower()) for ext in config.file.settings.allowed_extensions
+        ):
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid file extension. Only: {config.file.settings.allowed_extensions} allowed.",

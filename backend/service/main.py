@@ -2,22 +2,23 @@ import logging
 import logging.config
 
 from fastapi import FastAPI
-
-from service.composition.models import AppContainer
 from fastapi.middleware.cors import CORSMiddleware
 
-from service.shared.presentation.handlers.exceptions_handlers import setup_exception_handlers
-from service.services.profile.presentation.routers.auth_api.auth_api import auth_router
+from service.composition.models import AppContainer
+from service.services.analytics.presentation.routers.analytics_api.analytics_api import (
+    analytics_router,
+)
+from service.services.analytics.presentation.routers.memory_api.memory_api import memory_router
+from service.services.chat.presentation.routers.chat_api.chat_api import chat_router
+from service.services.chat.presentation.routers.chat_ws import router as chat_ws_router
 from service.services.files.presentation.routers.files_api.files_api import files_router
 from service.services.jobs.presentation.routers.jobs_api.jobs_api import jobs_router
-from service.services.profile.presentation.routers.profile_api.profile_api import profile_router
-from service.services.chat.presentation.routers.chat_api.chat_api import chat_router
-from service.services.analytics.presentation.routers.memory_api.memory_api import memory_router
-from service.services.analytics.presentation.routers.analytics_api.analytics_api import analytics_router
-from service.services.chat.presentation.routers.chat_ws import router as chat_ws_router
 from service.services.jobs.presentation.ws.jobs_ws import router as jobs_ws_router
-from service.shared.presentation.routers.debug_api import router as debug_router
+from service.services.profile.presentation.routers.auth_api.auth_api import auth_router
+from service.services.profile.presentation.routers.profile_api.profile_api import profile_router
 from service.settings import LOGGING, config, redact_config_for_logging
+from service.shared.presentation.handlers.exceptions_handlers import setup_exception_handlers
+from service.shared.presentation.routers.debug_api import router as debug_router
 from service.utils.app_lifespan import lifespan
 
 logging.config.dictConfig(LOGGING)
@@ -34,7 +35,6 @@ def create_app(container_override: AppContainer | None = None) -> FastAPI:
         openapi_url="/api/openapi.json",
         redoc_url="/api/redoc",
     )
-
 
     if container_override is not None:
         app.state.container = container_override

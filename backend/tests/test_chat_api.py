@@ -1,12 +1,9 @@
 import pytest
+from httpx import ASGITransport, AsyncClient
 
-from httpx import AsyncClient, ASGITransport
-
-from service.main import app
 from service.composition.state import get_chat_application_service
+from service.main import app
 from service.services.agents.chat_agent import ChatAgent
-from service.services.chat.presentation.routers.chat_api import chat_api
-from service.services.chat.domain.chat_contracts import ChatProcessingMetadata, ChatReplyResult
 
 
 @pytest.mark.asyncio
@@ -29,7 +26,9 @@ async def test_chat_endpoint_returns_echo():
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            r = await ac.post("/api/chats/THREAD123/message", json={"text": "Hi agent", "user_id": 42})
+            r = await ac.post(
+                "/api/chats/THREAD123/message", json={"text": "Hi agent", "user_id": 42}
+            )
 
         assert r.status_code == 200
         data = r.json()
@@ -90,7 +89,11 @@ async def test_chat_endpoint_passes_selected_model_to_service():
             captured["web_search"] = payload.web_search
             captured["deep_research"] = payload.deep_research
             captured["file_context"] = payload.file_context
-            return {"reply": "ok", "thread_id": thread_id, "metadata": {"selected_model": payload.model}}
+            return {
+                "reply": "ok",
+                "thread_id": thread_id,
+                "metadata": {"selected_model": payload.model},
+            }
 
     app.dependency_overrides[get_chat_application_service] = lambda: _FakeService()
     try:
@@ -131,7 +134,11 @@ async def test_chat_endpoint_passes_input_type_to_service():
             captured["web_search"] = payload.web_search
             captured["deep_research"] = payload.deep_research
             captured["file_context"] = payload.file_context
-            return {"reply": "ok", "thread_id": thread_id, "metadata": {"input_type": payload.input_type}}
+            return {
+                "reply": "ok",
+                "thread_id": thread_id,
+                "metadata": {"input_type": payload.input_type},
+            }
 
     app.dependency_overrides[get_chat_application_service] = lambda: _FakeService()
     try:
@@ -212,6 +219,7 @@ async def test_chat_download_generated_file_returns_binary(monkeypatch):
             return b"pptx-bytes"
 
     from service.services.chat.application.chat_application_service import ChatApplicationService
+
     fake_app_svc = ChatApplicationService.__new__(ChatApplicationService)
     fake_app_svc.file_service = _FakeFileService()
 
@@ -219,12 +227,15 @@ async def test_chat_download_generated_file_returns_binary(monkeypatch):
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            r = await ac.get("/api/chats/files/download", params={"file_key": "uploads/CHAT/demo.pptx", "filename": "demo.pptx"})
+            r = await ac.get(
+                "/api/chats/files/download",
+                params={"file_key": "uploads/CHAT/demo.pptx", "filename": "demo.pptx"},
+            )
 
         assert r.status_code == 200
         assert r.content == b"pptx-bytes"
         assert captured["download_key"] == "uploads/CHAT/demo.pptx"
-        assert "attachment; filename=\"demo.pptx\"" in (r.headers.get("content-disposition") or "")
+        assert 'attachment; filename="demo.pptx"' in (r.headers.get("content-disposition") or "")
     finally:
         app.dependency_overrides.pop(get_chat_application_service, None)
 
@@ -242,6 +253,7 @@ async def test_chat_download_generated_file_normalizes_legacy_local_path(monkeyp
             return b"ok"
 
     from service.services.chat.application.chat_application_service import ChatApplicationService
+
     fake_app_svc = ChatApplicationService.__new__(ChatApplicationService)
     fake_app_svc.file_service = _FakeFileService()
 

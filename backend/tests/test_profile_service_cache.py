@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -12,7 +12,9 @@ class InMemoryCache:
     def __init__(self) -> None:
         self.store: dict[tuple[str, str], dict] = {}
 
-    async def set_json(self, namespace: str, key: str, payload: dict, ttl_seconds: int | None = None) -> None:
+    async def set_json(
+        self, namespace: str, key: str, payload: dict, ttl_seconds: int | None = None
+    ) -> None:
         self.store[(namespace, key)] = dict(payload)
 
     async def get_json(self, namespace: str, key: str) -> dict | None:
@@ -35,9 +37,11 @@ class FakeProfileRepository:
             for user in initial_users:
                 self._users[str(user.id)] = user
 
-    async def create_user(self, email: str, password_hash: str, base_available_launches: int = 10, session=None) -> UserProfileLogic:
+    async def create_user(
+        self, email: str, password_hash: str, base_available_launches: int = 10, session=None
+    ) -> UserProfileLogic:
         self.create_calls += 1
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         user = UserProfileLogic(
             id=uuid.uuid4(),
             email=email,
@@ -74,7 +78,7 @@ def profile_conf() -> ProfileConfig:
 
 
 def _make_user() -> UserProfileLogic:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return UserProfileLogic(
         id=uuid.uuid4(),
         email="test@example.com",

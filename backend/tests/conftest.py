@@ -1,8 +1,9 @@
 import os
 import warnings
+
 import pytest
 
-from tests.test_helpers import FakeDBSession, FakeConnector, FakeRedis, FakeAsyncRedis
+from tests.test_helpers import FakeAsyncRedis, FakeConnector, FakeDBSession, FakeRedis
 
 # Set required env vars before any service module is imported so AuthConfig
 # validators can apply dev-mode defaults.

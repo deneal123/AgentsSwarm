@@ -3,13 +3,13 @@ from dataclasses import dataclass
 
 from fastapi.testclient import TestClient
 
-from service.main import app
 from service.composition.state import get_job_service
+from service.main import app
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ProcessingStatus, ServiceType, UserTypes
-from service.shared.security.auth_checker import check_auth
-from service.services.jobs.application.dto import StartJobRequest
 from service.services.chat.domain.chat_contracts import JobExecutionResult
+from service.services.jobs.application.dto import StartJobRequest
+from service.shared.security.auth_checker import check_auth
 
 
 @dataclass
@@ -24,7 +24,9 @@ class _FakeJobService:
         self._jobs: dict[uuid.UUID, _Job] = {}
         self.wait_time = 5
 
-    async def create_job(self, user_id: uuid.UUID, request_body: StartJobRequest) -> JobExecutionResult:
+    async def create_job(
+        self, user_id: uuid.UUID, request_body: StartJobRequest
+    ) -> JobExecutionResult:
         job_id = uuid.uuid4()
         self._jobs[job_id] = _Job(id=job_id, user_id=user_id, req=request_body)
         wait_time = self.wait_time

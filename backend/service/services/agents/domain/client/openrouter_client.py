@@ -11,7 +11,7 @@ OpenRouter совместим с OpenAI API (base_url = https://openrouter.ai/ap
 import asyncio
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 try:
     from agents import set_default_openai_client, set_default_openai_key, set_tracing_disabled
 except Exception:  # pragma: no cover
+
     def set_default_openai_client(_client):
         return None
 
@@ -82,13 +83,11 @@ OPENAI_API_KEY = OPENROUTER_API_KEY
 BASE_URL = OPENROUTER_BASE_URL
 
 
-def create_openrouter_client() -> Optional[AsyncOpenAI]:
+def create_openrouter_client() -> AsyncOpenAI | None:
     """Create AsyncOpenAI client pointed at the OpenRouter endpoint."""
     api_key = (OPENROUTER_API_KEY or "").strip()
     if not api_key:
-        logger.warning(
-            "OpenRouter client is not configured: missing AGENTS__OPENROUTER_API_KEY"
-        )
+        logger.warning("OpenRouter client is not configured: missing AGENTS__OPENROUTER_API_KEY")
         return None
 
     try:
@@ -119,7 +118,7 @@ except Exception:
 OPENAI_CLIENT = OPENROUTER_CLIENT
 
 
-def get_openai_client() -> Optional[AsyncOpenAI]:
+def get_openai_client() -> AsyncOpenAI | None:
     return OPENROUTER_CLIENT
 
 
@@ -142,7 +141,7 @@ def _normalize_model_list(raw_items: Any) -> list[str]:
 
 
 async def list_available_models(
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
     force_refresh: bool = False,
 ) -> list[str]:
     """List models from the OpenRouter API (cached, MWS-compatible signature)."""
@@ -180,12 +179,12 @@ async def create_chat_completion(
     messages: list[dict[str, str]],
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    n: Optional[int] = None,
-    presence_penalty: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    n: int | None = None,
+    presence_penalty: float | None = None,
+    frequency_penalty: float | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenRouter chat completions endpoint (/v1/chat/completions)."""
     target_client = client or OPENROUTER_CLIENT
@@ -214,13 +213,13 @@ async def create_completion(
     prompt: str,
     model: str,
     *,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
-    top_p: Optional[float] = None,
-    frequency_penalty: Optional[float] = None,
-    presence_penalty: Optional[float] = None,
-    stop: Optional[list[str]] = None,
-    client: Optional[AsyncOpenAI] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    top_p: float | None = None,
+    frequency_penalty: float | None = None,
+    presence_penalty: float | None = None,
+    stop: list[str] | None = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenRouter completions endpoint (/v1/completions)."""
     target_client = client or OPENROUTER_CLIENT
@@ -251,7 +250,7 @@ async def create_embedding(
     text: str,
     model: str,
     *,
-    client: Optional[AsyncOpenAI] = None,
+    client: AsyncOpenAI | None = None,
 ):
     """Call OpenRouter embeddings endpoint (/v1/embeddings)."""
     target_client = client or OPENROUTER_CLIENT

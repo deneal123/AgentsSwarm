@@ -1,7 +1,7 @@
 import pytest
 
-from service.shared.security.auth_validation import AuthValidator
 from service.settings import AuthConfig
+from service.shared.security.auth_validation import AuthValidator
 
 
 class FakeWebSocket:

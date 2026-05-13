@@ -1,11 +1,11 @@
 from service.services.agents.domain.routing import (
     ALLOWED_CATEGORIES,
+    ROUTER_PROMPT,
     create_router_agent,
     extract_category,
     finalize_category,
     resolve_category,
     resolve_forced_category,
-    ROUTER_PROMPT,
 )
 
 __all__ = [

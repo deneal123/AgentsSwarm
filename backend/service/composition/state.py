@@ -5,11 +5,11 @@ from typing import Any
 from fastapi import Request
 
 from service.composition.models import AppContainer
+from service.services.analytics.application.analytics_service import AnalyticsService
 from service.services.files.application.file_saver_service import FileSaverService
 from service.services.jobs.application.job_service import JobService
 from service.services.profile.application.auth_service import AuthService
 from service.services.profile.application.profile_service import ProfileService
-from service.services.analytics.application.analytics_service import AnalyticsService
 
 _CURRENT_CONTAINER: AppContainer | None = None
 

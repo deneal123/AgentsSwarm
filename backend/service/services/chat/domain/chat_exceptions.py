@@ -2,7 +2,12 @@ from service.shared.exceptions import ApplicationError
 
 
 class ChatDomainError(ApplicationError):
-    def __init__(self, message: str = "Chat domain error", code: str = "chat_domain_error", status_code: int = 400):
+    def __init__(
+        self,
+        message: str = "Chat domain error",
+        code: str = "chat_domain_error",
+        status_code: int = 400,
+    ):
         super().__init__(message=message, code=code, status_code=status_code)
 
 

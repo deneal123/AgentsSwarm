@@ -1,7 +1,5 @@
 """Factory helpers for sub-agent composition."""
 
-from typing import Optional
-
 from service.services.agents.domain.base import BaseAgent
 from service.services.agents.domain.subagents.audio_transcribe import AudioTranscriptionAgent
 from service.services.agents.domain.subagents.deep_research import DeepResearchAgent
@@ -11,7 +9,7 @@ from service.services.agents.domain.subagents.pptx_generation import PPTXGenerat
 from service.services.agents.domain.subagents.web_search import WebSearchAgent
 
 
-def build_subagents(model_settings: Optional[dict] = None) -> dict[str, BaseAgent]:
+def build_subagents(model_settings: dict | None = None) -> dict[str, BaseAgent]:
     """Build and return the default sub-agent registry."""
     settings = model_settings or {}
     general = GeneralAgent(settings)

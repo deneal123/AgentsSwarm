@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from redis.asyncio import Redis
 
@@ -15,7 +14,7 @@ class RedisManager:
 
     def __init__(self, config: RedisConfig) -> None:
         self._config = config
-        self._client: Optional[Redis] = None
+        self._client: Redis | None = None
 
     @property
     def enabled(self) -> bool:

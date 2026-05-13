@@ -31,7 +31,9 @@ def _enum_related_file(path: Path) -> bool:
 
 def main() -> int:
     if len(sys.argv) != 3:
-        raise SystemExit("Usage: python backend/scripts/check_enum_revision_guard.py <base_ref> <head_ref>")
+        raise SystemExit(
+            "Usage: python backend/scripts/check_enum_revision_guard.py <base_ref> <head_ref>"
+        )
 
     base_ref = sys.argv[1]
     head_ref = sys.argv[2]
@@ -42,7 +44,9 @@ def main() -> int:
         print("Enum files were not changed")
         return 0
 
-    has_new_migration = any(path.parts[:3] == MIGRATION_PREFIX.parts and path.suffix == ".py" for path in changed_files)
+    has_new_migration = any(
+        path.parts[:3] == MIGRATION_PREFIX.parts and path.suffix == ".py" for path in changed_files
+    )
     if has_new_migration:
         print("Enum files changed and migration revision detected")
         return 0

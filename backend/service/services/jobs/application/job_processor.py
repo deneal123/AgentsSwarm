@@ -50,10 +50,8 @@ class NewJobProcessor:
                 self._process_job(job), timeout=self.timeout_policy.timeout_sec
             )
             return result
-        except asyncio.TimeoutError:
-            logger.error(
-                f"Job {job.id} timed out after {self.timeout_policy.timeout_sec} seconds"
-            )
+        except TimeoutError:
+            logger.error(f"Job {job.id} timed out after {self.timeout_policy.timeout_sec} seconds")
 
             job.status = ProcessingStatus.FAILURE
             await self._save_job_result(job)

@@ -3,8 +3,8 @@ import uuid
 
 import pytest
 
-from service.shared.repositories.exceptions import RepositoryIntegrityError
 from service.services.agents.application import agent_file_bridge as bridge
+from service.shared.repositories.exceptions import RepositoryIntegrityError
 
 
 class _Saved:
@@ -26,7 +26,9 @@ class _FakeFileService:
         return _Saved(file_url=f"/tmp/{file_name}", file_key=f"uploads/CHAT/{file_name}")
 
 
-def test_collect_candidate_user_uuids_includes_primary_and_admin_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_collect_candidate_user_uuids_includes_primary_and_admin_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     admin_uuid = uuid.uuid4()
     monkeypatch.setattr(bridge.config.service, "admin_user_ids", [str(admin_uuid)])
 

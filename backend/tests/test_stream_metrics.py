@@ -1,5 +1,4 @@
 import pytest
-
 from prometheus_client import REGISTRY
 
 
@@ -24,7 +23,7 @@ async def test_xadd_error_increments_metric(monkeypatch):
         return 0.0
 
     before = get_metric("stream_xadd_errors_total")
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         # sync helper should raise and increment metric
         stream_helpers.xadd_sync(fake, "s", {"data": "x"})
     after = get_metric("stream_xadd_errors_total")
@@ -50,7 +49,9 @@ async def test_xautoclaim_failure_increments_metric(monkeypatch):
         return 0.0
 
     before = get_metric("stream_xautoclaim_failed_total")
-    res = await stream_helpers.xauto_claim(fake, "s", "g", "c", min_idle_ms=0, start_id="0-0", count=10)
+    res = await stream_helpers.xauto_claim(
+        fake, "s", "g", "c", min_idle_ms=0, start_id="0-0", count=10
+    )
     assert res == []
     after = get_metric("stream_xautoclaim_failed_total")
     assert after >= before + 1
@@ -58,8 +59,9 @@ async def test_xautoclaim_failure_increments_metric(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_reclaim_and_process_increments_processed(monkeypatch):
-    from service.infrastructure.messaging import stream_helpers
     import json
+
+    from service.infrastructure.messaging import stream_helpers
 
     class FakeRedis:
         async def xautoclaim(self, stream, group, consumer, min_idle_ms, start_id, count=100):
@@ -85,7 +87,9 @@ async def test_reclaim_and_process_increments_processed(monkeypatch):
     async def proc(mid, fields):
         processed.append(mid)
 
-    cnt = await stream_helpers.reclaim_and_process(fake, "s", "g", "reclaimer", proc, min_idle_ms=0, count=10)
+    cnt = await stream_helpers.reclaim_and_process(
+        fake, "s", "g", "reclaimer", proc, min_idle_ms=0, count=10
+    )
     assert cnt == 1
     after = get_metric("stream_reclaimed_processed_total")
     assert after >= before + 1

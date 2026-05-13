@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 T = TypeVar("T")
 
@@ -25,7 +24,7 @@ class AppErrorResponse(BaseDTO):
     error: ErrorDetail
 
 
-class AppResult(BaseDTO, Generic[T]):
+class AppResult[T](BaseDTO):
     ok: bool = Field(default=True)
     data: T | None = None
     error: ErrorDetail | None = None

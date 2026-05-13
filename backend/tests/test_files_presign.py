@@ -2,15 +2,17 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from service.main import app
 from service.composition.state import get_file_saver_service
-from service.shared.security.auth_checker import check_auth
+from service.main import app
 from service.models.auth_models import AuthProfile
 from service.models.key_value import UserTypes
+from service.shared.security.auth_checker import check_auth
 
 
 def _fake_auth():
-    return AuthProfile(user_id="00000000-0000-0000-0000-000000000000", fingerprint=None, type=UserTypes.REGISTERED)
+    return AuthProfile(
+        user_id="00000000-0000-0000-0000-000000000000", fingerprint=None, type=UserTypes.REGISTERED
+    )
 
 
 class FakeSaver:
@@ -26,6 +28,7 @@ class FakeSaver:
 
     async def fetch_file_metadata(self, user_id, file_id):
         from service.models.file_models import FileMetadataLogic
+
         return FileMetadataLogic(
             file_id=file_id if isinstance(file_id, UUID) else UUID(str(file_id)),
             file_url="s3://bucket/folder/TRAINING/test.jpg",

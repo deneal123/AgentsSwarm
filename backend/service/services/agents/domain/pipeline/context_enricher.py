@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Optional, Union
+from typing import Any
 
 
-async def load_memory_context(user_id: Optional[Union[int, str]], logger) -> str:
+async def load_memory_context(user_id: int | str | None, logger) -> str:
     """Load user memory context from MemoryService.
 
     Returns an empty string if user id is missing or retrieval fails.
@@ -37,7 +37,7 @@ def _trim_to_max_chars(text: str, max_chars: int | None) -> str:
 
 
 async def load_session_history_context(
-    session: Optional[Any],
+    session: Any | None,
     logger,
     *,
     limit_messages: int = 8,
@@ -96,8 +96,8 @@ def build_effective_input(
     *,
     memory_context: str = "",
     chat_history_context: str = "",
-    file_context: Optional[str] = None,
-    max_context_chars: Optional[int] = None,
+    file_context: str | None = None,
+    max_context_chars: int | None = None,
 ) -> str:
     """Build one-shot effective input by appending extra context sections."""
     user_input = str(user_input or "")
