@@ -15,10 +15,7 @@ class _FakeChatSvc:
 
 
 class _FakeAppSvc:
-    class _S:
-        chat_service = _FakeChatSvc()
-
-    services = _S()
+    chat_service = _FakeChatSvc()
 
 
 class _FakeContainerSvc:

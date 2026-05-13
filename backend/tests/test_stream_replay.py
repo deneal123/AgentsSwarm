@@ -22,10 +22,7 @@ class _FakeChatService:
 
 
 class _FakeChatAppService:
-    class _Services:
-        chat_service = _FakeChatService()
-
-    services = _Services()
+    chat_service = _FakeChatService()
 
 
 class _FakeServices:

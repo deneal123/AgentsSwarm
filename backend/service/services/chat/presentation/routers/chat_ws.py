@@ -51,7 +51,7 @@ def get_chat_ws_connection_service(
         job_service,
         file_service,
         _metrics,
-        app_container.services.chat_application_service.services.chat_service,
+        app_container.services.chat_application_service.chat_service,
     )
     return ChatWsConnectionService(
         auth_service, stream_consumer, message_handler, ws_settings, _metrics

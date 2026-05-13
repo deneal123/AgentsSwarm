@@ -5,7 +5,7 @@ import { CHAT_FONT_FAMILY, CHAT_THEME } from '../constants/theme';
 function ChatPageLayout({ children }) {
   return (
     <Box
-      h="100vh"
+      h="calc(100vh - 76px)"
       position="relative"
       bg={CHAT_THEME.pageBg}
       color={CHAT_THEME.textPrimary}

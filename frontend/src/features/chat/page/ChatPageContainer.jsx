@@ -1,11 +1,10 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { keyframes } from '@emotion/react';
-import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   AlertDescription,
   AlertIcon,
-  Avatar,
   Badge,
   Box,
   Button,
@@ -50,6 +49,7 @@ import ChatPageLayout from './ChatPageLayout';
 import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
 import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { useChatTransport, useComposerController, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { useLayoutControls } from '@app/providers';
 import { useChatInitialization } from '../hooks/orchestration/useChatInitialization';
 import { useChatThreadRouting } from '../hooks/orchestration/useChatThreadRouting';
 import { useChatDrawersState } from '../hooks/orchestration/useChatDrawersState';
@@ -108,6 +108,12 @@ const traceRingSpin = keyframes`
  * - Предложение регистрации при лимитах
  */
 function ChatPageContainer() {
+  const { setVariant, setFooterVisible } = useLayoutControls();
+  useEffect(() => {
+    setVariant('full');
+    setFooterVisible(false);
+  }, [setVariant, setFooterVisible]);
+
   const { threadId: routeThreadId } = useParams();
   const init = useChatInitialization(routeThreadId);
   const { threadId, initialMessage, initialManualModel, initialInputType, initialWebSearch, initialDeepResearch, initialFileContext, selectedModelOverride } = init.state;
@@ -1145,89 +1151,18 @@ function ChatPageContainer() {
               />
             </HStack>
 
-            {/* Right: auth/workspace */}
-            <HStack w={{ base: 'auto', md: '200px' }} justify="flex-end" spacing={2}>
-              {!isAuthenticated ? (
-                <>
-                  <Button
-                    as={NavLink}
-                    to="/login"
-                    size="sm"
-                    variant="ghost"
-                    color={CHAT_THEME.textSecondary}
-                    _hover={{ color: CHAT_THEME.textPrimary, bg: CHAT_THEME.panelHover }}
-                    borderRadius="10px"
-                    fontSize="13px"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
-                    Войти
-                  </Button>
-                  <Button
-                    as={NavLink}
-                    to="/register"
-                    size="sm"
-                    bg={CHAT_THEME.accentSoft}
-                    color="#fca5a5"
-                    border="1.5px solid rgba(239,68,68,0.3)"
-                    _hover={{ bg: 'rgba(239,68,68,0.22)', borderColor: 'rgba(239,68,68,0.45)', color: '#fca5a5' }}
-                    borderRadius="10px"
-                    fontSize="13px"
-                    fontWeight="600"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
-                    Регистрация
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={profileDisclosure.onOpen}
-                  size="sm"
-                  variant="ghost"
-                  borderRadius="12px"
-                  px={2}
-                  py={1}
-                  h="38px"
-                  _hover={{ bg: CHAT_THEME.panelHover }}
-                  _active={{ bg: CHAT_THEME.panelActive }}
-                >
-                  <HStack spacing={2.5} align="center">
-                    <Box
-                      position="relative"
-                      borderRadius="full"
-                      p="1.5px"
-                      bg="linear-gradient(135deg, rgba(239,68,68,0.95), rgba(255,255,255,0.35))"
-                    >
-                      <Avatar
-                        size="xs"
-                        name={user?.first_name || user?.email || 'User'}
-                        bg="rgba(12,12,12,1)"
-                        color={CHAT_THEME.textPrimary}
-                        fontSize="10px"
-                        fontWeight="700"
-                      />
-                      <Box
-                        position="absolute"
-                        bottom={0}
-                        right={0}
-                        w="7px"
-                        h="7px"
-                        borderRadius="full"
-                        bg="#22c55e"
-                        border="2px solid"
-                        borderColor={CHAT_THEME.headerBg}
-                      />
-                    </Box>
-                    <Box display={{ base: 'none', md: 'flex' }} flexDirection="column" alignItems="flex-start" lineHeight="1.15">
-                      <Text fontSize="12px" fontWeight="650" color={CHAT_THEME.textPrimary} noOfLines={1} maxW="120px">
-                        {user?.first_name || 'Профиль'}
-                      </Text>
-                      <Text fontSize="10px" fontWeight="500" color={CHAT_THEME.textTertiary} noOfLines={1} maxW="120px">
-                        {user?.email || ''}
-                      </Text>
-                    </Box>
-                  </HStack>
-                </Button>
-              )}
+            {/* Right: settings */}
+            <HStack w={{ base: 'auto', md: '160px' }} justify="flex-end" spacing={2}>
+              <IconButton
+                aria-label="Настройки чата"
+                icon={<FiSettings />}
+                variant="ghost"
+                size="sm"
+                color={CHAT_THEME.textSecondary}
+                _hover={{ bg: CHAT_THEME.panelHover, color: CHAT_THEME.textPrimary }}
+                borderRadius="10px"
+                onClick={settingsDisclosure.onOpen}
+              />
             </HStack>
           </Flex>
 
