@@ -1091,7 +1091,7 @@ function ChatPageContainer() {
           bg="rgba(0,0,0,0.25)"
         />
       </Box>
-      <Flex h="100vh" overflow="hidden" position="relative" zIndex={1}>
+      <Flex h="100%" overflow="hidden" position="relative" zIndex={1}>
         {/* Sidebar */}
         <ChatSidebar isCollapsed={isSidebarCollapsed}>
           <Box bg={CHAT_THEME.sidebarBg} h="full" borderRight={`1px solid ${CHAT_THEME.panelBorder}`}>
