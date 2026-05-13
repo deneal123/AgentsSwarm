@@ -8,7 +8,7 @@ export const CHAT_ACTIONS = {
   SET_SIDEBAR_SEARCH: 'SET_SIDEBAR_SEARCH', SET_SIDEBAR_COLLAPSED: 'SET_SIDEBAR_COLLAPSED', SET_INPUT_VALUE: 'SET_INPUT_VALUE', SET_ATTACHED_FILE: 'SET_ATTACHED_FILE', SET_IS_RECORDING: 'SET_IS_RECORDING',
   TRACE_START_SESSION: 'TRACE_START_SESSION', TRACE_APPEND_EVENT: 'TRACE_APPEND_EVENT', TRACE_FINALIZE_SESSION: 'TRACE_FINALIZE_SESSION', TRACE_RESET: 'TRACE_RESET',
   SOCKET_ERROR: 'SOCKET_ERROR', RECONNECT: 'RECONNECT', CANCEL_GENERATION: 'CANCEL_GENERATION', CLEAR_THREAD: 'CLEAR_THREAD',
-  STREAM_APPEND_CHUNK: 'STREAM_APPEND_CHUNK', STREAM_COMPLETE_LAST_AGENT: 'STREAM_COMPLETE_LAST_AGENT',
+  STREAM_APPEND_CHUNK: 'STREAM_APPEND_CHUNK', STREAM_COMPLETE_LAST_AGENT: 'STREAM_COMPLETE_LAST_AGENT', STREAM_FINALIZE_WITH_CONTENT: 'STREAM_FINALIZE_WITH_CONTENT',
 };
 
 export const initialChatState = {
@@ -68,6 +68,21 @@ export function chatStateReducer(state, action) { switch (action.type) {
       ...state,
       messages: state.messages.map((msg, index) => (index === state.messages.length - 1 && msg.type === 'agent' && msg.isTyping ? { ...msg, isTyping: false, complete: true, typingProgress: 1 } : msg)),
     };
+  case CHAT_ACTIONS.STREAM_FINALIZE_WITH_CONTENT: {
+    const { content, metadata, file_url } = action.payload;
+    const msgs = state.messages;
+    const lastIdx = msgs.length - 1;
+    if (lastIdx >= 0 && msgs[lastIdx].type === 'agent' && !msgs[lastIdx].complete) {
+      return {
+        ...state,
+        messages: msgs.map((msg, i) => i === lastIdx ? { ...msg, content, metadata: metadata || msg.metadata, file_url: file_url || msg.file_url, complete: true, isTyping: false, typingProgress: 1 } : msg),
+      };
+    }
+    return {
+      ...state,
+      messages: [...msgs, { id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content, timestamp: new Date().toISOString(), metadata, file_url, complete: true, isTyping: false, typingProgress: 1 }],
+    };
+  }
   default: return state;
 }}
 

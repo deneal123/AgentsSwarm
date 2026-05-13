@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { clampTraceDetail } from '../../utils/trace';
 
-export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, addMessage, appendStreamChunk, completeLastAgentMessage, setCurrentJob, clearCurrentJob, setInputValue }) {
+export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, appendTraceEvent, finalizeTraceSession, addMessage, appendStreamChunk, completeLastAgentMessage, finalizeStreamWithContent, setCurrentJob, clearCurrentJob, setInputValue }) {
   const isLoadingRef = useRef(false);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
@@ -71,11 +71,17 @@ export function useChatStreamingLifecycle({ isLoading, setIsLoading, setError, a
     }
     lastWsReplyFingerprintRef.current = replyFingerprint;
     appendTraceEvent({ kind: data?.metadata?.provider_unavailable ? 'error' : 'done', title: data?.metadata?.provider_unavailable ? 'Ответ сформирован в деградированном режиме' : 'Ответ сформирован', detail: data?.metadata?.provider_error || '' });
-    addMessage({ id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: incomingReply, timestamp: new Date().toISOString(), metadata: data.metadata, file_url: data.file_url, complete: true, isTyping: false, typingProgress: 1 });
+    // Finalize the streaming message with authoritative final content rather than adding a second bubble.
+    // Falls back to addMessage if no streaming message exists (e.g. chunk-less path).
+    if (finalizeStreamWithContent) {
+      finalizeStreamWithContent(incomingReply, data.metadata, data.file_url);
+    } else {
+      addMessage({ id: `agent_${Date.now()}_${Math.random()}`, type: 'agent', content: incomingReply, timestamp: new Date().toISOString(), metadata: data.metadata, file_url: data.file_url, complete: true, isTyping: false, typingProgress: 1 });
+    }
     setIsLoading(false);
     setInputValue('');
     finalizeTraceSession(data?.metadata?.provider_unavailable ? 'error' : 'done');
-  }, [addMessage, appendTraceEvent, finalizeTraceSession, resolveWsEventJobId, setInputValue, setIsLoading, shouldIgnoreWsEvent]);
+  }, [addMessage, appendTraceEvent, finalizeStreamWithContent, finalizeTraceSession, resolveWsEventJobId, setInputValue, setIsLoading, shouldIgnoreWsEvent]);
 
   const onAgentComplete = useCallback((data) => {
     if (shouldIgnoreWsEvent(data)) return;

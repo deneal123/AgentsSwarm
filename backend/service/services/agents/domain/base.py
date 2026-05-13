@@ -131,55 +131,6 @@ class SimpleStreamingAgent(BaseAgent):
                     if isinstance(value, str) and value:
                         return value
 
-                if r_type in {"response.output_text.done", "response.completed"}:
-                    value = (
-                        getattr(raw, "text", None) if not isinstance(raw, dict) else raw.get("text")
-                    )
-                    if isinstance(value, str) and value:
-                        return value
-
-            # message output item shape
-            item = getattr(raw, "item", None) if not isinstance(raw, dict) else raw.get("item")
-            if item is not None:
-                content = (
-                    getattr(item, "content", None)
-                    if not isinstance(item, dict)
-                    else item.get("content")
-                )
-                if isinstance(content, list):
-                    for c in content:
-                        text = (
-                            getattr(c, "text", None) if not isinstance(c, dict) else c.get("text")
-                        )
-                        if isinstance(text, str) and text:
-                            return text
-
-            response = (
-                getattr(raw, "response", None) if not isinstance(raw, dict) else raw.get("response")
-            )
-            if response is not None:
-                output = (
-                    getattr(response, "output", None)
-                    if not isinstance(response, dict)
-                    else response.get("output")
-                )
-                if isinstance(output, list):
-                    for out in output:
-                        content = (
-                            getattr(out, "content", None)
-                            if not isinstance(out, dict)
-                            else out.get("content")
-                        )
-                        if isinstance(content, list):
-                            for c in content:
-                                text = (
-                                    getattr(c, "text", None)
-                                    if not isinstance(c, dict)
-                                    else c.get("text")
-                                )
-                                if isinstance(text, str) and text:
-                                    return text
-
         return None
 
     async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:

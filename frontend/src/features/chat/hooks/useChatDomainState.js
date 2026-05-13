@@ -20,6 +20,7 @@ export function useChatDomainState() {
     dispatch({ type: CHAT_ACTIONS.STREAM_APPEND_CHUNK, payload: { chunk, metadata } });
   }, [dispatch]);
   const completeLastAgentMessage = useCallback(() => dispatch({ type: CHAT_ACTIONS.STREAM_COMPLETE_LAST_AGENT }), [dispatch]);
+  const finalizeStreamWithContent = useCallback((content, metadata, file_url) => dispatch({ type: CHAT_ACTIONS.STREAM_FINALIZE_WITH_CONTENT, payload: { content, metadata, file_url } }), [dispatch]);
   const addTraceSession = useCallback((session) => dispatch({ type: CHAT_ACTIONS.TRACE_START_SESSION, payload: session }), [dispatch]);
   const appendTrace = useCallback((sessionId, event) => dispatch({ type: CHAT_ACTIONS.TRACE_APPEND_EVENT, payload: { sessionId, event } }), [dispatch]);
   const finalizeTrace = useCallback((sessionId, status) => dispatch({ type: CHAT_ACTIONS.TRACE_FINALIZE_SESSION, payload: { sessionId, status } }), [dispatch]);
@@ -32,7 +33,7 @@ export function useChatDomainState() {
     traceSessions: state.traceSessions,
   }), [state.currentJob, state.error, state.loading, state.messages, state.traceSessions]);
 
-  const actions = useMemo(() => ({ setLoading, setError, clearError, setCurrentJob, clearCurrentJob, addMessage, clearMessages, replaceMessages, updateLastAgentChunk, completeLastAgentMessage, addTraceSession, appendTrace, finalizeTrace }), [addMessage, addTraceSession, appendTrace, clearCurrentJob, clearError, clearMessages, completeLastAgentMessage, finalizeTrace, replaceMessages, setCurrentJob, setError, setLoading, updateLastAgentChunk]);
+  const actions = useMemo(() => ({ setLoading, setError, clearError, setCurrentJob, clearCurrentJob, addMessage, clearMessages, replaceMessages, updateLastAgentChunk, completeLastAgentMessage, finalizeStreamWithContent, addTraceSession, appendTrace, finalizeTrace }), [addMessage, addTraceSession, appendTrace, clearCurrentJob, clearError, clearMessages, completeLastAgentMessage, finalizeStreamWithContent, finalizeTrace, replaceMessages, setCurrentJob, setError, setLoading, updateLastAgentChunk]);
 
   return { state: domainState, actions, container };
 }

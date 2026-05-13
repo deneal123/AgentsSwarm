@@ -178,6 +178,7 @@ function ChatPageContainer() {
     addMessage,
     appendStreamChunk: domainActions.updateLastAgentChunk,
     completeLastAgentMessage: domainActions.completeLastAgentMessage,
+    finalizeStreamWithContent: domainActions.finalizeStreamWithContent,
     setCurrentJob,
     clearCurrentJob,
     setInputValue: clearInput,
