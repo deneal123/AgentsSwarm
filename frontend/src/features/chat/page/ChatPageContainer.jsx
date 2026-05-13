@@ -174,10 +174,10 @@ function ChatPageContainer() {
   const orchestrator = useOrchestratorState();
   const orchestratorAnchorIdRef = useRef(null);
 
-  // Reset orchestrator state on new message (when trace sessions are reset)
+  // Reset orchestrator state on every new message (session count increases) or new chat (decreases)
   const prevTraceSessionCountRef = useRef(0);
   useEffect(() => {
-    if (traceSessions.length < prevTraceSessionCountRef.current) {
+    if (traceSessions.length !== prevTraceSessionCountRef.current) {
       orchestrator.actions.reset();
       orchestratorAnchorIdRef.current = null;
     }
