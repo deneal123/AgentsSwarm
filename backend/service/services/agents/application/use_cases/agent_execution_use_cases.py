@@ -57,6 +57,7 @@ class RunAgentUseCase:
         processor: AgentProcessor,
         reply_assembler: ReplyAssembler,
         metadata: dict[str, Any],
+        on_event: Any = None,
         **kwargs: Any,
     ) -> list[Any]:
         events = []
@@ -70,6 +71,8 @@ class RunAgentUseCase:
                 error_type=EventType.ERROR,
                 structured_output_type=EventType.STRUCTURED_OUTPUT,
             )
+            if on_event is not None:
+                on_event(event)
         return events
 
 

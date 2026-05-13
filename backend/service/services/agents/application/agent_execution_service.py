@@ -29,6 +29,7 @@ class DefaultAgentExecutionService(AgentExecutionPort):
         deep_research: bool,
         file_context: str,
         pseudo_session: Any | None = None,
+        on_event: Any | None = None,
     ) -> dict[str, Any]:
         resolved_model, routing_meta = await RouteModelUseCase().execute(
             text=text, selected_model=selected_model, input_type=input_type
@@ -60,6 +61,7 @@ class DefaultAgentExecutionService(AgentExecutionPort):
             processor=processor,
             reply_assembler=reply_assembler,
             metadata=metadata,
+            on_event=on_event,
             user_input=text,
             thread_id=thread_id,
             user_id=user_id,

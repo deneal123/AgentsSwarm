@@ -12,7 +12,6 @@ from service.services.chat.application.error_handling import (
     map_to_worker_error_payload,
     normalize_response_metadata,
 )
-from service.services.chat.application.use_cases.chat_use_cases import PersistChatMessagesUseCase
 from service.services.chat.infrastructure.chat_worker import (
     ChatWorkerConversationService,
     ChatWorkerDependencyFactory,
@@ -101,13 +100,13 @@ async def process_agent_message_async(
     dependency_factory: ChatWorkerDependencyFactory | None = None,
     agent_execution: AgentExecutionPort | None = None,
 ) -> dict:
-    from service.composition import state as container
     from service.models.key_value import ProcessingStatus
     from service.services.agents.application.agent_execution_service import (
         DefaultAgentExecutionService,
     )
     from service.services.agents.application.agent_file_bridge import persist_generated_artifacts
     from service.services.agents.application.agent_session_service import AgentSessionService
+    from service.services.agents.domain.events import EventType
     from service.services.files.application.file_saver_service import FileSaverService
     from service.services.files.persistence.file_repository import FileRepository
     from service.services.jobs.persistence.job_repository import JobRepository
@@ -156,6 +155,23 @@ async def process_agent_message_async(
                 {"type": "processing", "job_id": job_id, "timestamp": datetime.now(UTC).isoformat()}
             )
 
+            # Real-time event publishing: each stream_chunk is forwarded to Redis immediately
+            _seq = [0]
+
+            def _on_event(event: Any) -> None:
+                evt_type = event.type.value if hasattr(event.type, "value") else str(event.type)
+                if evt_type == EventType.STREAM_CHUNK and event.data:
+                    publisher.publish_payload({
+                        "type": "stream_chunk",
+                        "job_id": job_id,
+                        "data": str(event.data),
+                        "seq": _seq[0],
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    })
+                    _seq[0] += 1
+                else:
+                    publisher.publish_agent_event(event=event, job_id=job_id)
+
             execution_service = agent_execution or DefaultAgentExecutionService()
             execution_result = await execution_service.execute(
                 text=text,
@@ -169,9 +185,8 @@ async def process_agent_message_async(
                 deep_research=deep_research,
                 file_context=file_context,
                 pseudo_session=pseudo_session,
+                on_event=_on_event,
             )
-            for event in execution_result["events"]:
-                publisher.publish_agent_event(event=event, job_id=job_id)
 
             reply = str(execution_result["reply"])
             metadata: dict[str, Any] = execution_result["metadata"]
@@ -194,9 +209,8 @@ async def process_agent_message_async(
             metadata = normalize_response_metadata(
                 metadata, selected_model=resolved_model or selected_model
             )
-            await PersistChatMessagesUseCase(
-                container.get_current_container().services.chat_application_service.services.chat_service
-            ).execute(
+            await _persist_chat_turn(
+                db_session=session,
                 thread_id=thread_id,
                 user_text=text,
                 assistant_text=reply,
