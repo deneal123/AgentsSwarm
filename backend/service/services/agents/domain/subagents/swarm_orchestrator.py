@@ -300,7 +300,7 @@ class SwarmOrchestratorAgent(BaseAgent):
                 for line in logs:
                     if not line:
                         continue
-                    for prefix in ("[info] orchestrator: ", "[warning] orchestrator: ", "[error] orchestrator: "]:
+                    for prefix in ("[info] orchestrator: ", "[warning] orchestrator: ", "[error] orchestrator: "):
                         if line.startswith(prefix):
                             content = line[len(prefix):].strip()
                             if content and content not in {"Processing started"}:
