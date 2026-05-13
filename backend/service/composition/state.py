@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Request
+from starlette.requests import HTTPConnection
 
 from service.composition.models import AppContainer
 from service.services.analytics.application.analytics_service import AnalyticsService
@@ -25,40 +25,40 @@ def get_current_container() -> AppContainer:
     return _CURRENT_CONTAINER
 
 
-def get_app_container(request: Request) -> AppContainer:
+def get_app_container(request: HTTPConnection) -> AppContainer:
     app_container = getattr(request.app.state, "container", None)
     if app_container is not None:
         return app_container
     return get_current_container()
 
 
-def get_auth_service(request: Request) -> AuthService:
+def get_auth_service(request: HTTPConnection) -> AuthService:
     return get_app_container(request).services.auth_service
 
 
-def get_job_service(request: Request) -> JobService:
+def get_job_service(request: HTTPConnection) -> JobService:
     return get_app_container(request).services.job_service
 
 
-def get_profile_service(request: Request) -> ProfileService:
+def get_profile_service(request: HTTPConnection) -> ProfileService:
     return get_app_container(request).services.profile_service
 
 
-def get_file_saver_service(request: Request) -> FileSaverService:
+def get_file_saver_service(request: HTTPConnection) -> FileSaverService:
     return get_app_container(request).services.file_saver_service
 
 
-def get_analytics_service(request: Request) -> AnalyticsService:
+def get_analytics_service(request: HTTPConnection) -> AnalyticsService:
     return get_app_container(request).services.analytics_service
 
 
-def get_optional_redis_client(request: Request) -> Any:
+def get_optional_redis_client(request: HTTPConnection) -> Any:
     return get_app_container(request).infra.redis_client
 
 
-def get_optional_redis_session_store(request: Request) -> Any:
+def get_optional_redis_session_store(request: HTTPConnection) -> Any:
     return get_app_container(request).infra.redis_session_store
 
 
-def get_chat_application_service(request: Request) -> Any:
+def get_chat_application_service(request: HTTPConnection) -> Any:
     return get_app_container(request).services.chat_application_service
