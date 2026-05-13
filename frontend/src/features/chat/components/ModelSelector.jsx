@@ -27,11 +27,9 @@ function ModelSelector({ selectedModel, availableModels, onChange }) {
     <Menu matchWidth>
       <MenuButton
         as={Button}
-        rightIcon={<FiChevronDown />}
         w={isMobile ? "100%" : "320px"}
         minW={0}
         size="sm"
-        justifyContent="space-between"
         borderRadius={borderRadius.md}
         borderWidth="1px"
         borderColor={isAuto ? chat.modelSelector.triggerBorder : chat.modelSelector.triggerBorderActive}
@@ -41,12 +39,14 @@ function ModelSelector({ selectedModel, availableModels, onChange }) {
         fontSize="13px"
         fontWeight="600"
         px={3}
+        overflow="visible"
         _hover={{ bg: isAuto ? chat.modelSelector.triggerBgHover : chat.modelSelector.activeBgHover }}
         _active={{ bg: isAuto ? chat.modelSelector.triggerBgHover : chat.modelSelector.activeBgHover }}
       >
-        <HStack flex="1" justify="space-between" minW={0} spacing={2}>
-          <Icon as={FiCheck} opacity={isAuto ? 0.2 : 1} color={isAuto ? colors.text.tertiary : chat.modelSelector.activeText} />
-          <Text noOfLines={1}>{label}</Text>
+        <HStack w="100%" justify="center" spacing={2}>
+          {!isAuto && <Icon as={FiCheck} boxSize="12px" color={chat.modelSelector.activeText} flexShrink={0} />}
+          <Text noOfLines={1} textAlign="center">{label}</Text>
+          <Icon as={FiChevronDown} boxSize="12px" color="currentColor" flexShrink={0} />
         </HStack>
       </MenuButton>
       <MenuList

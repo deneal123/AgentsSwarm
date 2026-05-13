@@ -2,9 +2,6 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import { keyframes } from '@emotion/react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
   Badge,
   Box,
   Button,
@@ -30,8 +27,11 @@ import { getChatModels, sendChatMessage } from '@api/chat';
 import { colors } from '@theme/tokens';
 import { extractUrlCandidates } from '@utils/urlParser';
 import {
+  FiAlertCircle,
+  FiAlertTriangle,
   FiCopy,
   FiEye,
+  FiInfo,
   FiLayers,
   FiRotateCcw,
   FiSearch,
@@ -1175,27 +1175,33 @@ function ChatPageContainer() {
 
           <Box ref={messagesScrollRef} flex="1" minH="0" overflowY="auto" px={{ base: 3, md: 6, lg: 8 }} pt={{ base: 5, md: 8 }} pb={{ base: 6, md: 8 }} sx={CHAT_SCROLLBAR_SX}>
             {error && (
-              <Alert status="error" borderRadius="xl" mb={4}>
-                <AlertIcon />
-                <AlertDescription fontSize="13px" lineHeight="1.45" fontWeight="500">{error}</AlertDescription>
-              </Alert>
+              <Box display="flex" alignItems="center" gap={2.5} px={4} py={3} mb={4} borderRadius="12px"
+                bg="rgba(239,68,68,0.08)" border="1px solid rgba(239,68,68,0.3)"
+                backdropFilter="blur(8px)">
+                <Icon as={FiAlertCircle} color="#f87171" boxSize="15px" flexShrink={0} />
+                <Text fontSize="13px" color="rgba(255,255,255,0.85)" fontWeight="500" lineHeight="1.45">{error}</Text>
+              </Box>
             )}
 
             {providerStatus.unavailable && (
-              <Alert status="warning" borderRadius="xl" mb={4}>
-                <AlertIcon />
-                <AlertDescription fontSize="13px" lineHeight="1.45" fontWeight="500">
+              <Box display="flex" alignItems="center" gap={2.5} px={4} py={3} mb={4} borderRadius="12px"
+                bg="rgba(251,191,36,0.07)" border="1px solid rgba(251,191,36,0.28)"
+                backdropFilter="blur(8px)">
+                <Icon as={FiAlertTriangle} color="#fbbf24" boxSize="15px" flexShrink={0} />
+                <Text fontSize="13px" color="rgba(255,255,255,0.85)" fontWeight="500" lineHeight="1.45">
                   Сервис моделей сейчас недоступен. Проверьте API-ключ и доступ к провайдеру.
                   {providerStatus.error ? ` Детали: ${providerStatus.error}` : ''}
-                </AlertDescription>
-              </Alert>
+                </Text>
+              </Box>
             )}
 
             {connectionState === 'connecting' && (
-              <Alert status="info" borderRadius="xl" mb={4}>
-                <AlertIcon />
-                <AlertDescription fontSize="13px" lineHeight="1.45" fontWeight="500">Подключаемся к каналу сообщений...</AlertDescription>
-              </Alert>
+              <Box display="flex" alignItems="center" gap={2.5} px={4} py={3} mb={4} borderRadius="12px"
+                bg="rgba(96,165,250,0.07)" border="1px solid rgba(96,165,250,0.25)"
+                backdropFilter="blur(8px)">
+                <Icon as={FiInfo} color="#60a5fa" boxSize="15px" flexShrink={0} />
+                <Text fontSize="13px" color="rgba(255,255,255,0.85)" fontWeight="500" lineHeight="1.45">Подключаемся к каналу сообщений...</Text>
+              </Box>
             )}
 
             {visibleMessages.length === 0 ? (

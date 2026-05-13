@@ -146,6 +146,7 @@ function Header() {
           px={2}
           py={1}
           borderRadius={borderRadius.full}
+          overflow="visible"
           _focusVisible={{
             boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.5)",
             outline: "none",
@@ -308,7 +309,7 @@ function Header() {
           <Box
             maxW={isAuthPage ? "none" : "1400px"}
             mx="auto"
-            px={isAuthPage ? 5 : { base: 4, md: 6, lg: 8 }}
+            px={isAuthPage ? 5 : { base: 4, md: 4, lg: 5 }}
           >
             <Flex align="center" justify="space-between" h="76px" gap={4}>
               <Link
