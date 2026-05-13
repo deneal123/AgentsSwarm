@@ -3,12 +3,13 @@
 import asyncio
 import json
 import logging
+import re
 from collections.abc import AsyncGenerator
 
 import httpx
 
 from service.services.agents.domain.base import BaseAgent
-from service.services.agents.domain.client import create_chat_completion, get_active_provider, list_available_models
+from service.services.agents.domain.client import create_chat_completion, list_available_models
 from service.services.agents.domain.events import AgentEvent, EventType
 from service.services.agents.schemas.agents import UserContext
 from service.settings import config
@@ -24,12 +25,25 @@ INSTRUCTION_SYNTHESIS_PROMPT = """Ты — специализированный 
 3. Если пользователь передал описание изображения или карты — используй эти данные.
 4. Формат ответа: одна конкретная инструкция на русском языке, до 500 символов.
 5. НЕ добавляй вводные слова, пояснения или форматирование. Только сама инструкция.
+6. НЕ выводи размышления, цепочки мыслей или процесс рассуждений. Только итоговая инструкция.
 
 Пример хорошей инструкции:
 "Отправить робота carter01 к координатам (10, 12) на карте Area-7. Избегать препятствий в зоне (5,5)-(8,8). После прибытия передать статус 'mission_complete'."
 """
 
-TERMINAL_TASK_STATUSES = {"completed", "failed", "canceled", "COMPLETED", "FAILED", "CANCELED"}
+TERMINAL_STATUSES = {"completed", "failed", "canceled"}
+AGENT_SOURCES = {"agent", "agent-sdk", "orchestrator", "runner"}
+
+# Regex to extract and strip <think>...</think> blocks that reasoning models emit
+_THINK_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL | re.IGNORECASE)
+
+
+def _extract_think(text: str) -> tuple[str, str]:
+    """Return (reasoning_text, clean_instruction) — reasoning is shown to the user, not sent to orchestrator."""
+    thoughts = _THINK_RE.findall(text)
+    reasoning = "\n\n".join(t.strip() for t in thoughts if t.strip())
+    clean = _THINK_RE.sub("", text).strip()
+    return reasoning, clean
 
 
 class SwarmOrchestratorAgent(BaseAgent):
@@ -38,8 +52,9 @@ class SwarmOrchestratorAgent(BaseAgent):
     Workflow:
     1. Synthesize a clear orchestrator instruction from the multimodal user context.
     2. Create a task via the external orchestrator REST API.
-    3. Subscribe to the orchestrator WebSocket and stream live events back.
-    4. Yield a brief summary when the task reaches a terminal state.
+    3. Poll /task/{id}/events incrementally (proven reliable approach from official examples).
+    4. Stream live events to the frontend; extract images, plan updates, agent text.
+    5. Use the final task logs as the definitive user-facing reply.
     """
 
     def __init__(self, model_settings: dict):
@@ -68,20 +83,25 @@ class SwarmOrchestratorAgent(BaseAgent):
             metadata={"event_type": "orchestrator_synthesizing"},
         )
         try:
-            instruction = await self._synthesize_instruction(user_input)
+            instruction, reasoning = await self._synthesize_instruction(user_input)
         except Exception as exc:
             logger.exception("Failed to synthesize orchestrator instruction")
-            yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data=f"Не удалось сформировать инструкцию: {exc}",
-            )
+            yield AgentEvent(type=EventType.ERROR, agent_name=self.name, data=f"Не удалось сформировать инструкцию: {exc}")
             return
+
+        # Emit reasoning block so the UI can show it in a collapsible panel
+        if reasoning:
+            yield AgentEvent(
+                type=EventType.STATUS_UPDATE,
+                agent_name=self.name,
+                data=reasoning,
+                metadata={"event_type": "orchestrator_reasoning", "reasoning": reasoning},
+            )
 
         yield AgentEvent(
             type=EventType.STATUS_UPDATE,
             agent_name=self.name,
-            data=f"Инструкция готова: {instruction[:120]}{'…' if len(instruction) > 120 else ''}",
+            data=f"Инструкция: {instruction[:120]}{'…' if len(instruction) > 120 else ''}",
             metadata={"event_type": "orchestrator_instruction", "instruction": instruction},
         )
 
@@ -96,11 +116,7 @@ class SwarmOrchestratorAgent(BaseAgent):
             task_id = await self._create_orchestrator_task(instruction)
         except Exception as exc:
             logger.exception("Failed to create orchestrator task")
-            yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data=f"Не удалось создать задачу: {exc}",
-            )
+            yield AgentEvent(type=EventType.ERROR, agent_name=self.name, data=f"Не удалось создать задачу: {exc}")
             return
 
         yield AgentEvent(
@@ -110,76 +126,178 @@ class SwarmOrchestratorAgent(BaseAgent):
             metadata={"event_type": "orchestrator_task_created", "task_id": task_id},
         )
 
-        # Step 3 — stream orchestrator WS events
-        final_status = "completed"
+        # Step 3 — fetch initial plan
         try:
-            async for orch_event in self._stream_task_events(task_id):
-                event_meta = orch_event.get("meta") or {}
-                images = event_meta.get("images") or []
-
-                # Emit map / path visualisation images separately
-                if images:
-                    yield AgentEvent(
-                        type=EventType.STRUCTURED_OUTPUT,
-                        agent_name=self.name,
-                        data={
-                            "type": "orchestrator_images",
-                            "images": images,
-                            "task_id": task_id,
-                        },
-                        metadata={"event_type": "orchestrator_images", "task_id": task_id},
-                    )
-
-                # Detect terminal state
-                task_status = (
-                    event_meta.get("task_status")
-                    or event_meta.get("state")
-                    or orch_event.get("status", "")
-                )
-                if task_status in TERMINAL_TASK_STATUSES:
-                    final_status = task_status.lower()
-
-                # Emit live event for frontend timeline
+            plan = await self._fetch_plan(task_id)
+            if plan:
                 yield AgentEvent(
                     type=EventType.STATUS_UPDATE,
                     agent_name=self.name,
-                    data=orch_event.get("message", ""),
+                    data=f"План: {len(plan)} шаг(ов)",
+                    metadata={"event_type": "orchestrator_plan", "task_id": task_id, "plan": plan},
+                )
+        except Exception:
+            pass
+
+        # Step 4 — stream events via REST polling
+        final_status = "completed"
+        accumulated_agent_text: list[str] = []
+        plan_step_agents_seen: set = set()
+
+        try:
+            async for orch_event in self._poll_events(task_id):
+                meta = orch_event.get("meta") or {}
+                source = orch_event.get("source", "")
+                message = orch_event.get("message", "")
+                event_type = meta.get("event_type", "")
+                sdk_event = meta.get("sdk_event", "")
+                meta_type = meta.get("type", "")
+
+                # ── Images ──────────────────────────────────────────────────
+                if meta_type == "map_image":
+                    image_b64 = meta.get("image_b64", "")
+                    if image_b64:
+                        robots_on_map = meta.get("robots_on_map", 0)
+                        yield AgentEvent(
+                            type=EventType.STRUCTURED_OUTPUT,
+                            agent_name=self.name,
+                            data={
+                                "type": "orchestrator_images",
+                                "task_id": task_id,
+                                "image_b64": image_b64,
+                                "label": f"Карта ({robots_on_map} роботов)",
+                                "mime": meta.get("mime", "image/png"),
+                            },
+                            metadata={"event_type": "orchestrator_images", "task_id": task_id},
+                        )
+                        continue
+
+                if meta_type == "route_images":
+                    images = meta.get("images") or []
+                    winner = meta.get("winner", "")
+                    if images:
+                        normalized = [
+                            {
+                                "name": img.get("name", f"route_{i}"),
+                                "image_b64": img.get("image_b64", ""),
+                                "is_best": img.get("is_best", False) or img.get("name") == winner,
+                                "mime": img.get("mime", "image/png"),
+                            }
+                            for i, img in enumerate(images)
+                            if img.get("image_b64")
+                        ]
+                        if normalized:
+                            yield AgentEvent(
+                                type=EventType.STRUCTURED_OUTPUT,
+                                agent_name=self.name,
+                                data={
+                                    "type": "orchestrator_images",
+                                    "task_id": task_id,
+                                    "images": normalized,
+                                    "winner": winner,
+                                },
+                                metadata={"event_type": "orchestrator_images", "task_id": task_id},
+                            )
+                    continue
+
+                # ── Skip non-text SDK noise ──────────────────────────────────
+                if sdk_event == "message_output_created":
+                    continue
+                if not message or message in {"Task accepted", "Plan created"}:
+                    continue
+
+                # ── Streaming agent text deltas ──────────────────────────────
+                if sdk_event == "raw_response_event" and message:
+                    accumulated_agent_text.append(message)
+                    # Don't emit as STATUS_UPDATE — accumulate for final STREAM_CHUNK
+                    continue
+
+                # ── Plan updates on step events ──────────────────────────────
+                step_id = meta.get("step_id")
+                agent_in_step = meta.get("agent", "")
+                is_step_event = "step" in event_type and step_id is not None
+
+                if is_step_event and agent_in_step and agent_in_step not in plan_step_agents_seen:
+                    plan_step_agents_seen.add(agent_in_step)
+                    try:
+                        updated_plan = await self._fetch_plan(task_id)
+                        if updated_plan:
+                            yield AgentEvent(
+                                type=EventType.STATUS_UPDATE,
+                                agent_name=self.name,
+                                data="Обновление плана",
+                                metadata={"event_type": "orchestrator_plan", "task_id": task_id, "plan": updated_plan},
+                            )
+                    except Exception:
+                        pass
+
+                # ── Live event for frontend timeline ─────────────────────────
+                yield AgentEvent(
+                    type=EventType.STATUS_UPDATE,
+                    agent_name=self.name,
+                    data=message,
                     metadata={
                         "event_type": "orchestrator_event",
                         "task_id": task_id,
                         "orchestrator_event": {
-                            "source": orch_event.get("source", "orchestrator"),
-                            "message": orch_event.get("message", ""),
+                            "source": source,
+                            "message": message,
                             "level": orch_event.get("level", "info"),
                             "ts": orch_event.get("ts", ""),
-                            "meta": event_meta,
+                            "meta": {k: v for k, v in meta.items() if k not in ("image_b64", "images")},
                         },
                     },
                 )
 
-                if final_status in {"completed", "failed", "canceled"}:
-                    break
         except Exception as exc:
             logger.exception("Error while streaming orchestrator events for task %s", task_id)
-            yield AgentEvent(
-                type=EventType.ERROR,
-                agent_name=self.name,
-                data=f"Ошибка получения событий оркестратора: {exc}",
-            )
+            yield AgentEvent(type=EventType.ERROR, agent_name=self.name, data=f"Ошибка событий оркестратора: {exc}")
 
-        # Step 4 — brief final reply
-        status_labels = {
-            "completed": "успешно завершена",
-            "failed": "завершена с ошибкой",
-            "canceled": "отменена",
-        }
-        label = status_labels.get(final_status, f"завершена ({final_status})")
-        summary = (
-            f"Задача роя роботов **{label}**.\n\n"
-            f"Идентификатор задачи: `{task_id}`\n"
-            f"Инструкция оркестратору: {instruction}"
-        )
-        yield AgentEvent(type=EventType.STREAM_CHUNK, agent_name=self.name, data=summary)
+        # Step 5 — get final status and task logs for the user reply
+        try:
+            status_data = await self._get_task_status(task_id)
+            final_status = status_data.get("status", "completed")
+        except Exception:
+            pass
+
+        # Build reply: prefer accumulated streaming text, fall back to task logs
+        reply_text = ""
+        if accumulated_agent_text:
+            reply_text = "".join(accumulated_agent_text).strip()
+
+        if not reply_text:
+            try:
+                logs = await self._get_task_logs(task_id)
+                # Take last meaningful log entries (agent output, not system lines)
+                meaningful = [
+                    l for l in logs
+                    if l and not l.startswith("[info] api:") and not l.startswith("[info] planner: Plan")
+                ]
+                if meaningful:
+                    reply_text = "\n".join(meaningful[-5:])
+            except Exception:
+                pass
+
+        if not reply_text:
+            status_labels = {"completed": "успешно завершена", "failed": "завершена с ошибкой", "canceled": "отменена"}
+            reply_text = f"Задача роя роботов {status_labels.get(final_status, final_status)}.\nИдентификатор: `{task_id}`"
+
+        # Emit the actual reply
+        yield AgentEvent(type=EventType.STREAM_CHUNK, agent_name=self.name, data=reply_text)
+
+        # Final plan state
+        try:
+            final_plan = await self._fetch_plan(task_id)
+            if final_plan:
+                yield AgentEvent(
+                    type=EventType.STATUS_UPDATE,
+                    agent_name=self.name,
+                    data="Итоговый план",
+                    metadata={"event_type": "orchestrator_plan", "task_id": task_id, "plan": final_plan},
+                )
+        except Exception:
+            pass
+
         yield AgentEvent(
             type=EventType.AGENT_COMPLETE,
             agent_name=self.name,
@@ -188,79 +306,18 @@ class SwarmOrchestratorAgent(BaseAgent):
         )
 
     # ------------------------------------------------------------------
-    # Helpers
+    # REST polling (primary approach — proven reliable in orchestrator examples)
     # ------------------------------------------------------------------
 
-    async def _synthesize_instruction(self, user_input: str) -> str:
-        """Use an LLM to distil the multimodal context into a single orchestrator instruction."""
-        messages = [
-            {"role": "system", "content": INSTRUCTION_SYNTHESIS_PROMPT},
-            {"role": "user", "content": user_input},
-        ]
-        model = await self._pick_model()
-        response = await create_chat_completion(messages=messages, model=model, max_tokens=512, temperature=0.2)
-        text = getattr(getattr(response.choices[0], "message", None), "content", None) or ""
-        return text.strip() or user_input[:500]
-
-    async def _create_orchestrator_task(self, instruction: str) -> str:
-        """POST the instruction to the external orchestrator and return task_id."""
-        base_url = self._get_orchestrator_http_url()
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(f"{base_url}/task", json={"prompt": instruction})
-            resp.raise_for_status()
-            data = resp.json()
-            task_id = data.get("task_id")
-            if not task_id:
-                raise ValueError(f"Orchestrator did not return task_id: {data}")
-            return task_id
-
-    async def _stream_task_events(self, task_id: str) -> AsyncGenerator[dict]:
-        """Connect to the orchestrator WebSocket and yield raw event dicts."""
-        try:
-            import websockets
-        except ImportError:
-            raise RuntimeError("websockets package is required for orchestrator streaming. Install it with: pip install websockets")
-
-        ws_url = f"{self._get_orchestrator_ws_url()}/ws/task/{task_id}"
-        logger.info("Connecting to orchestrator WebSocket: %s", ws_url)
-
-        try:
-            async with websockets.connect(ws_url, ping_interval=20, ping_timeout=10) as ws:
-                async for raw_message in ws:
-                    try:
-                        if isinstance(raw_message, bytes):
-                            raw_message = raw_message.decode()
-                        data = json.loads(raw_message)
-                        yield data
-
-                        # Check if task has reached a terminal state via socket payload
-                        meta = data.get("meta") or {}
-                        task_status = (
-                            meta.get("task_status")
-                            or meta.get("state")
-                            or data.get("status", "")
-                        )
-                        if task_status in TERMINAL_TASK_STATUSES:
-                            logger.info("Orchestrator task %s reached terminal state: %s", task_id, task_status)
-                            return
-                    except json.JSONDecodeError:
-                        logger.warning("Non-JSON message from orchestrator WS: %s", raw_message[:200])
-        except Exception as exc:
-            # Fallback: poll events via REST if WS fails
-            logger.warning("Orchestrator WS failed (%s), falling back to REST polling", exc)
-            async for event in self._poll_task_events_rest(task_id):
-                yield event
-
-    async def _poll_task_events_rest(self, task_id: str) -> AsyncGenerator[dict]:
-        """Fallback: poll /task/{id}/events via REST when WS is unavailable."""
+    async def _poll_events(self, task_id: str, timeout: int = 300) -> AsyncGenerator[dict]:
+        """Incrementally poll /events until task reaches terminal state."""
         base_url = self._get_orchestrator_http_url()
         after_seq = 0
-        max_polls = 300  # 5 minutes at 1s interval
-        polls = 0
+        deadline = asyncio.get_event_loop().time() + timeout
+        poll_interval = 0.5
 
         async with httpx.AsyncClient(timeout=15) as client:
-            while polls < max_polls:
-                polls += 1
+            while asyncio.get_event_loop().time() < deadline:
                 try:
                     resp = await client.get(
                         f"{base_url}/task/{task_id}/events",
@@ -273,24 +330,80 @@ class SwarmOrchestratorAgent(BaseAgent):
 
                     for event in events:
                         yield event
-                        meta = event.get("meta") or {}
-                        task_status = meta.get("task_status") or meta.get("state") or ""
-                        if task_status in TERMINAL_TASK_STATUSES:
-                            return
 
-                    # Check task status separately
+                    # Check terminal status
                     status_resp = await client.get(f"{base_url}/task/{task_id}/status")
                     if status_resp.is_success:
-                        task_info = status_resp.json().get("task", {})
-                        if task_info.get("status") in TERMINAL_TASK_STATUSES:
+                        task_status = status_resp.json().get("task", {}).get("status", "")
+                        if task_status in TERMINAL_STATUSES:
+                            # One final poll for any trailing events
+                            trail_resp = await client.get(
+                                f"{base_url}/task/{task_id}/events",
+                                params={"after_seq": after_seq},
+                            )
+                            if trail_resp.is_success:
+                                for event in trail_resp.json().get("events", []):
+                                    yield event
                             return
-                except Exception as exc:
-                    logger.warning("REST poll error for task %s: %s", task_id, exc)
 
-                await asyncio.sleep(1)
+                except Exception as exc:
+                    logger.warning("Poll error for orchestrator task %s: %s", task_id, exc)
+
+                await asyncio.sleep(poll_interval)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    async def _synthesize_instruction(self, user_input: str) -> tuple[str, str]:
+        """Distil the multimodal context into (instruction, reasoning).
+
+        Reasoning is extracted from <think> blocks and shown to the user in the UI,
+        but is never forwarded to the orchestrator.
+        """
+        messages = [
+            {"role": "system", "content": INSTRUCTION_SYNTHESIS_PROMPT},
+            {"role": "user", "content": user_input},
+        ]
+        model = await self._pick_model()
+        response = await create_chat_completion(messages=messages, model=model, max_tokens=512, temperature=0.2)
+        raw = getattr(getattr(response.choices[0], "message", None), "content", None) or ""
+        reasoning, instruction = _extract_think(raw)
+        return instruction or user_input[:500], reasoning
+
+    async def _create_orchestrator_task(self, instruction: str) -> str:
+        base_url = self._get_orchestrator_http_url()
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(f"{base_url}/task", json={"prompt": instruction})
+            resp.raise_for_status()
+            data = resp.json()
+            task_id = data.get("task_id")
+            if not task_id:
+                raise ValueError(f"Orchestrator did not return task_id: {data}")
+            return task_id
+
+    async def _fetch_plan(self, task_id: str) -> list:
+        base_url = self._get_orchestrator_http_url()
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{base_url}/task/{task_id}/plan")
+            resp.raise_for_status()
+            return resp.json().get("plan", [])
+
+    async def _get_task_status(self, task_id: str) -> dict:
+        base_url = self._get_orchestrator_http_url()
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{base_url}/task/{task_id}/status")
+            resp.raise_for_status()
+            return resp.json().get("task", {})
+
+    async def _get_task_logs(self, task_id: str) -> list[str]:
+        base_url = self._get_orchestrator_http_url()
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{base_url}/task/{task_id}/logs")
+            resp.raise_for_status()
+            return resp.json().get("logs", [])
 
     async def _pick_model(self) -> str:
-        """Pick a suitable chat model from the active provider."""
         if isinstance(self.model_settings, dict) and self.model_settings.get("model"):
             return self.model_settings["model"]
         models = await list_available_models()
@@ -302,12 +415,3 @@ class SwarmOrchestratorAgent(BaseAgent):
     def _get_orchestrator_http_url() -> str:
         url = getattr(config.agents, "orchestrator_url", "") or "http://localhost:8100"
         return url.rstrip("/")
-
-    @staticmethod
-    def _get_orchestrator_ws_url() -> str:
-        http = SwarmOrchestratorAgent._get_orchestrator_http_url()
-        if http.startswith("https://"):
-            return "wss://" + http[8:]
-        if http.startswith("http://"):
-            return "ws://" + http[7:]
-        return http
