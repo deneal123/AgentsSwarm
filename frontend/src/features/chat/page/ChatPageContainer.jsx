@@ -37,35 +37,27 @@ import {
   FiSearch,
   FiZap,
   FiMenu,
-  FiMessageSquare,
-  FiPaperclip,
-  FiPlus,
   FiSettings,
-  FiX,
 } from 'react-icons/fi';
 import MessageRenderer from '../components/MessageRenderer';
 import ChatPageLayout from './ChatPageLayout';
-import { CHAT_FONT_FAMILY, CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
-import { useChatUiSettings } from '../hooks/useChatUiSettings';
-import { useChatTransport, useComposerController, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
+import { CHAT_SCROLLBAR_SX, CHAT_THEME } from '../constants/theme';
+import { useChatTransport, useProfileAndAuthFlow, useSidebarState, useChatSideEffects } from '../hooks';
 import { useLayoutControls } from '@app/providers';
 import { useChatInitialization } from '../hooks/orchestration/useChatInitialization';
 import { useChatThreadRouting } from '../hooks/orchestration/useChatThreadRouting';
 import { useChatDrawersState } from '../hooks/orchestration/useChatDrawersState';
 import { useChatStreamingLifecycle } from '../hooks/orchestration/useChatStreamingLifecycle';
 import { CHAT_UI_CONFIG } from '../config/uiConfig';
-import { ChatSidebar } from '../components';
 import { useTraceSessions } from '../hooks/useTraceSessions';
 import { useChatDomainState } from '../hooks/useChatDomainState';
 import { useMessageActions } from '../hooks/useMessageActions';
 import { useRecentThreads } from '../hooks/useRecentThreads';
+import { useChatUiSettings } from '../hooks/useChatUiSettings';
 import { clampTraceDetail } from '../utils/trace';
 import ModelSelector from '../components/ModelSelector';
-import ComposerShell from '../components/composer/ComposerShell';
-import ComposerInput from '../components/composer/ComposerInput';
-import ComposerActions from '../components/composer/ComposerActions';
-import ComposerAttachments from '../components/composer/ComposerAttachments';
-import ComposerVoiceControl from '../components/composer/ComposerVoiceControl';
+import ChatComposerPanel from '../components/composer/ChatComposerPanel';
+import ChatSidebarPanel from '../components/ChatSidebarPanel';
 import { PROSE_SX } from './proseStyles';
 import { ProfileDrawer } from '@features/profile';
 
@@ -141,15 +133,18 @@ function ChatPageContainer() {
   const { messages, loading: isLoading, error, currentJob } = domainState;
   const { setLoading: setIsLoading, setError, clearError, addMessage, clearMessages, replaceMessages, setCurrentJob, clearCurrentJob } = domainActions;
   const [availableModels, setAvailableModels] = useState([]);
-  const composer = useComposerController({ onSubmit: (value) => handleSendMessageRef.current?.(value), onCancelSubmit: () => {}, disabled: isLoading });
-  const { inputRef, fileInputRef, setInputValue, attachedFile, setAttachedFile, isRecording, setIsRecording, composerHeightPx } = composer;
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const composerRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
+  const clearInput = useCallback(() => composerRef.current?.clearInput(), []);
 
   const { settings: chatUiSettings, setSettings: setChatUiSettings, resetUiSettings: resetPersistedUiSettings } = useChatUiSettings({ initialWebSearch, initialDeepResearch });
   const { webSearchEnabled, deepResearchEnabled, showTracePanel } = chatUiSettings;
   const messagesEndRef = useRef(null);
   const messagesScrollRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
   const activeWsJobIdRef = useRef('');
   const lastWsReplyFingerprintRef = useRef('');
   const isCompactTrace = useBreakpointValue(CHAT_UI_CONFIG.trace.compactBreakpoint) ?? false;
@@ -185,7 +180,7 @@ function ChatPageContainer() {
     completeLastAgentMessage: domainActions.completeLastAgentMessage,
     setCurrentJob,
     clearCurrentJob,
-    setInputValue,
+    setInputValue: clearInput,
   });
   const { wsCallbacks } = streamingLifecycle.actions;
 
@@ -347,6 +342,7 @@ function ChatPageContainer() {
   }, [activeOrLatestTraceSession, setTracePanelsExpanded, showTracePanel, traceSessions.length]);
 
   const handleSendMessageRef = useRef(null);
+  const handleSendMessageStable = useCallback((...args) => handleSendMessageRef.current?.(...args), []);
   const { copyMessage, regenerateMessage } = useMessageActions({ messages, actions: { truncateAfter: (count) => replaceMessages(messages.slice(0, count)) }, handleSendMessageRef });
 
   const renderedMessages = useMemo(() => {
@@ -662,7 +658,7 @@ function ChatPageContainer() {
       return;
     }
 
-    setInputValue('');
+    composerRef.current?.clearInput();
     setSidebarSearch('');
 
     // Reset WS dedupe state for each new user request.
@@ -799,7 +795,7 @@ function ChatPageContainer() {
       finalizeTraceSession('error', traceSessionId);
       setIsLoading(false);
     }
-  }, [addMessage, appendTraceEvent, attachedFile, clearError, connectionState, deepResearchEnabled, ensureGuestLimit, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel,  selectedModelOverride, sendViaRest, setAttachedFile, setError, setInputValue, setIsLoading, setSidebarSearch, showAuthModal, startTraceSession, threadId, sideEffects, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
+  }, [addMessage, appendTraceEvent, attachedFile, clearError, connectionState, deepResearchEnabled, ensureGuestLimit, finalizeTraceSession, initialFileContext, initialInputType, initialManualModel, selectedModelOverride, sendViaRest, setAttachedFile, setError, setIsLoading, setSidebarSearch, showAuthModal, startTraceSession, threadId, sideEffects, upsertRecentThread, useWebSocket, webSearchEnabled, wsSendMessage]);
 
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
@@ -826,14 +822,14 @@ function ChatPageContainer() {
 
   const startNewChat = useCallback(() => {
     clearMessages();
-    setInputValue('');
+    composerRef.current?.clearInput();
     setSidebarSearch('');
     setAttachedFile(null);
     clearError();
     resetTraceSessions();
     setTracePanelsExpanded({});
     navigate('/');
-  }, [clearError, clearMessages, navigate, resetTraceSessions, setAttachedFile, setInputValue, setSidebarSearch, setTracePanelsExpanded]);
+  }, [clearError, clearMessages, navigate, resetTraceSessions, setAttachedFile, setSidebarSearch, setTracePanelsExpanded]);
 
   const openMemoryPanel = useCallback(async () => {
     if (!isAuthenticated) {
@@ -883,177 +879,74 @@ function ChatPageContainer() {
     });
   }, [resetPersistedUiSettings, sideEffects]);
 
-  const sidebar = (
-    <VStack h="full" align="stretch" spacing={0} p={4}>
-      {/* Logo */}
-      <Box mb={5}>
-        <Text fontWeight="700" color="white">AI Assistant</Text>
-      </Box>
+  const handleFileUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { uploadFileForChat } = await import('@api/chat');
+      const result = await uploadFileForChat(file);
+      setAttachedFile(result);
+      if (result.file_type === 'image' && result.vlm_description) {
+        appendTraceEvent({ kind: 'done', title: 'Проанализировано фото (MWS Vision)', detail: clampTraceDetail(result.vlm_description) });
+      } else if (result.file_type === 'audio') {
+        appendTraceEvent({ kind: 'done', title: 'Аудио прикреплено', detail: 'Файл будет отправлен модели как вложение' });
+      } else {
+        appendTraceEvent({ kind: 'done', title: `Файл подготовлен: ${result.filename}`, detail: `Тип: ${result.file_type || 'unknown'}` });
+      }
+      sideEffects.notify({
+        title: `Файл: ${result.filename}`,
+        description: result.file_type === 'image' ? 'Изображение готово для анализа' : result.file_type === 'audio' ? 'Аудио прикреплено к сообщению' : `Извлечено ${(result.extracted_text || '').length} символов`,
+        status: 'success', duration: 3000,
+      });
+    } catch (err) {
+      sideEffects.notify({ title: 'Ошибка загрузки', description: String(err), status: 'error', duration: 4000 });
+    }
+    e.target.value = '';
+  }, [appendTraceEvent, setAttachedFile, sideEffects]);
 
-      {/* New chat button */}
-      <Button
-        leftIcon={<FiPlus />}
-        onClick={startNewChat}
-        mb={4}
-        h="38px"
-        borderRadius="12px"
-        bg={CHAT_THEME.panelHover}
-        border={`1.5px solid ${CHAT_THEME.panelBorderStrong}`}
-        color={CHAT_THEME.textSecondary}
-        fontWeight="600"
-        fontSize="13px"
-        fontFamily={CHAT_FONT_FAMILY}
-        _hover={{ bg: CHAT_THEME.panelActive, color: CHAT_THEME.textPrimary, borderColor: 'rgba(255,255,255,0.2)' }}
-        transition="all 0.18s"
-        justifyContent="flex-start"
-      >
-        Новый чат
-      </Button>
+  const handleVoiceToggle = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+    try {
+      const isSecure = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+      if (!isSecure || !navigator.mediaDevices) {
+        sideEffects.notify({ title: 'Микрофон недоступен', description: 'Требуется HTTPS-соединение.', status: 'warning', duration: 4000 });
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const file = new File([blob], 'voice.webm', { type: 'audio/webm' });
+        try {
+          const { uploadFileForChat } = await import('@api/chat');
+          const result = await uploadFileForChat(file);
+          setAttachedFile(result);
+          appendTraceEvent({ kind: 'done', title: 'Аудио прикреплено', detail: 'Файл будет отправлен модели как вложение' });
+          sideEffects.notify({ title: 'Аудио прикреплено', description: 'Нажмите отправить', status: 'success', duration: 2000 });
+        } catch {
+          sideEffects.notify({ title: 'Ошибка распознавания', status: 'error', duration: 3000 });
+        }
+      };
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      sideEffects.notify({ title: 'Запись...', description: 'Нажмите для остановки', status: 'info', duration: 2000 });
+    } catch {
+      sideEffects.notify({ title: 'Микрофон недоступен', status: 'error', duration: 3000 });
+    }
+  }, [appendTraceEvent, isRecording, setAttachedFile, sideEffects]);
 
-      {/* Recent chats label */}
-      <Text
-        color={CHAT_THEME.textTertiary}
-        fontSize="11px"
-        fontWeight="600"
-        textTransform="uppercase"
-        letterSpacing="0.08em"
-        mb={2}
-        px={1}
-      >
-        Последние чаты
-      </Text>
+  const onToggleWebSearch = useCallback(() => setChatUiSettings((p) => ({ ...p, webSearchEnabled: !p.webSearchEnabled })), [setChatUiSettings]);
+  const onToggleDeepResearch = useCallback(() => setChatUiSettings((p) => ({ ...p, deepResearchEnabled: !p.deepResearchEnabled })), [setChatUiSettings]);
 
-      {/* Search */}
-      <Box mb={3.5} position="relative">
-        <Box
-          as="input"
-          type="text"
-          placeholder="Поиск чатов..."
-          value={sidebarSearch}
-          onChange={(e) => setSidebarSearch(e.target.value)}
-          w="100%"
-          h="32px"
-          pl={3}
-          pr={3}
-          borderRadius="9px"
-          bg={CHAT_THEME.panelHover}
-          border={`1.5px solid ${CHAT_THEME.panelBorder}`}
-          color={CHAT_THEME.textPrimary}
-          fontSize="13px"
-          fontFamily={CHAT_FONT_FAMILY}
-          outline="none"
-          sx={{
-            '&::placeholder': { color: CHAT_THEME.textTertiary },
-            '&:focus': { borderColor: 'rgba(239,68,68,0.3)', boxShadow: '0 0 0 3px rgba(239,68,68,0.08)' },
-            transition: 'border-color 0.18s, box-shadow 0.18s',
-          }}
-        />
-      </Box>
-
-      {/* Chat list */}
-      <Box flex="1" overflowY="auto" sx={CHAT_SCROLLBAR_SX} mr={-1} pr={1}>
-        <VStack spacing={0.5} align="stretch">
-          {recentThreads.length === 0 && (
-            <Text color={CHAT_THEME.textTertiary} fontSize="13px" px={2} py={2}>
-              Нет чатов
-            </Text>
-          )}
-          {filteredRecentThreads.map((thread) => {
-            const tid = thread.thread_id || thread.id || thread;
-            const label = thread.title || thread.last_message || `Чат ${String(tid).slice(0, 8)}`;
-            const isActive = tid === threadId;
-            return (
-              <Box key={tid} role="group" position="relative">
-                <HStack
-                  spacing={2.5}
-                  px={3}
-                  py={2}
-                  pr={9}
-                  borderRadius="10px"
-                  bg={isActive ? CHAT_THEME.accentSoft : 'transparent'}
-                  border={`1.5px solid ${isActive ? 'rgba(239,68,68,0.3)' : 'transparent'}`}
-                  cursor="pointer"
-                  _hover={{ bg: isActive ? CHAT_THEME.accentSoft : CHAT_THEME.panelHover }}
-                  onClick={() => sideEffects.goToThread(tid)}
-                  transition="all 0.15s"
-                  role="button"
-                >
-                  <Icon
-                    as={FiMessageSquare}
-                    color={isActive ? '#f87171' : CHAT_THEME.textTertiary}
-                    boxSize="14px"
-                    flexShrink={0}
-                  />
-                  <Text
-                    color={isActive ? '#fca5a5' : CHAT_THEME.textSecondary}
-                    fontSize="13.5px"
-                    fontWeight={isActive ? '600' : '500'}
-                    noOfLines={1}
-                    flex="1"
-                    letterSpacing="-0.01em"
-                  >
-                    {label}
-                  </Text>
-                </HStack>
-
-                <IconButton
-                  aria-label="Удалить чат"
-                  icon={deletingThreadId === tid ? <Spinner size="xs" /> : <FiX />}
-                  size="xs"
-                  position="absolute"
-                  right="7px"
-                  top="50%"
-                  transform="translateY(-50%) translateX(3px)"
-                  opacity={isActive ? 0.92 : 0}
-                  pointerEvents={isActive ? 'auto' : 'none'}
-                  _groupHover={{ opacity: 1, transform: 'translateY(-50%) translateX(0px)', pointerEvents: 'auto' }}
-                  variant="ghost"
-                  color="rgba(248,113,113,0.95)"
-                  _hover={{ bg: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}
-                  _active={{ bg: 'rgba(239,68,68,0.28)' }}
-                  borderRadius="8px"
-                  onClick={(event) => handleDeleteThread(thread, event)}
-                  isDisabled={deletingThreadId === tid}
-                  transition="all 0.18s"
-                />
-              </Box>
-            );
-          })}
-        </VStack>
-      </Box>
-
-      {/* Footer buttons */}
-      <VStack spacing={1} align="stretch" mt={4} pt={4} borderTop={`1px solid ${CHAT_THEME.panelBorder}`}>
-        {[
-          { icon: '🧠', label: 'Память и контекст', onClick: openMemoryPanel },
-          { icon: <FiSettings />, label: 'Настройки', onClick: settingsDisclosure.onOpen },
-        ].map(({ icon, label, onClick }) => (
-          <Button
-            key={label}
-            size="sm"
-            h="34px"
-            justifyContent="flex-start"
-            leftIcon={
-              <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-                {typeof icon === 'string' ? <Text fontSize="13px" lineHeight="1">{icon}</Text> : icon}
-              </Box>
-            }
-            variant="ghost"
-            color={CHAT_THEME.textSecondary}
-            fontSize="13px"
-            fontWeight="500"
-            fontFamily={CHAT_FONT_FAMILY}
-            borderRadius="10px"
-            _hover={{ bg: CHAT_THEME.panelHover, color: CHAT_THEME.textPrimary }}
-            onClick={onClick}
-            transition="all 0.15s"
-          >
-            {label}
-          </Button>
-        ))}
-      </VStack>
-    </VStack>
-  );
+  const composerModelLabel = lastUsedModel || selectedModelOverride || '';
 
   return (
     <ChatPageLayout>
@@ -1103,12 +996,19 @@ function ChatPageContainer() {
         />
       </Box>
       <Flex h="100%" overflow="hidden" position="relative" zIndex={1}>
-        {/* Sidebar */}
-        <ChatSidebar isCollapsed={isSidebarCollapsed}>
-          <Box bg={CHAT_THEME.sidebarBg} h="full" borderRight={`1px solid ${CHAT_THEME.panelBorder}`}>
-            {sidebar}
-          </Box>
-        </ChatSidebar>
+        <ChatSidebarPanel
+          isSidebarCollapsed={isSidebarCollapsed}
+          filteredRecentThreads={filteredRecentThreads}
+          threadId={threadId}
+          sidebarSearch={sidebarSearch}
+          setSidebarSearch={setSidebarSearch}
+          deletingThreadId={deletingThreadId}
+          handleDeleteThread={handleDeleteThread}
+          onNavigateThread={sideEffects.goToThread}
+          onNewChat={startNewChat}
+          onOpenMemory={openMemoryPanel}
+          onOpenSettings={settingsDisclosure.onOpen}
+        />
 
         <VStack flex="1" align="stretch" spacing={0} minH="0" overflow="hidden">
           {/* Header */}
@@ -1249,200 +1149,45 @@ function ChatPageContainer() {
             )}
           </Box>
 
-          <Box
-            flexShrink={0}
-            px={{ base: 3, md: 6, lg: 8 }}
-            pt={3}
-            pb={4}
-            borderTop={`1px solid ${CHAT_THEME.panelBorder}`}
-            bg={CHAT_THEME.inputStickyBg}
-            backdropFilter="blur(20px)"
-          >
-            <Box maxW="960px" mx="auto">
-              <ComposerShell>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  accept=".txt,.md,.pdf,.docx,.csv,.json,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.ogg,.m4a,.webm"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      const { uploadFileForChat } = await import('@api/chat');
-                      const result = await uploadFileForChat(file);
-                      setAttachedFile(result);
-
-                      if (result.file_type === 'image' && result.vlm_description) {
-                        appendTraceEvent({
-                          kind: 'done',
-                          title: 'Проанализировано фото (MWS Vision)',
-                          detail: clampTraceDetail(result.vlm_description),
-                        });
-                      } else if (result.file_type === 'audio') {
-                        appendTraceEvent({
-                          kind: 'done',
-                          title: 'Аудио прикреплено',
-                          detail: 'Файл будет отправлен модели как вложение',
-                        });
-                      } else {
-                        appendTraceEvent({
-                          kind: 'done',
-                          title: `Файл подготовлен: ${result.filename}`,
-                          detail: `Тип: ${result.file_type || 'unknown'}`,
-                        });
-                      }
-
-                      sideEffects.notify({
-                        title: `Файл: ${result.filename}`,
-                        description: result.file_type === 'image'
-                          ? 'Изображение готово для анализа'
-                          : result.file_type === 'audio'
-                            ? 'Аудио прикреплено к сообщению'
-                            : `Извлечено ${(result.extracted_text || '').length} символов`,
-                        status: 'success',
-                        duration: 3000,
-                      });
-                    } catch (err) {
-                      sideEffects.notify({ title: 'Ошибка загрузки', description: String(err), status: 'error', duration: 4000 });
-                    }
-                    e.target.value = '';
-                  }}
-                />
-                <IconButton
-                  aria-label="Прикрепить файл"
-                  icon={<FiPaperclip />}
-                  size="sm"
-                  variant="ghost"
-                  position="absolute"
-                  left={3}
-                  top="12px"
-                  zIndex={2}
-                  color={attachedFile ? '#f87171' : CHAT_THEME.textTertiary}
-                  _hover={{ color: CHAT_THEME.textPrimary, bg: CHAT_THEME.panelHover }}
-                  borderRadius="9px"
-                  onClick={() => fileInputRef.current?.click()}
-                />
-
-                <ComposerInput
-                  value={composer.value}
-                  onChange={composer.onChange}
-                  onSubmit={composer.onSubmit}
-                  disabled={composer.disabled}
-                  onKeyDown={composer.onKeyDown}
-                  inputRef={inputRef}
-                  composerHeightPx={composerHeightPx}
-                />
-                <ComposerVoiceControl
-                  recordingState={composer.recordingState}
-                  onToggle={async () => {
-                      if (isRecording) {
-                        if (mediaRecorderRef.current) {
-                          mediaRecorderRef.current.stop();
-                          setIsRecording(false);
-                        }
-                        return;
-                      }
-                      try {
-                        const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
-                        if (!isSecure || !navigator.mediaDevices) {
-                          sideEffects.notify({ title: 'Микрофон недоступен', description: 'Требуется HTTPS-соединение для доступа к микрофону.', status: 'warning', duration: 4000 });
-                          return;
-                        }
-                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        const mediaRecorder = new MediaRecorder(stream);
-                        const chunks = [];
-                        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-                        mediaRecorder.onstop = async () => {
-                          stream.getTracks().forEach(t => t.stop());
-                          const blob = new Blob(chunks, { type: 'audio/webm' });
-                          const file = new File([blob], 'voice.webm', { type: 'audio/webm' });
-                          try {
-                            const { uploadFileForChat } = await import('@api/chat');
-                            const result = await uploadFileForChat(file);
-                            setAttachedFile(result);
-                            appendTraceEvent({
-                              kind: 'done',
-                              title: 'Аудио прикреплено',
-                              detail: 'Файл будет отправлен модели как вложение',
-                            });
-                            sideEffects.notify({ title: 'Аудио прикреплено', description: 'Нажмите отправить', status: 'success', duration: 2000 });
-                          } catch {
-                            sideEffects.notify({ title: 'Ошибка распознавания', status: 'error', duration: 3000 });
-                          }
-                        };
-                        mediaRecorder.start();
-                        mediaRecorderRef.current = mediaRecorder;
-                        setIsRecording(true);
-                        sideEffects.notify({ title: 'Запись...', description: 'Нажмите для остановки', status: 'info', duration: 2000 });
-                      } catch {
-                        sideEffects.notify({ title: 'Микрофон недоступен', status: 'error', duration: 3000 });
-                      }
-                  }}
-                />
-                <ComposerActions value={composer.value} onSubmit={composer.onSubmit} disabled={composer.disabled} />
-              </ComposerShell>
-              <ComposerAttachments attachments={composer.attachments} onClear={() => setAttachedFile(null)} />
-
-              <HStack mt={2.5} spacing={2} justify="space-between" flexWrap="wrap">
-                <HStack spacing={1.5}>
-                  {[
-                    { label: 'Веб-поиск', icon: '🌐', active: webSearchEnabled, toggle: () => setChatUiSettings((p) => ({ ...p, webSearchEnabled: !p.webSearchEnabled })) },
-                    { label: 'Deep Research', icon: '🔬', active: deepResearchEnabled, toggle: () => setChatUiSettings((p) => ({ ...p, deepResearchEnabled: !p.deepResearchEnabled })) },
-                  ].map(({ label, icon, active, toggle }) => (
-                    <Button
-                      key={label}
-                      size="xs"
-                      borderRadius="8px"
-                      variant="unstyled"
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      px={3}
-                      h="26px"
-                      fontSize="12px"
-                      fontWeight="600"
-                      fontFamily={CHAT_FONT_FAMILY}
-                      bg={active ? CHAT_THEME.accentSoft : CHAT_THEME.panelHover}
-                      color={active ? '#f87171' : CHAT_THEME.textSecondary}
-                      border={`1.5px solid ${active ? 'rgba(239,68,68,0.35)' : CHAT_THEME.panelBorder}`}
-                      _hover={{ bg: active ? 'rgba(239,68,68,0.22)' : CHAT_THEME.panelActive, color: active ? '#f87171' : CHAT_THEME.textPrimary }}
-                      onClick={toggle}
-                      transition="all 0.15s"
-                      leftIcon={<Text fontSize="11px">{icon}</Text>}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </HStack>
-
-                <HStack spacing={3}>
-                  <Text fontSize="12px" color={CHAT_THEME.textTertiary}>
-                    {lastUsedModel
-                      ? `Модель: ${lastUsedModel}`
-                      : (selectedModelOverride ? `Модель: ${selectedModelOverride}` : 'Модель: Auto')}
-                  </Text>
-                  {!isAuthenticated && (
-                    <Text fontSize="12px" color={CHAT_THEME.textTertiary}>
-                      {remainingRequests} запросов
-                    </Text>
-                  )}
-                </HStack>
-              </HStack>
-              </Box>
-            </Box>
+          <ChatComposerPanel
+            ref={composerRef}
+            onSubmit={handleSendMessageStable}
+            disabled={isLoading}
+            webSearchEnabled={webSearchEnabled}
+            deepResearchEnabled={deepResearchEnabled}
+            onToggleWebSearch={onToggleWebSearch}
+            onToggleDeepResearch={onToggleDeepResearch}
+            modelLabel={composerModelLabel}
+            isAuthenticated={isAuthenticated}
+            remainingRequests={remainingRequests}
+            attachedFile={attachedFile}
+            onClearAttachment={() => setAttachedFile(null)}
+            onFileUpload={handleFileUpload}
+            onVoiceToggle={handleVoiceToggle}
+            isRecording={isRecording}
+            fileInputRef={fileInputRef}
+          />
         </VStack>
       </Flex>
 
       <Drawer isOpen={sidebarDisclosure.isOpen} placement="left" onClose={sidebarDisclosure.onClose}>
         <DrawerOverlay />
-        <DrawerContent bg={CHAT_THEME.sidebarBg} borderRight={`1px solid ${CHAT_THEME.panelBorder}`}>
-          <DrawerCloseButton mt={2} />
-          <DrawerHeader borderBottomWidth="1px" borderColor="rgba(255,255,255,0.08)">
-            Навигация
-          </DrawerHeader>
-          <DrawerBody pt={4}>
-            {sidebar}
+        <DrawerContent bg={CHAT_THEME.sidebarBg} borderRight={`1px solid ${CHAT_THEME.panelBorder}`} p={0}>
+          <DrawerCloseButton mt={2} zIndex={2} />
+          <DrawerBody p={0} h="full">
+            <ChatSidebarPanel
+              isSidebarCollapsed={false}
+              filteredRecentThreads={filteredRecentThreads}
+              threadId={threadId}
+              sidebarSearch={sidebarSearch}
+              setSidebarSearch={setSidebarSearch}
+              deletingThreadId={deletingThreadId}
+              handleDeleteThread={handleDeleteThread}
+              onNavigateThread={(tid) => { sideEffects.goToThread(tid); sidebarDisclosure.onClose(); }}
+              onNewChat={() => { startNewChat(); sidebarDisclosure.onClose(); }}
+              onOpenMemory={openMemoryPanel}
+              onOpenSettings={settingsDisclosure.onOpen}
+            />
           </DrawerBody>
         </DrawerContent>
       </Drawer>
