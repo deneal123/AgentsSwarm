@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { keyframes } from '@emotion/react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Alert,
   AlertDescription,
@@ -110,6 +110,7 @@ function ChatPageContainer() {
     setFooterVisible(false);
   }, [setVariant, setFooterVisible]);
 
+  const location = useLocation();
   const { threadId: routeThreadId } = useParams();
   const init = useChatInitialization(routeThreadId);
   const { threadId, initialMessage, initialManualModel, initialInputType, initialWebSearch, initialDeepResearch, initialFileContext, selectedModelOverride } = init.state;
@@ -126,6 +127,15 @@ function ChatPageContainer() {
   const drawers = useChatDrawersState(profileDisclosure);
   const { sidebarDisclosure, memoryDisclosure, settingsDisclosure, memoryFacts } = drawers.state;
   const { setMemoryFacts } = drawers.actions;
+
+  // Open profile drawer when navigated with ?profile=open
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('profile') === 'open') {
+      profileDisclosure.onOpen();
+      navigate('/', { replace: true });
+    }
+  }, [location.search, navigate, profileDisclosure]);
 
 
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -247,13 +257,16 @@ function ChatPageContainer() {
           typingProgress: 1,
         }));
         replaceMessages(mapped);
-      } catch {
-        // thread may be new — ignore
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          setRecentThreads((prev) => prev.filter((t) => (t.thread_id || t.id || t) !== routeThreadId));
+          navigate('/', { replace: true });
+        }
       }
     };
     loadHistory();
     return () => { cancelled = true; };
-  }, [initialMessage, replaceMessages, routeThreadId]);
+  }, [initialMessage, navigate, replaceMessages, routeThreadId, setRecentThreads]);
 
   const lastUsedModel = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {

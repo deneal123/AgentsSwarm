@@ -242,7 +242,7 @@ function Header() {
 
             <Box p={2}>
               <MenuItem
-                onClick={() => navigate(APP_ROUTES.ROOT)}
+                onClick={() => navigate('/?profile=open')}
                 py={3}
                 px={3}
                 fontSize="sm"
@@ -422,7 +422,7 @@ function Header() {
                   <Divider borderColor="rgba(255,255,255,0.08)" my={4} />
                   <Box
                     as="button"
-                    onClick={() => navigate(APP_ROUTES.ROOT)}
+                    onClick={() => navigate('/?profile=open')}
                     display="flex"
                     alignItems="center"
                     gap={3}

@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import { LayoutProvider } from "@app/providers";
 import { gradients, colors, spacing } from "@theme/tokens";
 import { ScrollToTop } from "@shared/ui/atoms";
+import { isChatRoute } from "@app/router/routes";
 
 // CSS animation for page transitions - works on iOS Safari
 const fadeIn = keyframes`
@@ -18,14 +19,13 @@ function ProtectedLayout() {
   const [layoutVariant, setLayoutVariant] = React.useState("container");
   const [isFooterVisible, setFooterVisible] = React.useState(true);
 
-  React.useEffect(() => {
-    setLayoutVariant("container");
-    setFooterVisible(true);
-  }, [location.pathname]);
+  const isChat = isChatRoute(location.pathname);
+  const effectiveVariant = isChat ? "full" : layoutVariant;
+  const effectiveFooter = isChat ? false : isFooterVisible;
 
 
   return (
-    <LayoutProvider state={{ variant: layoutVariant, isFooterVisible }} actions={{ setVariant: setLayoutVariant, setFooterVisible }}>
+    <LayoutProvider state={{ variant: effectiveVariant, isFooterVisible: effectiveFooter }} actions={{ setVariant: setLayoutVariant, setFooterVisible }}>
       <Box position="relative" bg={colors.background.darkPrimary} w="100%">
         <ScrollToTop />
 
@@ -66,7 +66,7 @@ function ProtectedLayout() {
           animation={`${fadeIn} 0.25s ease-out forwards`}
           sx={{ "@media (prefers-reduced-motion: reduce)": { animation: "none" } }}
         >
-          {layoutVariant === "full" ? (
+          {effectiveVariant === "full" ? (
             <Outlet />
           ) : (
             <Box
@@ -81,7 +81,7 @@ function ProtectedLayout() {
         </Box>
 
         {/* Footer */}
-        {isFooterVisible && (
+        {effectiveFooter && (
           <Box position="relative" zIndex={1}>
             <Footer />
           </Box>
