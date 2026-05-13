@@ -90,7 +90,11 @@ class SimpleStreamingAgent(BaseAgent):
 
     @staticmethod
     def _extract_text_from_sdk_event(event: Any) -> str | None:
-        """Extract textual delta/content from heterogeneous Agents SDK stream events."""
+        """Extract streaming token delta from SDK stream events.
+
+        Only raw_response_event delta subtypes are extracted — never "done" or
+        "completed" summaries, which would duplicate already-streamed tokens.
+        """
         if event is None:
             return None
 
@@ -98,40 +102,26 @@ class SimpleStreamingAgent(BaseAgent):
             event.get("type") if isinstance(event, dict) else None
         )
 
-        # Direct candidates on event
-        for field in ("text", "delta", "content"):
-            value = getattr(event, field, None) if not isinstance(event, dict) else event.get(field)
-            if isinstance(value, str) and value:
-                return value
+        # Only extract streaming deltas from raw LLM response events.
+        # All other event types (run_item_stream_event, agent_updated_stream_event)
+        # are completion signals, not new text to stream.
+        if event_type != "raw_response_event":
+            return None
 
         raw = getattr(event, "data", None) if not isinstance(event, dict) else event.get("data")
+        if raw is None:
+            return None
 
-        if raw is not None:
-            # Common object fields
-            for field in ("delta", "text", "content"):
-                value = getattr(raw, field, None) if not isinstance(raw, dict) else raw.get(field)
-                if isinstance(value, str) and value:
-                    return value
+        r_type = getattr(raw, "type", None) if not isinstance(raw, dict) else raw.get("type")
+        if r_type not in {
+            "response.output_text.delta",
+            "response.refusal.delta",
+            "response.function_call_arguments.delta",
+        }:
+            return None
 
-            # Responses API shapes
-            if event_type == "raw_response_event":
-                r_type = (
-                    getattr(raw, "type", None) if not isinstance(raw, dict) else raw.get("type")
-                )
-                if r_type in {
-                    "response.output_text.delta",
-                    "response.refusal.delta",
-                    "response.function_call_arguments.delta",
-                }:
-                    value = (
-                        getattr(raw, "delta", None)
-                        if not isinstance(raw, dict)
-                        else raw.get("delta")
-                    )
-                    if isinstance(value, str) and value:
-                        return value
-
-        return None
+        delta = getattr(raw, "delta", None) if not isinstance(raw, dict) else raw.get("delta")
+        return delta if isinstance(delta, str) and delta else None
 
     async def process(self, user_input: str, context: UserContext) -> AsyncGenerator[AgentEvent]:
         """Stream response with optional tool calls."""

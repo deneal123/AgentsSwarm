@@ -57,6 +57,7 @@ export function useWebSocketChat(threadId, callbacks = {}) {
     onDisconnect,
     onAgentReply,
     onStreamChunk,
+    onAgentEvent,
   } = callbacks;
 
   const scheduleReconnect = useCallback(() => {
@@ -161,9 +162,12 @@ export function useWebSocketChat(threadId, callbacks = {}) {
       }
 
       default:
+        // Forward all agent lifecycle events (routing_start, routing_complete,
+        // agent_start, agent_complete, tool_call_start, tool_call_complete, etc.)
+        onAgentEvent?.(data);
         break;
     }
-  }, [onMessage, onJobCreated, onComplete, onError, onAgentReply, onStreamChunk, toast]);
+  }, [onMessage, onJobCreated, onComplete, onError, onAgentReply, onStreamChunk, onAgentEvent, toast]);
 
   const connect = useCallback(() => {
     if (connectingRef.current || !threadId) return;

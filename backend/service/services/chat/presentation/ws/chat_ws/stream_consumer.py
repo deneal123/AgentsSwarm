@@ -121,11 +121,16 @@ class ChatStreamConsumer:
                 "seq": event_data.get("seq"),
                 "timestamp": timestamp,
             }
-        return {
+        payload = {
             "type": event_type,
             "job_id": event_data.get("job_id"),
             "data": event_data.get("data", event_data),
+            "message": event_data.get("message"),
+            "agent_name": event_data.get("agent_name"),
+            "tool_name": event_data.get("tool_name"),
+            "error": event_data.get("error"),
             "metadata": event_data.get("metadata"),
             "seq": event_data.get("seq"),
             "timestamp": timestamp,
         }
+        return {k: v for k, v in payload.items() if v is not None}
