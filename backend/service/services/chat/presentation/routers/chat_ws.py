@@ -59,6 +59,7 @@ def get_chat_ws_connection_service(
         )
     except Exception:
         logger.exception("Failed to build ChatWsConnectionService")
+        raise
 
 
 @router.websocket("/api/chats/{thread_id}/ws")

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useToast } from '@chakra-ui/react';
+import { useAppToast } from '@shared/hooks/useAppToast';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const INITIAL_RECONNECT_DELAY_MS = 1000;
@@ -46,7 +46,7 @@ export function useWebSocketChat(threadId, callbacks = {}) {
   const heartbeatCheckRef = useRef(null);
   const connectRef = useRef(null);
 
-  const toast = useToast();
+  const toast = useAppToast();
 
   const {
     onMessage,

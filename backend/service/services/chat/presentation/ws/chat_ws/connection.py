@@ -55,7 +55,7 @@ class ChatWsConnectionService:
                     stream_key,
                     group,
                     consumer,
-                    start_from_latest=is_anonymous,
+                    start_from_latest=True,
                 )
             )
             heartbeat_task = asyncio.create_task(self._send_heartbeats(websocket))
