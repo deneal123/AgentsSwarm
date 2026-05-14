@@ -5,6 +5,71 @@
 
 ---
 
+## Архитектура
+
+```mermaid
+graph TB
+    User["Пользователь"]
+    Interface["Interface Service"]
+
+    OrchestratorAPI["Orchestrator API\nPOST /task"]
+    Pipeline["Planner → PlanRunner\nLLM + пошаговый исполнитель"]
+    StreamCollector["StreamCollector\nWS /ws/task/{id}"]
+
+    Router["Router Agent\nклассификация + handoff"]
+    MapAnalyst["MapAnalyst Agent\nкарта + маршруты"]
+    MissionAgents["Агенты миссий\nNavigation · Charging · Patrol\nInspection · FleetOps · Swarm"]
+    General["General Agent"]
+    BgPoller["Background Poller\nwait_mission()"]
+
+    MCPServers["MCP Серверы\nmission-control :8010\nmission-dispatch :8011\nros-msp :8012"]
+    MissionControlAPI["Mission Control API\n:8050"]
+    IsaacSim["Isaac Sim / VDA5050\n(роботы)"]
+    Rosbridge["rosbridge\nROS2 topics"]
+
+    User -->|"prompt"| Interface
+    Interface -->|"POST /task"| OrchestratorAPI
+    OrchestratorAPI --> Pipeline
+    Pipeline -->|"шаг"| Router
+    Pipeline -->|"навигация"| MapAnalyst
+
+    Router --> MissionAgents
+    Router --> General
+    MapAnalyst -->|"map + route_images"| StreamCollector
+
+    MissionAgents -->|"MCP"| MCPServers
+    MissionAgents -->|"wait_mission()"| BgPoller
+    BgPoller -->|"mission_complete"| StreamCollector
+    BgPoller -->|"GET /mission"| MCPServers
+
+    MapAnalyst -->|"HTTP"| MissionControlAPI
+    MCPServers -->|"HTTP"| MissionControlAPI
+    MCPServers -->|"WS"| Rosbridge
+    MissionControlAPI -->|"missions"| IsaacSim
+    Rosbridge -->|"ROS2"| IsaacSim
+
+    Pipeline -->|"события"| StreamCollector
+    Router -->|"события"| StreamCollector
+    StreamCollector -->|"push"| Interface
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style OrchestratorAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style Pipeline fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style BgPoller fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style MapAnalyst fill:none,stroke:#1890ff,stroke-width:2px,color:#fff
+    style MissionAgents fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style General fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style MCPServers fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    style MissionControlAPI fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+    style IsaacSim fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+    style Rosbridge fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+```
+
+---
+
 ## Быстрый старт
 
 ```bash
@@ -89,71 +154,6 @@ MISSION_DISPATCH_TIMEOUT=3600  # таймаут миссии по умолчан
 | `WS` | `/ws/task/{id}` | WebSocket-стрим событий задачи |
 
 Interface-сервис (backend + frontend) обращается напрямую к этим эндпоинтам и WebSocket без промежуточного gateway.
-
----
-
-## Архитектура
-
-```mermaid
-graph TB
-    User["Пользователь"]
-    Interface["Interface Service"]
-
-    OrchestratorAPI["Orchestrator API\nPOST /task"]
-    Pipeline["Planner → PlanRunner\nLLM + пошаговый исполнитель"]
-    StreamCollector["StreamCollector\nWS /ws/task/{id}"]
-
-    Router["Router Agent\nклассификация + handoff"]
-    MapAnalyst["MapAnalyst Agent\nкарта + маршруты"]
-    MissionAgents["Агенты миссий\nNavigation · Charging · Patrol\nInspection · FleetOps · Swarm"]
-    General["General Agent"]
-    BgPoller["Background Poller\nwait_mission()"]
-
-    MCPServers["MCP Серверы\nmission-control :8010\nmission-dispatch :8011\nros-msp :8012"]
-    MissionControlAPI["Mission Control API\n:8050"]
-    IsaacSim["Isaac Sim / VDA5050\n(роботы)"]
-    Rosbridge["rosbridge\nROS2 topics"]
-
-    User -->|"prompt"| Interface
-    Interface -->|"POST /task"| OrchestratorAPI
-    OrchestratorAPI --> Pipeline
-    Pipeline -->|"шаг"| Router
-    Pipeline -->|"навигация"| MapAnalyst
-
-    Router --> MissionAgents
-    Router --> General
-    MapAnalyst -->|"map + route_images"| StreamCollector
-
-    MissionAgents -->|"MCP"| MCPServers
-    MissionAgents -->|"wait_mission()"| BgPoller
-    BgPoller -->|"mission_complete"| StreamCollector
-    BgPoller -->|"GET /mission"| MCPServers
-
-    MapAnalyst -->|"HTTP"| MissionControlAPI
-    MCPServers -->|"HTTP"| MissionControlAPI
-    MCPServers -->|"WS"| Rosbridge
-    MissionControlAPI -->|"missions"| IsaacSim
-    Rosbridge -->|"ROS2"| IsaacSim
-
-    Pipeline -->|"события"| StreamCollector
-    Router -->|"события"| StreamCollector
-    StreamCollector -->|"push"| Interface
-
-    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
-    style OrchestratorAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style Pipeline fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style BgPoller fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style MapAnalyst fill:none,stroke:#1890ff,stroke-width:2px,color:#fff
-    style MissionAgents fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style General fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style MCPServers fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
-    style MissionControlAPI fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
-    style IsaacSim fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
-    style Rosbridge fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
-```
 
 ---
 
