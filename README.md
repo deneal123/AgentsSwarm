@@ -30,12 +30,12 @@
 ```mermaid
 graph TB
     User["Пользователь"]
-    Interface["Interface\nReact + FastAPI + Celery + RabbitMQ\nЧат · WebSearch · DeepResearch · ImageGen · PptxGen\nУправление роем через SwarmOrchestratorAgent"]
-    Orchestrator["Orchestrator\nFastAPI + OpenAI Agents SDK\nPlanner → Router → 9 специализированных агентов\nMCP: mission-control · mission-dispatch · ros-msp"]
-    MissionControl["Mission Control\n(форк NVIDIA)\nГраф карты, планирование\nBehavior Trees, cuOpt"]
-    MissionDispatch["Mission Dispatch\n(форк NVIDIA)\nОчередь миссий\nMQTT · PostgreSQL"]
-    IsaacSim["NVIDIA Isaac Sim\nheadless · Web Viewer\nROS 2 Jazzy · isaac_ros_mission_client\nVDA5050 client · rosbridge WebSocket"]
-    vLLM["vLLM Service\nData Parallel · 2×V100\nQwen2.5-Instruct"]
+    Interface["Interface\nReact + FastAPI + Celery + RabbitMQ"]
+    Orchestrator["Orchestrator\nFastAPI + OpenAI Agents SDK"]
+    MissionControl["Mission Control\n(форк NVIDIA)"]
+    MissionDispatch["Mission Dispatch\n(форк NVIDIA)"]
+    IsaacSim["NVIDIA Isaac Sim\nheadless · Web Viewer"]
+    vLLM["vLLM Service\nData Parallel · 2×V100"]
 
     User -->|"сообщение"| Interface
     Interface -->|"POST /task\nWS events"| Orchestrator
