@@ -3,6 +3,66 @@
 > Платформа для работы с ИИ: чат, агентные маршруты, web/deep-research, генерация файлов, память пользователя и фоновые джобы.
 > Управление роем роботов через оркестратор.
 
+## Архитектура
+
+```mermaid
+graph TB
+    User["Пользователь"]
+    Frontend["React Frontend\nChat + TracePanel"]
+    FastAPI["FastAPI\n/api/chats/ + /ws"]
+
+    WsLayer["WebSocket Layer\nauth → stream → heartbeat"]
+    ChatSvc["ChatService\nJobOrchestrator"]
+    RabbitMQ["RabbitMQ\nброкер задач"]
+    CeleryTask["Celery Worker\nprocess_agent_message"]
+
+    AgentExec["AgentExecutionService\nроутинг + сборка ответа"]
+    Orchestrator["Orchestrator\nLLM-классификатор"]
+
+    Agents["Агенты\nGeneral · WebSearch · DeepResearch\nImageGen · PptxGen · Audio · Swarm"]
+    LLMProviders["LLM Providers\nOpenAI / OpenRouter / MWS"]
+    ExternalAPIs["External APIs\nWeb Search · Image Gen · Mem0"]
+
+    RedisStream["Redis Stream\nchat:{thread_id}:stream"]
+    Storage["PostgreSQL + MinIO\nданные и файлы"]
+
+    User -->|"сообщение"| Frontend
+    Frontend -->|"WS + REST"| FastAPI
+    FastAPI --> WsLayer
+    FastAPI -->|"создать задачу"| ChatSvc
+    ChatSvc -->|"apply_async"| RabbitMQ
+    RabbitMQ --> CeleryTask
+
+    WsLayer -->|"XREAD"| RedisStream
+
+    CeleryTask --> AgentExec
+    AgentExec --> Orchestrator
+    Orchestrator -->|"выбор агента"| Agents
+    Agents -->|"completions"| LLMProviders
+    Agents -->|"tools"| ExternalAPIs
+    Agents -->|"AgentEvent stream\nXADD"| RedisStream
+
+    RedisStream -->|"stream_chunk\nagent_reply\nrouting/tool events"| WsLayer
+    WsLayer -->|"push"| Frontend
+
+    CeleryTask -->|"persist"| Storage
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style Frontend fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style FastAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style WsLayer fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style ChatSvc fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style RabbitMQ fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style CeleryTask fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style AgentExec fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    style Orchestrator fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    style Agents fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style RedisStream fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    style LLMProviders fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+    style ExternalAPIs fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+    style Storage fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
+```
+
 ## Что внутри проекта
 
 - **Frontend:** React + Chakra UI (`frontend/`)
