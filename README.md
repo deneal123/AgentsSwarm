@@ -27,46 +27,32 @@
 
 ## Общая архитектура системы
 
-```
-Пользователь
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Interface (React + FastAPI + Celery + RabbitMQ)            │
-│  Чат · WebSearch · DeepResearch · ImageGen · PptxGen        │
-│  Управление роем через SwarmOrchestratorAgent               │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ POST /task  WS events
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Orchestrator (FastAPI + OpenAI Agents SDK)                 │
-│  Planner → Router → 8 специализированных агентов           │
-│  MCP-серверы: mission-control · mission-dispatch · ros-msp  │
-└──────┬───────────────────────────────────────┬──────────────┘
-       │ HTTP/MCP                              │ HTTP/MCP
-       ▼                                       ▼
-┌──────────────────┐                  ┌────────────────────┐
-│  Mission Control │                  │  Mission Dispatch  │
-│  (форк NVIDIA)   │◄────────────────►│  (форк NVIDIA)     │
-│  Граф карты,     │   VDA5050        │  Очередь миссий,   │
-│  планирование    │                  │  MQTT, PostgreSQL  │
-└──────────────────┘                  └────────────────────┘
-       │                                       │
-       └───────────────────┬───────────────────┘
-                           │ VDA5050 + ROS 2 bridge
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  NVIDIA Isaac Sim (headless, Web Viewer)                    │
-│  workspace: ROS 2 Jazzy, isaac_ros_mission_client           │
-│  VDA5050 client, rosbridge WebSocket                        │
-└─────────────────────────────────────────────────────────────┘
-       ▲
-       │ OpenAI-compatible API
-┌──────────────────────────┐
-│  vLLM Service            │
-│  Data Parallel, 2×V100   │
-│  Qwen-Instruct Agent     │
-└──────────────────────────┘
+```mermaid
+graph TB
+    User["Пользователь"]
+    Interface["Interface\nReact + FastAPI + Celery + RabbitMQ\nЧат · WebSearch · DeepResearch · ImageGen · PptxGen\nУправление роем через SwarmOrchestratorAgent"]
+    Orchestrator["Orchestrator\nFastAPI + OpenAI Agents SDK\nPlanner → Router → 9 специализированных агентов\nMCP: mission-control · mission-dispatch · ros-msp"]
+    MissionControl["Mission Control\n(форк NVIDIA)\nГраф карты, планирование\nBehavior Trees, cuOpt"]
+    MissionDispatch["Mission Dispatch\n(форк NVIDIA)\nОчередь миссий\nMQTT · PostgreSQL"]
+    IsaacSim["NVIDIA Isaac Sim\nheadless · Web Viewer\nROS 2 Jazzy · isaac_ros_mission_client\nVDA5050 client · rosbridge WebSocket"]
+    vLLM["vLLM Service\nData Parallel · 2×V100\nQwen2.5-Instruct"]
+
+    User -->|"сообщение"| Interface
+    Interface -->|"POST /task\nWS events"| Orchestrator
+    Orchestrator -->|"HTTP / MCP"| MissionControl
+    Orchestrator -->|"HTTP / MCP"| MissionDispatch
+    MissionControl <-->|"VDA5050"| MissionDispatch
+    MissionControl -->|"VDA5050 + ROS 2 bridge"| IsaacSim
+    MissionDispatch -->|"VDA5050 + ROS 2 bridge"| IsaacSim
+    vLLM -->|"OpenAI-compatible API"| Orchestrator
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
+    style Orchestrator fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style MissionControl fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    style MissionDispatch fill:none,stroke:#4a9eff,stroke-width:2px,color:#fff
+    style IsaacSim fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style vLLM fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
 ```
 
 ---
