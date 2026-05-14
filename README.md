@@ -6,393 +6,505 @@
 
 ## Рабочее название:
 
-> Автономный рой роботов - (AgentsSwarm)
+> Автономный рой роботов — AgentsSwarm
+
+---
 
 ## Компоненты архитектуры системы
 
-- [interface](https://github.com/deneal123/AgentsSwarm/tree/interface)
-- [isaac_mission_control+mcp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_control)
-- [isaac_mission_dispatch+msp_server](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_dispatch)
-- [nvidia_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/nvidia_isaac_simulation)
-- [orchestrator](https://github.com/deneal123/AgentsSwarm/tree/orchestrator)
-- [smolvla_tools](https://github.com/deneal123/AgentsSwarm/tree/smolvla_tools)
-- [vllm_service](https://github.com/deneal123/AgentsSwarm/tree/vllm_service)
-- [workspace_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/workspace_isaac_simulation)
+| Компонент | Ветка | Тип | Статус |
+|-----------|-------|-----|--------|
+| [interface](https://github.com/deneal123/AgentsSwarm/tree/interface) | `interface` | Авторская разработка | ✅ Завершён |
+| [orchestrator](https://github.com/deneal123/AgentsSwarm/tree/orchestrator) | `orchestrator` | Авторская разработка | ✅ Завершён |
+| [vllm_service](https://github.com/deneal123/AgentsSwarm/tree/vllm_service) | `vllm_service` | Авторская разработка | ✅ Завершён |
+| [isaac_mission_control](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_control) | `isaac_mission_control` | Форк NVIDIA + доработки | ✅ Завершён |
+| [isaac_mission_dispatch](https://github.com/deneal123/AgentsSwarm/tree/isaac_mission_dispatch) | `isaac_mission_dispatch` | Форк NVIDIA + доработки | ✅ Завершён |
+| [nvidia_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/nvidia_isaac_simulation) | `nvidia_isaac_simulation` | Официальный NVIDIA (без изменений) | ✅ Использован |
+| [workspace_isaac_simulation](https://github.com/deneal123/AgentsSwarm/tree/workspace_isaac_simulation) | `workspace_isaac_simulation` | Форк NVIDIA + ROS 2 пакеты | ✅ Завершён |
+| [smolvla_tools](https://github.com/deneal123/AgentsSwarm/tree/smolvla_tools) | `smolvla_tools` | Авторская разработка (эксперимент) | 🔬 Зарезервировано |
 
+---
 
-## TODO:
+## Общая архитектура системы
+
+```
+Пользователь
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Interface (React + FastAPI + Celery + RabbitMQ)            │
+│  Чат · WebSearch · DeepResearch · ImageGen · PptxGen        │
+│  Управление роем через SwarmOrchestratorAgent               │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ POST /task  WS events
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Orchestrator (FastAPI + OpenAI Agents SDK)                 │
+│  Planner → Router → 8 специализированных агентов           │
+│  MCP-серверы: mission-control · mission-dispatch · ros-msp  │
+└──────┬───────────────────────────────────────┬──────────────┘
+       │ HTTP/MCP                              │ HTTP/MCP
+       ▼                                       ▼
+┌──────────────────┐                  ┌────────────────────┐
+│  Mission Control │                  │  Mission Dispatch  │
+│  (форк NVIDIA)   │◄────────────────►│  (форк NVIDIA)     │
+│  Граф карты,     │   VDA5050        │  Очередь миссий,   │
+│  планирование    │                  │  MQTT, PostgreSQL  │
+└──────────────────┘                  └────────────────────┘
+       │                                       │
+       └───────────────────┬───────────────────┘
+                           │ VDA5050 + ROS 2 bridge
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  NVIDIA Isaac Sim (headless, Web Viewer)                    │
+│  workspace: ROS 2 Jazzy, isaac_ros_mission_client           │
+│  VDA5050 client, rosbridge WebSocket                        │
+└─────────────────────────────────────────────────────────────┘
+       ▲
+       │ OpenAI-compatible API
+┌──────────────────────────┐
+│  vLLM Service            │
+│  Data Parallel, 2×V100   │
+│  Qwen-Instruct Agent     │
+└──────────────────────────┘
+```
+
+---
+
+## TODO (актуальный план)
 
 ### 1. NVIDIA Isaac Sim
 
-Открытая платформа для разработки роботов и создания симуляций.
+Официальная платформа симуляции роботов от NVIDIA. Использована без изменений исходного кода — только настройка сцены, Action Graph и ROS 2 bridge.
 
 #### 1.1 Подготовка окружения
-- [x] Подготовка workspace в Docker контейнере с собранным ROS 2 Jazzy под Ubuntu 24.04 для разработки и использования ROS 2 launch файлов (включая поднятие ROS 2 bridge для публикации данных из Isaac Sim)
+- [x] Подготовка ROS 2 workspace в Docker-контейнере (Ubuntu 24.04, ROS 2 Jazzy) для разработки и запуска launch-файлов
+- [x] Настройка rosbridge WebSocket-сервера для публикации данных из Isaac Sim в ROS 2 топики
+- [x] Очень длительная отладка Docker-образа workspace: настройка DDS bridge, зависимостей, монтирования
 
 #### 1.2 Запуск симуляции
-- [x] Подготовка Docker Compose конфигурации для запуска NVIDIA Isaac Sim в headless режиме с Web-based viewer для удаленного доступа к интерфейсу
+- [x] Docker Compose конфигурация для запуска Isaac Sim в headless-режиме с Web Viewer (удалённый доступ к интерфейсу)
 
 #### 1.3 Настройка сцены
-- [x] Создание сцены (или поиск из готовых ассетов/сценариев), настройка сцены и Action Graph роботов (namespaces)
+- [x] Создание/выбор сцены из NVIDIA Asset Store (Carter warehouse)
+- [x] Настройка Action Graph роботов, назначение пространств имён (namespaces) для нескольких роботов
 
 #### 1.4 Проверка данных
-- [x] Проверка работоспособности публикации данных из Isaac Sim в ROS 2 топики
+- [x] Проверка публикации данных из Isaac Sim в ROS 2 топики (одометрия, лидар, камера)
 
-#### 1.5 Isaac ROS Mission Client
-- [x] Запуск из workspace пакета `isaac_ros_mission_client` (VDA5050) для сбора и преобразования данных из симулятора в ROS 2 топики
-- [x] Подготовка конфигурации запуска команд для нескольких роботов
-- [x] Генерация occupancy map и `.yaml` конфигураций
+#### 1.5 Isaac ROS Mission Client (VDA5050)
+- [x] Запуск пакета `isaac_ros_mission_client` (VDA5050) из workspace
+- [x] Подготовка launch-конфигурации для нескольких роботов
+- [x] Генерация occupancy map и `.yaml`-конфигураций для Mission Control
 
 #### 1.6 Isaac ROS Cloud Control
 - [x] Проверка работоспособности пакета `isaac_ros_cloud_control` в собранном workspace
-- [x] Подготовка ROS 2 команд для запуска клиента с несколькими роботами
+- [x] Подготовка ROS 2 launch-команд для нескольких роботов
 
 ---
 
-### 2. MissionDispatch + MissionControl
+### 2. Mission Control (форк NVIDIA)
 
-#### Описание компонентов
-- **Mission Dispatch**: VDA5050-совместимый облачный сервис для отправки миссий одному или нескольким роботам
-- **Mission Control**: Сервис построения дерева поведения задач. Использует occupancy map, строит граф карты, подбирает оптимальные маршруты (с использованием cuOpt) и делегирует выполнение через Mission Dispatch с VDA5050 Mission Client
+**Репозиторий**: форк [nvidia-isaac/mission-control](https://github.com/nvidia-isaac/mission-control), подмодуль `isaac_mission_control/MissionControl`.
 
-#### 2.1 Развертывание
-- [x] Подготовка Docker Compose конфигурации с dev-контейнерами и окружением для запуска MissionDispatch и MissionControl
-- [x] Компоненты: cuOpt, Mosquitto, PostgreSQL, mission-database, mission-dispatch, wpg, mission-control, waypoint_ui
+Сервис построения дерева поведения задач. Использует occupancy map, строит граф карты, подбирает оптимальные маршруты (интеграция с NVIDIA cuOpt) и делегирует выполнение через Mission Dispatch по протоколу VDA5050.
 
-#### 2.2 Багфиксы и доработки
-- [x] **Исправление endpoint'ов**: обнаружено использование несуществующего endpoint `push_map`, замена на актуальные методы mission_control: `map/update_robot`, `map/metadata`
-- [x] Создан форк с корректировками, в планах — создание Pull Request в официальный репозиторий NVIDIA
-- [x] **Исправление импорта Pydantic**: обнаружена ошибка импорта, из-за которой падал waypoint_ui (необходим для быстрой проверки и получения координат для миссии по occupancy map)
+#### 2.1 Развёртывание
+- [x] Docker Compose конфигурация со всем стеком: cuOpt, Mosquitto, PostgreSQL, mission-database, mission-dispatch, wpg, mission-control, waypoint_ui
+- [x] Длительная настройка образов и окружения для совместной работы всех сервисов
+
+#### 2.2 Авторские исправления и доработки (форк)
+- [x] **Исправление endpoint `push_map`**: обнаружено использование несуществующего endpoint, заменено на актуальные методы `map/update_robot`, `map/metadata`
+- [x] **Исправление импорта Pydantic**: ошибка импорта в `waypoint_selection_ui`, из-за которой сервис не запускался
+- [x] **Исправление пути waypoint entrypoint** и конфигурации хоста/порта
+- [x] Несколько последовательных fix-коммитов по стабилизации (см. коммиты `Fix: waypoint fix path`, `Fix: import time`, `Fix: upload map`)
+- [x] **Revert**: откат нестабильного изменения (коммит `revert`)
 
 #### 2.3 Тестирование
-- [x] Запуск и проверка работоспособности подключения сервисов
-- [x] Проверка создания и инициализации конфигураций роботов
-- [x] Проверка доставки данных от `vda5050_client_bringup` из workspace до сервисов
+- [x] Проверка подключения и инициализации конфигураций роботов
+- [x] Проверка доставки данных от `vda5050_client_bringup` до сервисов Mission Control/Dispatch
 - [x] Подтверждение статуса "online" для роботов
-- [x] Пробный запуск миссии через MissionDispatch Swagger, проверка перехода миссии в статус "running"
-- [x] Проверка получения координат для миссии через waypoint_ui
-
-#### 2.4 Интеграция
-
-#NOTE: Возникла проблема с состояниями роботов, не происходит инициализация стартового положения робота, не публикуются данные odom
-- [?] Проверка корректного построения дерева поведения в MissionControl и передачи миссий роботам
+- [x] Пробный запуск миссии через Mission Dispatch Swagger
+- [x] Получение координат для миссии через `waypoint_ui`
+- [x] Проверка корректного построения дерева поведения и передачи миссий роботам в симуляторе
 
 ---
 
-### 3. Связка NVIDIA Isaac Sim ↔ MissionDispatch + MissionControl
+### 3. Mission Dispatch (форк NVIDIA)
 
-- [?] Проверка корректности настройки связки: NVIDIA Isaac Sim ↔ ROS 2 bridge ↔ workspace
-- [?] Проверка, что Mission Client получает корректные данные от симуляции и обновляет состояние роботов в связке с MissionDispatch
-- [?] Проверка, что созданные деревья поведения в MissionControl успешно исполняются роботами в NVIDIA Isaac Sim
+**Репозиторий**: форк [nvidia-isaac/mission-dispatch](https://github.com/nvidia-isaac/mission-dispatch), подмодуль `isaac_mission_dispatch/MissionDispatch`.
 
----
+VDA5050-совместимый облачный сервис очереди миссий. Принимает миссии, отправляет их роботам через MQTT (Mosquitto), отслеживает статусы через PostgreSQL.
 
-### 4. MCP Server (Model Context Protocol)
+#### 3.1 Авторские исправления и доработки (форк)
+- [x] **Исправление legacy endpoint `push_map`** в `packages/controllers/server` — замена на актуальные маршруты
+- [x] **Исправление конфигурации хоста** (`Fix: add host`)
+- [x] Стабилизация совместной работы с Mission Control и VDA5050 клиентом
 
-**RosMSPServer + DispatchMCPServer + ControlMCPServer**
-
-MCP — протокол, служащий посредником между LLM и внешними данными/инструментами.
-
-#### 4.1 Развертывание
-- [x] Подготовка Docker Compose конфигурации с контейнерами для использования MCP протоколов
-- [x] Обеспечение взаимодействия между MissionDispatch, MissionControl, ROS 2 и агентом для передачи управления роботами LLM
-
-#### 4.2 Доработка
-- [?] Доработка существующих MCP протоколов для MissionDispatch и MissionControl
-- [?] Отключение лишних инструментов
-- [?] Добавление кастомных инструментов для специфичных задач
-
-#### 4.3 Интеграция
-- [x] Проверка подключения LLM к разработанным MCP протоколам
+#### 3.2 Тестирование
+- [x] Сквозная проверка: Isaac Sim → VDA5050 клиент → Mission Dispatch → Mission Control → обратно
 
 ---
 
-### 5. vLLM Service
+### 4. Связка Isaac Sim ↔ Mission Control ↔ Mission Dispatch
 
-Микросервис на фреймворке vLLM для сервинга LLM моделей в OpenAI-compatible формате в data parallel режиме на двух нодах.
-
-#### 5.1 Разработка
-- [x] Подготовка шаблонной структуры микросервиса
-- [x] Реализация основных API endpoints для взаимодействия с LLM
-- [x] Подготовка Docker Compose конфигурации
-
-#### 5.2 Запуск моделей
-- [x] Сервинг модели **Qwen-Instruct Agent Tool** для выполнения агентских задач
-
-#### 5.3 Тестирование
-- [x] Тестирование и проверка работы модели в data parallel режиме
+- [x] Проверка корректности настройки: Isaac Sim ↔ ROS 2 bridge ↔ workspace
+- [x] Mission Client корректно получает данные из симуляции и обновляет статус роботов
+- [x] Деревья поведения Mission Control успешно исполняются роботами в Isaac Sim
 
 ---
 
-### 6. Orchestrator
+### 5. MCP-серверы (Model Context Protocol)
 
-Микросервис на базе **OpenAI Agents SDK**, выступающий интеллектуальной прослойкой между пользователем и инфраструктурой управления роботами. Orchestrator принимает запросы на естественном языке, маршрутизирует их к специализированным агентам, вызывает инструменты через MCP-серверы (RosMSP, MissionControl, MissionDispatch) и возвращает результат в реальном времени.
+**Расположение**: `orchestrator/docker/` — три MCP-сервера встроены в оркестратор как код (не подмодули), т.к. претерпели глубокие изменения относительно официальных реализаций.
 
-#### 6.1 Базовая настройка и окружение
-- [x] Создание базовой структуры микросервиса на FastAPI
-- [x] Настройка Dockerfile и Docker Compose конфигурации
-- [x] Конфигурация переменных окружения (.env) для подключения к MCP-серверам
-- [x] Интеграция с Redis для управления сессиями и кэширования
+#### Официальные источники (не форки, полностью переработаны):
+- `mission-control-mcp` ← на основе MCP-сервера из репозитория Mission Control NVIDIA
+- `mission-dispatch-mcp` ← на основе MCP-сервера из репозитория Mission Dispatch NVIDIA
+- `ros-msp` ← на основе [ros-mcp-server](https://github.com/robotmcp/ros-mcp-server)
 
-#### 6.2 MCP-серверы и инструменты
-- [x] Подключение RosMSP MCP сервера (конфигурация + env)
-- [x] Подключение MissionControl MCP сервера (конфигурация + env)
-- [x] Подключение MissionDispatch MCP сервера (конфигурация + env)
-- [x] Контейнеризация ros-msp: Dockerfile, pyproject.toml, requirements/, переименование docker/ros_mcp → docker/ros-msp
-- [x] SSE-транспорт для всех трёх MCP-серверов (docker-compose dev: порты 8010/8011/8012)
-- [x] Переменные среды: ROSBRIDGE_IP, ROSBRIDGE_PORT, ROS_MSP_TRANSPORT, ROS_MSP_MCP_URL
-- [x] Динамический выбор транспорта stdio/sse через env vars (`mcp.py` → `_server_config()`)
-- [x] RobotInfo: добавлен mission_dispatch_server() (без него агент не имел доступа к fleet summary / battery)
+#### 5.1 Развёртывание
+- [x] Docker Compose конфигурация с тремя MCP-серверами (порты 8010/8011/8012)
+- [x] SSE-транспорт для всех серверов (stdio/SSE — динамический выбор через env)
+- [x] Контейнеризация `ros-msp`: Dockerfile, pyproject.toml, requirements
 
-#### 6.3 Агентная архитектура
+#### 5.2 Авторские доработки (глубокие)
+- [x] **mission-control-mcp**: реализованы заглушечные endpoint-ы (стояли `raise NotImplementedError`), исправлены баги, **полный переход с синхронных на асинхронные tools**
+- [x] **mission-dispatch-mcp**: аналогично — реализация нереализованных методов, async-переход, исправление багов совместимости
+- [x] **ros-msp**: доработка инструментов для работы с ROS 2 топиками через rosbridge WebSocket
+- [x] Отключение нерелевантных инструментов, добавление кастомных инструментов для специфичных задач роя
 
-##### RouterAgent
-- [x] Разработка system prompt для маршрутизации запросов
-- [x] Реализация handoff логики между специализированными агентами (конфигурация)
-- [x] Добавление fallback агента для общих вопросов
-- [x] Тестирование корректности маршрутизации (смоук-набор для классификации)
+#### 5.3 Интеграция
+- [x] Подключение всех трёх MCP-серверов к Orchestrator через OpenAI Agents SDK
+- [x] Проверка end-to-end вызова инструментов от агента до реального API
 
-##### MissionPlannerAgent (новый)
-- [x] Скелет планировщика: детерминированный план, цикл шагов, стрим событий/статуса
-- [x] Двухфазный агент: построение плана из шагов по сложному запросу
-- [x] Замкнутый цикл: выполнение шагов через handoff к специализированным агентам до успеха/остановки/ошибки
-- [x] Стриминг шагов и повторное планирование при проблемах
-- [x] Контракты шагов плана (meta: expected_outcome, tools, depends_on, inputs)
-- [x] Хьюристика выбора агента: Navigation для одиночных задач, SwarmCoordinator при упоминании нескольких роботов/ключевых слов, прокидывание target_robots в meta
-- [x] Исправление инструментов в meta шагов плана: реальные имена MCP-инструментов (submit_navigation_mission, dispatch_mission, get_mission_status, get_idle_robots, check_robot_health)
-- [x] `POST /task/{task_id}/replan` — пересборка плана с опциональным немедленным запуском (`?run=true`)
+---
 
-###### Интеграция с OpenAI Agents SDK (по примерам из docs/open-agents-sdk и docs/example)
-- [x] Подключить реальный Agents SDK Runner вместо симулятора (streamed run + handoff) для плановых шагов
-- [x] Использовать фабрику клиентов (`services/openai_client.py`) для переключения OpenAI/vLLM через переменные окружения
-- [x] Внедрить Router на Agents SDK с `Runner.run_streamed` (ранний вывод категории) и схемой output_type для маршрутизации
-- [x] Добавить guardrails/validators на вход/выход (см. `docs/example/guardrail.py`, `guide.md`)
-- [x] Применить pydantic output_type для структурированных ответов (e.g. `RoutingDecision`, `UserContext`)
-- [x] Прокинуть ModelSettings/RunConfig в раннеры (temperature/top_p, nest_handoff_history) и чтение моделей из env
-- [x] Подключить tools/модели через MCP/Agents SDK registry (см. `tools.md`, `msp.md`) для реальных вызовов MissionControl/MissionDispatch
+### 6. vLLM Service
 
-##### RobotInfoAgent
+**Авторская разработка с нуля.** Микросервис для сервинга LLM-моделей в OpenAI-совместимом формате в режиме Data Parallel на двух нодах (2 × Tesla V100-PCIE 32 GB).
 
-- [x] Реализация агента с подключением RosMSP MCP + MissionDispatch MCP (оба необходимы)
-- [x] Разработка system prompt с инструкциями по работе с роботами (два блока: Mission Dispatch + ros-msp)
-- [x] Добавление логики обработки запросов о состоянии роботов (get_fleet_summary, get_robot_status, check_robot_health)
-- [x] Реализация batch запросов для получения информации о всех роботах (get_idle_robots, get_mission_status)
-- [x] Обработка edge cases: робот не найден, недоступен
+#### 6.1 Архитектура
+- [x] Координатор (rank 0) + Worker (rank 1) с RPC-синхронизацией через порт 13345
+- [x] Единый OpenAI-compatible API endpoint (`:8000`) — клиенты общаются только с координатором
+- [x] Модульная структура: `engine/`, `server/`, `models/`, `config/`, `utils/`
 
-##### NavigationAgent
-- [x] Реализация агента с подключением MissionControl и MissionDispatch MCP (конфигурация)
-- [x] Разработка system prompt для навигационных задач (обязательный 3-шаговый алгоритм)
-- [x] Реализация логики создания и отправки миссий (submit_navigation_mission, dispatch_mission)
-- [x] Закрыта дыра мониторинга: обязательный polling get_mission_status до COMPLETED/FAILED (до 8 проверок)
-- [x] Сценарии: зарядка (submit_charging_mission), отстыковка (submit_undock_mission), прямое управление (dispatch_mission)
+#### 6.2 Реализация
+- [x] CLI-интерфейс (`uv run`) для запуска координатора и воркера
+- [x] Dockerfile с uv и vLLM, docker-compose для одноузловой разработки
+- [x] Скрипты развёртывания `deploy.sh` / `deploy.bat` для Linux и Windows
+- [x] Шаблоны конфигурации `.env.node0` / `.env.node1`
+- [x] Настройка `VLLM_GPU_MEMORY_UTILIZATION` для управления потреблением GPU-памяти
 
-##### SwarmCoordinatorAgent
-- [x] Реализация агента с подключением всех трех MCP-серверов (конфигурация)
-- [x] Разработка system prompt для координации нескольких роботов (обязательный 4-шаговый алгоритм)
-- [x] Реализация логики распределения задач: поиск свободных роботов, health-check, параллельная отправка миссий
-- [x] Мониторинг роя: поочерёдный polling get_mission_status для каждого робота (до 6 раундов)
-- [?] Добавление алгоритмов для точки встречи (rendezvous) на стороне агента (инструкции есть, LLM вычисляет)
-- [?] Реализация балансировки нагрузки между роботами
+#### 6.3 Запуск моделей
+- [x] Сервинг **Qwen-Instruct** (Agent Tool call) — основная модель для агентских задач
+- [x] Тестирование Data Parallel режима: корректное распределение нагрузки между нодами
 
-#### 6.4 Потоковая обработка (Streaming)
+#### 6.4 Тестирование
+- [x] Smoke-тесты API (`/health`, `/v1/chat/completions`)
+- [x] Проверка совместимости с OpenAI Agents SDK (фабрика клиентов в orchestrator)
 
-- [x] Реализация StreamCollector для агрегации логов и событий (скелет)
-- [x] Форматирование стримов с указанием task_id и source (payload с ts/meta/level)
-- [x] Добавление метаданных в стримы: timestamp, уровень логирования, тип события
-- [x] Реализация буферизации для поздних подключений (seq + get_since, cap)
-- [x] HTTP endpoint `/task/{task_id}/events` для выборки стрима (REST-заглушка до WebSocket)
-- [x] HTTP endpoint `POST /task/{task_id}/events` для приема событий/логов от внешних воркеров с опциональным обновлением статуса
-- [x] Стрим событий отмены (`Task canceled`, `Task canceled during execution`) и маркировка плана как `canceled`
-- [x] WebSocket `/ws/task/{task_id}` для стриминга событий (пуллинг StreamCollector)
+---
 
-#### 6.5 Управление сессиями и контекстом
+### 7. Orchestrator
 
-- [x] Настройка Redis для хранения сессий
-- [x] Реализация SessionManager с методами:
-  - `get_session(task_id)` — получение контекста сессии
-  - `update_session(task_id, context)` — обновление контекста
-  - `clear_session(task_id)` — очистка сессии
-- [x] Хранение истории запросов для диалогового контекста
-- [x] Сохранение последнего использованного robot_id
-- [x] Кэширование результатов MCP вызовов
+**Авторская разработка с нуля.** Главный интеллектуальный микросервис системы. Принимает запросы на естественном языке, строит план, маршрутизирует к специализированным агентам, вызывает инструменты через MCP-серверы, транслирует результат в реальном времени через WebSocket.
 
-#### 6.6 Обработка ошибок и fallback
+**Версия**: v0.5.6 (56+ коммитов)
 
-- [x] Реализация глобального exception handler
+#### 7.1 Инфраструктура и окружение
+- [x] Базовая структура FastAPI-микросервиса
+- [x] Dockerfile и Docker Compose (dev: 5 сервисов — orchestrator + 3 MCP + Redis)
+- [x] Переменные окружения для подключения к MCP-серверам, vLLM, Mission Control
+- [x] Redis для управления сессиями и кэширования результатов MCP
+
+#### 7.2 Агентная архитектура (OpenAI Agents SDK)
+
+##### Router Agent
+- [x] Классификация запроса в 8 категорий: `robot_info`, `navigation`, `charging`, `patrol`, `inspection`, `fleet_ops`, `swarm_coord`, `general`
+- [x] Детерминированные правила приоритетов (ключевые слова → категория)
+- [x] Handoff-логика к специализированным агентам
+
+##### MissionPlanner Agent
+- [x] Двухфазный агент: 1) построение детерминированного плана из шагов, 2) исполнение шагов через handoff к специализированным агентам
+- [x] Контракты шагов плана: `expected_outcome`, `tools`, `depends_on`, `inputs`, `target_robots`
+- [x] Повторное планирование при сбоях шага (replan)
+- [x] `POST /task/{task_id}/replan` с опциональным немедленным запуском
+
+##### MapAnalyst Agent
+- [x] Получение PNG-карты и метаданных из Mission Control API
+- [x] Передача карты vision-LLM для анализа в контексте навигационной задачи
+- [x] Стриминг аннотированного overlay-изображения в Interface
+
+##### RobotInfo Agent
+- [x] Подключение к RosMSP MCP + MissionDispatch MCP
+- [x] Инструменты: `get_fleet_summary`, `get_robot_status`, `check_robot_health`, `get_idle_robots`
+- [x] Обработка edge-cases: робот не найден, недоступен
+
+##### Navigation Agent
+- [x] Подключение к MissionControl + MissionDispatch MCP
+- [x] 3-шаговый обязательный алгоритм: `submit_navigation_mission` → `dispatch_mission` → polling `get_mission_status`
+- [x] Polling статуса миссии до COMPLETED/FAILED (до 8 проверок)
+- [x] Сценарии: зарядка (`submit_charging_mission`), отстыковка (`submit_undock_mission`)
+
+##### Charging Agent
+- [x] Специализированный агент для задач зарядки и стыковки
+- [x] Обязательный алгоритм: поиск свободного дока → submit_charging_mission → dispatch → polling
+
+##### Patrol Agent
+- [x] Агент для циклического патрулирования зоны
+- [x] Построение маршрута из нескольких waypoints, повторный обход
+
+##### Inspection Agent
+- [x] Агент для задач инспекции: что видит камера, обнаружение объектов, AprilTag-метки
+- [x] Подъезд к объекту через навигационную миссию, анализ изображения через vision-LLM
+
+##### FleetOps Agent
+- [x] Операции над всем флотом: отмена всех миссий, зарядка всего флота, диагностика системы
+- [x] Сбор аналитики и отчётов по миссиям
+
+##### SwarmCoordinator Agent
+- [x] Подключение всех трёх MCP-серверов
+- [x] 4-шаговый алгоритм: поиск свободных роботов → health-check → параллельная отправка миссий → мониторинг роя
+- [x] Поочерёдный polling статуса для каждого робота (до 6 раундов)
+- [ ] Алгоритмы точки встречи (rendezvous) на стороне агента — инструкции есть, вычисляет LLM
+- [ ] Балансировка нагрузки между роботами на основе состояния батареи
+
+##### General Agent
+- [x] Fallback-агент для справочных вопросов и приветствий
+
+#### 7.3 Потоковая обработка (Streaming)
+- [x] `StreamCollector`: агрегация событий с seq-нумерацией, буферизация для поздних подключений
+- [x] WebSocket `/ws/task/{task_id}` — push всех событий в реальном времени
+- [x] HTTP endpoint `GET /task/{task_id}/events` (REST-заглушка / polling)
+- [x] `POST /task/{task_id}/events` — приём событий от внешних воркеров
+- [x] Стриминг событий отмены задачи, маркировка шагов плана как `canceled`
+- [x] Метаданные в стримах: timestamp, уровень логирования, тип события, task_id
+
+#### 7.4 Управление сессиями и контекстом
+- [x] Redis SessionManager: `get_session`, `update_session`, `clear_session`
+- [x] Хранение истории диалога, последнего robot_id, кэш MCP-результатов
+
+#### 7.5 Обработка ошибок и надёжность
+- [x] Глобальный exception handler
 - [x] Graceful shutdown при отключении MCP-серверов (lifespan hooks)
-- [x] Retry механизм для временных сбоев MCP (sync/async backoff утилита)
-- [x] Логирование ошибок с контекстом task_id
-- [x] Отправка пользователю понятных сообщений об ошибках через WebSocket
+- [x] Retry с backoff для временных сбоев MCP (sync/async)
+- [x] Guardrails / validators на вход и выход агентов
 
-#### 6.7 API эндпоинты
+#### 7.6 API endpoints
+- [x] `POST /task` — приём задачи (`run=false` для отложенного запуска)
+- [x] `POST /task/{task_id}/run` — запуск отложенной задачи
+- [x] `POST /task/{task_id}/cancel` — отмена с маркировкой плана
+- [x] `POST /task/{task_id}/replan` — пересборка плана (`?run=true`)
+- [x] `GET /task/{task_id}/status` — статус задачи
+- [x] `GET /task/{task_id}/plan` — шаги плана
+- [x] `GET /task/{task_id}/logs` — все логи задачи
+- [x] `POST /task/{task_id}/events` — приём событий
+- [x] `WS /ws/task/{task_id}` — WebSocket стриминг
+- [x] `GET /health` — healthcheck
 
-- [x] `POST /task` — прием задачи от Worker
-  - Input: `{task_id: str, prompt: str, session_data: Optional[dict]}` + query `run=false` для отложенного запуска
-  - Output: `{status: "processing"|"pending", task_id: str}`
-- [x] `GET /task/{task_id}/status` — получение статуса задачи
-- [x] `GET /task/{task_id}/plan` — получение плана шагов (если построен)
-- [x] `GET /task/{task_id}/logs` — получение всех логов задачи
-- [x] `POST /task/{task_id}/cancel` — отмена выполнения задачи
-- [x] `POST /task/{task_id}/events` — приём событий (stream) и обновлений статуса от воркеров/агентов
-- [x] `GET /health` — healthcheck эндпоинт
-- [x] `POST /task/{task_id}/run` — запуск отложенной задачи (Router/Planner) с построением плана и стримингом шагов
-- [x] `POST /task/{task_id}/cancel` — прерывает исполнение, помечает шаги плана `canceled`, стримит события отмены
-- [x] `POST /task/{task_id}/replan` — пересборка плана; `?run=true` — сразу запустить
-
-#### 6.8 Качество кода и рефакторинг
-
-- [x] Фикс `BackgroundTasks | None` → `BackgroundTasks = BackgroundTasks()` (FastAPI DI несовместим с union-типом)
-- [x] Фикс `Iterable` → `tuple` для exceptions в `retry.py`
-- [x] Предкомпиляция regex в `planner.py` (`_ROBOT_ID_RE`, `_GOAL_SPLIT_RE`) — вынос из hot path
-- [x] Упрощение `_extract_robot_ids()` через `dict.fromkeys()` вместо ручной дедупликации
-- [x] Замена `os.getenv("AGENTS_TRACING_DISABLED", "1") != "0"` на `env_bool()` в `agents_sdk.py`
-- [x] Консолидация трёх дублирующихся MCP-фабрик в единый `_server_config()` в `mcp.py`
-
-#### 6.9 Тестирование
-
-- [x] Юнит-тесты для базовых сервисов (health, sessions, streaming, retry, события, заглушечный раннер)
-- [x] Контрактные тесты планировщика (агент, инструменты, target_robots, зависимости шагов)
-- [x] Тесты guardrails (input/output валидация, категории роутера, silent fallback)
-- [x] Интеграционные тесты HTTP API (run, cancel, replan, events, WebSocket) — 43/43 ✅
-- [?] Интеграционные тесты с реальными MCP-серверами (требуют Docker-окружения)
-- [?] E2E тесты полного цикла с LLM (требуют работающей модели)
-- [?] Тесты потоковой передачи данных через WebSocket (async client)
-- [?] Нагрузочное тестирование (100+ параллельных задач)
-
-#### 6.10 Документация
-
-- [x] README полностью переписан: удалён Gateway, актуальная архитектура с Interface-сервисом
-- [x] Архитектурная диаграмма Mermaid — актуальная топология (5 сервисов + rosbridge + Isaac Sim)
-- [x] Таблица fallback-ов и устойчивости
-- [x] Инвентарь MCP-инструментов по каждому серверу
-- [x] Примечание об ограничении: оркестратор не поллирует миссии автоматически (это задача агента)
-
-#### 6.11 Интеграция с Interface
-
-- [?] Тестирование эндпоинта `/task` с реальным интерфейсом
-- [?] Тестирование стримов от Orchestrator до Frontend
+#### 7.7 Тестирование
+- [x] Unit-тесты базовых сервисов (health, sessions, streaming, retry)
+- [x] Контрактные тесты планировщика (агент, инструменты, target_robots, зависимости)
+- [x] Тесты guardrails (валидация, категории роутера, fallback)
+- [x] Интеграционные тесты HTTP API — 43/43 ✅
+- [ ] Интеграционные тесты с реальными MCP-серверами (требуют Docker-окружения)
+- [ ] E2E тесты полного цикла с LLM
 
 ---
 
-### 7. Interface
+### 8. Interface
 
-#### 7.1 Базовая настрока и окружение
+**Авторская разработка с нуля.** Полноценная веб-платформа: чат с агентами, управление роем роботов, генерация файлов, история, профиль. **168 коммитов**, версия v0.5.0.
 
-- ...
+#### 8.1 Инфраструктура и окружение
+- [x] **Frontend**: React + Chakra UI (CRA + craco), SPA с React Router
+- [x] **Backend**: FastAPI + SQLAlchemy + Alembic (PostgreSQL), чистая архитектура (domain / application / infrastructure)
+- [x] **Очереди**: RabbitMQ + Celery (фоновые задачи агентов)
+- [x] **Стриминг**: Redis Streams (`chat:{thread_id}:stream`) для push событий от агентов к WebSocket
+- [x] **Хранилище файлов**: MinIO / local storage
+- [x] Docker Compose: dev (hot-reload backend + frontend dev server) и prod (nginx, собранный фронт)
+- [x] Makefile, `build.sh`, `run.sh` для удобного управления стеком
 
-### 7.2 Агентная архитектура для сбора мутимодального контекста
+#### 8.2 Backend — агентная архитектура
+- [x] `AgentExecutionService` — роутинг запроса к нужному агенту, сборка ответа
+- [x] `Orchestrator` — LLM-классификатор выбора агента
+- [x] `ModelRoutingService` — выбор провайдера LLM по конфигурации (OpenAI / OpenRouter / MWS / vLLM)
+- [x] `AgentSessionService` — сессии и история диалога
+- [x] `AgentFileBridge` — передача файлов между агентом и хранилищем
+- [x] `ReplyAssembler` — сборка финального ответа из stream-событий агента
 
-- ...
+#### 8.3 Специализированные агенты
+- [x] **General** — общий чат, ответы на вопросы
+- [x] **WebSearch** — поиск в интернете (tool call → внешние API)
+- [x] **DeepResearch** — глубокое исследование: многошаговый поиск, синтез источников
+- [x] **ImageGeneration** — генерация изображений через внешние API
+- [x] **PptxGeneration** — генерация PowerPoint-презентаций
+- [x] **AudioTranscribe** — транскрипция аудио
+- [x] **SwarmOrchestrator** — проксирование запросов в Orchestrator-микросервис для управления роем роботов
 
-### 7.3 Реализованные ендпоинты бекенда
+#### 8.4 Frontend — страницы и компоненты
+- [x] **Авторизация**: Login, Signup, Auth-флоу с JWT
+- [x] **Chat**: основной чат с агентами, выбор агента, история диалогов, стриминг ответов
+- [x] **TracePanel**: панель трассировки событий агента (tool calls, routing, stream chunks)
+- [x] **Files**: управление файлами, загрузка/скачивание
+- [x] **Profile**: настройки пользователя
+- [x] Адаптивная тема (Chakra UI + кастомный xy-theme)
 
-- ...
+#### 8.5 WebSocket и стриминг
+- [x] WebSocket Layer: auth → stream → heartbeat
+- [x] `XREAD` из Redis Stream — push событий агента в реальном времени на фронтенд
+- [x] Типы событий: `stream_chunk`, `agent_reply`, `routing`, `tool_call`
 
-### 7.4 Реализация фронтенда
+#### 8.6 Интеграция с Orchestrator
+- [x] `SwarmOrchestratorAgent` → `POST /task` в Orchestrator
+- [x] Стриминг событий от Orchestrator до Frontend через Redis Stream
+- [x] Обработка ответов: план, шаги, статусы, логи
 
-- ...
+#### 8.7 Тестирование и качество кода
+- [x] Pytests для backend (unit + integration)
+- [x] Jest для frontend-компонентов
+- [x] ESLint + Ruff (backend) — CI-совместимые линтеры
+- [x] Масштабный рефакторинг: clean architecture, use-case классы, явные DTO, устранение глобальных зависимостей
 
 ---
 
-### 8. SmolVLA Tools
+### 9. workspace_isaac_simulation
 
-Фреймворк для оптимизации моделей SmolVLA (Vision‑Language‑Action) для робототехнических приложений. Реализует полный пайплайн сжатия: дистилляция знаний → FP16 pruning → анализ квантизации. Итоговая модель сохраняет >90% точности при сжатии в 443 раза (1.7 ГБ → <0.5 ГБ VRAM) и ускорении инференса 20–25×, что позволяет развертывать её на борту робота (Jetson Orin Nano).
+**Форк** [IsaacSim-ros_workspaces](https://github.com/NVIDIA-Omniverse/IsaacSim-ros_workspaces) с добавлением необходимых ROS 2 пакетов. Подмодуль `IsaacSim-ros_workspaces` содержит вложенные подмодули ROS-пространства (`moveit_resources`, `topic_based_ros2_control`).
 
-#### 8.1 Подготовка окружения и инструментов
+#### 9.1 Разработка
+- [x] Добавление необходимых ROS 2 пакетов поверх официального workspace
+- [x] Очень длительная настройка Docker-контейнера: Ubuntu 24.04 + ROS 2 Jazzy + DDS bridge
+- [x] Стабилизация настройки rosbridge WebSocket-сервера
+- [x] Настройка запуска `vda5050_client_bringup` для нескольких роботов одновременно
+- [x] Конфигурация Makefile для удобного управления стеком
 
+---
+
+### 10. SmolVLA Tools (экспериментальный модуль)
+
+**Авторская разработка.** Фреймворк для оптимизации Vision-Language-Action моделей (SmolVLA) для робототехнических приложений. Реализован полный пайплайн сжатия. **Статус: завершён как эксперимент, не интегрирован в итоговую систему.**
+
+> Изначальная цель — реализовать кастомное VDA5050 action-действие для Mission Control, которое запускает инференс SmolVLA прямо на борту робота (Jetson Orin Nano). Направление оставлено как потенциальное развитие системы.
+
+#### 10.1 Подготовка окружения
 - [x] Настройка проекта с uv и pyproject.toml
-- [x] Интеграция с HuggingFace (lerobot/smolvla_base, lerobot/pusht, lerobot/libero)
-- [x] Подготовка .env.example и конфигурации переменных окружения
-- [x] Создание шаблонов скриптов: train.py, export_onnx.py
+- [x] Интеграция с HuggingFace (`lerobot/smolvla_base`, `lerobot/pusht`, `lerobot/libero`)
 
-#### 8.2 Архитектура и модели
+#### 10.2 Архитектура моделей
+- [x] `TeacherModel` с загрузкой предобученных весов SmolVLA
+- [x] `StudentModel` с настраиваемым коэффициентом сжатия (`student_ratio`)
+- [x] Многокомпонентная функция потерь дистилляции: MSE + KL-divergence + attention transfer
+- [x] Mixed precision (FP16) через `torch.cuda.amp`
 
-- [x] Реализация TeacherModel с загрузкой предобученных весов
-- [x] Реализация StudentModel с настраиваемым коэффициентом сжатия (student_ratio)
-- [x] Разработка многокомпонентной функции потерь дистилляции (MSE + KL + attention transfer)
- Поддержка mixed precision (FP16) через torch.cuda.amp
-
-#### 8.3 Пайплайн оптимизации
-
+#### 10.3 Пайплайн оптимизации
 - [x] Stage 1: Knowledge distillation (10 эпох, температура 3.0, alpha 0.7)
-- [x] Stage 2: Mixed precision inference (FP16) для ускорения на тензорных ядрах
-- [x] Stage 3: Structured pruning (30% весов в Linear слоях)
-- [x] Stage 4: Анализ квантизации (INT8) с выявлением критических слоёв
+- [x] Stage 2: Mixed precision inference (FP16)
+- [x] Stage 3: Structured pruning (30% весов в Linear-слоях)
+- [x] Stage 4: Анализ квантизации (INT8), выявление критических слоёв
 
-#### 8.4 Эксперименты и валидация
+#### 10.4 Результаты экспериментов
+- [x] Валидация Teacher-модели на `lerobot/libero`: MSE 0.1782, R² 0.8412
+- [x] Сжатие: **443× по параметрам**, 12× по VRAM (6 GB → <0.5 GB)
+- [x] Ускорение инференса: **25×** (Teacher 450 ms → Student 18 ms на RTX 4090)
+- [x] Метрики качества: MSE +9.1%, MAE +5.1%, R² −1.8% (>90% точности сохранено)
+- [x] Per-action MAE по 7 действиям манипулятора — разница в третьем знаке
 
-- [x] Валидация Teacher‑модели на lerobot/libero: MSE 0.1782, R² 0.8412
-- [x] Запуск полного пайплайна на 10 эпохах
-- [x] Сбор метрик: MSE (+9.1%), MAE (+5.1%), R² (–1.8%)
-- [x] Измерение сжатия: 443× по параметрам, 12× по VRAM
-- [x] Оценка per‑action MAE (7 действий манипулятора) — разница в третьем знаке
+#### 10.5 Экспорт и совместимость
+- [x] Экспорт Student-модели в ONNX (фиксированный вход 224×224)
+- [x] Проверка совместимости с NVIDIA TensorRT (рекомендован FP16-режим)
+- [x] Подготовка примеров инференса для NVIDIA Jetson Orin Nano
 
-#### 8.5 Профилирование и бенчмарки
-
-- [x] Профилирование времени инференса (batch=1) на RTX 4090
-- [x] Сравнение latency: Teacher → 450 ms, Student → 18 ms (25× ускорение)
-- [x] Анализ потребления памяти: Teacher (FP32) → 6 GB, Student (FP16) → <0.5 GB
-
-### 8.6 Экспорт и развертывание
-
-- [x] Экспорт Student‑модели в ONNX (фиксированный вход 224×224)
-- [x] Проверка совместимости с NVIDIA TensorRT (рекомендован FP16 режим)
-- [x] Подготовка примеров инференса для встраиваемых платформ
-
-#### 8.7 Документация и отчёты
-
-- [x] Оформление отчётов №1–3 (docs/report_1.md, report_2.md, report_3.md)
-- [x] Написание README с примерами использования и результатами
-- [x] Фиксация инженерных выводов для интеграции в рой (Jetson‑совместимость)
-
-### 9. Доработка workspace, разработка VDA5050 адаптер хендлера для создания кастомного action действия для использования VLA в миссиях (интеграция SmolVLA в MissionDispatch+MissionControl через кастомные действия) - добавляет индивидуальную автономность
-
-#### 9.1 В разработке ...
+#### 10.6 Потенциальное развитие (не реализовано)
+- [ ] Кастомный VDA5050 action-handler в Mission Control для вызова SmolVLA-инференса как действия в миссии
+- [ ] Интеграция SmolVLA через Mission Dispatch + кастомное действие → индивидуальная автономность каждого робота
+- [ ] Развёртывание на борту Jetson Orin Nano
 
 ---
 
-## Технические требования для запуска полного стека проекта
+## Технические требования для запуска полного стека
 
-- Машина для симуляций (Selectel)
-  - **Образ**: Ubuntu 24.04 LTS 64-bit GPU driver 580 Open
-  - **Конфигурация**: 4 vCPU, 16 GB RAM, RTX 4090 (24 GB VRAM)
-  - **Диск**: 128 GB
-  - **Стоимость**: 15 012,70 ₽/мес
-- Машина для микросервисов (Selectel)
-  - **Образ**: Ubuntu 24.04 LTS 64-bit
-  - **Конфигурация**: 4 vCPU, 8 GB RAM
-  - **Диск**: 128 GB
-  - **Стоимость**: 1 156,09 ₽/мес
-- Кластер для LLM (MTS)
-  - **Образ**: Ubuntu 24.04 LTS 64-bit
-  - **Конфигурация**: 2 ноды × Tesla V100-PCIE (32 GB VRAM)
-  - **Диск**: 2 ноды x 1.6 ТБ
-  - **Стоимость**: Бесплатно
-- Итого
-  | Параметр | Значение |
-  |---------|---------|
-  | Общая стоимость | **16 168,79 ₽/мес** |
+| Машина | Провайдер | Конфигурация | Назначение | Стоимость |
+|--------|-----------|--------------|------------|-----------|
+| Симуляция | Selectel | 4 vCPU, 16 GB RAM, RTX 4090 (24 GB VRAM), 128 GB SSD, Ubuntu 24.04, GPU driver 580 | Isaac Sim (headless) + workspace ROS 2 + Mission Control/Dispatch | 15 012,70 ₽/мес |
+| Микросервисы | Selectel | 4 vCPU, 8 GB RAM, 128 GB SSD, Ubuntu 24.04 | Interface + Orchestrator + Redis + RabbitMQ + MinIO + PostgreSQL | 1 156,09 ₽/мес |
+| LLM-кластер | MTS Cloud | 2 ноды × Tesla V100-PCIE (32 GB VRAM), 1.6 ТБ/нода | vLLM Data Parallel (Qwen-Instruct) | Бесплатно |
+| **Итого** | | | | **16 168,79 ₽/мес** |
 
+---
 
-## Sourses
+## Источники и литература
 
-- [x] [vLLM Server](https://github.com/vllm-project/vllm)
-- [x] [Ros2](https://github.com/ros2)
-- [x] [Redis](https://redis.readthedocs.io/en/stable/index.html)
-- [x] [RabbitMQ](https://www.rabbitmq.com/tutorials/tutorial-one-python)
-- [x] [PostgreSQL](https://www.geeksforgeeks.org/python/sqlalchemy-tutorial-in-python/)
-- [x] [Minio](https://docs.min.io/enterprise/aistor-object-store/developers/sdk/python/)
-- [x] [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview)
-- [x] [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)
-- [x] [RosMspServer](https://github.com/robotmcp/ros-mcp-server.git)
-- [x] [RosMspClient](https://github.com/robotmcp/robotmcp_client.git)
-- [x] [NVIDIA Isaac ROS](https://nvidia-isaac-ros.github.io/getting_started/index.html#system-requirements)
+### Использованные (задействованы в проекте)
+
+#### Симуляция и робототехника
+- [x] [NVIDIA Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/)
+- [x] [NVIDIA Isaac ROS](https://nvidia-isaac-ros.github.io/getting_started/index.html)
 - [x] [NVIDIA Isaac ROS Repositories and Packages](https://nvidia-isaac-ros.github.io/repositories_and_packages/index.html)
-- [x] [Multiple Robot ROS Navigation](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/ros_tutorials/tutorial_ros_multi_navigation.html)
-- [x] [Nvidia Vss Agent](https://docs.nvidia.com/vss/3.1.0/quickstart.html)
-- [x] [Nvidia Agent Workflows](https://docs.nvidia.com/vss/latest/adding-workflows.html)
-- [x] [video-search-and-summarization](https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization/tree/main)
-- [x] [huggingface.co/lerobot/smolvla_base](https://huggingface.co/lerobot/smolvla_base)
-- [x] [arxiv.org/abs/2506.01844](https://arxiv.org/abs/2506.01844)
-- [x] [github.com/huggingface/lerobot](https://github.com/huggingface/lerobot)
-- [x] [huggingface.co/docs/lerobot](https://huggingface.co/docs/lerobot)
+- [x] [Multiple Robot ROS Navigation (Isaac Sim 4.5)](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/ros_tutorials/tutorial_ros_multi_navigation.html)
+- [x] [IsaacSim-ros_workspaces (официальный)](https://github.com/NVIDIA-Omniverse/IsaacSim-ros_workspaces)
+- [x] [ROS 2 (Jazzy)](https://github.com/ros2)
+- [x] [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite)
+- [x] [VDA5050 Protocol](https://github.com/VDA5050/VDA5050)
+- [x] [NVIDIA Mission Control](https://github.com/nvidia-isaac/mission-control)
+- [x] [NVIDIA Mission Dispatch](https://github.com/nvidia-isaac/mission-dispatch)
+- [x] [NVIDIA cuOpt](https://docs.nvidia.com/cuopt/)
+
+#### MCP и агентные инструменты
+- [x] [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)
+- [x] [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+- [x] [ros-mcp-server](https://github.com/robotmcp/ros-mcp-server)
+- [x] [FastMCP](https://github.com/jlowin/fastmcp)
+
+#### LLM и инференс
+- [x] [vLLM](https://github.com/vllm-project/vllm)
+- [x] [Qwen2.5-Instruct (HuggingFace)](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct)
+
+#### Инфраструктура
+- [x] [FastAPI](https://fastapi.tiangolo.com/)
+- [x] [Redis](https://redis.readthedocs.io/en/stable/)
+- [x] [RabbitMQ](https://www.rabbitmq.com/)
+- [x] [Celery](https://docs.celeryq.dev/)
+- [x] [PostgreSQL + SQLAlchemy](https://docs.sqlalchemy.org/)
+- [x] [MinIO](https://min.io/docs/minio/linux/developers/python/API.html)
+- [x] [Alembic](https://alembic.sqlalchemy.org/)
+- [x] [React](https://react.dev/)
+- [x] [Chakra UI](https://v2.chakra-ui.com/)
+
+#### SmolVLA / LeRobot
+- [x] [SmolVLA (HuggingFace)](https://huggingface.co/lerobot/smolvla_base)
+- [x] [SmolVLA arxiv paper](https://arxiv.org/abs/2506.01844)
+- [x] [LeRobot (HuggingFace)](https://github.com/huggingface/lerobot)
+- [x] [LeRobot Docs](https://huggingface.co/docs/lerobot)
+
+---
+
+### Не использованные (изучены, отложены или заменены)
+
+#### Альтернативные агентные фреймворки
+- [ ] [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview) — рассматривался как основа оркестратора, заменён OpenAI Agents SDK
+- [ ] [LangChain](https://python.langchain.com/) — рассматривался, не выбран
+- [ ] [AutoGen (Microsoft)](https://microsoft.github.io/autogen/) — изучен как альтернатива multi-agent координации
+- [ ] [CrewAI](https://docs.crewai.com/) — изучен как альтернатива
+
+#### NVIDIA Agent Workflows / VSS
+- [ ] [NVIDIA VSS Agent](https://docs.nvidia.com/vss/3.1.0/quickstart.html) — изучен, не применён
+- [ ] [NVIDIA Agent Workflows](https://docs.nvidia.com/vss/latest/adding-workflows.html) — изучен
+- [ ] [video-search-and-summarization blueprint](https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization) — изучен как референс для vision-pipeline
+
+#### Альтернативные инструменты развёртывания
+- [ ] [Helm / Kubernetes](https://helm.sh/) — рассматривался для prod-развёртывания стека NVIDIA
+- [ ] [NVIDIA Fleet Commander](https://developer.nvidia.com/fleet-commander) — изучен как enterprise-альтернатива Mission Control
+
+#### Клиенты и SDK
+- [ ] [RosMspClient](https://github.com/robotmcp/robotmcp_client.git) — изучен, ros-msp сервер использован напрямую
+
+#### Память и персонализация
+- [ ] [Mem0](https://mem0.ai/) — рассматривался для долгосрочной памяти агентов Interface
+- [ ] [Zep](https://www.getzep.com/) — альтернатива Mem0
+
+#### Квантизация и оптимизация моделей
+- [ ] [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) — проверена совместимость с SmolVLA ONNX, не применён в prod
+- [ ] [llama.cpp](https://github.com/ggerganov/llama.cpp) — рассматривался для бортового инференса на Jetson
+- [ ] [Ollama](https://ollama.com/) — рассматривался как более простая альтернатива vLLM для разработки
