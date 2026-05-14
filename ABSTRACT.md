@@ -4,8 +4,6 @@
 
 ## На русском языке
 
-**Тема:** Организация кооперативного восприятия сцены в группе автономных агентов на основе обмена визуальной информацией
-
 Работа посвящена проектированию и реализации многоагентной робототехнической платформы AgentsSwarm, обеспечивающей кооперативное восприятие сцены группой мобильных роботов, стандартизованное управление флотом и высокоуровневую оркестрацию задач посредством больших языковых моделей.
 
 **Цель работы** — создание интегрированного программного комплекса, в котором запрос пользователя на естественном языке транслируется в скоординированное выполнение миссий группой роботов через единый сквозной контур управления.
@@ -18,13 +16,7 @@
 
 ---
 
-> **Объём:** ~1 900 знаков с пробелами ✅ (норма: 1 500–2 000)
-
----
-
 ## In English
-
-**Title:** Cooperative Scene Perception in a Group of Autonomous Agents Based on Visual Information Exchange
 
 This thesis presents the design and implementation of AgentsSwarm, a multi-agent robotic platform that enables cooperative scene perception among a group of mobile robots, standardised fleet management, and high-level task orchestration driven by large language models.
 
@@ -37,5 +29,3 @@ This thesis presents the design and implementation of AgentsSwarm, a multi-agent
 **Results:** eight independent components were fully implemented — Interface (React + FastAPI + Celery, 168 commits, v0.5.0), Orchestrator (FastAPI + Agents SDK, 56 commits, v0.5.6), vLLM Service (Data Parallel, v0.2.9), reworked Mission Control and Mission Dispatch forks, a configured ROS 2 workspace, and three heavily modified MCP servers. All 43 orchestrator API integration tests passed. The SmolVLA model was compressed 443-fold in parameter count while retaining over 90% accuracy (MSE +9.1%, R² −1.8%) with a 25× inference speed-up (450 ms → 18 ms on RTX 4090).
 
 ---
-
-> **Length:** ~1 850 characters with spaces ✅ (requirement: 1 500–2 000)
