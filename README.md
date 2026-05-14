@@ -508,3 +508,59 @@ VDA5050-совместимый облачный сервис очереди ми
 - [ ] [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) — проверена совместимость с SmolVLA ONNX, не применён в prod
 - [ ] [llama.cpp](https://github.com/ggerganov/llama.cpp) — рассматривался для бортового инференса на Jetson
 - [ ] [Ollama](https://ollama.com/) — рассматривался как более простая альтернатива vLLM для разработки
+
+---
+
+### Источники литературного обзора ([REVIEW.md](./REVIEW.md))
+
+#### Кооперативное визуальное восприятие
+
+- [Han et al., 2023 — Collaborative Perception in Autonomous Driving: Methods, Datasets and Challenges (IEEE ITS Magazine)](https://arxiv.org/abs/2301.06262)
+- [Liu et al., 2023 — Towards Vehicle-to-Everything Autonomous Driving: A Survey on Collaborative Perception (arXiv)](https://arxiv.org/abs/2308.16714)
+- [Wang et al., 2020 — V2VNet: Vehicle-to-Vehicle Communication for Joint Perception and Prediction (ECCV)](https://arxiv.org/abs/2008.07519)
+- [Liu et al., 2020 — When2com: Multi-Agent Perception via Communication Graph Grouping (CVPR)](https://arxiv.org/abs/2006.00176)
+- [Hu et al., 2022 — Where2comm: Communication-Efficient Collaborative Perception via Spatial Confidence Maps (NeurIPS)](https://arxiv.org/abs/2209.12836)
+- [Xu et al., 2022 — V2X-ViT: Vehicle-to-Everything Cooperative Perception with Vision Transformer (ECCV)](https://arxiv.org/abs/2203.10638)
+- [Xu et al., 2022 — OPV2V: An Open Benchmark Dataset and Fusion Pipeline for V2V Perception (ICRA)](https://arxiv.org/abs/2109.07644)
+- [Xu et al., 2022 — CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers (CoRL)](https://arxiv.org/abs/2207.02202)
+- [Zhou et al., 2024 — CoPeD: Advancing Multi-Robot Collaborative Perception Dataset (RA-L)](https://arxiv.org/abs/2405.14731)
+
+#### C-SLAM и координация флота
+
+- [Lajoie et al., 2022 — Towards Collaborative SLAM: a Survey (Field Robotics)](https://arxiv.org/abs/2108.08325)
+- [Lajoie & Beltrame, 2024 — Swarm-SLAM: Sparse Decentralized Collaborative SLAM (RA-L)](https://arxiv.org/abs/2301.06230)
+- [VDA/VDMA, 2022 — VDA5050 Standard v2.0 (официальная спецификация)](https://github.com/VDA5050/VDA5050)
+- [van Duijkeren et al., 2023 — An Industrial Perspective on Multi-Agent Decision Making for VDA5050 (arXiv)](https://arxiv.org/abs/2311.14615)
+- [Open Robotics — Open RMF (GitHub)](https://github.com/open-rmf)
+- [Iovino et al., 2022 — A Survey of Behavior Trees in Robotics and AI (RAS)](https://arxiv.org/abs/2005.05842)
+- [Chen et al., 2023 — FogROS2: An Adaptive Platform for Cloud and Fog Robotics (ICRA)](https://arxiv.org/abs/2205.09778)
+- [Sikand et al., 2021 — Robofleet: Open Source Communication for Robot Fleets (IROS)](https://arxiv.org/abs/2103.06993)
+
+#### LLM в робототехнике
+
+- [Zeng et al., 2023 — Large Language Models for Robotics: A Survey (arXiv)](https://arxiv.org/abs/2311.07226)
+- [Li et al., 2025 — Large Language Models for Multi-Robot Systems: A Survey (arXiv)](https://arxiv.org/abs/2502.03814)
+- [Yao et al., 2023 — ReAct: Synergizing Reasoning and Acting in Language Models (ICLR)](https://arxiv.org/abs/2210.03629)
+- [Ahn et al., 2022 — SayCan: Do As I Can, Not As I Say (CoRL)](https://arxiv.org/abs/2204.01691)
+- [Singh et al., 2023 — ProgPrompt: Generating Situated Robot Task Plans using LLMs (ICRA)](https://arxiv.org/abs/2209.11302)
+- [Pan et al., 2025 — SELP: Generating Safe and Efficient Task Plans for Robot Agents (ICRA 2025)](https://arxiv.org/abs/2409.19471)
+- [Jiao et al., 2023 — Swarm-GPT: Combining LLMs with Safe Motion Planning for Drone Swarms (arXiv)](https://arxiv.org/abs/2312.01059)
+
+#### Foundation Models и VLA
+
+- [Brohan et al., 2023 — RT-2: Vision-Language-Action Models Transfer Web Knowledge (CoRL)](https://arxiv.org/abs/2307.15818)
+- [Huang et al., 2023 — VoxPoser: Composable 3D Value Maps for Robotic Manipulation (CoRL)](https://arxiv.org/abs/2307.05973)
+- [Kim et al., 2024 — OpenVLA: An Open-Source Vision-Language-Action Model (CoRL)](https://arxiv.org/abs/2406.09246)
+- [OXE Collaboration, 2023 — Open X-Embodiment: Robotic Learning Datasets and RT-X Models (CoRL)](https://arxiv.org/abs/2310.08864)
+- [Black et al., 2024 — π₀: A Vision-Language-Action Flow Model (Physical Intelligence)](https://arxiv.org/abs/2410.24164)
+- [HuggingFace/LeRobot, 2025 — SmolVLA: A VLA Model for Affordable and Efficient Robotics (arXiv)](https://arxiv.org/abs/2506.01844)
+- [Wen et al., 2025 — TinyVLA: Towards Fast, Data-Efficient VLA Models (RA-L)](https://arxiv.org/abs/2409.12514)
+
+#### Симуляция, цифровые двойники, инференс
+
+- [NVIDIA — Isaac Sim Multi-Robot Navigation Tutorial](https://docs.isaacsim.omniverse.nvidia.com/4.5.0/ros_tutorials/tutorial_ros_multi_navigation.html)
+- [Mittal et al., 2023 — Orbit: A Unified Simulation Framework for Robot Learning (RA-L)](https://arxiv.org/abs/2301.04195)
+- [Jacinto et al., 2024 — Pegasus Simulator: Isaac Sim for Multiple Aerial Vehicles (ICUAS)](https://arxiv.org/abs/2307.05263)
+- [Fuller et al., 2021 — A Survey on AI-Driven Digital Twins in Industry 4.0 (Sensors MDPI)](https://doi.org/10.3390/s21196340)
+- [Kwon et al., 2023 — Efficient Memory Management for LLM Serving with PagedAttention / vLLM (SOSP)](https://arxiv.org/abs/2309.06180)
+- [Qwen Team, 2024 — Qwen2.5 Technical Report (arXiv)](https://arxiv.org/abs/2412.15115)
