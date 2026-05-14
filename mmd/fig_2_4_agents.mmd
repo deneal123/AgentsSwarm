@@ -1,0 +1,42 @@
+graph TB
+    Request["Входящий запрос\nHTTP POST /tasks"]
+    Router["Router Agent\n8 категорий · LLM-классификатор"]
+
+    MissionPlanner["MissionPlanner\nдвухфазный алгоритм"]
+    MapAnalyst["MapAnalyst\nvision-LLM"]
+    Navigation["Navigation\nнавигация"]
+    Charging["Charging\nзарядка"]
+    Patrol["Patrol\nпатрулирование"]
+    Inspection["Inspection\nинспекция"]
+    FleetOps["FleetOps\nмониторинг флота"]
+    SwarmCoordinator["SwarmCoordinator\nкоординация роя"]
+    General["General\nобщие вопросы"]
+
+    MCPLayer["MCP Layer\nmission-control · mission-dispatch · ros-msp"]
+
+    Request --> Router
+    Router -->|"mission"| MissionPlanner
+    Router -->|"map"| MapAnalyst
+    Router -->|"navigation"| Navigation
+    Router -->|"charging"| Charging
+    Router -->|"patrol"| Patrol
+    Router -->|"inspection"| Inspection
+    Router -->|"fleet_ops"| FleetOps
+    Router -->|"swarm"| SwarmCoordinator
+    Router -->|"general"| General
+
+    MissionPlanner & MapAnalyst & Navigation & Charging --> MCPLayer
+    Patrol & Inspection & FleetOps & SwarmCoordinator --> MCPLayer
+
+    style Request fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Router fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style MissionPlanner fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MapAnalyst fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Charging fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Patrol fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Inspection fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style FleetOps fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style SwarmCoordinator fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style General fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MCPLayer fill:none,stroke:#4a9eff,stroke-width:2px,color:#000

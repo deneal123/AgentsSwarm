@@ -1,0 +1,30 @@
+graph LR
+    AgentExec["AgentExecutionService\nCelery Worker"]
+
+    StreamChunk["stream_chunk\nфрагмент текста"]
+    AgentReply["agent_reply\nфинальный ответ"]
+    RoutingEvent["routing_event\nhandoff агента"]
+    ToolEvent["tool_event\nвызов инструмента"]
+
+    RedisStream["Redis Stream\nchat:{thread_id}:stream\nXADD id=* type data ts"]
+
+    XRead["XREAD block=0\nWebSocket Handler"]
+    Heartbeat["Heartbeat\npong каждые 15s"]
+
+    BrowserClient["Browser Client\nReact · EventSource"]
+
+    AgentExec --> StreamChunk & AgentReply & RoutingEvent & ToolEvent
+    StreamChunk & AgentReply & RoutingEvent & ToolEvent -->|"XADD"| RedisStream
+    RedisStream -->|"XREAD"| XRead
+    XRead -->|"JSON frame"| BrowserClient
+    Heartbeat -->|"ping"| BrowserClient
+
+    style AgentExec fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style StreamChunk fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style AgentReply fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style RoutingEvent fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style ToolEvent fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style RedisStream fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style XRead fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style Heartbeat fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style BrowserClient fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000

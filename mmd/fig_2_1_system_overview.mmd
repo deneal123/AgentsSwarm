@@ -1,0 +1,45 @@
+graph TB
+    User["Пользователь"]
+    Interface["Interface\nReact + FastAPI + Celery + RabbitMQ"]
+    Orchestrator["Orchestrator\nFastAPI + OpenAI Agents SDK"]
+    vLLM["vLLM Service\nData Parallel · 2×Tesla V100"]
+    MCP1["mission-control-mcp\n:8010 / SSE"]
+    MCP2["mission-dispatch-mcp\n:8011 / SSE"]
+    MCP3["ros-msp\n:8012 / stdio"]
+    MissionControl["Mission Control\nBehavior Tree + cuOpt"]
+    MissionDispatch["Mission Dispatch\nVDA5050 Fleet Manager"]
+    IsaacSim["Isaac Sim\nheadless · Web Viewer"]
+    ROS2["ROS 2 Jazzy\nrosbridge :9090"]
+    Redis["Redis\nStreams + Cache"]
+    RabbitMQ["RabbitMQ\nTask Queue"]
+
+    User -->|"сообщение"| Interface
+    Interface <-->|"WS + REST"| Orchestrator
+    Interface <--> Redis
+    Interface --> RabbitMQ
+    Orchestrator --> vLLM
+    Orchestrator --> MCP1
+    Orchestrator --> MCP2
+    Orchestrator --> MCP3
+    MCP1 --> MissionControl
+    MCP2 --> MissionDispatch
+    MCP3 --> ROS2
+    MissionControl <--> MissionDispatch
+    MissionControl --> IsaacSim
+    MissionDispatch --> IsaacSim
+    ROS2 --> IsaacSim
+    Orchestrator <--> Redis
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Orchestrator fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style vLLM fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style MCP1 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MCP2 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MCP3 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MissionControl fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MissionDispatch fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style IsaacSim fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style ROS2 fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Redis fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style RabbitMQ fill:none,stroke:#ffa500,stroke-width:2px,color:#000

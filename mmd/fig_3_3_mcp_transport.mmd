@@ -1,0 +1,41 @@
+graph TB
+    EnvVar["MCP_TRANSPORT\nпеременная окружения"]
+
+    SSEMode["SSE режим\nFastAPI + uvicorn"]
+    StdioMode["stdio режим\nsubprocess"]
+
+    SSEEndpoint["HTTP endpoint /sse\nServer-Sent Events"]
+    StdioPipe["stdin / stdout\nстандартные потоки"]
+
+    SSEConn["HTTP Keep-Alive\nevent stream"]
+    StdioConn["IPC без сетевого стека\nлокальное тестирование"]
+
+    MCPClient["Orchestrator\nMCP Client"]
+
+    ProdNote["Docker Compose\nПорты :8010 · :8011 · :8012"]
+    LocalNote["Локальный запуск\nбез Docker"]
+
+    EnvVar -->|"= sse"| SSEMode
+    EnvVar -->|"= stdio"| StdioMode
+
+    SSEMode --> SSEEndpoint
+    SSEEndpoint --> SSEConn
+    SSEConn --> MCPClient
+
+    StdioMode --> StdioPipe
+    StdioPipe --> StdioConn
+    StdioConn --> MCPClient
+
+    SSEConn -.-> ProdNote
+    StdioConn -.-> LocalNote
+
+    style EnvVar fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style SSEMode fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style StdioMode fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style SSEEndpoint fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style StdioPipe fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style SSEConn fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style StdioConn fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MCPClient fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style ProdNote fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style LocalNote fill:none,stroke:#e67e22,stroke-width:2px,color:#000

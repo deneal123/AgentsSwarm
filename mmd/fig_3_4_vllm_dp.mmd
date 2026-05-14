@@ -1,0 +1,28 @@
+graph LR
+    Client["Orchestrator\nOpenAI SDK client"]
+
+    subgraph node0["Нода 0 · Tesla V100 32 ГБ"]
+        Coordinator["vLLM Coordinator\nrank-0 · HTTP :8000\nтокенизация + агрегация"]
+        GPU0["Tesla V100\n32 ГБ VRAM"]
+    end
+
+    subgraph node1["Нода 1 · Tesla V100 32 ГБ"]
+        Worker["vLLM Worker\nrank-1 · gRPC :13345\nforward pass"]
+        GPU1["Tesla V100\n32 ГБ VRAM"]
+    end
+
+    Config["Конфигурация\nTP=1 · PP=2\nGPU util=90%\nМодель: Qwen2.5-32B"]
+
+    Client -->|"POST /v1/chat/completions\nOpenAI-compatible API"| Coordinator
+    Coordinator <-->|"gRPC RPC\nforward pass sync"| Worker
+    Coordinator --- GPU0
+    Worker --- GPU1
+    Config -.-> Coordinator
+    Config -.-> Worker
+
+    style Client fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Coordinator fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Worker fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style GPU0 fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style GPU1 fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Config fill:none,stroke:#e67e22,stroke-width:2px,color:#000

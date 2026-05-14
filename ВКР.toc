@@ -1,0 +1,67 @@
+\babel@toc {russian}{}\relax 
+\contentsline {chapter}{ВВЕДЕНИЕ}{8}{chapter*.1}%
+\contentsline {chapter}{\numberline {1}Анализ предметной области и обзор существующих решений}{11}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Кооперативное визуальное восприятие в многоагентных системах}{11}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Постановка задачи и фундаментальный компромисс}{11}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Ключевые алгоритмические подходы}{11}{subsection.1.1.2}%
+\contentsline {section}{\numberline {1.2}Совместное картографирование и локализация}{12}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Координация флота и стандарты интероперабельности}{13}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}VDA5050 как промышленный стандарт}{13}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}OpenRMF и архитектурные аналоги}{13}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}Behavior Trees как исполнимый формат миссий}{13}{subsection.1.3.3}%
+\contentsline {subsection}{\numberline {1.3.4}Облачная и туманная робототехника}{14}{subsection.1.3.4}%
+\contentsline {section}{\numberline {1.4}Большие языковые модели в робототехнике}{14}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Смена парадигмы: от чат-бота к reasoning-агенту}{14}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Парадигма ReAct и tool use}{14}{subsection.1.4.2}%
+\contentsline {subsection}{\numberline {1.4.3}Безопасность и формальные ограничения LLM-планирования}{15}{subsection.1.4.3}%
+\contentsline {subsection}{\numberline {1.4.4}LLM для координации роя}{15}{subsection.1.4.4}%
+\contentsline {section}{\numberline {1.5}Foundation Models и Vision-Language-Action модели}{15}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Симуляционные среды и цифровые двойники}{16}{section.1.6}%
+\contentsline {section}{\numberline {1.7}Выводы и результаты по главе~1}{16}{section.1.7}%
+\contentsline {chapter}{\numberline {2}Проектирование архитектуры системы AgentsSwarm}{18}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Требования к системе}{18}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Общая микросервисная архитектура}{19}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Протокол взаимодействия агентов: Model Context Protocol}{20}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Протокол управления флотом: VDA5050}{22}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Агентная архитектура оркестратора}{22}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Событийно-ориентированная потоковая модель}{23}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Инфраструктура развёртывания}{24}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Выводы и результаты по главе~2}{25}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Реализация компонентов системы}{26}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Симуляционная среда: NVIDIA Isaac Sim и ROS~2 Workspace}{26}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Mission Control: форк NVIDIA и авторские доработки}{27}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Mission Dispatch: форк NVIDIA и авторские доработки}{28}{section.3.3}%
+\contentsline {section}{\numberline {3.4}MCP-серверы: глубокая переработка официальных реализаций}{28}{section.3.4}%
+\contentsline {section}{\numberline {3.5}vLLM Service: авторский сервис инференса}{29}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Orchestrator: главный интеллектуальный микросервис}{30}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Interface: веб-платформа управления}{32}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Общая архитектура и стек}{32}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Backend: агенты и обработка задач}{35}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.3}Потоковая модель: Redis Streams и WebSocket}{35}{subsection.3.7.3}%
+\contentsline {subsection}{\numberline {3.7.4}Frontend: страницы интерфейса}{36}{subsection.3.7.4}%
+\contentsline {subsection}{\numberline {3.7.5}Демонстрация рабочего воркфлоу}{36}{subsection.3.7.5}%
+\contentsline {section}{\numberline {3.8}Выводы и результаты по главе~3}{37}{section.3.8}%
+\contentsline {chapter}{\numberline {4}Оптимизация модели SmolVLA для бортового инференса}{38}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Постановка задачи и мотивация}{38}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Архитектура SmolVLA и исходные характеристики}{38}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Пайплайн оптимизации}{39}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Результаты экспериментов}{40}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Выводы и результаты по главе~4}{40}{section.4.5}%
+\contentsline {chapter}{\numberline {5}Верификация системы}{42}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Стратегия тестирования}{42}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Тестирование оркестратора}{42}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Тестирование Interface}{42}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Выводы и результаты по главе~5}{43}{section.5.4}%
+\contentsline {chapter}{ЗАКЛЮЧЕНИЕ}{44}{chapter*.20}%
+\contentsline {chapter}{БИБЛИОГРАФИЧЕСКИЙ СПИСОК}{45}{Item.29}%
+\contentsline {chapter}{ПРИЛОЖЕНИЯ}{52}{chapter*.21}%
+\contentsline {chapter}{\numberline {А}Глоссарий предметной области}{53}{appendix.A}%
+\contentsline {section}{Приложение А. Глоссарий предметной области}{53}{section*.22}%
+\contentsline {chapter}{\numberline {Б}Список сокращений}{55}{appendix.B}%
+\contentsline {section}{Приложение Б. Список сокращений}{55}{section*.23}%
+\contentsline {chapter}{\numberline {В}Технические характеристики инфраструктуры}{56}{appendix.C}%
+\contentsline {section}{Приложение В. Технические характеристики инфраструктуры}{56}{section*.24}%
+\contentsline {chapter}{\numberline {Г}Ключевые фрагменты кода}{57}{appendix.D}%
+\contentsline {section}{Приложение Г. Ключевые фрагменты кода}{57}{section*.26}%
+\contentsline {chapter}{\numberline {Д}Протоколы экспериментов}{59}{appendix.E}%
+\contentsline {section}{Приложение Д. Протоколы экспериментов}{59}{section*.27}%

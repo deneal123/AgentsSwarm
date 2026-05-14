@@ -1,0 +1,55 @@
+graph TB
+    User["Пользователь"]
+    Frontend["React Frontend\nChat + TracePanel + Files + Profile"]
+
+    FastAPI["FastAPI\n/api/chats/ + /ws"]
+    WsLayer["WebSocket Layer\nauth → stream → heartbeat"]
+    ChatSvc["ChatService\nJobOrchestrator"]
+    RabbitMQ["RabbitMQ\nброкер задач"]
+    CeleryTask["Celery Worker\nprocess_agent_message"]
+
+    AgentExec["AgentExecutionService\nроутинг + сборка ответа"]
+    OrchestratorWS["Orchestrator\nWebSocket /ws/task/{id}"]
+
+    Agents["Агенты\nGeneral · WebSearch · DeepResearch\nImageGen · PptxGen · Audio · Swarm"]
+    LLMProviders["LLM Providers\nOpenAI / OpenRouter / MWS"]
+    ExternalAPIs["External APIs\nWeb Search · Image Gen · Mem0"]
+
+    RedisStream["Redis Stream\nchat:{thread_id}:stream"]
+    Storage["PostgreSQL + MinIO\nданные и файлы"]
+
+    User -->|"сообщение"| Frontend
+    Frontend -->|"WS + REST"| FastAPI
+    FastAPI --> WsLayer
+    FastAPI -->|"создать задачу"| ChatSvc
+    ChatSvc -->|"apply_async"| RabbitMQ
+    RabbitMQ --> CeleryTask
+
+    WsLayer -->|"XREAD"| RedisStream
+
+    CeleryTask --> AgentExec
+    AgentExec --> OrchestratorWS
+    OrchestratorWS -->|"выбор агента"| Agents
+    Agents -->|"completions"| LLMProviders
+    Agents -->|"tools"| ExternalAPIs
+    Agents -->|"AgentEvent XADD"| RedisStream
+
+    RedisStream -->|"stream_chunk\nagent_reply\nrouting/tool events"| WsLayer
+    WsLayer -->|"push"| Frontend
+
+    CeleryTask -->|"persist"| Storage
+
+    style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Frontend fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style FastAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style WsLayer fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style ChatSvc fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style RabbitMQ fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style CeleryTask fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style AgentExec fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style OrchestratorWS fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Agents fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style RedisStream fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style LLMProviders fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style ExternalAPIs fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style Storage fill:none,stroke:#e67e22,stroke-width:2px,color:#000

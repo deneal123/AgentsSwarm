@@ -1,0 +1,24 @@
+graph LR
+    Orchestrator["Orchestrator\nAgents SDK"]
+    MCPServer["mission-dispatch-mcp\n:8011 / SSE"]
+    MissionControl["Mission Control\nBehavior Tree + cuOpt"]
+    MissionDispatch["Mission Dispatch API\n:8090"]
+    Mosquitto["Mosquitto MQTT\nBroker :1883"]
+    VDA5050["VDA5050 Client\nIsaac Sim"]
+    IsaacSim["Isaac Sim\nRobot Navigation"]
+
+    Orchestrator -->|"MCP tool call"| MCPServer
+    MCPServer -->|"HTTP GET /map\nwaypoint route"| MissionControl
+    MCPServer -->|"HTTP POST /missions"| MissionDispatch
+    MissionControl -->|"optimised order"| MissionDispatch
+    MissionDispatch -->|"VDA5050 order\nMQTT publish"| Mosquitto
+    Mosquitto -->|"subscribe"| VDA5050
+    VDA5050 -->|"navigate"| IsaacSim
+
+    style Orchestrator fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style MCPServer fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MissionControl fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style MissionDispatch fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Mosquitto fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style VDA5050 fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style IsaacSim fill:none,stroke:#52c41a,stroke-width:2px,color:#000

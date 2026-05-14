@@ -1,0 +1,29 @@
+graph TB
+    HttpClient["HTTP Client\nPOST /tasks"]
+    Runner["Runner.run_streamed\nOpenAI Agents SDK"]
+    StreamCollector["StreamCollector\nbuffer + seq counter"]
+    WebSocket["WebSocket\n/ws/task/{task_id}"]
+    BrowserClient["Browser Client\nReact EventSource"]
+
+    AgentSDK["Agent SDK\nRawEvent stream"]
+    SeqBuffer["seq buffer\n{seq: event}"]
+    Guardrails["Guardrails\nвалидация output"]
+
+    HttpClient -->|"task_id"| WebSocket
+    HttpClient -->|"запуск агента"| Runner
+    Runner -->|"RawEvent\ntype · data"| AgentSDK
+    AgentSDK --> StreamCollector
+    StreamCollector --> SeqBuffer
+    SeqBuffer -->|"seq += 1\nbuffer[seq] = event"| StreamCollector
+    StreamCollector -->|"Guardrails check"| Guardrails
+    Guardrails -->|"{seq, type, data}"| WebSocket
+    WebSocket -->|"JSON frame\nпотоковая доставка"| BrowserClient
+
+    style HttpClient fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Runner fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style AgentSDK fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style SeqBuffer fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Guardrails fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style WebSocket fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style BrowserClient fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000

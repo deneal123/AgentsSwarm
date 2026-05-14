@@ -1,0 +1,29 @@
+graph LR
+    Teacher["SmolVLA Teacher\n450M параметров\nFP32 · 6.0 ГБ VRAM"]
+
+    Stage1["Этап 1: Knowledge Distillation\nL = α·MSE + (1-α)·KL + λ·AT\nα=0.7 · λ=0.1\nДатасет: lerobot/libero"]
+
+    Stage2["Этап 2: Mixed Precision FP16\ntorch.cuda.amp\nActivations → FP16\nWeights → FP32"]
+
+    Stage3["Этап 3: Structured Pruning\nL2-norm · 30% весов\nLinear: attention + FFN\nLayerNorm и embed — нетронуты"]
+
+    Stage4["Этап 4: INT8 Analysis\nанализ чувствительности слоёв\nкритические — исключены\nпериферийные — квантизованы"]
+
+    Student["SmolVLA Student\n~1M параметров\n<0.5 ГБ VRAM"]
+
+    Metrics["Результаты\n×443 сжатие параметров\n×12 VRAM · ×25 латентность\nMSE: 0.1782→0.1944\nR²: 0.841→0.826"]
+
+    Teacher -->|"обучающие сигналы\nsoft targets"| Stage1
+    Stage1 -->|"student checkpoint"| Stage2
+    Stage2 -->|"fp16 model"| Stage3
+    Stage3 -->|"pruned model"| Stage4
+    Stage4 --> Student
+    Student --> Metrics
+
+    style Teacher fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style Stage1 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Stage2 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Stage3 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Stage4 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Student fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Metrics fill:none,stroke:#9b59b6,stroke-width:2px,color:#000

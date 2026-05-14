@@ -1,0 +1,36 @@
+graph TB
+    subgraph selectel["Сервер симуляции · RTX 4090 · Ubuntu 24.04"]
+        subgraph isaac["NVIDIA Isaac Sim (headless)"]
+            Scene["Сцена Carter Warehouse\nроботы + физика + сенсоры"]
+            VDAClient["VDA5050 Client\nподписка на MQTT"]
+        end
+
+        subgraph ros2["ROS 2 Jazzy Workspace"]
+            OccupancyMap["occupancy_map_node\nPNG карта сцены"]
+            RosBridge["rosbridge_server\nWebSocket :9090"]
+        end
+
+        Mosquitto["Mosquitto MQTT Broker\n:1883"]
+    end
+
+    MissionControl["Mission Control\nBehavior Tree + cuOpt"]
+    RosMcp["ros-msp\nMCP Server :8012"]
+    Orchestrator["Orchestrator\nAgents SDK"]
+
+    Scene -->|"ROS 2 topics"| OccupancyMap
+    Scene -->|"sensor data"| RosBridge
+    OccupancyMap -->|"map PNG\nHTTP POST"| MissionControl
+    RosBridge <-->|"WebSocket"| RosMcp
+    RosMcp <-->|"tool calls"| Orchestrator
+    Mosquitto <-->|"VDA5050 order/state"| VDAClient
+    VDAClient -->|"навигация"| Scene
+    MissionControl -->|"VDA5050 order\nMQTT publish"| Mosquitto
+
+    style Scene fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style VDAClient fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style OccupancyMap fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style RosBridge fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Mosquitto fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style MissionControl fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style RosMcp fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Orchestrator fill:none,stroke:#ffa500,stroke-width:2px,color:#000

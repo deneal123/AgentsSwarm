@@ -1,0 +1,54 @@
+graph TB
+    App["FastAPI Application\nlifespan manager · v0.5.6"]
+
+    subgraph routers["Роутеры"]
+        Health["/health"]
+        Agents["/agents"]
+        Sessions["/sessions"]
+        Tasks["/tasks"]
+        WsEndpoint["/ws  WebSocket"]
+    end
+
+    subgraph deps["Зависимости  Depends"]
+        SessionMgr["SessionManager\nRedis · TTL 24h"]
+        StreamColl["StreamCollector\nseq-нумерация событий"]
+        MCPClients["MCP Clients\nmission-control · dispatch · ros"]
+    end
+
+    subgraph agentLayer["Агентный слой  9 агентов"]
+        RouterA["Router\n8 категорий"]
+        MissionA["MissionPlanner\nдвухфазный"]
+        MapA["MapAnalyst\nvision-LLM"]
+        NavGroup["Navigation · Charging\nPatrol · Inspection"]
+        FleetA["FleetOps\nSwarmCoordinator"]
+        GenA["General"]
+    end
+
+    vLLM["vLLM Service\nQwen2.5-Instruct"]
+    Redis["Redis\nСессии · Кэш"]
+
+    App --> Health & Agents & Sessions & Tasks & WsEndpoint
+    Tasks & WsEndpoint --> SessionMgr & StreamColl & MCPClients
+    StreamColl --> RouterA
+    RouterA --> MissionA & MapA & NavGroup & FleetA & GenA
+    MissionA & MapA & NavGroup & FleetA --> MCPClients
+    MCPClients --> vLLM
+    SessionMgr --> Redis
+
+    style App fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style Health fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Agents fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Sessions fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Tasks fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style WsEndpoint fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style SessionMgr fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style StreamColl fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style MCPClients fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style RouterA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MissionA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MapA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style NavGroup fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style FleetA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style GenA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style vLLM fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Redis fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
