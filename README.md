@@ -97,111 +97,59 @@ Interface-сервис (backend + frontend) обращается напряму�
 ```mermaid
 graph TB
     User["Пользователь"]
-    Interface["Interface Service\n(backend + frontend)"]
+    Interface["Interface Service"]
 
     OrchestratorAPI["Orchestrator API\nPOST /task"]
-    StreamCollector["StreamCollector\nбуфер событий"]
-    WebSocket["WS /ws/task/{id}\n(текст + изображения)"]
+    Pipeline["Planner → PlanRunner\nLLM + пошаговый исполнитель"]
+    StreamCollector["StreamCollector\nWS /ws/task/{id}"]
 
-    Planner["Planner\nLLM + эвристика"]
-    PlanRunner["PlanRunner\nпошаговый исполнитель"]
     Router["Router Agent\nклассификация + handoff"]
-
-    MapAnalyst["MapAnalyst Agent\nанализ карты + маршруты"]
-    RobotInfo["RobotInfo Agent"]
-    Navigation["Navigation Agent"]
-    Swarm["SwarmCoordinator Agent"]
+    MapAnalyst["MapAnalyst Agent\nкарта + маршруты"]
+    MissionAgents["Агенты миссий\nNavigation · Charging · Patrol\nInspection · FleetOps · Swarm"]
     General["General Agent"]
+    BgPoller["Background Poller\nwait_mission()"]
 
-    BgPoller["Background Poller\nasyncio.Task\n(wait_mission)"]
-
+    MCPServers["MCP Серверы\nmission-control :8010\nmission-dispatch :8011\nros-msp :8012"]
     MissionControlAPI["Mission Control API\n:8050"]
-    RosMSP["ros-msp\nFastMCP SSE\n:8012"]
-    MissionControl["mission-control-mcp\nSSE :8010"]
-    MissionDispatch["mission-dispatch-mcp\nSSE :8011"]
-
     IsaacSim["Isaac Sim / VDA5050\n(роботы)"]
-    Rosbridge["rosbridge_server\n195.225.110.91:9090"]
+    Rosbridge["rosbridge\nROS2 topics"]
 
-    User -->|"HTTP POST /task\nprompt"| Interface
+    User -->|"prompt"| Interface
     Interface -->|"POST /task"| OrchestratorAPI
-    Interface -->|"WS /ws/task/{id}"| WebSocket
+    OrchestratorAPI --> Pipeline
+    Pipeline -->|"шаг"| Router
+    Pipeline -->|"навигация"| MapAnalyst
 
-    OrchestratorAPI --> Planner
-    Planner -->|"список PlanStep"| PlanRunner
-    PlanRunner -->|"шаг за шагом"| Router
-    PlanRunner -->|"если навигация"| MapAnalyst
+    Router --> MissionAgents
+    Router --> General
+    MapAnalyst -->|"map + route_images"| StreamCollector
 
-    Router -->|"robot_info"| RobotInfo
-    Router -->|"navigation"| Navigation
-    Router -->|"charging"| Charging
-    Router -->|"patrol"| Patrol
-    Router -->|"inspection"| Inspection
-    Router -->|"fleet_ops"| FleetOps
-    Router -->|"swarm_coord"| Swarm
-    Router -->|"general"| General
+    MissionAgents -->|"MCP"| MCPServers
+    MissionAgents -->|"wait_mission()"| BgPoller
+    BgPoller -->|"mission_complete"| StreamCollector
+    BgPoller -->|"GET /mission"| MCPServers
 
-    Charging["Charging Agent"]
-    Patrol["Patrol Agent"]
-    Inspection["Inspection Agent"]
-    FleetOps["FleetOps Agent"]
-
-    Navigation -->|"wait_mission()"| BgPoller
-    Charging -->|"wait_mission()"| BgPoller
-    Patrol -->|"wait_mission()"| BgPoller
-    BgPoller -->|"mission_complete event"| StreamCollector
-
-    MapAnalyst -->|"GET /api/v1/map"| MissionControlAPI
-    MapAnalyst -->|"POST /api/v1/visualize_route"| MissionControlAPI
-    RobotInfo -->|"MCP"| RosMSP
-    Navigation -->|"MCP"| MissionControl
-    Navigation -->|"MCP"| MissionDispatch
-    Charging -->|"MCP"| MissionControl
-    Charging -->|"MCP"| MissionDispatch
-    Patrol -->|"MCP"| MissionControl
-    Patrol -->|"MCP"| MissionDispatch
-    Inspection -->|"MCP"| MissionControl
-    Inspection -->|"MCP"| MissionDispatch
-    FleetOps -->|"MCP"| MissionControl
-    FleetOps -->|"MCP"| MissionDispatch
-    Swarm -->|"MCP"| RosMSP
-    Swarm -->|"MCP"| MissionControl
-    Swarm -->|"MCP"| MissionDispatch
-    BgPoller -->|"GET /mission"| MissionDispatch
-
-    RosMSP -->|"WebSocket ws://"| Rosbridge
-    Rosbridge -->|"ROS2 topics"| IsaacSim
-    MissionControl -->|"HTTP"| MissionControlAPI
+    MapAnalyst -->|"HTTP"| MissionControlAPI
+    MCPServers -->|"HTTP"| MissionControlAPI
+    MCPServers -->|"WS"| Rosbridge
     MissionControlAPI -->|"missions"| IsaacSim
-    MissionDispatch -->|"HTTP"| IsaacSim
+    Rosbridge -->|"ROS2"| IsaacSim
 
-    PlanRunner -->|"события"| StreamCollector
-    MapAnalyst -->|"route_images (base64 PNG)"| StreamCollector
+    Pipeline -->|"события"| StreamCollector
     Router -->|"события"| StreamCollector
-    StreamCollector --> WebSocket
-    WebSocket -->|"push"| Interface
+    StreamCollector -->|"push"| Interface
 
     style User fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
     style Interface fill:none,stroke:#ff6b6b,stroke-width:2px,color:#fff
     style OrchestratorAPI fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
+    style Pipeline fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style StreamCollector fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style WebSocket fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style Planner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
-    style PlanRunner fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style BgPoller fill:none,stroke:#ffa500,stroke-width:2px,color:#fff
     style Router fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style MapAnalyst fill:none,stroke:#1890ff,stroke-width:2px,color:#fff
-    style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style Charging fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style Patrol fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style Inspection fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style FleetOps fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style Swarm fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
+    style MissionAgents fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
     style General fill:none,stroke:#52c41a,stroke-width:2px,color:#fff
-    style RosMSP fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
-    style MissionControl fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
-    style MissionDispatch fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
+    style MCPServers fill:none,stroke:#9b59b6,stroke-width:2px,color:#fff
     style MissionControlAPI fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
     style IsaacSim fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
     style Rosbridge fill:none,stroke:#e67e22,stroke-width:2px,color:#fff
