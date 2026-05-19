@@ -1,100 +1,121 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2026.5.14)  14 MAY 2026 20:24
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.5.19)  19 MAY 2026 21:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **./ВКР.tex
 (ВКР.tex
-LaTeX2e <2023-11-01> patch level 1
-L3 programming layer <2024-01-04>
-(C:\Program Files\MiKTeX\tex/latex/extsizes\extreport.cls
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/extsizes\extreport.cls
 Document Class: extreport 1996/10/08 v1.0 Non Standard LaTeX document class
-(C:\Program Files\MiKTeX\tex/latex/extsizes\size14.clo
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/extsizes\size14.clo
 File: size14.clo 1999/11/11 v1.4a NON-Standard LaTeX file (size option)
 )
-(C:\Program Files\MiKTeX\tex/latex/base\exscale.sty
-Package: exscale 2018/09/24 v2.1i Standard LaTeX package exscale
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/base\exscale.sty
+Package: exscale 2025/06/05 v2.1i Standard LaTeX package exscale
 LaTeX Font Info:    Redeclaring symbol font `largesymbols' on input line 57.
 LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
 (Font)                  OMX/cmex/m/n --> OMX/cmex/m/n on input line 57.
 LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
 (Font)                  OMX/cmex/m/n --> OMX/cmex/m/n on input line 57.
-\big@size=\dimen140
+\big@size=\dimen150
 )
-\c@part=\count183
-\c@chapter=\count184
-\c@section=\count185
-\c@subsection=\count186
-\c@subsubsection=\count187
-\c@paragraph=\count188
-\c@subparagraph=\count189
-\c@figure=\count190
-\c@table=\count191
-\abovecaptionskip=\skip48
-\belowcaptionskip=\skip49
-\bibindent=\dimen141
+\c@part=\count271
+\c@chapter=\count272
+\c@section=\count273
+\c@subsection=\count274
+\c@subsubsection=\count275
+\c@paragraph=\count276
+\c@subparagraph=\count277
+\c@figure=\count278
+\c@table=\count279
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen151
 )
-(C:\Program Files\MiKTeX\tex/latex/fontspec\fontspec.sty
-(C:\Program Files\MiKTeX\tex/latex/l3packages/xparse\xparse.sty
-(C:\Program Files\MiKTeX\tex/latex/l3kernel\expl3.sty
-Package: expl3 2024-01-04 L3 programming layer (loader) 
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/xparse\xpars
+e.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+Package: expl3 2026-03-20 L3 programming layer (loader) 
 
-(C:\Program Files\MiKTeX\tex/latex/l3backend\l3backend-xetex.def
-File: l3backend-xetex.def 2024-01-04 L3 backend support: XeTeX
-\g__graphics_track_int=\count192
-\l__pdf_internal_box=\box51
-\g__pdf_backend_object_int=\count193
-\g__pdf_backend_annotation_int=\count194
-\g__pdf_backend_link_int=\count195
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-xet
+ex.def
+File: l3backend-xetex.def 2026-02-18 L3 backend support: XeTeX
+\g__graphics_track_int=\count280
+\g__pdfannot_backend_int=\count281
+\g__pdfannot_backend_link_int=\count282
 ))
-Package: xparse 2023-10-10 L3 Experimental document command parser
+Package: xparse 2025-10-09 L3 Experimental document command parser
 )
-Package: fontspec 2022/01/15 v2.8a Font selection for XeLaTeX and LuaLaTeX
+Package: fontspec 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTeX
 
-(C:\Program Files\MiKTeX\tex/latex/fontspec\fontspec-xetex.sty
-Package: fontspec-xetex 2022/01/15 v2.8a Font selection for XeLaTeX and LuaLaTe
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec-xetex
+.sty
+Package: fontspec-xetex 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTe
 X
-\l__fontspec_script_int=\count196
-\l__fontspec_language_int=\count197
-\l__fontspec_strnum_int=\count198
-\l__fontspec_tmp_int=\count199
-\l__fontspec_tmpa_int=\count266
-\l__fontspec_tmpb_int=\count267
-\l__fontspec_tmpc_int=\count268
-\l__fontspec_em_int=\count269
-\l__fontspec_emdef_int=\count270
-\l__fontspec_strong_int=\count271
-\l__fontspec_strongdef_int=\count272
-\l__fontspec_tmpa_dim=\dimen142
-\l__fontspec_tmpb_dim=\dimen143
-\l__fontspec_tmpc_dim=\dimen144
-
-(C:\Program Files\MiKTeX\tex/latex/base\fontenc.sty
-Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
+\l__fontspec_script_int=\count283
+\l__fontspec_language_int=\count284
+\l__fontspec_strnum_int=\count285
+\l__fontspec_tmp_int=\count286
+\l__fontspec_tmpa_int=\count287
+\l__fontspec_tmpb_int=\count288
+\l__fontspec_tmpc_int=\count289
+\l__fontspec_em_int=\count290
+\l__fontspec_emdef_int=\count291
+\l__fontspec_strong_int=\count292
+\l__fontspec_strongdef_int=\count293
+\l__fontspec_tmpa_dim=\dimen152
+\l__fontspec_tmpb_dim=\dimen153
+\l__fontspec_tmpc_dim=\dimen154
+ (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
 )
-(C:\Program Files\MiKTeX\tex/latex/fontspec\fontspec.cfg)))
-(C:\Program Files\MiKTeX\tex/generic/babel\babel.sty
-Package: babel 2024/01/07 v24.1 The Babel package
-\babel@savecnt=\count273
-\U@D=\dimen145
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.cfg))
+) (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/babel\babel.sty
+Package: babel 2026/04/15 v26.6 The multilingual framework for LuaLaTeX, pdfLaT
+eX and XeLaTeX
+\babel@savecnt=\count294
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding OT1) on input li
+ne 2078.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding OT1) on input li
+ne 2080.
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding T1) on input lin
+e 2082.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding T1) on input lin
+e 2083.
+LaTeX Encoding Info:    Ignoring declaration for text command \ij (encoding ?) 
+on input line 2084.
+LaTeX Encoding Info:    Ignoring declaration for text command \IJ (encoding ?) 
+on input line 2086.
+LaTeX Encoding Info:    Ignoring declaration for text command \SS (encoding ?) 
+on input line 2111.
+\U@D=\dimen155
 \l@unhyphenated=\language79
 
-(C:\Program Files\MiKTeX\tex/generic/babel\xebabel.def)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/babel\xebabel.def)
 \bbl@readstream=\read2
-\bbl@dirlevel=\count274
+\bbl@dirlevel=\count295
+Package babel Info: Configuration files are deprecated, as
+(babel)             they can break document portability.
+(babel)             Reported on input line 4206.
 
 *************************************
 * Local config file bblopts.cfg used
 *
-(C:\Program Files\MiKTeX\tex/latex/arabi\bblopts.cfg
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/arabi\bblopts.cfg
 File: bblopts.cfg 2005/09/08 v0.1 add Arabic and Farsi to "declared" options of
  babel
 )
-Package babel Info: Main language set with 'main='. Except if you have
-(babel)             problems, prefer the default mechanism for setting
-(babel)             the main language, ie, as the last declared.
-(babel)             Reported on input line 4250.
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/en\babel
+-english.tex)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/ru\babel
+-russian.tex)
+Package babel Info: Importing font and identification data for english
+(babel)             from babel-en.ini. Reported on input line 4330.
 
-(C:\Program Files\MiKTeX\tex/latex/babel-english\english.ldf
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/babel-english\english.l
+df
 Language: english 2017/06/06 v3.3r English support from the babel system
 Package babel Info: Hyphen rules for 'canadian' set to \l@english
 (babel)             (\language0). Reported on input line 102.
@@ -103,22 +124,19 @@ Package babel Info: Hyphen rules for 'australian' set to \l@ukenglish
 Package babel Info: Hyphen rules for 'newzealand' set to \l@ukenglish
 (babel)             (\language73). Reported on input line 108.
 )
-(C:\Program Files\MiKTeX\tex/latex/babel-russian\russianb.ldf
+Package babel Info: Importing font and identification data for russian
+(babel)             from babel-ru.ini. Reported on input line 4330.
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/babel-russian\russianb.
+ldf
 File: russianb.ldf 2021/01/10 1.3m Russian support for the Babel system
 Language: russian 2020/09/09 1.3k Russian support for the Babel system
 Package babel Info: Making " an active character on input line 124.
 Package babel Info: Default for \cyrdash is provided on input line 163.
 ))
-(C:\Program Files\MiKTeX\tex/generic/babel/locale/ru\babel-russian.tex
-Package babel Info: Importing font and identification data for russian
-(babel)             from babel-ru.ini. Reported on input line 11.
-)
-(C:\Program Files\MiKTeX\tex/generic/babel/locale/en\babel-english.tex
-Package babel Info: Importing font and identification data for english
-(babel)             from babel-en.ini. Reported on input line 11.
-)
 
-Package fontspec Info: Font family 'TimesNewRoman(0)' created for font 'Times
+Package fontspec Info: 
+(fontspec)             Font family 'TimesNewRoman(0)' created for font 'Times
 (fontspec)             New Roman' with options [Ligatures=TeX].
 (fontspec)              
 (fontspec)              This font family consists of the following NFSS
@@ -150,7 +168,8 @@ ext;"
 text;"
 
 
-Package fontspec Info: Font family 'Arial(0)' created for font 'Arial' with
+Package fontspec Info: 
+(fontspec)             Font family 'Arial(0)' created for font 'Arial' with
 (fontspec)             options [Ligatures=TeX].
 (fontspec)              
 (fontspec)              This font family consists of the following NFSS
@@ -182,7 +201,28 @@ xt;"
 tex-text;"
 
 
-Package fontspec Info: Font family 'CourierNew(0)' created for font 'Courier
+Package fontspec Info: 
+(fontspec)             Courier New scale = 0.85.
+
+
+Package fontspec Info: 
+(fontspec)             Courier New scale = 0.85.
+
+
+Package fontspec Info: 
+(fontspec)             Courier New/B scale = 0.85.
+
+
+Package fontspec Info: 
+(fontspec)             Courier New/I scale = 0.85.
+
+
+Package fontspec Info: 
+(fontspec)             Courier New/BI scale = 0.85.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'CourierNew(0)' created for font 'Courier
 (fontspec)             New' with options
 (fontspec)             [WordSpace={1,0,0},HyphenChar=None,PunctuationSpace=Word
 Space,Scale=0.85].
@@ -192,645 +232,623 @@ Space,Scale=0.85].
 (fontspec)              
 (fontspec)             - 'normal' (m/n) with NFSS spec.: <->s*[0.85]"Courier
 (fontspec)             New/OT:script=latn;language=dflt;"
-(fontspec)             - 'small caps'  (m/sc) with NFSS spec.: 
-(fontspec)             and font adjustment code:
-(fontspec)             \fontdimen 2\font =1\fontdimen 2\font \fontdimen 3\font
-(fontspec)             =0\fontdimen 3\font \fontdimen 4\font =0\fontdimen
-(fontspec)             4\font \fontdimen 7\font =0\fontdimen 2\font
-(fontspec)             \tex_hyphenchar:D \font =-1\scan_stop: 
 (fontspec)             - 'bold' (b/n) with NFSS spec.: <->s*[0.85]"Courier
 (fontspec)             New/B/OT:script=latn;language=dflt;"
-(fontspec)             - 'bold small caps'  (b/sc) with NFSS spec.: 
-(fontspec)             and font adjustment code:
-(fontspec)             \fontdimen 2\font =1\fontdimen 2\font \fontdimen 3\font
-(fontspec)             =0\fontdimen 3\font \fontdimen 4\font =0\fontdimen
-(fontspec)             4\font \fontdimen 7\font =0\fontdimen 2\font
-(fontspec)             \tex_hyphenchar:D \font =-1\scan_stop: 
 (fontspec)             - 'italic' (m/it) with NFSS spec.: <->s*[0.85]"Courier
 (fontspec)             New/I/OT:script=latn;language=dflt;"
-(fontspec)             - 'italic small caps'  (m/scit) with NFSS spec.: 
-(fontspec)             and font adjustment code:
-(fontspec)             \fontdimen 2\font =1\fontdimen 2\font \fontdimen 3\font
-(fontspec)             =0\fontdimen 3\font \fontdimen 4\font =0\fontdimen
-(fontspec)             4\font \fontdimen 7\font =0\fontdimen 2\font
-(fontspec)             \tex_hyphenchar:D \font =-1\scan_stop: 
 (fontspec)             - 'bold italic' (b/it) with NFSS spec.:
 (fontspec)             <->s*[0.85]"Courier
 (fontspec)             New/BI/OT:script=latn;language=dflt;"
-(fontspec)             - 'bold italic small caps'  (b/scit) with NFSS spec.: 
-(fontspec)             and font adjustment code:
-(fontspec)             \fontdimen 2\font =1\fontdimen 2\font \fontdimen 3\font
-(fontspec)             =0\fontdimen 3\font \fontdimen 4\font =0\fontdimen
-(fontspec)             4\font \fontdimen 7\font =0\fontdimen 2\font
-(fontspec)             \tex_hyphenchar:D \font =-1\scan_stop: 
 
 
-(C:\Program Files\MiKTeX\tex/latex/geometry\geometry.sty
-Package: geometry 2020/01/02 v5.9 Page Geometry
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
 
-(C:\Program Files\MiKTeX\tex/latex/graphics\keyval.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks17
 )
-(C:\Program Files\MiKTeX\tex/generic/iftex\ifvtex.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 
-(C:\Program Files\MiKTeX\tex/generic/iftex\iftex.sty
-Package: iftex 2022/02/03 v1.0f TeX engine tests
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
 ))
-\Gm@cnth=\count275
-\Gm@cntv=\count276
-\c@Gm@tempcnt=\count277
-\Gm@bindingoffset=\dimen146
-\Gm@wd@mp=\dimen147
-\Gm@odd@mp=\dimen148
-\Gm@even@mp=\dimen149
-\Gm@layoutwidth=\dimen150
-\Gm@layoutheight=\dimen151
-\Gm@layouthoffset=\dimen152
-\Gm@layoutvoffset=\dimen153
+\Gm@cnth=\count296
+\Gm@cntv=\count297
+\c@Gm@tempcnt=\count298
+\Gm@bindingoffset=\dimen156
+\Gm@wd@mp=\dimen157
+\Gm@odd@mp=\dimen158
+\Gm@even@mp=\dimen159
+\Gm@layoutwidth=\dimen160
+\Gm@layoutheight=\dimen161
+\Gm@layouthoffset=\dimen162
+\Gm@layoutvoffset=\dimen163
 \Gm@dimlist=\toks18
 
-(C:\Program Files\MiKTeX\tex/latex/geometry\geometry.cfg))
-(C:\Program Files\MiKTeX\tex/latex/setspace\setspace.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/setspace\setspace.sty
 Package: setspace 2022/12/04 v6.7b set line spacing
 )
-(C:\Program Files\MiKTeX\tex/latex/tools\indentfirst.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/tools\indentfirst.sty
 Package: indentfirst 2023/07/02 v1.03 Indent first paragraph (DPC)
 )
-(C:\Program Files\MiKTeX\tex/latex/titlesec\titlesec.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
 Package: titlesec 2025/01/04 v2.17 Sectioning titles
-\ttl@box=\box52
-\beforetitleunit=\skip50
-\aftertitleunit=\skip51
-\ttl@plus=\dimen154
-\ttl@minus=\dimen155
+\ttl@box=\box53
+\beforetitleunit=\skip51
+\aftertitleunit=\skip52
+\ttl@plus=\dimen164
+\ttl@minus=\dimen165
 \ttl@toksa=\toks19
-\titlewidth=\dimen156
-\titlewidthlast=\dimen157
-\titlewidthfirst=\dimen158
+\titlewidth=\dimen166
+\titlewidthlast=\dimen167
+\titlewidthfirst=\dimen168
 )
-(C:\Program Files\MiKTeX\tex/latex/graphics\graphicx.sty
-Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
 
-(C:\Program Files\MiKTeX\tex/latex/graphics\graphics.sty
-Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
 
-(C:\Program Files\MiKTeX\tex/latex/graphics\trig.sty
-Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
 )
-(C:\Program Files\MiKTeX\tex/latex/graphics-cfg\graphics.cfg
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
-Package graphics Info: Driver file: xetex.def on input line 107.
+Package graphics Info: Driver file: xetex.def on input line 106.
 
-(C:\Program Files\MiKTeX\tex/latex/graphics-def\xetex.def
-File: xetex.def 2022/09/22 v5.0n Graphics/color driver for xetex
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\xetex.def
+File: xetex.def 2025/11/01 v5.0p Graphics/color driver for xetex
 ))
-\Gin@req@height=\dimen159
-\Gin@req@width=\dimen160
-)
-(C:\Program Files\MiKTeX\tex/latex/float\float.sty
+\Gin@req@height=\dimen169
+\Gin@req@width=\dimen170
+) (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty
 Package: float 2001/11/08 v1.3d Float enhancements (AL)
-\c@float@type=\count278
+\c@float@type=\count299
 \float@exts=\toks20
-\float@box=\box53
+\float@box=\box54
 \@float@everytoks=\toks21
-\@floatcapt=\box54
+\@floatcapt=\box55
 )
-(C:\Program Files\MiKTeX\tex/latex/caption\caption.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape.sty
+Package: pdflscape 2022-10-27 v0.13 Display of landscape pages in PDF
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape-nom
+etadata.sty
+Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PD
+F (HO)
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\lscape.sty
+Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
+)
+Package pdflscape Info: Auto-detected driver: dvipdfm (xetex) on input line 98.
+
+))
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
 Package: caption 2023/08/05 v3.6o Customizing captions (AR)
 
-(C:\Program Files\MiKTeX\tex/latex/caption\caption3.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
 Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
-\caption@tempdima=\dimen161
-\captionmargin=\dimen162
-\caption@leftmargin=\dimen163
-\caption@rightmargin=\dimen164
-\caption@width=\dimen165
-\caption@indent=\dimen166
-\caption@parindent=\dimen167
-\caption@hangindent=\dimen168
+\caption@tempdima=\dimen171
+\captionmargin=\dimen172
+\caption@leftmargin=\dimen173
+\caption@rightmargin=\dimen174
+\caption@width=\dimen175
+\caption@indent=\dimen176
+\caption@parindent=\dimen177
+\caption@hangindent=\dimen178
 Package caption Info: Standard document class detected.
 )
-\c@caption@flags=\count279
-\c@continuedfloat=\count280
+\c@caption@flags=\count300
+\c@continuedfloat=\count301
 Package caption Info: float package is loaded.
 )
-(C:\Program Files\MiKTeX\tex/latex/booktabs\booktabs.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
-\heavyrulewidth=\dimen169
-\lightrulewidth=\dimen170
-\cmidrulewidth=\dimen171
-\belowrulesep=\dimen172
-\belowbottomsep=\dimen173
-\aboverulesep=\dimen174
-\abovetopsep=\dimen175
-\cmidrulesep=\dimen176
-\cmidrulekern=\dimen177
-\defaultaddspace=\dimen178
-\@cmidla=\count281
-\@cmidlb=\count282
-\@aboverulesep=\dimen179
-\@belowrulesep=\dimen180
-\@thisruleclass=\count283
-\@lastruleclass=\count284
-\@thisrulewidth=\dimen181
+\heavyrulewidth=\dimen179
+\lightrulewidth=\dimen180
+\cmidrulewidth=\dimen181
+\belowrulesep=\dimen182
+\belowbottomsep=\dimen183
+\aboverulesep=\dimen184
+\abovetopsep=\dimen185
+\cmidrulesep=\dimen186
+\cmidrulekern=\dimen187
+\defaultaddspace=\dimen188
+\@cmidla=\count302
+\@cmidlb=\count303
+\@aboverulesep=\dimen189
+\@belowrulesep=\dimen190
+\@thisruleclass=\count304
+\@lastruleclass=\count305
+\@thisrulewidth=\dimen191
 )
-(C:\Program Files\MiKTeX\tex/latex/tools\array.sty
-Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
-\col@sep=\dimen182
-\ar@mcellbox=\box55
-\extrarowheight=\dimen183
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
+Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
+\col@sep=\dimen192
+\ar@mcellbox=\box56
+\extrarowheight=\dimen193
 \NC@list=\toks22
-\extratabsurround=\skip52
-\backup@length=\skip53
-\ar@cellbox=\box56
+\extratabsurround=\skip53
+\backup@length=\skip54
+\ar@cellbox=\box57
 )
-(C:\Program Files\MiKTeX\tex/latex/tools\longtable.sty
-Package: longtable 2023-11-01 v4.19 Multi-page Table package (DPC)
-\LTleft=\skip54
-\LTright=\skip55
-\LTpre=\skip56
-\LTpost=\skip57
-\LTchunksize=\count285
-\LTcapwidth=\dimen184
-\LT@head=\box57
-\LT@firsthead=\box58
-\LT@foot=\box59
-\LT@lastfoot=\box60
-\LT@gbox=\box61
-\LT@cols=\count286
-\LT@rows=\count287
-\c@LT@tables=\count288
-\c@LT@chunks=\count289
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/tools\longtable.sty
+Package: longtable 2025-10-13 v4.24 Multi-page Table package (DPC)
+\LTleft=\skip55
+\LTright=\skip56
+\LTpre=\skip57
+\LTpost=\skip58
+\LTchunksize=\count306
+\LTcapwidth=\dimen194
+\LT@head=\box58
+\LT@firsthead=\box59
+\LT@foot=\box60
+\LT@lastfoot=\box61
+\LT@gbox=\box62
+\LT@cols=\count307
+\LT@rows=\count308
+\c@LT@tables=\count309
+\c@LT@chunks=\count310
 \LT@p@ftn=\toks23
 )
-(C:\Program Files\MiKTeX\tex/latex/multirow\multirow.sty
-Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
-\multirow@colwidth=\skip58
-\multirow@cntb=\count290
-\multirow@dima=\skip59
-\bigstrutjot=\dimen185
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/multirow\multirow.sty
+Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
+\multirow@colwidth=\skip59
+\multirow@cntb=\count311
+\multirow@dima=\skip60
+\bigstrutjot=\dimen195
 )
-(C:\Program Files\MiKTeX\tex/latex/amsmath\amsmath.sty
-Package: amsmath 2023/05/13 v2.17o AMS math features
-\@mathmargin=\skip60
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+Package: amsmath 2025/07/09 v2.17z AMS math features
+\@mathmargin=\skip61
 
 For additional information on amsmath, use the `?' option.
-(C:\Program Files\MiKTeX\tex/latex/amsmath\amstext.sty
-Package: amstext 2021/08/26 v2.01 AMS text
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+Package: amstext 2024/11/17 v2.01 AMS text
 
-(C:\Program Files\MiKTeX\tex/latex/amsmath\amsgen.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks24
-\ex@=\dimen186
+\ex@=\dimen196
 ))
-(C:\Program Files\MiKTeX\tex/latex/amsmath\amsbsy.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
-\pmbraise@=\dimen187
+\pmbraise@=\dimen197
 )
-(C:\Program Files\MiKTeX\tex/latex/amsmath\amsopn.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
-\inf@bad=\count291
-LaTeX Info: Redefining \frac on input line 234.
-\uproot@=\count292
-\leftroot@=\count293
-LaTeX Info: Redefining \overline on input line 399.
-LaTeX Info: Redefining \colon on input line 410.
-\classnum@=\count294
-\DOTSCASE@=\count295
-LaTeX Info: Redefining \ldots on input line 496.
-LaTeX Info: Redefining \dots on input line 499.
-LaTeX Info: Redefining \cdots on input line 620.
-\Mathstrutbox@=\box62
-\strutbox@=\box63
-LaTeX Info: Redefining \big on input line 722.
-LaTeX Info: Redefining \Big on input line 723.
-LaTeX Info: Redefining \bigg on input line 724.
-LaTeX Info: Redefining \Bigg on input line 725.
-\big@size=\dimen188
-LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
-LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
-\macc@depth=\count296
-LaTeX Info: Redefining \bmod on input line 905.
-LaTeX Info: Redefining \pmod on input line 910.
-LaTeX Info: Redefining \smash on input line 940.
-LaTeX Info: Redefining \relbar on input line 970.
-LaTeX Info: Redefining \Relbar on input line 971.
-\c@MaxMatrixCols=\count297
-\dotsspace@=\muskip16
-\c@parentequation=\count298
-\dspbrk@lvl=\count299
+\inf@bad=\count312
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count313
+\leftroot@=\count314
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count315
+\DOTSCASE@=\count316
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box63
+\strutbox@=\box64
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen198
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count317
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count318
+\dotsspace@=\muskip17
+\c@parentequation=\count319
+\dspbrk@lvl=\count320
 \tag@help=\toks25
-\row@=\count300
-\column@=\count301
-\maxfields@=\count302
+\row@=\count321
+\column@=\count322
+\maxfields@=\count323
 \andhelp@=\toks26
-\eqnshift@=\dimen189
-\alignsep@=\dimen190
-\tagshift@=\dimen191
-\tagwidth@=\dimen192
-\totwidth@=\dimen193
-\lineht@=\dimen194
+\eqnshift@=\dimen199
+\alignsep@=\dimen256
+\tagshift@=\dimen257
+\tagwidth@=\dimen258
+\totwidth@=\dimen259
+\lineht@=\dimen260
 \@envbody=\toks27
-\multlinegap=\skip61
-\multlinetaggap=\skip62
+\multlinegap=\skip62
+\multlinetaggap=\skip63
 \mathdisplay@stack=\toks28
-LaTeX Info: Redefining \[ on input line 2953.
-LaTeX Info: Redefining \] on input line 2954.
+LaTeX Info: Redefining \[ on input line 2950.
+LaTeX Info: Redefining \] on input line 2951.
 )
-(C:\Program Files\MiKTeX\tex/latex/amsfonts\amssymb.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
 
-(C:\Program Files\MiKTeX\tex/latex/amsfonts\amsfonts.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty
 Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
 \symAMSa=\mathgroup4
 \symAMSb=\mathgroup5
 LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
-))
-(C:\Program Files\MiKTeX\tex/latex/listings\listings.sty
-\lst@mode=\count303
-\lst@gtempboxa=\box64
+)) (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.st
+y
+\lst@mode=\count324
+\lst@gtempboxa=\box65
 \lst@token=\toks29
-\lst@length=\count304
-\lst@currlwidth=\dimen195
-\lst@column=\count305
-\lst@pos=\count306
-\lst@lostspace=\dimen196
-\lst@width=\dimen197
-\lst@newlines=\count307
-\lst@lineno=\count308
-\lst@maxwidth=\dimen198
+\lst@length=\count325
+\lst@currlwidth=\dimen261
+\lst@column=\count326
+\lst@pos=\count327
+\lst@lostspace=\dimen262
+\lst@width=\dimen263
+\lst@newlines=\count328
+\lst@lineno=\count329
+\lst@maxwidth=\dimen264
 
-(C:\Program Files\MiKTeX\tex/latex/listings\lstpatch.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
 File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
 )
-(C:\Program Files\MiKTeX\tex/latex/listings\lstmisc.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-\c@lstnumber=\count309
-\lst@skipnumbers=\count310
-\lst@framebox=\box65
+\c@lstnumber=\count330
+\lst@skipnumbers=\count331
+\lst@framebox=\box66
 )
-(C:\Program Files\MiKTeX\tex/latex/listings\listings.cfg
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
 File: listings.cfg 2025/11/14 1.11b listings configuration
 ))
 Package: listings 2025/11/14 1.11b (Carsten Heinz)
+==> First Aid for listings.sty no longer applied!
+    Expected:
+        2024/09/23 1.10c (Carsten Heinz)
+    but found:
+        2025/11/14 1.11b (Carsten Heinz)
+    so I'm assuming it got fixed.
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
 
-(C:\Program Files\MiKTeX\tex/latex/xcolor\xcolor.sty
-Package: xcolor 2023/11/15 v3.01 LaTeX color extensions (UK)
-
-(C:\Program Files\MiKTeX\tex/latex/graphics-cfg\color.cfg
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: xetex.def on input line 274.
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+) (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+Package: hyperref 2026-04-24 v7.01q Hypertext links for LaTeX
 
-(C:\Program Files\MiKTeX\tex/latex/graphics\mathcolor.ltx)
-Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1350.
-Package xcolor Info: Model `RGB' extended on input line 1366.
-Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1368.
-Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1369.
-Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1370.
-Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1371.
-Package xcolor Info: Model `Gray' substituted by `gray' on input line 1372.
-Package xcolor Info: Model `wave' substituted by `hsb' on input line 1373.
-)
-(C:\Program Files\MiKTeX\tex/latex/hyperref\hyperref.sty
-Package: hyperref 2023-11-26 v7.01g Hypertext links for LaTeX
-
-(C:\Program Files\MiKTeX\tex/generic/infwarerr\infwarerr.sty
-Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-)
-(C:\Program Files\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
 )
-(C:\Program Files\MiKTeX\tex/generic/kvdefinekeys\kvdefinekeys.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
 )
-(C:\Program Files\MiKTeX\tex/generic/pdfescape\pdfescape.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
 
-(C:\Program Files\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
 Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
 )
-(C:\Program Files\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
 Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode not found.
 ))
-(C:\Program Files\MiKTeX\tex/latex/hycolor\hycolor.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
 )
-(C:\Program Files\MiKTeX\tex/latex/letltxmacro\letltxmacro.sty
-Package: letltxmacro 2019/12/03 v1.6 Let assignment for LaTeX macros (HO)
-)
-(C:\Program Files\MiKTeX\tex/latex/auxhook\auxhook.sty
-Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
-)
-(C:\Program Files\MiKTeX\tex/latex/hyperref\nameref.sty
-Package: nameref 2023-11-26 v2.56 Cross-referencing by name of section
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+Package: nameref 2026-01-29 v2.58 Cross-referencing by name of section
 
-(C:\Program Files\MiKTeX\tex/latex/refcount\refcount.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
 Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 )
-(C:\Program Files\MiKTeX\tex/generic/gettitlestring\gettitlestring.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 
-(C:\Program Files\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count311
+\c@section@level=\count332
 )
-(C:\Program Files\MiKTeX\tex/latex/etoolbox\etoolbox.sty
-Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count312
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count333
 )
-\@linkdim=\dimen199
-\Hy@linkcounter=\count313
-\Hy@pagecounter=\count314
-
-(C:\Program Files\MiKTeX\tex/latex/hyperref\pd1enc.def
-File: pd1enc.def 2023-11-26 v7.01g Hyperref: PDFDocEncoding definition (HO)
-)
-(C:\Program Files\MiKTeX\tex/generic/intcalc\intcalc.sty
-Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
-)
-\Hy@SavedSpaceFactor=\count315
-
-(C:\Program Files\MiKTeX\tex/latex/hyperref\puenc.def
-File: puenc.def 2023-11-26 v7.01g Hyperref: PDF Unicode definition (HO)
-)
-Package hyperref Info: Option `unicode' set `true' on input line 3167.
-Package hyperref Info: Hyper figures OFF on input line 4181.
-Package hyperref Info: Link nesting OFF on input line 4186.
-Package hyperref Info: Hyper index ON on input line 4189.
-Package hyperref Info: Plain pages OFF on input line 4196.
-Package hyperref Info: Backreferencing OFF on input line 4201.
-Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
-Package hyperref Info: Bookmarks ON on input line 4448.
-\c@Hy@tempcnt=\count316
-
-(C:\Program Files\MiKTeX\tex/latex/url\url.sty
-\Urlmuskip=\muskip17
-Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
-)
-LaTeX Info: Redefining \url on input line 4786.
-\XeTeXLinkMargin=\dimen256
-
-(C:\Program Files\MiKTeX\tex/generic/bitset\bitset.sty
-Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
-
-(C:\Program Files\MiKTeX\tex/generic/bigintcalc\bigintcalc.sty
-Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
-)
-))
-\Fld@menulength=\count317
-\Field@Width=\dimen257
-\Fld@charsize=\dimen258
-Package hyperref Info: Hyper figures OFF on input line 6065.
-Package hyperref Info: Link nesting OFF on input line 6070.
-Package hyperref Info: Hyper index ON on input line 6073.
-Package hyperref Info: backreferencing OFF on input line 6080.
-Package hyperref Info: Link coloring OFF on input line 6085.
-Package hyperref Info: Link coloring with OCG OFF on input line 6090.
-Package hyperref Info: PDF/A mode OFF on input line 6095.
-
-(C:\Program Files\MiKTeX\tex/latex/base\atbegshi-ltx.sty
-Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
-package with kernel methods
-)
-\Hy@abspage=\count318
-\c@Item=\count319
-\c@Hfootnote=\count320
-)
-Package hyperref Info: Driver (autodetected): hxetex.
-
-(C:\Program Files\MiKTeX\tex/latex/hyperref\hxetex.def
-File: hxetex.def 2023-11-26 v7.01g Hyperref driver for XeTeX
-
-(C:\Program Files\MiKTeX\tex/generic/stringenc\stringenc.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
+ty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\pdfm@box=\box66
-\c@Hy@AnnotLevel=\count321
-\HyField@AnnotCount=\count322
-\Fld@listcount=\count323
-\c@bookmark@seq@number=\count324
-
-(C:\Program Files\MiKTeX\tex/latex/rerunfilecheck\rerunfilecheck.sty
-Package: rerunfilecheck 2022-07-10 v1.10 Rerun checks for auxiliary files (HO)
-
-(C:\Program Files\MiKTeX\tex/latex/base\atveryend-ltx.sty
-Package: atveryend-ltx 2020/08/19 v1.0a Emulation of the original atveryend pac
-kage
-with kernel methods
+\@linkdim=\dimen265
+\Hy@linkcounter=\count334
+\Hy@pagecounter=\count335
+ (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+File: pd1enc.def 2026-04-24 v7.01q Hyperref: PDFDocEncoding definition (HO)
+) (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-(C:\Program Files\MiKTeX\tex/generic/uniquecounter\uniquecounter.sty
+\Hy@SavedSpaceFactor=\count336
+ (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
+File: puenc.def 2026-04-24 v7.01q Hyperref: PDF Unicode definition (HO)
+)
+Package hyperref Info: Option `unicode' set `true' on input line 3164.
+Package hyperref Info: Hyper figures OFF on input line 4199.
+Package hyperref Info: Link nesting OFF on input line 4204.
+Package hyperref Info: Hyper index ON on input line 4207.
+Package hyperref Info: Plain pages OFF on input line 4214.
+Package hyperref Info: Backreferencing OFF on input line 4219.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4466.
+\c@Hy@tempcnt=\count337
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
+\Urlmuskip=\muskip18
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 4805.
+\XeTeXLinkMargin=\dimen266
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count338
+\Field@Width=\dimen267
+\Fld@charsize=\dimen268
+Package hyperref Info: Hyper figures OFF on input line 6091.
+Package hyperref Info: Link nesting OFF on input line 6096.
+Package hyperref Info: Hyper index ON on input line 6099.
+Package hyperref Info: backreferencing OFF on input line 6106.
+Package hyperref Info: Link coloring OFF on input line 6111.
+Package hyperref Info: Link coloring with OCG OFF on input line 6116.
+Package hyperref Info: PDF/A mode OFF on input line 6121.
+\Hy@abspage=\count339
+\c@Item=\count340
+\c@Hfootnote=\count341
+)
+Package hyperref Info: Driver (autodetected): hxetex.
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hxetex.def
+File: hxetex.def 2026-04-24 v7.01q Hyperref driver for XeTeX
+\pdfm@box=\box67
+\c@Hy@AnnotLevel=\count342
+\HyField@AnnotCount=\count343
+\Fld@listcount=\count344
+\c@bookmark@seq@number=\count345
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty
 Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 )
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
-85.
+84.
 )
-\Hy@SectionHShift=\skip63
+\Hy@SectionHShift=\skip64
 )
 Package hyperref Info: Option `colorlinks' set `true' on input line 143.
-
-
-Package hyperref Warning: Option `bookmarks' has already been used,
-(hyperref)                setting the option has no effect on input line 143.
-
 Package hyperref Info: Option `bookmarksnumbered' set `true' on input line 143.
 
-(C:\Program Files\MiKTeX\tex/latex/pdfpages\pdfpages.sty
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\pdfpages.sty
 Package: pdfpages 2026/03/30 v0.6h Insert pages of external PDF documents (AM)
 
-(C:\Program Files\MiKTeX\tex/latex/base\ifthen.sty
-Package: ifthen 2022/04/13 v1.1d Standard LaTeX ifthen package (DPC)
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
+Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 )
-(C:\Program Files\MiKTeX\tex/latex/tools\calc.sty
-Package: calc 2023/07/08 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count325
-\calc@Bcount=\count326
-\calc@Adimen=\dimen259
-\calc@Bdimen=\dimen260
-\calc@Askip=\skip64
-\calc@Bskip=\skip65
-LaTeX Info: Redefining \setlength on input line 80.
-LaTeX Info: Redefining \addtolength on input line 81.
-\calc@Ccount=\count327
-\calc@Cskip=\skip66
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/tools\calc.sty
+Package: calc 2025/03/01 v4.3b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count346
+\calc@Bcount=\count347
+\calc@Adimen=\dimen269
+\calc@Bdimen=\dimen270
+\calc@Askip=\skip65
+\calc@Bskip=\skip66
+LaTeX Info: Redefining \setlength on input line 86.
+LaTeX Info: Redefining \addtolength on input line 87.
+\calc@Ccount=\count348
+\calc@Cskip=\skip67
 )
-(C:\Program Files\MiKTeX\tex/latex/eso-pic\eso-pic.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
 Package: eso-pic 2025/12/10 v3.0d eso-pic (RN)
-\ESO@tempdima=\dimen261
-\ESO@tempdimb=\dimen262
+\ESO@tempdima=\dimen271
+\ESO@tempdimb=\dimen272
 )
-\AM@pagewidth=\dimen263
-\AM@pageheight=\dimen264
-\AM@fboxrule=\dimen265
+\AM@pagewidth=\dimen273
+\AM@pageheight=\dimen274
+\AM@fboxrule=\dimen275
 
-(C:\Program Files\MiKTeX\tex/latex/pdfpages\ppxetex.def
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/pdfpages\ppxetex.def
 File: ppxetex.def 2026/03/30 v0.6h Pdfpages driver for XeTeX (AM)
 )
-\pdfpages@includegraphics@status=\count328
-\AM@pagebox=\box67
+\pdfpages@includegraphics@status=\count349
+\AM@pagebox=\box68
 \AM@global@opts=\toks30
-\AM@pagecnt=\count329
+\AM@pagecnt=\count350
 \AM@toc@title=\toks31
 \AM@lof@heading=\toks32
-\c@AM@survey=\count330
-\AM@templatesizebox=\box68
+\c@AM@survey=\count351
+\AM@templatesizebox=\box69
 )
-(C:\Program Files\MiKTeX\tex/latex/enumitem\enumitem.sty
-Package: enumitem 2019/06/20 v3.9 Customized lists
-\labelindent=\skip67
-\enit@outerparindent=\dimen266
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
+Package: enumitem 2025/02/06 v3.11 Customized lists
+\labelindent=\skip68
+\enit@outerparindent=\dimen276
 \enit@toks=\toks33
-\enit@inbox=\box69
-\enit@count@id=\count331
-\enitdp@description=\count332
+\enit@inbox=\box70
+\enit@count@id=\count352
+\enitdp@description=\count353
 )
-(C:\Program Files\MiKTeX\tex/latex/tocloft\tocloft.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/tocloft\tocloft.sty
 Package: tocloft 2017/08/31 v2.3i parameterised ToC, etc., typesetting
 Package tocloft Info: The document has chapter divisions on input line 51.
-\cftparskip=\skip68
-\cftbeforetoctitleskip=\skip69
-\cftaftertoctitleskip=\skip70
-\cftbeforepartskip=\skip71
-\cftpartnumwidth=\skip72
-\cftpartindent=\skip73
-\cftbeforechapskip=\skip74
-\cftchapindent=\skip75
-\cftchapnumwidth=\skip76
-\cftbeforesecskip=\skip77
-\cftsecindent=\skip78
-\cftsecnumwidth=\skip79
-\cftbeforesubsecskip=\skip80
-\cftsubsecindent=\skip81
-\cftsubsecnumwidth=\skip82
-\cftbeforesubsubsecskip=\skip83
-\cftsubsubsecindent=\skip84
-\cftsubsubsecnumwidth=\skip85
-\cftbeforeparaskip=\skip86
-\cftparaindent=\skip87
-\cftparanumwidth=\skip88
-\cftbeforesubparaskip=\skip89
-\cftsubparaindent=\skip90
-\cftsubparanumwidth=\skip91
-\cftbeforeloftitleskip=\skip92
-\cftafterloftitleskip=\skip93
-\cftbeforefigskip=\skip94
-\cftfigindent=\skip95
-\cftfignumwidth=\skip96
-\c@lofdepth=\count333
-\c@lotdepth=\count334
-\cftbeforelottitleskip=\skip97
-\cftafterlottitleskip=\skip98
-\cftbeforetabskip=\skip99
-\cfttabindent=\skip100
-\cfttabnumwidth=\skip101
-) (ВКР.aux)
+\cftparskip=\skip69
+\cftbeforetoctitleskip=\skip70
+\cftaftertoctitleskip=\skip71
+\cftbeforepartskip=\skip72
+\cftpartnumwidth=\skip73
+\cftpartindent=\skip74
+\cftbeforechapskip=\skip75
+\cftchapindent=\skip76
+\cftchapnumwidth=\skip77
+\cftbeforesecskip=\skip78
+\cftsecindent=\skip79
+\cftsecnumwidth=\skip80
+\cftbeforesubsecskip=\skip81
+\cftsubsecindent=\skip82
+\cftsubsecnumwidth=\skip83
+\cftbeforesubsubsecskip=\skip84
+\cftsubsubsecindent=\skip85
+\cftsubsubsecnumwidth=\skip86
+\cftbeforeparaskip=\skip87
+\cftparaindent=\skip88
+\cftparanumwidth=\skip89
+\cftbeforesubparaskip=\skip90
+\cftsubparaindent=\skip91
+\cftsubparanumwidth=\skip92
+\cftbeforeloftitleskip=\skip93
+\cftafterloftitleskip=\skip94
+\cftbeforefigskip=\skip95
+\cftfigindent=\skip96
+\cftfignumwidth=\skip97
+\c@lofdepth=\count354
+\c@lotdepth=\count355
+\cftbeforelottitleskip=\skip98
+\cftafterlottitleskip=\skip99
+\cftbeforetabskip=\skip100
+\cfttabindent=\skip101
+\cfttabnumwidth=\skip102
+)
+(ВКР.aux
+Package babel Info: 'russian' activates 'russian' shorthands.
+(babel)             Reported on input line 8.
+)
 \openout1 = `ВКР.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 188.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
-88.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 181.
+LaTeX Font Info:    ... okay on input line 181.
 
-(C:\Program Files\MiKTeX\tex/latex/base\ts1cmr.fd
-File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-)
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 188.
-LaTeX Font Info:    ... okay on input line 188.
-
-Package fontspec Info: Adjusting the maths setup (use [no-math] to avoid
+Package fontspec Info: 
+(fontspec)             Adjusting the maths setup (use [no-math] to avoid
 (fontspec)             this).
 
 \symlegacymaths=\mathgroup6
 LaTeX Font Info:    Overwriting symbol font `legacymaths' in version `bold'
-(Font)                  OT1/cmr/m/n --> OT1/cmr/bx/n on input line 188.
-LaTeX Font Info:    Redeclaring math accent \acute on input line 188.
-LaTeX Font Info:    Redeclaring math accent \grave on input line 188.
-LaTeX Font Info:    Redeclaring math accent \ddot on input line 188.
-LaTeX Font Info:    Redeclaring math accent \tilde on input line 188.
-LaTeX Font Info:    Redeclaring math accent \bar on input line 188.
-LaTeX Font Info:    Redeclaring math accent \breve on input line 188.
-LaTeX Font Info:    Redeclaring math accent \check on input line 188.
-LaTeX Font Info:    Redeclaring math accent \hat on input line 188.
-LaTeX Font Info:    Redeclaring math accent \dot on input line 188.
-LaTeX Font Info:    Redeclaring math accent \mathring on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Delta on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Theta on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Xi on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Pi on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Phi on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Psi on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \Omega on input line 188.
-LaTeX Font Info:    Redeclaring math symbol \mathdollar on input line 188.
-LaTeX Font Info:    Redeclaring symbol font `operators' on input line 188.
+(Font)                  OT1/cmr/m/n --> OT1/cmr/bx/n on input line 181.
+LaTeX Font Info:    Redeclaring math accent \acute on input line 181.
+LaTeX Font Info:    Redeclaring math accent \grave on input line 181.
+LaTeX Font Info:    Redeclaring math accent \ddot on input line 181.
+LaTeX Font Info:    Redeclaring math accent \tilde on input line 181.
+LaTeX Font Info:    Redeclaring math accent \bar on input line 181.
+LaTeX Font Info:    Redeclaring math accent \breve on input line 181.
+LaTeX Font Info:    Redeclaring math accent \check on input line 181.
+LaTeX Font Info:    Redeclaring math accent \hat on input line 181.
+LaTeX Font Info:    Redeclaring math accent \dot on input line 181.
+LaTeX Font Info:    Redeclaring math accent \mathring on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Delta on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Theta on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Xi on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Pi on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Phi on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Psi on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \Omega on input line 181.
+LaTeX Font Info:    Redeclaring math symbol \mathdollar on input line 181.
+LaTeX Font Info:    Redeclaring symbol font `operators' on input line 181.
 LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
-(Font)              `operators' in the math version `normal' on input line 188.
+(Font)              `operators' in the math version `normal' on input line 181.
 
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
 (Font)                  OT1/cmr/m/n --> TU/TimesNewRoman(0)/m/n on input line 1
-88.
+81.
 LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
-(Font)              `operators' in the math version `bold' on input line 188.
+(Font)              `operators' in the math version `bold' on input line 181.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
 (Font)                  OT1/cmr/bx/n --> TU/TimesNewRoman(0)/m/n on input line 
-188.
+181.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
 (Font)                  TU/TimesNewRoman(0)/m/n --> TU/TimesNewRoman(0)/m/n on 
-input line 188.
+input line 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
 (Font)                  OT1/cmr/m/it --> TU/TimesNewRoman(0)/m/it on input line
- 188.
+ 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
 (Font)                  OT1/cmr/bx/n --> TU/TimesNewRoman(0)/b/n on input line 
-188.
+181.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/cmss/m/n --> TU/Arial(0)/m/n on input line 188.
+(Font)                  OT1/cmss/m/n --> TU/Arial(0)/m/n on input line 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/cmtt/m/n --> TU/CourierNew(0)/m/n on input line 188
+(Font)                  OT1/cmtt/m/n --> TU/CourierNew(0)/m/n on input line 181
 .
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
 (Font)                  TU/TimesNewRoman(0)/m/n --> TU/TimesNewRoman(0)/b/n on 
-input line 188.
+input line 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
 (Font)                  OT1/cmr/bx/it --> TU/TimesNewRoman(0)/b/it on input lin
-e 188.
+e 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/cmss/bx/n --> TU/Arial(0)/b/n on input line 188.
+(Font)                  OT1/cmss/bx/n --> TU/Arial(0)/b/n on input line 181.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/cmtt/m/n --> TU/CourierNew(0)/b/n on input line 188
+(Font)                  OT1/cmtt/m/n --> TU/CourierNew(0)/b/n on input line 181
 .
-LaTeX Info: Redefining \th on input line 188.
+LaTeX Info: Redefining \th on input line 181.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
@@ -870,30 +888,17 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: longtable package is loaded.
-(C:\Program Files\MiKTeX\tex/latex/caption\ltcaption.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/caption\ltcaption.sty
 Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
 )
 Package caption Info: End \AtBeginDocument code.
-\c@lstlisting=\count335
-Package hyperref Info: Link coloring ON on input line 188.
- (ВКР.out) (ВКР.out)
+\c@lstlisting=\count356
+Package hyperref Info: Link coloring ON on input line 181.
+
+(ВКР.out) (ВКР.out)
 \@outlinefile=\write3
 \openout3 = `ВКР.out'.
 
-
-(C:\Program Files\MiKTeX\tex/latex/pdflscape\pdflscape.sty
-Package: pdflscape 2022-10-27 v0.13 Display of landscape pages in PDF
-
-(C:\Program Files\MiKTeX\tex/latex/pdflscape\pdflscape-nometadata.sty
-Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PD
-F (HO)
-
-(C:\Program Files\MiKTeX\tex/latex/graphics\lscape.sty
-Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
-)
-Package pdflscape Info: Auto-detected driver: dvipdfm (xetex) on input line 98.
-
-))
 File: Титульный_лист_flat.pdf Graphic file (type pdf)
 <use Титульный_лист_flat.pdf>
 File: Титульный_лист_flat.pdf Graphic file (type pdf)
@@ -910,209 +915,234 @@ File: Титульный_лист_flat.pdf Graphic file (type pdf)
 
 
 ]
-LaTeX Font Info:    Trying to load font information for U+msa on input line 215
-.
-
-(C:\Program Files\MiKTeX\tex/latex/amsfonts\umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 215
-.
-
-(C:\Program Files\MiKTeX\tex/latex/amsfonts\umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-Underfull \hbox (badness 1874) in paragraph at lines 215--216
-\TU/TimesNewRoman(0)/m/n/14.4 Interface (React + FastAPI + Celery, 168 коммитов
-, v0.5.0), Orchestrator
+Underfull \hbox (badness 2012) in paragraph at lines 204--205
+\TU/TimesNewRoman(0)/m/n/14.4 нации многороботных систем; разработка микросерви
+сной архитектуры
  []
 
+
+Underfull \hbox (badness 1137) in paragraph at lines 204--205
+\TU/TimesNewRoman(0)/m/n/14.4 исполнителем PlanRunner и агентами RobotInfo, Map
+Analyst, Navigation,
+ []
+
+
+Underfull \hbox (badness 4001) in paragraph at lines 204--205
+\TU/TimesNewRoman(0)/m/n/14.4 SwarmCoordinator и General; переработка трёх MCP-
+серверов (Mission
+ []
+
+
+Underfull \hbox (badness 1231) in paragraph at lines 204--205
+\TU/TimesNewRoman(0)/m/n/14.4 вызовов; адаптация форков NVIDIA Mission Control 
+и Mission Dispatch
+ []
+
+
+Underfull \hbox (badness 4634) in paragraph at lines 204--205
+\TU/TimesNewRoman(0)/m/n/14.4 под протокол VDA5050; экспериментальная оптимизац
+ия VLA-модели
+ []
+
+LaTeX Font Info:    Trying to load font information for U+msa on input line 208
+.
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 208
+.
+
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
 [2] [3]
-Underfull \hbox (badness 4096) in paragraph at lines 231--232
+Underfull \hbox (badness 4096) in paragraph at lines 224--225
 []\TU/TimesNewRoman(0)/b/n/14.4 Research tasks: \TU/TimesNewRoman(0)/m/n/14.4 a
 nalysis of cooperative perception and multi-robot
  []
 
 
-Underfull \hbox (badness 3108) in paragraph at lines 231--232
+Underfull \hbox (badness 3108) in paragraph at lines 224--225
 \TU/TimesNewRoman(0)/m/n/14.4 coordination approaches; design of a microservice
  architecture comprising
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 231--232
-\TU/TimesNewRoman(0)/m/n/14.4 eight interconnected components; development of a
-n LLM orchestrator
+Underfull \hbox (badness 3118) in paragraph at lines 228--229
+\TU/TimesNewRoman(0)/m/n/14.4 (React + FastAPI + Celery, 168 commits, v0.5.0 de
+velopment snapshot),
  []
 
-
-Underfull \hbox (badness 2903) in paragraph at lines 231--232
-\TU/TimesNewRoman(0)/m/n/14.4 based on the OpenAI Agents SDK with nine speciali
-sed agents (Router,
- []
-
-[4] (ВКР.toc
+[4] [5] (ВКР.toc
 Underfull \hbox (badness 10000) in paragraph at lines 16--16
  [][] [][][]\TU/TimesNewRoman(0)/m/n/14.4 Безопасность и формальные ограничения
  LLM- 
  []
 
-[5] [6])
+[6] [7])
 \tf@toc=\write4
 \openout4 = `ВКР.toc'.
 
- [7]
-Underfull \hbox (badness 1635) in paragraph at lines 253--254
-[]\TU/TimesNewRoman(0)/m/n/14.4 Появление мощных больших языковых моделей (LLM)
- открывает
+ [8]
+Overfull \hbox (0.20872pt too wide) in paragraph at lines 246--247
+\TU/TimesNewRoman(0)/m/n/14.4 вого интерфейса в рассуждающего агента, способног
+о обращаться к внешним
  []
 
-[8
+[9
 
 ]
-Underfull \hbox (badness 2744) in paragraph at lines 265--266
+Underfull \hbox (badness 2744) in paragraph at lines 258--259
 \TU/TimesNewRoman(0)/m/n/14.4 местному картографированию, координации флота и п
 рименению
  []
 
-[9] [10]
+[10] [11]
 Глава 1.
 
-Underfull \hbox (badness 1184) in paragraph at lines 296--297
+Underfull \hbox (badness 1184) in paragraph at lines 289--290
 []\TU/TimesNewRoman(0)/b/n/14.4 When2com \TU/TimesNewRoman(0)/m/n/14.4 [[]] ввё
 л принципиально новый вопрос: не только \TU/TimesNewRoman(0)/m/it/14.4 чем
  []
 
 
-Underfull \hbox (badness 1430) in paragraph at lines 296--297
+Underfull \hbox (badness 1430) in paragraph at lines 289--290
 \TU/TimesNewRoman(0)/m/n/14.4 делиться, но и \TU/TimesNewRoman(0)/m/it/14.4 ког
 да \TU/TimesNewRoman(0)/m/n/14.4 стоит коммуницировать. Предложенный механизм
  []
 
-[11
+[12
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 306--307
+Underfull \hbox (badness 10000) in paragraph at lines 299--300
 []\TU/TimesNewRoman(0)/m/n/14.4 Параллельным направлением к cooperative percept
 ion является
  []
 
 
-Underfull \hbox (badness 1097) in paragraph at lines 306--307
+Underfull \hbox (badness 1097) in paragraph at lines 299--300
 \TU/TimesNewRoman(0)/m/n/14.4 работ и выделяет три фундаментальные проблемы: ро
 бастность (устой-
  []
 
 
-Underfull \hbox (badness 1728) in paragraph at lines 306--307
+Underfull \hbox (badness 1728) in paragraph at lines 299--300
 \TU/TimesNewRoman(0)/m/n/14.4 чивость к ошибкам ассоциации данных), управление 
 коммуникацией и
  []
 
-[12]
-Underfull \hbox (badness 1478) in paragraph at lines 318--319
+[13]
+Underfull \hbox (badness 1478) in paragraph at lines 311--312
 \TU/TimesNewRoman(0)/m/n/14.4 авторы из Robert Bosch GmbH анализируют задачи mu
 lti-agent decision
  []
 
-[13] [14]
-Underfull \hbox (badness 3240) in paragraph at lines 348--349
-\TU/TimesNewRoman(0)/m/n/14.4 AgentsSwarm: текущая система корректно разграничи
-вает LLM-слой и
+[14] [15] [16] [17]
+Underfull \hbox (badness 10000) in paragraph at lines 371--372
+[]\TU/TimesNewRoman(0)/m/n/14.4 Положение AgentsSwarm между академическими рабо
+тами по
  []
 
 
-Underfull \hbox (badness 1460) in paragraph at lines 348--349
-\TU/TimesNewRoman(0)/m/n/14.4 mission-контур, однако формальная верификация LLM
--выходов остаётся
+Underfull \hbox (badness 5446) in paragraph at lines 371--372
+\TU/TimesNewRoman(0)/m/n/14.4 collaborative perception, промышленными multi-rob
+ot middleware и ис-
  []
 
-[15] [16]
-Underfull \hbox (badness 1331) in paragraph at lines 380--381
+
+Underfull \hbox (badness 1303) in paragraph at lines 371--372
+\TU/TimesNewRoman(0)/m/n/14.4 воспроизводимую интеграцию этих направлений в еди
+ный исполнимый
+ []
+
+
+Underfull \hbox (badness 1331) in paragraph at lines 373--374
 []\TU/TimesNewRoman(0)/m/n/14.4 Открытыми вопросами остаются: формальные гарант
 ии LLM-слоя
  []
 
-[17]
+[18]
 Глава 2.
 
-Underfull \hbox (badness 3557) in paragraph at lines 389--390
+Underfull \hbox (badness 3557) in paragraph at lines 382--383
 []\TU/TimesNewRoman(0)/m/n/14.4 Проектирование системы AgentsSwarm началось с ф
 ормулировки
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 397--398
+Underfull \hbox (badness 10000) in paragraph at lines 390--391
 []\TU/TimesNewRoman(0)/m/n/14.4 Отображение статуса выполнения миссии в реально
 м времени
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 406--407
+Underfull \hbox (badness 10000) in paragraph at lines 398--399
 []\TU/TimesNewRoman(0)/m/it/14.4 Интероперабельность: \TU/TimesNewRoman(0)/m/n/
 14.4 использование открытых стандартов
  []
 
-[18
+[19
 
 ]
-Underfull \hbox (badness 1590) in paragraph at lines 420--421
+Underfull \hbox (badness 1590) in paragraph at lines 412--413
 []\TU/TimesNewRoman(0)/b/n/14.4 vLLM Service \TU/TimesNewRoman(0)/m/n/14.4 — се
 рвис инференса LLM в режиме Data Parallel
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 421--422
+Underfull \hbox (badness 10000) in paragraph at lines 413--414
 []\TU/TimesNewRoman(0)/b/n/14.4 Mission Control \TU/TimesNewRoman(0)/m/n/14.4 —
  форк NVIDIA, реализующий VDA5050-
  []
 
 File: img/fig_2_1_system_overview.png Graphic file (type bmp)
 <img/fig_2_1_system_overview.png>
-[19]
+[20]
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 12.24008pt on input line 443.
- [20]
+(Font)              scaled to size 12.24008pt on input line 437.
+ [21]
 File: img/fig_2_2_mcp_servers.png Graphic file (type bmp)
 <img/fig_2_2_mcp_servers.png>
- [21]
+ [22] [23]
 File: img/fig_2_3_command_route.png Graphic file (type bmp)
 <img/fig_2_3_command_route.png>
-
+ [24]
 Underfull \hbox (badness 2205) in paragraph at lines 482--483
 []\TU/TimesNewRoman(0)/m/n/14.4 Агентная архитектура оркестратора построена по 
 иерархическому
  []
 
 
-Underfull \hbox (badness 3590) in paragraph at lines 486--487
-[]\TU/TimesNewRoman(0)/b/n/14.4 MissionPlanner \TU/TimesNewRoman(0)/m/n/14.4 ре
-ализует двухфазный алгоритм: на первой фазе
+Underfull \hbox (badness 2005) in paragraph at lines 482--483
+\TU/TimesNewRoman(0)/m/n/14.4 принципу: входящий запрос обрабатывается Router A
+gent, классифици-
  []
 
-[22]
 File: img/fig_2_4_agents.png Graphic file (type bmp)
 <img/fig_2_4_agents.png>
+[25
 
-Underfull \hbox (badness 10000) in paragraph at lines 501--502
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 503--504
 []\TU/TimesNewRoman(0)/m/n/14.4 Асинхронная потоковая модель Interface построен
 а на Redis
  []
 
 
-Underfull \hbox (badness 4739) in paragraph at lines 501--502
+Underfull \hbox (badness 4739) in paragraph at lines 503--504
 \TU/TimesNewRoman(0)/m/n/14.4 Stream как шине событий. Агент-воркер публикует с
 обытия в поток
  []
 
 
-Underfull \hbox (badness 1048) in paragraph at lines 501--502
+Underfull \hbox (badness 1048) in paragraph at lines 503--504
 \TU/CourierNew(0)/m/n/14.4 chat:{thread_id}:stream \TU/TimesNewRoman(0)/m/n/14.
 4 командой XADD; WebSocket-слой читает по-
  []
 
 
-Underfull \hbox (badness 1509) in paragraph at lines 503--504
+Underfull \hbox (badness 1509) in paragraph at lines 505--506
 \TU/TimesNewRoman(0)/m/n/14.4 или \TU/TimesNewRoman(0)/m/it/14.4 error\TU/Times
 NewRoman(0)/m/n/14.4 . Типы событий: \TU/CourierNew(0)/m/n/14.4 stream_chunk\TU
 /TimesNewRoman(0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 agent_reply\TU/TimesNew
@@ -1121,886 +1151,923 @@ Roman(0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 routing_event\TU/TimesNewRoman(0
  []
 
 
-Overfull \hbox (8.57541pt too wide) in paragraph at lines 505--506
-[]\TU/TimesNewRoman(0)/m/n/14.4 Параллельный канал — WebSocket оркестратора (\T
-U/CourierNew(0)/m/n/14.4 /ws/task/{task_id}\TU/TimesNewRoman(0)/m/n/14.4 ),
+Underfull \hbox (badness 10000) in paragraph at lines 507--508
+[]\TU/TimesNewRoman(0)/m/n/14.4 Параллельный канал — REST-взаимодействие с орке
+стратором:
+ []
+
+
+Underfull \hbox (badness 2221) in paragraph at lines 507--508
+\TU/TimesNewRoman(0)/m/n/14.4 SwarmOrchestratorAgent создаёт задачу через \TU/C
+ourierNew(0)/m/n/14.4 POST /task\TU/TimesNewRoman(0)/m/n/14.4 , затем инкре-
+ []
+
+
+Underfull \hbox (badness 2065) in paragraph at lines 507--508
+\TU/TimesNewRoman(0)/m/n/14.4 ментально опрашивает \TU/CourierNew(0)/m/n/14.4 G
+ET /task/{id}/events \TU/TimesNewRoman(0)/m/n/14.4 и транслирует события
+ []
+
+
+Underfull \hbox (badness 1629) in paragraph at lines 507--508
+\TU/TimesNewRoman(0)/m/n/14.4 в Redis Stream Interface, обеспечивая сквозную пр
+озрачность агентного
  []
 
 File: img/fig_2_5_task_lifecycle.png Graphic file (type bmp)
 <img/fig_2_5_task_lifecycle.png>
-[23]
-Overfull \hbox (2.72212pt too wide) in paragraph at lines 526--526
-[]|\TU/TimesNewRoman(0)/b/n/14.4 Провайдер|  
- []
-
-
-Underfull \hbox (badness 1454) in paragraph at lines 535--536
+[26]
+Underfull \hbox (badness 1454) in paragraph at lines 539--540
 []\TU/TimesNewRoman(0)/m/n/14.4 Межсервисное взаимодействие: HTTP/REST (оркестр
 атор $\OMS/cmsy/m/n/14.4 $$ \TU/TimesNewRoman(0)/m/n/14.4 MCP,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 539--540
+Underfull \hbox (badness 10000) in paragraph at lines 543--544
 []\TU/TimesNewRoman(0)/m/n/14.4 Спроектированная архитектура AgentsSwarm обеспе
 чивает чёт-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 539--540
+Underfull \hbox (badness 10000) in paragraph at lines 543--544
 \TU/TimesNewRoman(0)/m/n/14.4 кое разделение ответственности между компонентами
 : пользователь-
  []
 
 
-Underfull \hbox (badness 7869) in paragraph at lines 539--540
+Underfull \hbox (badness 7869) in paragraph at lines 543--544
 \TU/TimesNewRoman(0)/m/n/14.4 ский слой (Interface) изолирован от роботического
  контура (Mission
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 539--540
+Underfull \hbox (badness 10000) in paragraph at lines 543--544
 \TU/TimesNewRoman(0)/m/n/14.4 Control/Dispatch/Isaac Sim) через двухступенчатый
  агентный барьер
  []
 
-[24]
-Underfull \hbox (badness 1565) in paragraph at lines 541--542
+[27]
+Underfull \hbox (badness 1565) in paragraph at lines 545--546
 \TU/TimesNewRoman(0)/m/n/14.4 через стандартизованный MCP-протокол. OpenRMF [[]
 ] и аналогичные
  []
 
 
-Underfull \hbox (badness 1038) in paragraph at lines 541--542
+Underfull \hbox (badness 1038) in paragraph at lines 545--546
 \TU/TimesNewRoman(0)/m/n/14.4 AgentsSwarm принимает произвольный запрос на есте
 ственном языке и
  []
 
 
-Underfull \hbox (badness 6445) in paragraph at lines 541--542
+Underfull \hbox (badness 6445) in paragraph at lines 545--546
 \TU/TimesNewRoman(0)/m/n/14.4 транслирует его в исполнимую последовательность V
 DA5050-команд.
  []
 
-[25]
+[28]
 Глава 3.
 
-Underfull \hbox (badness 1320) in paragraph at lines 550--551
+Underfull \hbox (badness 1320) in paragraph at lines 554--555
 []\TU/TimesNewRoman(0)/m/n/14.4 Симуляционная среда построена на базе NVIDIA Is
 aac Sim 4.5 в
  []
 
-
-Underfull \hbox (badness 2582) in paragraph at lines 550--551
-\TU/TimesNewRoman(0)/m/n/14.4 Warehouse содержит несколько роботов Carter с уни
-кальными ROS 2-
- []
-
-
-Underfull \hbox (badness 2253) in paragraph at lines 556--557
-\TU/CourierNew(0)/m/n/14.4 /map/update_robot\TU/TimesNewRoman(0)/m/n/14.4 . На 
-основе карты Mission Control строит waypoint
- []
-
 File: img/fig_3_1_isaac_ros.png Graphic file (type bmp)
 <img/fig_3_1_isaac_ros.png>
-[26
+[29
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 573--574
+File: img/fig_3_2_map_waypoints.png Graphic file (type bmp)
+<img/fig_3_2_map_waypoints.png>
+ [30]
+Underfull \hbox (badness 10000) in paragraph at lines 584--585
 []\TU/TimesNewRoman(0)/b/n/14.4 Проблема 2: устаревший синтаксис Pydantic v1. \
 TU/TimesNewRoman(0)/m/n/14.4 Модуль
  []
 
-[27]
-Underfull \hbox (badness 1014) in paragraph at lines 581--582
+
+Underfull \hbox (badness 5939) in paragraph at lines 590--591
+\TU/TimesNewRoman(0)/m/n/14.4 взаимодействие между fleet manager и роботами [[]
+]. В оригиналь-
+ []
+
+
+Underfull \hbox (badness 7740) in paragraph at lines 590--591
+\TU/TimesNewRoman(0)/m/n/14.4 ном коде обнаружена проблема с устаревшим маршрут
+ом в пакете
+ []
+
+
+Underfull \hbox (badness 1014) in paragraph at lines 592--593
 []\TU/TimesNewRoman(0)/m/n/14.4 Дополнительно выявлена некорректная конфигураци
 я MQTT-хоста:
  []
 
-
-Underfull \hbox (badness 7030) in paragraph at lines 593--594
+[31]
+Underfull \hbox (badness 10000) in paragraph at lines 604--605
 []\TU/TimesNewRoman(0)/b/n/14.4 mission-control-mcp \TU/TimesNewRoman(0)/m/n/14
-.4 предоставляет инструменты: \TU/CourierNew(0)/m/n/14.4 get_map \TU/TimesNewRo
-man(0)/m/n/14.4 (PNG-
+.4 предоставляет инструменты верхнего уров-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 593--594
-\TU/TimesNewRoman(0)/m/n/14.4 карта), \TU/CourierNew(0)/m/n/14.4 get_waypoints 
-\TU/TimesNewRoman(0)/m/n/14.4 (навигационные узлы), \TU/CourierNew(0)/m/n/14.4 
-get_robot_status\TU/TimesNewRoman(0)/m/n/14.4 ,
+Underfull \hbox (badness 10000) in paragraph at lines 604--605
+\TU/TimesNewRoman(0)/m/n/14.4 ня Mission Control. Для миссий зарегистрированы о
+бработчики на-
  []
 
 
-Underfull \hbox (badness 1242) in paragraph at lines 593--594
-\TU/CourierNew(0)/m/n/14.4 list_robots\TU/TimesNewRoman(0)/m/n/14.4 , \TU/Couri
-erNew(0)/m/n/14.4 update_map\TU/TimesNewRoman(0)/m/n/14.4 . Реализованы заглуше
-чные endpoints для кор-
+Underfull \hbox (badness 10000) in paragraph at lines 604--605
+\TU/TimesNewRoman(0)/m/n/14.4 вигации, зарядки и undock; основной навигационный
+ вызов в ко-
  []
 
 
-Overfull \hbox (12.93188pt too wide) in paragraph at lines 595--596
-[]\TU/TimesNewRoman(0)/b/n/14.4 mission-dispatch-mcp \TU/TimesNewRoman(0)/m/n/1
-4.4 предоставляет: \TU/CourierNew(0)/m/n/14.4 create_mission\TU/TimesNewRoman(0
-)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 cancel_mission\TU/TimesNewRoman(0)/m/n/
-14.4 ,
+Underfull \hbox (badness 10000) in paragraph at lines 604--605
+\TU/TimesNewRoman(0)/m/n/14.4 де имеет имя \TU/CourierNew(0)/m/n/14.4 submit_na
+vigation_mission\TU/TimesNewRoman(0)/m/n/14.4 . Для карт используются
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 595--596
+Underfull \hbox (badness 1072) in paragraph at lines 604--605
+\TU/TimesNewRoman(0)/m/n/14.4 с detected objects, apriltags, objectives и pick-
+and-place. Нереализованные
+ []
+
+
+Underfull \hbox (badness 1540) in paragraph at lines 606--607
+\TU/TimesNewRoman(0)/m/n/14.4 ления исполнением. Группа мониторинга покрывает с
+татусы роботов и
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 606--607
 \TU/CourierNew(0)/m/n/14.4 get_mission_status\TU/TimesNewRoman(0)/m/n/14.4 , \T
-U/CourierNew(0)/m/n/14.4 list_missions\TU/TimesNewRoman(0)/m/n/14.4 . Исправлен
-ы несовместимые
+U/CourierNew(0)/m/n/14.4 get_idle_robots\TU/TimesNewRoman(0)/m/n/14.4 , \TU/Cou
+rierNew(0)/m/n/14.4 check_robot_health\TU/TimesNewRoman(0)/m/n/14.4 . Группа
  []
 
-[28]
-Underfull \hbox (badness 1810) in paragraph at lines 599--600
+
+Underfull \hbox (badness 1348) in paragraph at lines 608--609
+\TU/CourierNew(0)/m/n/14.4 call_service\TU/TimesNewRoman(0)/m/n/14.4 , \TU/Cour
+ierNew(0)/m/n/14.4 get_actions\TU/TimesNewRoman(0)/m/n/14.4 , \TU/CourierNew(0)
+/m/n/14.4 send_action_goal \TU/TimesNewRoman(0)/m/n/14.4 и смежным инструмен-
+ []
+
+
+Underfull \hbox (badness 3118) in paragraph at lines 608--609
+\TU/TimesNewRoman(0)/m/n/14.4 там чтения метаданных. Сервер устанавливает посто
+янное WebSocket-
+ []
+
+
+Underfull \hbox (badness 1810) in paragraph at lines 610--611
 []\TU/TimesNewRoman(0)/b/n/14.4 Динамический выбор транспорта \TU/TimesNewRoman
 (0)/m/n/14.4 реализован через переменную
  []
 
+[32]
 File: img/fig_3_3_mcp_transport.png Graphic file (type bmp)
 <img/fig_3_3_mcp_transport.png>
-[29]
-Underfull \hbox (badness 2142) in paragraph at lines 614--615
-[]\TU/TimesNewRoman(0)/m/n/14.4 Конфигурация нод задаётся через \TU/CourierNew(
-0)/m/n/14.4 .env.node0 \TU/TimesNewRoman(0)/m/n/14.4 и \TU/CourierNew(0)/m/n/14
-.4 .env.node1\TU/TimesNewRoman(0)/m/n/14.4 : па-
+
+Underfull \hbox (badness 1888) in paragraph at lines 625--626
+[]\TU/TimesNewRoman(0)/b/n/14.4 Архитектура Data Parallel: \TU/TimesNewRoman(0)
+/m/n/14.4 узел 0 (координатор, rank 0) прини-
  []
 
 
-Underfull \hbox (badness 4981) in paragraph at lines 614--615
-\TU/TimesNewRoman(0)/m/n/14.4 раметры \TU/CourierNew(0)/m/n/14.4 VLLM_HOST\TU/T
-imesNewRoman(0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 VLLM_PORT\TU/TimesNewRoma
-n(0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 VLLM_GPU_MEMORY_UTILIZATION \TU/Time
-sNewRoman(0)/m/n/14.4 (0,90),
+Underfull \hbox (badness 5504) in paragraph at lines 625--626
+\TU/TimesNewRoman(0)/m/n/14.4 рез RPC-канал на порту 13345. Конфигурация задаёт
+ся параметрами
  []
 
+
+Underfull \hbox (badness 10000) in paragraph at lines 625--626
+\TU/CourierNew(0)/m/n/14.4 data_parallel_size\TU/TimesNewRoman(0)/m/n/14.4 , \T
+U/CourierNew(0)/m/n/14.4 data_parallel_rank\TU/TimesNewRoman(0)/m/n/14.4 , \TU/
+CourierNew(0)/m/n/14.4 data_parallel_address
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 625--626
+\TU/TimesNewRoman(0)/m/n/14.4 и \TU/CourierNew(0)/m/n/14.4 data_parallel_rpc_po
+rt\TU/TimesNewRoman(0)/m/n/14.4 ; внутри каждого узла используется
+ []
+
+[33]
 File: img/fig_3_4_vllm_dp.png Graphic file (type bmp)
 <img/fig_3_4_vllm_dp.png>
 
-Underfull \hbox (badness 10000) in paragraph at lines 627--628
+Underfull \hbox (badness 10000) in paragraph at lines 642--643
 []\TU/TimesNewRoman(0)/m/n/14.4 Оркестратор — основной интеллектуальный сервис 
 системы
  []
 
 
-Underfull \hbox (badness 1910) in paragraph at lines 627--628
-\TU/TimesNewRoman(0)/m/n/14.4 AgentsSwarm, реализованный на FastAPI с lifespan-
-менеджером (версия
+Underfull \hbox (badness 1297) in paragraph at lines 644--645
+\TU/TimesNewRoman(0)/m/n/14.4 ный маршрут \TU/CourierNew(0)/m/n/14.4 /health\TU
+/TimesNewRoman(0)/m/n/14.4 , маршрут постановки задачи \TU/CourierNew(0)/m/n/14
+.4 /task \TU/TimesNewRoman(0)/m/n/14.4 и семейство
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 629--630
-[]\TU/TimesNewRoman(0)/b/n/14.4 Структура приложения. \TU/TimesNewRoman(0)/m/n/
-14.4 FastAPI-приложение организовано по
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 629--630
-\TU/TimesNewRoman(0)/m/n/14.4 роутерам: \TU/CourierNew(0)/m/n/14.4 /health\TU/T
-imesNewRoman(0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 /agents\TU/TimesNewRoman(
-0)/m/n/14.4 , \TU/CourierNew(0)/m/n/14.4 /sessions\TU/TimesNewRoman(0)/m/n/14.4
- , \TU/CourierNew(0)/m/n/14.4 /tasks\TU/TimesNewRoman(0)/m/n/14.4 , \TU/Courier
-New(0)/m/n/14.4 /ws\TU/TimesNewRoman(0)/m/n/14.4 . Зависимости
- []
-
-
-Underfull \hbox (badness 7486) in paragraph at lines 629--630
-\TU/TimesNewRoman(0)/m/n/14.4 (SessionManager, StreamCollector, MCP-клиенты) ре
-гистрируются через
- []
-
-[30]
-Overfull \hbox (12.26744pt too wide) in paragraph at lines 641--642
+[34]
+Underfull \hbox (badness 10000) in paragraph at lines 656--657
 []\TU/TimesNewRoman(0)/b/n/14.4 Интеграция OpenAI Agents SDK. \TU/TimesNewRoman
-(0)/m/n/14.4 Вызов \TU/CourierNew(0)/m/n/14.4 Runner.run_streamed(agent,
+(0)/m/n/14.4 Исполнитель использу-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 641--642
-\TU/CourierNew(0)/m/n/14.4 messages, context) \TU/TimesNewRoman(0)/m/n/14.4 воз
-вращает асинхронный итератор событий.
+Underfull \hbox (badness 10000) in paragraph at lines 656--657
+\TU/TimesNewRoman(0)/m/n/14.4 ет \TU/CourierNew(0)/m/n/14.4 Runner.run_streamed
+(agent, input=..., run_config=...,
  []
 
 
-Underfull \hbox (badness 1337) in paragraph at lines 641--642
-\TU/TimesNewRoman(0)/m/n/14.4 StreamCollector присваивает каждому событию поряд
-ковый номер (seq),
+Underfull \hbox (badness 10000) in paragraph at lines 656--657
+\TU/TimesNewRoman(0)/m/n/14.4 присваивает каждому событию порядковый номер (seq
+), буферизу-
  []
 
 
-Underfull \hbox (badness 1609) in paragraph at lines 641--642
-\TU/TimesNewRoman(0)/m/n/14.4 буферизует и публикует в WebSocket \TU/CourierNew
-(0)/m/n/14.4 /ws/task/{task_id} \TU/TimesNewRoman(0)/m/n/14.4 с гарантией
+Underfull \hbox (badness 1354) in paragraph at lines 656--657
+\TU/TimesNewRoman(0)/m/n/14.4 ет его в памяти по \TU/CourierNew(0)/m/n/14.4 tas
+k_id \TU/TimesNewRoman(0)/m/n/14.4 и отдаёт накопленные события через \TU/Couri
+erNew(0)/m/n/14.4 GET
  []
 
 File: img/fig_3_5_orchestrator_app.png Graphic file (type bmp)
 <img/fig_3_5_orchestrator_app.png>
+[35]
 File: img/fig_3_6_streamcollector.png Graphic file (type bmp)
 <img/fig_3_6_streamcollector.png>
-[31]
-Underfull \hbox (badness 1237) in paragraph at lines 665--666
-[]\TU/TimesNewRoman(0)/m/n/14.4 Interface — полнофункциональный веб-портал для 
-взаимодействия
+ [36]
+Underfull \hbox (badness 10000) in paragraph at lines 686--687
+[]\TU/TimesNewRoman(0)/m/n/14.4 Бэкенд реализован по clean architecture: слои \
+TU/TimesNewRoman(0)/m/it/14.4 domain \TU/TimesNewRoman(0)/m/n/14.4 (сущ-
  []
 
-[32]
+
+Underfull \hbox (badness 10000) in paragraph at lines 686--687
+\TU/TimesNewRoman(0)/m/n/14.4 ности и интерфейсы), \TU/TimesNewRoman(0)/m/it/14
+.4 application \TU/TimesNewRoman(0)/m/n/14.4 (ChatService, ChatJobOrchestrator,
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 686--687
+\TU/TimesNewRoman(0)/m/n/14.4 AgentExecutionService), \TU/TimesNewRoman(0)/m/it
+/14.4 infrastructure \TU/TimesNewRoman(0)/m/n/14.4 (PostgreSQL/SQLAlchemy, Redi
+s,
+ []
+
+
+Underfull \hbox (badness 1087) in paragraph at lines 686--687
+\TU/TimesNewRoman(0)/m/n/14.4 MinIO), \TU/TimesNewRoman(0)/m/it/14.4 api \TU/Ti
+mesNewRoman(0)/m/n/14.4 (FastAPI роутеры, WebSocket-слой). Docker Compose предо
+-
+ []
+
+[37]
 File: img/fig_3_7_interface_arch.png Graphic file (type bmp)
 <img/fig_3_7_interface_arch.png>
- [33]
-Overfull \vbox (15.14857pt too high) has occurred while \output is active []
-
-
-[34]
-Underfull \hbox (badness 1881) in paragraph at lines 680--681
-[]\TU/TimesNewRoman(0)/m/n/14.4 JobOrchestrator маршрутизирует задачу к одному 
-из семи агентов
+ [38]
+Underfull \hbox (badness 10000) in paragraph at lines 708--709
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Универсальный LLM-чат (Qwen2.5-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 692--693
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Генерация изображений через внешний
+Underfull \hbox (badness 2096) in paragraph at lines 710--711
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Многоитерационное глубокое иссле-
  []
 
 
-Overfull \hbox (13.17548pt too wide) in paragraph at lines 695--695
-[]|\TU/TimesNewRoman(0)/m/n/14.4 SwarmOrchestrator| 
+Underfull \hbox (badness 5050) in paragraph at lines 714--715
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Создание задачи в Orchestrator че-
  []
 
-
-Underfull \hbox (badness 3058) in paragraph at lines 700--701
+[39]
+Underfull \hbox (badness 3058) in paragraph at lines 719--720
 []\TU/TimesNewRoman(0)/m/n/14.4 Celery-задача \TU/CourierNew(0)/m/n/14.4 proces
 s_agent_message \TU/TimesNewRoman(0)/m/n/14.4 запускается при получении
  []
 
 File: img/fig_3_8_redis_stream.png Graphic file (type bmp)
 <img/fig_3_8_redis_stream.png>
-[35]
-Underfull \hbox (badness 7203) in paragraph at lines 725--726
-[]\TU/TimesNewRoman(0)/m/n/14.4 В записанном демо показан полный сквозной сцена
-рий: поль-
+[40]
+Underfull \hbox (badness 1466) in paragraph at lines 746--747
+\TU/TimesNewRoman(0)/m/n/14.4 Interface создаёт Celery-задачу, SwarmOrchestrato
+rAgent создаёт задачу в
  []
 
 
-Underfull \hbox (badness 2512) in paragraph at lines 725--726
-\TU/TimesNewRoman(0)/m/n/14.4 зователь вводит запрос о навигации робота в Chat 
-с выбором агента
+Underfull \hbox (badness 2150) in paragraph at lines 748--749
+[]\TU/TimesNewRoman(0)/m/n/14.4 Примеры пользовательского интерфейса приведены 
+на рис. [][]3.9[][] и
  []
 
-
-Underfull \hbox (badness 2512) in paragraph at lines 725--726
-\TU/TimesNewRoman(0)/m/n/14.4 устанавливает WebSocket-соединение с оркестраторо
-м; оркестратор вы-
- []
-
-
-Underfull \hbox (badness 8038) in paragraph at lines 735--736
-[]\TU/TimesNewRoman(0)/m/n/14.4 В данной главе описана реализация всех восьми к
-омпонентов
- []
-
-[36]
-Underfull \hbox (badness 2088) in paragraph at lines 739--740
-[]\TU/TimesNewRoman(0)/m/it/14.4 Data Parallel vLLM \TU/TimesNewRoman(0)/m/n/14
-.4 — единственная возможность уместить 32B-
- []
-
-
-Overfull \hbox (5.97495pt too wide) in paragraph at lines 751--751
-[]|\TU/TimesNewRoman(0)/b/n/14.4 Коммиты| 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 753--754
+File: img/fig_3_9_chat.png Graphic file (type bmp)
+<img/fig_3_9_chat.png>
+[41]
+File: img/fig_3_10_trace.png Graphic file (type bmp)
+<img/fig_3_10_trace.png>
+ [42]
+Underfull \hbox (badness 7740) in paragraph at lines 784--785
 []|\TU/TimesNewRoman(0)/m/n/14.4 React, FastAPI, Celery,
  []
 
 
-Underfull \hbox (badness 3088) in paragraph at lines 754--755
-[]|\TU/TimesNewRoman(0)/m/n/14.4 FastAPI, OpenAI Agents
+Underfull \hbox (badness 10000) in paragraph at lines 784--785
+\TU/TimesNewRoman(0)/m/n/14.4 Redis, PostgreSQL,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 757--757
+Underfull \hbox (badness 10000) in paragraph at lines 788--788
 []|\TU/TimesNewRoman(0)/m/n/14.4 Mission
  []
 
 
-Underfull \hbox (badness 5161) in paragraph at lines 758--759
+Underfull \hbox (badness 1902) in paragraph at lines 789--790
 []|\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Isaac Sim 4.5,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 759--759
+Underfull \hbox (badness 10000) in paragraph at lines 790--790
 []|\TU/TimesNewRoman(0)/m/n/14.4 ROS 2
  []
 
 
-Underfull \hbox (badness 3601) in paragraph at lines 759--760
+Underfull \hbox (badness 1137) in paragraph at lines 790--791
 []|\TU/TimesNewRoman(0)/m/n/14.4 ROS 2 Jazzy, rosbridge,
  []
 
-[37]
+
+Underfull \hbox (badness 10000) in paragraph at lines 791--791
+[]|\TU/TimesNewRoman(0)/m/n/14.4 SmolVLA
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 791--792
+[]|\TU/TimesNewRoman(0)/m/n/14.4 PyTorch, LeRobot,
+ []
+
+LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
+(Font)              scaled to size 8.50006pt on input line 794.
+[43]
 Глава 4.
 
-Underfull \hbox (badness 2689) in paragraph at lines 780--781
+Underfull \hbox (badness 2689) in paragraph at lines 812--813
 []\TU/TimesNewRoman(0)/m/n/14.4 SmolVLA базируется на видеоэнкодере SigLIP и яз
 ыковой моде-
  []
 
 
-Underfull \hbox (badness 2573) in paragraph at lines 780--781
+Underfull \hbox (badness 2573) in paragraph at lines 812--813
 \TU/TimesNewRoman(0)/m/n/14.4 ли SmolLM2, соединённых projection-слоем. На вход
  поступают RGB-
  []
 
 
-Overfull \hbox (9.47002pt too wide) in paragraph at lines 787--797
-[][] 
+Underfull \hbox (badness 1552) in paragraph at lines 812--813
+\TU/TimesNewRoman(0)/m/n/14.4 изображение наблюдения, состояние робота и языков
+ая инструкция; на
  []
 
-[38
+[44
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 810--811
-[]\TU/TimesNewRoman(0)/b/n/14.4 Этап 2: Mixed Precision Inference (FP16). \TU/T
-imesNewRoman(0)/m/n/14.4 Применяется
+Overfull \hbox (0.27095pt too wide) in paragraph at lines 845--846
+\TU/TimesNewRoman(0)/m/n/14.4 анализа инференса. Ускорение инференса оцениваетс
+я в составе полного пай-
  []
 
-
-Underfull \hbox (badness 1789) in paragraph at lines 810--811
-\TU/CourierNew(0)/m/n/14.4 torch.cuda.amp \TU/TimesNewRoman(0)/m/n/14.4 с автом
-атическим управлением precision: веса остают-
- []
-
-
-Underfull \hbox (badness 2368) in paragraph at lines 812--813
-\TU/TimesNewRoman(0)/m/n/14.4 projection и feed-forward, нетронутыми остаются с
-лои нормализации и
- []
-
-
-Underfull \hbox (badness 2237) in paragraph at lines 814--815
-[]\TU/TimesNewRoman(0)/b/n/14.4 Этап 4: INT8 Quantization Analysis. \TU/TimesNe
-wRoman(0)/m/n/14.4 Оценивается применимость
- []
-
+[45] [46]
 File: img/fig_4_1_smolvla_pipeline.png Graphic file (type bmp)
 <img/fig_4_1_smolvla_pipeline.png>
-[39] [40] [41]
+ [47] [48
+
+
+] [49]
 Глава 5.
 
-Underfull \hbox (badness 1057) in paragraph at lines 861--862
+Underfull \hbox (badness 1057) in paragraph at lines 900--901
 []\TU/TimesNewRoman(0)/m/n/14.4 Стратегия верификации AgentsSwarm охватывает тр
 и уровня: \TU/TimesNewRoman(0)/m/it/14.4 unit-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 867--868
-[]\TU/TimesNewRoman(0)/b/n/14.4 Unit-тесты базовых сервисов \TU/TimesNewRoman(0
-)/m/n/14.4 проверяют: корректность health-
+Underfull \hbox (badness 1881) in paragraph at lines 904--905
+[]\TU/TimesNewRoman(0)/m/n/14.4 Текущий тестовый набор оркестратора включает 88
+ тестов, орга-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 869--870
-[]\TU/TimesNewRoman(0)/b/n/14.4 Контрактные тесты планировщика \TU/TimesNewRoma
-n(0)/m/n/14.4 верифицируют структуру
+Underfull \hbox (badness 7064) in paragraph at lines 904--905
+\TU/TimesNewRoman(0)/m/n/14.4 низованных вокруг базовых сервисов, планировщика,
+ StreamCollector,
  []
 
 
-Underfull \hbox (badness 4492) in paragraph at lines 869--870
-\TU/TimesNewRoman(0)/m/n/14.4 выходных данных MissionPlanner: обязательное нали
-чие полей \TU/CourierNew(0)/m/n/14.4 steps\TU/TimesNewRoman(0)/m/n/14.4 ,
+Underfull \hbox (badness 1275) in paragraph at lines 912--913
+\TU/TimesNewRoman(0)/m/n/14.4 replanning. Контрольный локальный запуск 19.05.20
+26 командой \TU/CourierNew(0)/m/n/14.4 uv run
  []
 
-[42
+
+Underfull \hbox (badness 10000) in paragraph at lines 912--913
+\TU/CourierNew(0)/m/n/14.4 --with pytest --with pytest-asyncio pytest tests/ -q
+ \TU/TimesNewRoman(0)/m/n/14.4 завершил-
+ []
+
+[50
 
 ]
-Underfull \hbox (badness 1005) in paragraph at lines 885--886
-[]\TU/TimesNewRoman(0)/m/n/14.4 Автоматизированное тестирование подтвердило кор
-ректность рабо-
- []
-
-[43]
-Underfull \hbox (badness 2096) in paragraph at lines 899--900
-\TU/TimesNewRoman(0)/m/n/14.4 V100, v0.2.9), доработанные форки NVIDIA Mission 
-Control и Mission
+Underfull \hbox (badness 2080) in paragraph at lines 920--921
+\TU/TimesNewRoman(0)/m/n/14.4 нарий: POST \TU/CourierNew(0)/m/n/14.4 /api/chats
+/ $\OMS/cmsy/m/n/14.4 !$ \TU/TimesNewRoman(0)/m/n/14.4 POST \TU/CourierNew(0)/m
+/n/14.4 /api/chats/{thread_id}/message
  []
 
 
-Underfull \hbox (badness 1430) in paragraph at lines 905--906
+Underfull \hbox (badness 10000) in paragraph at lines 920--921
+\OMS/cmsy/m/n/14.4 !$ \TU/TimesNewRoman(0)/m/n/14.4 WebSocket \TU/CourierNew(0)
+/m/n/14.4 /api/chats/{thread_id}/ws $\OMS/cmsy/m/n/14.4 !$ \TU/TimesNewRoman(0)
+/m/n/14.4 ожидание события
+ []
+
+
+Underfull \hbox (badness 2285) in paragraph at lines 920--921
+\TU/CourierNew(0)/m/n/14.4 agent_reply\TU/TimesNewRoman(0)/m/n/14.4 . Тест подт
+верждает корректную работу всей цепочки без
+ []
+
+
+Underfull \hbox (badness 2253) in paragraph at lines 924--925
+[]\TU/TimesNewRoman(0)/m/n/14.4 Автоматизированное тестирование подтвердило раб
+отоспособность
+ []
+
+
+Underfull \hbox (badness 3612) in paragraph at lines 924--925
+\TU/TimesNewRoman(0)/m/n/14.4 (зависимость от GPU-кластера); отсутствие нагрузо
+чного тестирования
+ []
+
+
+Underfull \hbox (badness 3746) in paragraph at lines 924--925
+\TU/TimesNewRoman(0)/m/n/14.4 при параллельных сессиях; необходимость синхрониз
+ировать тестовые
+ []
+
+[51] [52]
+Underfull \hbox (badness 1430) in paragraph at lines 944--945
 \TU/TimesNewRoman(0)/m/n/14.4 объединяющей кооперативное восприятие, fleet mana
 gement (VDA5050),
  []
 
+[53
 
-Overfull \hbox (0.50471pt too wide) in paragraph at lines 910--911
+]
+Overfull \hbox (0.50471pt too wide) in paragraph at lines 949--950
 []\TU/TimesNewRoman(0)/m/n/14.4 Частичная децентрализация оркестрации для повыш
 ения устойчивости
  []
 
 
-Underfull \hbox (badness 1881) in paragraph at lines 911--912
+Underfull \hbox (badness 1881) in paragraph at lines 950--951
 []\TU/TimesNewRoman(0)/m/n/14.4 Формальная верификация LLM-планов через constra
 int checking и
  []
 
-[44
-
-] [45]
-Underfull \hbox (badness 10000) in paragraph at lines 925--926
+[54]
+Underfull \hbox (badness 10000) in paragraph at lines 964--965
 \TU/TimesNewRoman(0)/m/n/14.4 Systems Magazine. 2023. DOI: 10.1109/MITS.2023.32
 98534.
  []
 
 
-Underfull \hbox (badness 4569) in paragraph at lines 931--932
+Underfull \hbox (badness 4569) in paragraph at lines 970--971
 \TU/TimesNewRoman(0)/m/n/14.4 Communication for Joint Perception and Prediction
  // ECCV 2020.
  []
 
 
-Underfull \hbox (badness 2080) in paragraph at lines 934--935
+Underfull \hbox (badness 2080) in paragraph at lines 973--974
 []\TU/TimesNewRoman(0)/m/n/14.4 Лю Й.-Ч., Тянь Дж., Глэйзер Н., Кира З. When2co
 m: Multi-Agent
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 934--935
+Underfull \hbox (badness 10000) in paragraph at lines 973--974
 \TU/TimesNewRoman(0)/m/n/14.4 Perception via Communication Graph Grouping // CV
 PR 2020.
  []
 
 
-Underfull \hbox (badness 1102) in paragraph at lines 937--938
+Underfull \hbox (badness 1102) in paragraph at lines 976--977
 []\TU/TimesNewRoman(0)/m/n/14.4 Ху Й., Фан С., Лэй З. и др. Where2comm: Communi
 cation-Efficient
  []
 
 
-Underfull \hbox (badness 7796) in paragraph at lines 953--954
+Underfull \hbox (badness 7796) in paragraph at lines 992--993
 \TU/TimesNewRoman(0)/m/n/14.4 Simultaneous Localization and Mapping: a Survey o
 f the Current
  []
 
 
-Underfull \hbox (badness 3417) in paragraph at lines 953--954
+Underfull \hbox (badness 3417) in paragraph at lines 992--993
 \TU/TimesNewRoman(0)/m/n/14.4 Research Landscape // Field Robotics. 2022. Vol. 
 2. Pp. 971–1000.
  []
 
-[46
+[55
 
 ]
-Underfull \hbox (badness 7722) in paragraph at lines 956--957
+Underfull \hbox (badness 7722) in paragraph at lines 995--996
 []\TU/TimesNewRoman(0)/m/n/14.4 Лажуа П.-И., Бельтраме Дж. Swarm-SLAM: Sparse D
 ecentralized
  []
 
 
-Underfull \hbox (badness 2591) in paragraph at lines 956--957
+Underfull \hbox (badness 2591) in paragraph at lines 995--996
 \TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and Mappi
 ng Framework for
  []
 
 
-Underfull \hbox (badness 1354) in paragraph at lines 959--960
+Underfull \hbox (badness 1354) in paragraph at lines 998--999
 []\TU/TimesNewRoman(0)/m/n/14.4 VDA, VDMA. VDA 5050: Interface for the Communic
 ation Between
  []
 
 
-Underfull \hbox (badness 2245) in paragraph at lines 962--963
+Underfull \hbox (badness 2245) in paragraph at lines 1001--1002
 \TU/TimesNewRoman(0)/m/n/14.4 Perspective on Multi-Agent Decision Making for In
 teroperable Robot
  []
 
 
-Underfull \hbox (badness 1881) in paragraph at lines 962--963
+Underfull \hbox (badness 1881) in paragraph at lines 1001--1002
 \TU/TimesNewRoman(0)/m/n/14.4 Navigation following the VDA5050 Standard // arXi
 v preprint. 2023.
  []
 
 
-Underfull \hbox (badness 1953) in paragraph at lines 965--966
+Underfull \hbox (badness 1953) in paragraph at lines 1004--1005
 []\TU/TimesNewRoman(0)/m/n/14.4 Open Robotics. Open RMF (Open Robotics Middlewa
 re Framework).
  []
 
 
-Underfull \hbox (badness 2556) in paragraph at lines 965--966
+Underfull \hbox (badness 2556) in paragraph at lines 1004--1005
 \TU/TimesNewRoman(0)/m/n/14.4 2021–2024. URL: [][]$[][][][][] [] [] [] [][][][]
 [][] [] [][][] [] [][][][][][][][][]$[][] (дата обращения:
  []
 
-[47]
-Underfull \hbox (badness 3312) in paragraph at lines 990--991
+[56]
+Underfull \hbox (badness 3312) in paragraph at lines 1029--1030
 []\TU/TimesNewRoman(0)/m/n/14.4 Сингх И., Блукис В., Мусавьян А. и др. ProgProm
 pt: Generating
  []
 
 
-Underfull \hbox (badness 2837) in paragraph at lines 993--994
+Underfull \hbox (badness 2837) in paragraph at lines 1032--1033
 []\TU/TimesNewRoman(0)/m/n/14.4 Пан Дж., Тан Л. и др. SELP: Generating Safe and
  Efficient Task
  []
 
 
-Underfull \hbox (badness 1515) in paragraph at lines 993--994
+Underfull \hbox (badness 1515) in paragraph at lines 1032--1033
 \TU/TimesNewRoman(0)/m/n/14.4 Plans for Robot Agents with Large Language Models
  // ICRA 2025.
  []
 
 
-Underfull \hbox (badness 2229) in paragraph at lines 1000--1001
+Underfull \hbox (badness 2229) in paragraph at lines 1039--1040
 \TU/TimesNewRoman(0)/m/n/14.4 Models Transfer Web Knowledge to Robotic Control 
 // CoRL 2023.
  []
 
 
-Underfull \hbox (badness 2913) in paragraph at lines 1003--1004
+Underfull \hbox (badness 2913) in paragraph at lines 1042--1043
 []\TU/TimesNewRoman(0)/m/n/14.4 Хуан В., Ван Ч., Чжан Р. и др. VoxPoser: Compos
 able 3D Value
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1009--1010
+Underfull \hbox (badness 10000) in paragraph at lines 1048--1049
 []\TU/TimesNewRoman(0)/m/n/14.4 Open X-Embodiment Collaboration. Open X-Embodim
 ent: Robotic
  []
 
 
-Underfull \hbox (badness 5726) in paragraph at lines 1015--1016
+Underfull \hbox (badness 5726) in paragraph at lines 1054--1055
 []\TU/TimesNewRoman(0)/m/n/14.4 Ретцлафф М. и др. (HuggingFace/LeRobot). SmolVL
 A: A Vision-
  []
 
-[48]
-Underfull \hbox (badness 10000) in paragraph at lines 1025--1026
+[57]
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1065
 []\TU/TimesNewRoman(0)/m/n/14.4 Миттал М., Ю Ч., Ю К. и др. Orbit: A Unified Si
 mulation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1025--1026
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1065
 \TU/TimesNewRoman(0)/m/n/14.4 Framework for Interactive Robot Learning Environm
 ents // IEEE
  []
 
 
-Underfull \hbox (badness 1817) in paragraph at lines 1028--1029
+Underfull \hbox (badness 1817) in paragraph at lines 1067--1068
 []\TU/TimesNewRoman(0)/m/n/14.4 Жасинто М.Ф., Пинто Дж. и др. Pegasus Simulator
 : An Isaac Sim
  []
 
 
-Underfull \hbox (badness 3078) in paragraph at lines 1028--1029
+Underfull \hbox (badness 3078) in paragraph at lines 1067--1068
 \TU/TimesNewRoman(0)/m/n/14.4 Framework for Multiple Aerial Vehicles Simulation
  // ICUAS 2024.
  []
 
 
-Underfull \hbox (badness 1389) in paragraph at lines 1034--1035
+Underfull \hbox (badness 1389) in paragraph at lines 1073--1074
 []\TU/TimesNewRoman(0)/m/n/14.4 Квон В., Ли З., Чжуан С. и др. Efficient Memory
  Management for
  []
 
 
-Underfull \hbox (badness 3471) in paragraph at lines 1034--1035
+Underfull \hbox (badness 3471) in paragraph at lines 1073--1074
 \TU/TimesNewRoman(0)/m/n/14.4 Large Language Model Serving with PagedAttention 
 // SOSP 2023.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1041--1042
+Underfull \hbox (badness 10000) in paragraph at lines 1083--1084
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. 2024. URL: [][]$[][][][][] 
 [] [] [] [][][][][][][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1041--1042
+Underfull \hbox (badness 10000) in paragraph at lines 1083--1084
 [][][][][][] [] [][] [] [][][][][][][] [] [][][][][][][] [] [][][][][] [] [][][
 ][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (дата обращения:
  []
 
-
-Underfull \hbox (badness 4634) in paragraph at lines 1044--1045
+[58]
+Underfull \hbox (badness 4634) in paragraph at lines 1086--1087
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Corporation. Isaac ROS Repositories and 
 Packages [Элек-
  []
 
 
-Underfull \hbox (badness 2020) in paragraph at lines 1044--1045
+Underfull \hbox (badness 2020) in paragraph at lines 1086--1087
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. 2024. URL: [][]$[][][][][] [] []
  [] [][][][][][][][][][][][][][][][][][] [] [][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1044--1045
+Underfull \hbox (badness 10000) in paragraph at lines 1086--1087
 [][] [] [][][][][][][][][][][][] [] [][][] [] [][][][][][][][] [] [][][][][] []
  [][][][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (дата обращения:
  []
 
-[49]
-Underfull \hbox (badness 10000) in paragraph at lines 1047--1048
+
+Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. 2025. URL: [][]$[][][][][] 
 [] [] [] [][][][] [] [][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1047--1048
+Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
 [][][][][][][][][] [] [][][][][][] [] [][][] [] [] [] [] [] [] [] [][][] [] [][
 ][][][][][][][] [] [][][][][][][][] [] [][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1050--1051
+Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Omniverse. IsaacSim-ros_workspaces: Offi
 cial ROS 2
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1050--1051
+Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
 \TU/TimesNewRoman(0)/m/n/14.4 Workspaces for Isaac Sim [Электронный ресурс]. UR
 L: [][]$[][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1050--1051
+Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
 [] [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][][][][][] [] [][][][][
 ][][][][][][][][] [] [][][][][][][][][][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (д
 ата
  []
 
 
-Underfull \hbox (badness 3514) in paragraph at lines 1053--1054
+Underfull \hbox (badness 3514) in paragraph at lines 1095--1096
 []\TU/TimesNewRoman(0)/m/n/14.4 Open Robotics. ROS 2 Jazzy Jalisco [Электронный
  ресурс]. 2024.
  []
 
 
-Underfull \hbox (badness 6412) in paragraph at lines 1059--1060
+Underfull \hbox (badness 6412) in paragraph at lines 1101--1102
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. URL: [][]$[][][][][] [] [] 
 [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 1062--1063
+Underfull \hbox (badness 2418) in paragraph at lines 1104--1105
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Isaac. Mission Dispatch: VDA5050 Fleet D
 ispatcher [Элек-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1062--1063
+Underfull \hbox (badness 10000) in paragraph at lines 1104--1105
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. URL: [][]$[][][][][] [] [] [] []
 [][][][][] [] [][][] [] [][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1069--1070
+Underfull \hbox (badness 10000) in paragraph at lines 1111--1112
 []\TU/TimesNewRoman(0)/m/n/14.4 OpenAI. OpenAI Agents SDK [Электронный ресурс].
  2025.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1069--1070
+Underfull \hbox (badness 10000) in paragraph at lines 1111--1112
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][] [] [][
 ][] [] [][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][]$[][] (дата
  []
 
-
-Underfull \hbox (badness 7326) in paragraph at lines 1072--1073
+[59]
+Underfull \hbox (badness 7326) in paragraph at lines 1114--1115
 []\TU/TimesNewRoman(0)/m/n/14.4 Anthropic. Model Context Protocol (MCP) [Электр
 онный ресурс].
  []
 
 
-Underfull \hbox (badness 2478) in paragraph at lines 1072--1073
+Underfull \hbox (badness 2478) in paragraph at lines 1114--1115
 \TU/TimesNewRoman(0)/m/n/14.4 2024. URL: [][]$[][][][][] [] [] [] [][][][][][][
 ][][][][][][][][][][][][][] [] [][][]$[][] (дата обращения:
  []
 
 
-Underfull \hbox (badness 1147) in paragraph at lines 1075--1076
+Underfull \hbox (badness 1147) in paragraph at lines 1117--1118
 []\TU/TimesNewRoman(0)/m/n/14.4 RobotMCP. ros-mcp-server: ROS MCP Server [Элект
 ронный ресурс].
  []
 
-[50]
-Underfull \hbox (badness 10000) in paragraph at lines 1085--1086
+
+Underfull \hbox (badness 10000) in paragraph at lines 1127--1128
 []\TU/TimesNewRoman(0)/m/n/14.4 Alibaba Cloud. Qwen2.5-7B-Instruct [Электронный
  ресурс]. 2024.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1085--1086
+Underfull \hbox (badness 10000) in paragraph at lines 1127--1128
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][][][][][
 ][] [] [][] [] [][][][] [] [][][][][] [] [][][][][][][][][][][][][][][]$[][] (д
 ата
  []
 
 
-Underfull \hbox (badness 1308) in paragraph at lines 1092--1093
+Underfull \hbox (badness 1308) in paragraph at lines 1134--1135
 []\TU/TimesNewRoman(0)/m/n/14.4 Redis Ltd. Redis-py: Python Client for Redis [Э
 лектронный ресурс].
  []
 
 
-Underfull \hbox (badness 2343) in paragraph at lines 1095--1096
+Underfull \hbox (badness 2343) in paragraph at lines 1137--1138
 []\TU/TimesNewRoman(0)/m/n/14.4 Broadcom Inc. RabbitMQ: Open Source Message Bro
 ker [Электрон-
  []
 
 
-Underfull \hbox (badness 2626) in paragraph at lines 1095--1096
+Underfull \hbox (badness 2626) in paragraph at lines 1137--1138
 \TU/TimesNewRoman(0)/m/n/14.4 ный ресурс]. URL: [][]$[][][][][] [] [] [] [][][]
  [] [][][][][][][][] [] [][][][]$[][] (дата обращения:
  []
 
 
-Underfull \hbox (badness 1292) in paragraph at lines 1101--1102
+Underfull \hbox (badness 1292) in paragraph at lines 1143--1144
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. URL: [][]$[][][][][] [] [] 
 [] [][][][] [] [][][][][][][][][][] [] [][][][]$[][] (дата
  []
 
-[51]
-Underfull \hbox (badness 1253) in paragraph at lines 1120--1121
+[60]
+Underfull \hbox (badness 1253) in paragraph at lines 1162--1163
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. URL: [][]$[][][][][] [] [] [] []
 [][][][][] [] [][][] [] [][][][][][][][][][][] [] [][][][][][][]$[][]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1123--1124
+Underfull \hbox (badness 10000) in paragraph at lines 1165--1166
 []\TU/TimesNewRoman(0)/m/n/14.4 HuggingFace. LeRobot Documentation [Электронный
  ресурс].
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1123--1124
+Underfull \hbox (badness 10000) in paragraph at lines 1165--1166
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][][][][][
 ][] [] [][] [] [][][][] [] [][][][][][][]$[][] (дата обращения:
  []
 
-[52]
+[61]
 Приложение А.
 
-Package hyperref Warning: The anchor of a bookmark and its parent's must not
-(hyperref)                be the same. Added a new anchor on input line 1135.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1143--1143
+Underfull \hbox (badness 10000) in paragraph at lines 1184--1184
 []|\TU/TimesNewRoman(0)/m/n/14.4 Behavior Tree
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1144--1145
+Underfull \hbox (badness 10000) in paragraph at lines 1185--1186
 []|\TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1145--1145
+Underfull \hbox (badness 10000) in paragraph at lines 1186--1186
 []|\TU/TimesNewRoman(0)/m/n/14.4 Cooperative
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1146--1146
+Underfull \hbox (badness 10000) in paragraph at lines 1187--1187
 []|\TU/TimesNewRoman(0)/m/n/14.4 Fleet
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1147--1147
+Underfull \hbox (badness 10000) in paragraph at lines 1188--1188
 []|\TU/TimesNewRoman(0)/m/n/14.4 Foundation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1155--1156
+Underfull \hbox (badness 10000) in paragraph at lines 1196--1197
 []|\TU/TimesNewRoman(0)/m/n/14.4 Открытый стандарт коммуникации между
  []
 
 
-Underfull \hbox (badness 2717) in paragraph at lines 1156--1157
+Underfull \hbox (badness 2717) in paragraph at lines 1197--1198
 []|\TU/TimesNewRoman(0)/m/n/14.4 Vision-Language-Action model — мультимо-
  []
 
-[53
 
-] [54]
+ignored: Infinite glue shrinkage found in box being split [62
+
+] [63]
 Приложение Б.
 
-Package hyperref Warning: The anchor of a bookmark and its parent's must not
-(hyperref)                be the same. Added a new anchor on input line 1164.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1175--1176
+Underfull \hbox (badness 10000) in paragraph at lines 1215--1216
 []|\TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and
  []
 
-[55
+[64
 
 ]
 Приложение В.
-
-Package hyperref Warning: The anchor of a bookmark and its parent's must not
-(hyperref)                be the same. Added a new anchor on input line 1195.
-
-
-Overfull \hbox (2.72212pt too wide) in paragraph at lines 1204--1204
-[]|\TU/TimesNewRoman(0)/b/n/14.4 Провайдер|  
- []
-
-[56
+[65
 
 ]
 Приложение Г.
-
-Package hyperref Warning: The anchor of a bookmark and its parent's must not
-(hyperref)                be the same. Added a new anchor on input line 1214.
-
-(C:\Program Files\MiKTeX\tex/latex/listings\lstlang1.sty
+(C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 1218.
+nput line 1256.
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 10.20007pt on input line 1218.
- [57
+(Font)              scaled to size 10.20007pt on input line 1256.
 
-] [58]
+[66
+
+] [67]
 Приложение Д.
 
-Package hyperref Warning: The anchor of a bookmark and its parent's must not
-(hyperref)                be the same. Added a new anchor on input line 1267.
-
-
-Underfull \hbox (badness 1337) in paragraph at lines 1271--1272
-\TU/TimesNewRoman(0)/m/n/14.4 (ответы агентов заменяются mock-объектами). Коман
-да запуска: \TU/CourierNew(0)/m/n/14.4 pytest
+Underfull \hbox (badness 10000) in paragraph at lines 1321--1322
+\TU/CourierNew(0)/m/n/14.4 pytest tests/ -q\TU/TimesNewRoman(0)/m/n/14.4 . Допо
+лнительно задавались \TU/CourierNew(0)/m/n/14.4 TEST_MODE=true \TU/TimesNewRoma
+n(0)/m/n/14.4 и
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1279--1280
+Underfull \hbox (badness 10000) in paragraph at lines 1329--1330
 []\TU/TimesNewRoman(0)/m/n/14.4 Условия измерения: RTX 4090 (24 ГБ VRAM), CUDA 
 12.1,
  []
 
-[59
+[68
 
 ] (ВКР.aux)
  ***********
-LaTeX2e <2023-11-01> patch level 1
-L3 programming layer <2024-01-04>
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `ВКР.out' has not changed.
-(rerunfilecheck)             Checksum: 82101503BCCC1EE77C7C6DBAC22F56AD;22470.
+(rerunfilecheck)             Checksum: F4EEE614A4B264551B4EAEE46EE1496F;20742.
  ) 
 Here is how much of TeX's memory you used:
- 19325 strings out of 409617
- 355373 string characters out of 5778276
- 2112191 words of memory out of 5000000
- 41125 multiletter control sequences out of 15000+600000
- 562041 words of font info for 97 fonts, out of 8000000 for 9000
+ 19307 strings out of 402807
+ 357636 string characters out of 5445135
+ 1191114 words of memory out of 5000000
+ 47915 multiletter control sequences out of 15000+600000
+ 631040 words of font info for 97 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 79i,17n,93p,839b,1191s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,17n,93p,864b,1829s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on ВКР.pdf (59 pages).
+Output written on ВКР.pdf (68 pages).

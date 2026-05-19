@@ -82,6 +82,7 @@
 \usepackage{graphicx}
 \graphicspath{{./img/}}
 \usepackage{float}
+\usepackage{pdflscape}
 
 % ---------- Подписи ----------
 \usepackage{caption}
@@ -136,7 +137,6 @@
   linkcolor=black,
   citecolor=black,
   urlcolor=blue,
-  bookmarks=true,
   bookmarksnumbered=true,
   pdftitle={Организация кооперативного восприятия сцены в группе автономных агентов},
   pdfauthor={}
@@ -177,13 +177,6 @@
 \tolerance=1500
 \emergencystretch=2em
 
-% ---------- Вспомогательные команды ----------
-\newcommand{\placeholder}[1]{%
-  \begin{center}
-  \fbox{\parbox{0.85\textwidth}{\centering\small\itshape [#1]}}
-  \end{center}
-}
-
 % ============================================================
 \begin{document}
 \pagenumbering{arabic}
@@ -208,11 +201,11 @@
 
 \textbf{Цель работы}~--- создание интегрированного программного комплекса, в котором запрос пользователя на естественном языке транслируется в скоординированное выполнение миссий группой роботов через единый сквозной контур управления.
 
-\textbf{Задачи:} анализ подходов к кооперативному восприятию и координации многороботных систем; разработка микросервисной архитектуры из восьми взаимосвязанных компонентов; реализация LLM"=оркестратора на базе OpenAI Agents SDK с девятью специализированными агентами (Router, MissionPlanner, MapAnalyst, Navigation, Charging, Patrol, Inspection, FleetOps, SwarmCoordinator); глубокая доработка трёх MCP"=серверов (Mission Control, Mission Dispatch, ROS MSP) с переходом на асинхронную модель вызовов; адаптация форков NVIDIA Mission Control и Mission Dispatch под протокол VDA5050; экспериментальная оптимизация VLA"=модели SmolVLA для бортового инференса.
+\textbf{Задачи:} анализ подходов к кооперативному восприятию и координации многороботных систем; разработка микросервисной архитектуры из восьми взаимосвязанных компонентов; реализация LLM"=оркестратора на базе OpenAI Agents SDK с маршрутизатором Router, планировщиком, исполнителем PlanRunner и агентами RobotInfo, MapAnalyst, Navigation, SwarmCoordinator и General; переработка трёх MCP"=серверов (Mission Control, Mission Dispatch, ros-msp) с переходом на асинхронную модель вызовов; адаптация форков NVIDIA Mission Control и Mission Dispatch под протокол VDA5050; экспериментальная оптимизация VLA"=модели SmolVLA для бортового инференса.
 
 \textbf{Методология} основана на принципах облачной робототехники, событийно"=ориентированной архитектуры и протокола Model Context Protocol. Эмпирическая база включает симуляцию флота роботов Carter в NVIDIA Isaac Sim (headless"=режим, ROS~2 Jazzy, rosbridge WebSocket); развёртывание LLM"=сервиса Qwen2.5"=Instruct в режиме Data Parallel на двух узлах Tesla V100 (32~ГБ VRAM) через авторский vLLM"=сервис; пайплайн дистилляции, прунинга и квантизации модели SmolVLA.
 
-\textbf{Результаты:} реализованы восемь самостоятельных компонентов~--- Interface (React + FastAPI + Celery, 168~коммитов, v0.5.0), Orchestrator (FastAPI + Agents SDK, 56~коммитов, v0.5.6), vLLM Service (Data Parallel, v0.2.9), доработанные форки Mission Control и Mission Dispatch, настроенный ROS~2 workspace, три переработанных MCP"=сервера. Пройдено 43 из 43 интеграционных тестов API оркестратора. Для модели SmolVLA достигнуто сжатие в 443 раза по числу параметров при сохранении более 90\% точности (MSE~+9{,}1\%, $R^2$~$-$1{,}8\%) и ускорении инференса в 25~раз (450~мс~$\to$~18~мс, RTX~4090).
+\textbf{Результаты:} реализованы восемь самостоятельных компонентов~--- Interface (React + FastAPI + Celery, 168~коммитов, срез v0.5.0), Orchestrator (FastAPI + Agents SDK, 61~коммит, срез v0.5.6), vLLM Service (Data Parallel, срез v0.2.9), доработанные форки Mission Control и Mission Dispatch, настроенный ROS~2 workspace, три переработанных MCP"=сервера. Контрольный локальный pytest-прогон актуального кода Orchestrator подтвердил 66 из 88 тестов; оставшиеся падения связаны с рассинхронизацией тестовых ожиданий после изменения PlanRunner/MapAnalyst и с проверками LLM-клиента. Для модели SmolVLA достигнуто сжатие в 443 раза по числу параметров при сохранении более 90\% точности (MSE~+9{,}1\%, $R^2$~$-$1{,}8\%) и ускорении инференса в 25~раз (450~мс~$\to$~18~мс, RTX~4090).
 
 % ============================================================
 %  ABSTRACT (EN)
@@ -228,11 +221,11 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \textbf{The objective} is to build an integrated software system in which a natural"=language user request is translated into coordinated multi"=robot mission execution through a unified end"=to"=end control pipeline.
 
-\textbf{Research tasks:} analysis of cooperative perception and multi"=robot coordination approaches; design of a microservice architecture comprising eight interconnected components; development of an LLM orchestrator based on the OpenAI Agents SDK with nine specialised agents (Router, MissionPlanner, MapAnalyst, Navigation, Charging, Patrol, Inspection, FleetOps, SwarmCoordinator); deep rework of three MCP servers (Mission Control, Mission Dispatch, ROS MSP) with a full migration to asynchronous tool calls; adaptation of NVIDIA Mission Control and Mission Dispatch forks to the VDA5050 protocol; and experimental optimisation of the SmolVLA vision"=language"=action model for on"=board inference.
+\textbf{Research tasks:} analysis of cooperative perception and multi"=robot coordination approaches; design of a microservice architecture comprising eight interconnected components; development of an LLM orchestrator based on the OpenAI Agents SDK with Router, a planner, PlanRunner, and the RobotInfo, MapAnalyst, Navigation, SwarmCoordinator, and General agents; rework of three MCP servers (Mission Control, Mission Dispatch, ros-msp) with a migration to asynchronous tool calls; adaptation of NVIDIA Mission Control and Mission Dispatch forks to the VDA5050 protocol; and experimental optimisation of the SmolVLA vision"=language"=action model for on"=board inference.
 
 \textbf{The methodology} is grounded in cloud"=robotics principles, event"=driven architecture, and the Model Context Protocol. The empirical base comprises simulation of a Carter robot fleet in NVIDIA Isaac Sim (headless mode, ROS~2 Jazzy, rosbridge WebSocket); deployment of a Qwen2.5"=Instruct LLM service in Data Parallel mode across two Tesla V100 nodes (32~GB VRAM each) via a custom"=built vLLM service; and a knowledge"=distillation, pruning, and quantisation pipeline for SmolVLA.
 
-\textbf{Results:} eight independent components were fully implemented~--- Interface (React + FastAPI + Celery, 168~commits, v0.5.0), Orchestrator (FastAPI + Agents SDK, 56~commits, v0.5.6), vLLM Service (Data Parallel, v0.2.9), reworked Mission Control and Mission Dispatch forks, a configured ROS~2 workspace, and three heavily modified MCP servers. All 43 orchestrator API integration tests passed. The SmolVLA model was compressed 443"=fold in parameter count while retaining over 90\% accuracy (MSE~+9.1\%, $R^2$~$-$1.8\%) with a 25$\times$ inference speed"=up (450~ms~$\to$~18~ms on RTX~4090).
+\textbf{Results:} eight independent components were implemented~--- Interface (React + FastAPI + Celery, 168~commits, v0.5.0 development snapshot), Orchestrator (FastAPI + Agents SDK, 61~commits, v0.5.6 development snapshot), vLLM Service (Data Parallel, v0.2.9 development snapshot), reworked Mission Control and Mission Dispatch forks, a configured ROS~2 workspace, and three redesigned MCP servers. A local pytest control run of the current Orchestrator code passed 66 of 88 tests; the remaining failures are related to outdated test expectations after PlanRunner/MapAnalyst changes and LLM-client checks. The SmolVLA model was compressed 443"=fold in parameter count while retaining over 90\% accuracy (MSE~+9.1\%, $R^2$~$-$1.8\%) with a 25$\times$ inference speed"=up (450~ms~$\to$~18~ms on RTX~4090).
 
 % ============================================================
 %  ОГЛАВЛЕНИЕ
@@ -250,7 +243,7 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 Вместе с тем координация флота остаётся нетривиальной инженерной задачей. Существующие fleet management системы~--- в том числе соответствующие стандарту VDA5050~--- предоставляют надёжный низкоуровневый контур диспетчеризации миссий, однако не обеспечивают высокоуровневого семантического планирования и не предоставляют пользователю интерфейс на естественном языке. Академические прототипы кооперативного восприятия (V2VNet, Where2comm, CoBEVT) достигают высоких показателей точности на симулированных датасетах, однако не интегрированы с промышленными стандартами координации флота.
 
-Появление мощных больших языковых моделей (LLM) открывает принципиально новую возможность: транслировать пользовательский запрос на естественном языке напрямую в координированное выполнение многороботных миссий. Парадигмы ReAct и tool use превращают языковую модель из «чат-бота» в полноценный reasoning-агент, способный вызывать внешние инструменты, накапливать наблюдения и динамически корректировать план действий.
+Появление мощных больших языковых моделей (LLM) открывает возможность транслировать пользовательский запрос на естественном языке напрямую в координированное выполнение многороботных миссий. Парадигмы ReAct и вызова инструментов превращают языковую модель из диалогового интерфейса в рассуждающего агента, способного обращаться к внешним сервисам, накапливать наблюдения и корректировать план действий.
 
 \textbf{Объект исследования}~--- многоагентная робототехническая система с кооперативным восприятием и централизованным fleet management.
 
@@ -264,17 +257,17 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 \begin{enumerate}
   \item Анализ подходов к кооперативному визуальному восприятию, совместному картографированию, координации флота и применению LLM в робототехнике.
   \item Проектирование микросервисной архитектуры из восьми взаимосвязанных компонентов.
-  \item Реализация LLM-оркестратора на базе OpenAI Agents SDK с девятью специализированными агентами.
-  \item Глубокая переработка трёх MCP-серверов с переходом на асинхронную модель вызовов.
+  \item Реализация LLM-оркестратора на базе OpenAI Agents SDK со специализированными агентами и пошаговым исполнителем PlanRunner.
+  \item Переработка трёх MCP-серверов с переходом на асинхронную модель вызовов.
   \item Адаптация форков NVIDIA Mission Control и Mission Dispatch под протокол VDA5050.
   \item Настройка симуляционной среды NVIDIA Isaac Sim с группой роботов Carter.
   \item Развёртывание vLLM-сервиса в режиме Data Parallel на кластере из двух узлов Tesla V100.
   \item Экспериментальная оптимизация VLA-модели SmolVLA для бортового инференса.
 \end{enumerate}
 
-\textbf{Основные результаты.} Реализованы восемь самостоятельных компонентов: Interface (v0.5.0, 168~коммитов), Orchestrator (v0.5.6, 56~коммитов), vLLM Service (v0.2.9), доработанные форки Mission Control и Mission Dispatch, настроенный ROS~2 workspace, три переработанных MCP-сервера. Пройдено 43 из 43 интеграционных тестов. Для SmolVLA достигнуто сжатие в 443~раза и ускорение инференса в 25~раз при сохранении более 90\% точности.
+\textbf{Основные результаты.} Реализованы восемь самостоятельных компонентов: Interface (срез v0.5.0, 168~коммитов), Orchestrator (срез v0.5.6, 61~коммит), vLLM Service (срез v0.2.9), доработанные форки Mission Control и Mission Dispatch, настроенный ROS~2 workspace, три переработанных MCP-сервера. Контрольный локальный прогон актуального pytest-набора Orchestrator дал 66 пройденных тестов из 88 и выявил необходимость актуализации части тестовых ожиданий. Для SmolVLA достигнуто сжатие в 443~раза и ускорение инференса в 25~раз при сохранении более 90\% точности.
 
-\textbf{Структура работы.} Диссертация состоит из введения, пяти глав, заключения, библиографического списка из 37 источников и пяти приложений. Глава~1 содержит анализ предметной области и обзор существующих решений. Глава~2 описывает проектирование архитектуры системы. Глава~3 посвящена реализации компонентов. Глава~4 представляет оптимизацию SmolVLA. Глава~5 описывает верификацию системы автоматизированными тестами.
+\textbf{Структура работы.} Диссертация состоит из введения, пяти глав, заключения, библиографического списка из 65 источников и пяти приложений. Глава~1 содержит анализ предметной области и обзор существующих решений. Глава~2 описывает проектирование архитектуры системы. Глава~3 посвящена реализации компонентов. Глава~4 представляет оптимизацию SmolVLA. Глава~5 описывает верификацию системы автоматизированными тестами.
 
 % ============================================================
 %  ГЛАВА 1. АНАЛИЗ ПРЕДМЕТНОЙ ОБЛАСТИ
@@ -327,17 +320,17 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \subsection{Облачная и туманная робототехника}
 
-\textbf{FogROS2}~\cite{chen2023fogros2} демонстрирует, что offloading вычислительно тяжёлых алгоритмов (SLAM, grasp planning) в облако даёт радикальное ускорение: снижение задержки SLAM на 50\%, ускорение планирования захватов с 14~с до 1{,}2~с. \textbf{Robofleet}~\cite{sikand2021robofleet} решает задачу эффективной коммуникации в флоте с дедупликацией трафика и adaptive backpressure. Литература последовательно указывает на то, что наиболее практичны архитектуры, где низкоуровневое управление остаётся в робототехническом стеке (ROS~2, VDA5050 клиент), а облако берёт на себя планирование и семантическое reasoning~--- именно эту стратегию реализует AgentsSwarm.
+\textbf{FogROS2}~\cite{chen2023fogros2} демонстрирует, что вынос вычислительно тяжёлых алгоритмов (SLAM, планирование захватов) в облако снижает задержку SLAM на 50\% и ускоряет планирование захватов с 14~с до 1{,}2~с. \textbf{Robofleet}~\cite{sikand2021robofleet} решает задачу эффективной коммуникации в флоте с дедупликацией трафика и адаптивным обратным давлением. Литература последовательно указывает на практичность архитектур, где низкоуровневое управление остаётся в робототехническом стеке (ROS~2, VDA5050 клиент), а облачный слой отвечает за планирование и семантическое рассуждение. Именно эту стратегию реализует AgentsSwarm.
 
 \section{Большие языковые модели в робототехнике}
 
-\subsection{Смена парадигмы: от чат-бота к reasoning-агенту}
+\subsection{Смена парадигмы: от диалоговой модели к агенту планирования}
 
-Применение LLM в робототехнике прошло несколько этапов. Ранние работы использовали языковые модели как интерфейс «понимания команд». Переломным стало осознание, что LLM обладают commonsense reasoning и способностью к декомпозиции сложных задач. Обзоры~\cite{zeng2023llmrobotics,li2025llmmulti} классифицируют применение LLM по четырём слоям: коммуникация с человеком, перцептивная семантическая интерпретация, task planning и генерация действий. Для многоагентных систем выделяется отдельный класс задач: high-level coordination, task allocation и human-in-the-loop supervision~\cite{li2025llmmulti}.
+Применение LLM в робототехнике прошло несколько этапов. Ранние работы использовали языковые модели как интерфейс понимания команд. Затем акцент сместился к декомпозиции задач и выбору действий на основе контекста. Обзоры~\cite{zeng2023llmrobotics,li2025llmmulti} классифицируют применение LLM по четырём слоям: коммуникация с человеком, перцептивная семантическая интерпретация, планирование задач и генерация действий. Для многоагентных систем выделяется отдельный класс задач: высокоуровневая координация, распределение задач и надзор с участием человека~\cite{li2025llmmulti}.
 
-\subsection{Парадигма ReAct и tool use}
+\subsection{Парадигма ReAct и вызов инструментов}
 
-\textbf{ReAct}~\cite{yao2023react} стал методологической основой для агентных систем нового поколения: LLM чередует генерацию рассуждений (reasoning traces) и действий (actions), что позволяет динамически корректировать план на основе наблюдаемых результатов. В отличие от одношагового prompting, ReAct создаёт замкнутый цикл \textit{reasoning} $\to$ \textit{action} $\to$ \textit{observation} $\to$ \textit{reasoning}.
+\textbf{ReAct}~\cite{yao2023react} стал методологической основой для агентных систем нового поколения: LLM чередует генерацию рассуждений (reasoning traces) и действий (actions), что позволяет корректировать план на основе наблюдаемых результатов. В отличие от одношагового prompting, ReAct создаёт замкнутый цикл \textit{reasoning} $\to$ \textit{action} $\to$ \textit{observation} $\to$ \textit{reasoning}.
 
 \textbf{SayCan}~\cite{ahn2022saycan} решает проблему «заземления» языкового плана в физические ограничения среды: LLM генерирует вероятности возможных действий, а модель аффордансов взвешивает их реализуемость (84\% точности планирования, 74\% успеха выполнения). \textbf{ProgPrompt}~\cite{singh2023progprompt} вводит программоподобную структуру промптов, что существенно повышает воспроизводимость генерируемых планов.
 
@@ -345,7 +338,7 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \subsection{Безопасность и формальные ограничения LLM-планирования}
 
-\textbf{SELP}~\cite{pan2025selp} предлагает три техники для генерации безопасных планов: голосование по эквивалентности, constrained decoding через LTL-формулы и доменное дообучение. Система показывает +10{,}8\% к safety rate и +19{,}8\% к эффективности для навигации БПЛА. Это направление актуально для AgentsSwarm: текущая система корректно разграничивает LLM-слой и mission-контур, однако формальная верификация LLM-выходов остаётся открытым вопросом.
+\textbf{SELP}~\cite{pan2025selp} предлагает три техники для генерации безопасных планов: голосование по эквивалентности, constrained decoding через LTL-формулы и доменное дообучение. Система показывает +10{,}8\% к safety rate и +19{,}8\% к эффективности для навигации БПЛА. Это направление актуально для AgentsSwarm: текущая система разграничивает LLM-слой и mission-контур, однако формальная верификация LLM-выходов остаётся открытым вопросом.
 
 \subsection{LLM для координации роя}
 
@@ -353,7 +346,7 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \section{Foundation Models и Vision-Language-Action модели}
 
-\textbf{RT-2}~\cite{brohan2023rt2} продемонстрировал, что совместное обучение на данных роботов и интернет-данных позволяет VLA-модели переносить семантические знания в реальное управление роботом. \textbf{VoxPoser}~\cite{huang2023voxposer} показал комплементарный подход: LLM генерирует код для составления 3D value maps, по которым планировщик синтезирует траектории манипулятора в zero-shot режиме. \textbf{OpenVLA}~\cite{kim2024openvla}~--- открытая модель на 7B параметров, поддерживающая fine-tuning через LoRA. \textbf{Open X-Embodiment}~\cite{oxe2023}~--- датасет из более чем 1M реальных траекторий от 22 типов роботов~--- стал важнейшим ресурсом для обобщённых VLA-моделей. \textbf{$\pi_0$}~\cite{black2024pi0} представляет следующий уровень~--- универсальный VLA на основе flow matching.
+\textbf{RT-2}~\cite{brohan2023rt2} продемонстрировал, что совместное обучение на данных роботов и интернет-данных позволяет VLA-модели переносить семантические знания в реальное управление роботом. \textbf{VoxPoser}~\cite{huang2023voxposer} показал комплементарный подход: LLM генерирует код для составления 3D value maps, по которым планировщик синтезирует траектории манипулятора в zero-shot режиме. \textbf{OpenVLA}~\cite{kim2024openvla}~--- открытая модель на 7B параметров, поддерживающая fine-tuning через LoRA. \textbf{Open X-Embodiment}~\cite{oxe2023}~--- датасет из более чем 1M реальных траекторий от 22 типов роботов~--- стал одним из ключевых ресурсов для обобщённых VLA-моделей. \textbf{$\pi_0$}~\cite{black2024pi0} представляет следующий уровень~--- универсальный VLA на основе flow matching.
 
 Параллельно с масштабированием идёт компактификация VLA для ресурсно ограниченных платформ. \textbf{SmolVLA}~\cite{retzlaff2025smolvla} (450M параметров) обучается на одном GPU и сохраняет производительность при значительно меньших требованиях. \textbf{TinyVLA}~\cite{wen2025tinyvla} с диффузионным декодером превосходит OpenVLA при задержке инференса в 20 раз меньше. В контексте AgentsSwarm экспериментальный модуль SmolVLA Tools реализовал пайплайн оптимизации SmolVLA с результатами, описанными в главе~4.
 
@@ -361,9 +354,9 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \textbf{NVIDIA Isaac Sim}~\cite{nvidia2024isaac}~--- фотореалистичная физически правдоподобная среда симуляции, построенная на Omniverse. Официальный tutorial по multi-robot navigation демонстрирует одновременную навигацию нескольких роботов с ROS~2 namespaces~--- это практически совпадает с логикой AgentsSwarm, где одна сцена обслуживает несколько роботов Carter. \textbf{Orbit (Isaac Lab)}~\cite{mittal2023orbit} позиционирует Isaac Sim как унифицированный фреймворк для роботообучения. \textbf{Pegasus Simulator}~\cite{jacinto2024pegasus} демонстрирует расширяемость Isaac Sim для специфических платформ (БПЛА с PX4).
 
-Обзор по AI-driven цифровым двойникам~\cite{fuller2021digitaltwin} показывает, что основная сложность лежит не в симуляции как таковой, а в интероперабельности моделей и sim-to-real переносе. Для AgentsSwarm это означает честное признание: система закрывает симуляционный и orchestration-контур, но перенос на физический флот требует отдельного исследовательского этапа.
+Обзор по AI-driven цифровым двойникам~\cite{fuller2021digitaltwin} показывает, что основная сложность лежит не в симуляции как таковой, а в интероперабельности моделей и sim-to-real переносе. Для AgentsSwarm это задаёт границу применимости: система закрывает симуляционный и оркестрационный контур, но перенос на физический флот требует отдельного исследовательского этапа.
 
-\textbf{vLLM / PagedAttention}~\cite{kwon2023vllm} решает проблему эффективного использования GPU-памяти при serving LLM: алгоритм PagedAttention, вдохновлённый виртуальной памятью ОС, увеличивает пропускную способность в 2–4 раза. \textbf{Qwen2.5}~\cite{qwen2025}~--- семейство открытых instruction-following моделей, обученных на 18 трлн токенов. Выбор Qwen-Instruct как основной модели оркестратора обеспечивает баланс между качеством tool call и доступностью для самостоятельного развёртывания.
+\textbf{vLLM / PagedAttention}~\cite{kwon2023vllm} решает проблему эффективного использования GPU-памяти при обслуживании LLM: алгоритм PagedAttention, вдохновлённый виртуальной памятью ОС, увеличивает пропускную способность в 2--4 раза. \textbf{Qwen2.5}~\cite{qwen2025}~--- семейство открытых instruction-following моделей, обученных на 18 трлн токенов. Выбор Qwen-Instruct как основной модели оркестратора задаёт баланс между качеством вызова инструментов и доступностью для самостоятельного развёртывания.
 
 \section{Выводы и результаты по главе~1}
 
@@ -371,11 +364,11 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \textbf{Академические прототипы кооперативного восприятия} (V2VNet, Where2comm, CoBEVT) сосредоточены на алгоритмической эффективности feature fusion. Они не решают задачу интеграции восприятия с fleet management и не имеют исполнимого миссионного контура. AgentsSwarm дополняет этот класс: вместо нового алгоритма fusion предлагается архитектура, в которой кооперативное восприятие встроено в полный цикл управления флотом.
 
-\textbf{Промышленные fleet management системы} (OpenRMF, VDA5050-совместимые стеки) решают задачи координации и интероперабельности, но не интегрируют семантическое LLM-планирование. AgentsSwarm добавляет этот слой через оркестратор с девятью специализированными агентами.
+\textbf{Промышленные fleet management системы} (OpenRMF, VDA5050-совместимые стеки) решают задачи координации и интероперабельности, но не интегрируют семантическое LLM-планирование. AgentsSwarm добавляет этот слой через оркестратор с маршрутизатором, планировщиком и специализированными агентами исполнения.
 
 \textbf{LLM-robotics прототипы} (SayCan, Swarm-GPT, RT-2) демонстрируют применение языковых и мультимодальных моделей, но либо работают с одиночным роботом, либо не интегрированы с промышленными стандартами координации флота. AgentsSwarm соединяет LLM-слой с VDA5050-контуром.
 
-Гибридная позиция AgentsSwarm~--- между академической литературой по collaborative perception, промышленными multi-robot middleware и emerging-работами по LLM-driven robotics~--- является как источником научного вклада, так и честным признанием ограничений: система не предъявляет новый state-of-the-art алгоритм, но демонстрирует воспроизводимую системную интеграцию, которая в литературе встречается значительно реже, чем изолированные алгоритмические вклады.
+Положение AgentsSwarm между академическими работами по collaborative perception, промышленными multi-robot middleware и исследованиями LLM-driven robotics определяет вклад работы: система не предлагает новый state-of-the-art алгоритм feature fusion, но демонстрирует воспроизводимую интеграцию этих направлений в единый исполнимый контур.
 
 Открытыми вопросами остаются: формальные гарантии LLM-слоя (hallucination, constraint violations), sim-to-real перенос и бортовая автономность~--- направления, которые система AgentsSwarm обозначает через модуль SmolVLA Tools и архитектурные расширения, описанные в следующих главах.
 
@@ -397,7 +390,6 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
   \item Отображение статуса выполнения миссии в реальном времени (streaming).
   \item Поддержка параллельных пользовательских сессий с фоновой обработкой задач.
   \item Хранение истории диалогов и персональной памяти пользователя.
-  \item Генерация дополнительных артефактов: изображений, презентаций, исследовательских отчётов.
 \end{enumerate}
 
 \textbf{Нефункциональные требования:}
@@ -412,20 +404,22 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \section{Общая микросервисная архитектура}
 
-Система декомпозирована на восемь самостоятельных компонентов, взаимодействующих через REST API, WebSocket, MQTT и Model Context Protocol.
+Система декомпозирована на восемь самостоятельных компонентов, взаимодействующих через REST API, WebSocket, MQTT и Model Context Protocol~\cite{mcp2024}.
 
 \begin{enumerate}
-  \item \textbf{Interface}~--- пользовательский веб-портал (React + FastAPI + Celery + RabbitMQ + Redis Streams + PostgreSQL + MinIO). Принимает запросы, маршрутизирует к агентам, стримит ответы через WebSocket.
-  \item \textbf{Orchestrator}~--- главный интеллектуальный сервис (FastAPI + OpenAI Agents SDK). Содержит девять специализированных агентов, взаимодействует с роботическим контуром через MCP-серверы.
-  \item \textbf{vLLM Service}~--- сервис инференса LLM в режиме Data Parallel (2\,$\times$\,Tesla V100). Предоставляет OpenAI-compatible API.
-  \item \textbf{Mission Control}~--- форк NVIDIA, реализующий VDA5050-совместимый fleet manager с Behavior Tree планировщиком и cuOpt-оптимизацией.
-  \item \textbf{Mission Dispatch}~--- форк NVIDIA, реализующий очередь миссий и VDA5050-обмен через MQTT.
-  \item \textbf{Isaac Sim}~--- среда симуляции NVIDIA с роботами Carter в headless-режиме, интегрированная с ROS~2 Jazzy.
-  \item \textbf{ROS~2 Workspace}~--- форк с дополнительными пакетами навигации, VDA5050 клиентом, rosbridge WebSocket.
-  \item \textbf{SmolVLA Tools}~--- экспериментальный модуль оптимизации VLA-модели.
+  \item \textbf{Interface}~--- пользовательский веб-портал (React + FastAPI + Celery + RabbitMQ + Redis Streams + PostgreSQL + MinIO)~\cite{react,chakraui,fastapi,celery,rabbitmq,redis_py,sqlalchemy,alembic,minio}. Принимает запросы, маршрутизирует к агентам, стримит ответы через WebSocket.
+  \item \textbf{Orchestrator}~--- главный интеллектуальный сервис (FastAPI + OpenAI Agents SDK). Содержит маршрутизатор, планировщик, исполнитель шагов и специализированных агентов, взаимодействующих с роботическим контуром через MCP-серверы.
+  \item \textbf{vLLM Service}~--- сервис инференса LLM в режиме Data Parallel (2\,$\times$\,Tesla V100). Предоставляет OpenAI-compatible API~\cite{vllm_project,qwen25_model}.
+  \item \textbf{Mission Control}~--- форк NVIDIA, реализующий VDA5050-совместимый fleet manager с Behavior Tree планировщиком и cuOpt-оптимизацией~\cite{missioncontrol,cuopt}.
+  \item \textbf{Mission Dispatch}~--- форк NVIDIA, реализующий очередь миссий и VDA5050-обмен через MQTT~\cite{missiondispatch}.
+  \item \textbf{Isaac Sim}~--- среда симуляции NVIDIA с роботами Carter в headless-режиме, интегрированная с ROS~2 Jazzy~\cite{nvidia2024isaac,isaacsim_multirobot}.
+  \item \textbf{ROS~2 Workspace}~--- форк с дополнительными пакетами навигации, VDA5050 клиентом, rosbridge WebSocket~\cite{isaacros2024,isaacros_packages,isaacsim_ros_ws,ros2jazzy,rosbridge}.
+  \item \textbf{SmolVLA Tools}~--- экспериментальный модуль оптимизации VLA-модели~\cite{smolvla_model,lerobot,lerobot_docs}.
 \end{enumerate}
 
 Слои системы: \textit{воспринимающий} (Isaac Sim, ROS~2), \textit{планирующий} (Orchestrator, vLLM, MCP-серверы) и \textit{исполняющий} (Mission Control, Mission Dispatch, VDA5050 клиент робота).
+
+Общая схема взаимодействия компонентов приведена на рис.~\ref{fig:system-overview}.
 
 \begin{figure}[H]
 \centering
@@ -436,20 +430,22 @@ This thesis presents the design and implementation of AgentsSwarm, a multi"=agen
 
 \section{Протокол взаимодействия агентов: Model Context Protocol}
 
-\textbf{Model Context Protocol (MCP)}~--- открытый стандарт для взаимодействия LLM-агентов с внешними инструментами и данными. Протокол определяет архитектуру клиент-сервер, где MCP-клиент (агент) вызывает tools, resources и prompts, предоставляемые MCP-сервером. Транспортный слой поддерживает два режима: SSE (Server-Sent Events) для HTTP-развёртывания и stdio для локальных процессов.
+\textbf{Model Context Protocol (MCP)}~\cite{mcp2024}~--- открытый стандарт для взаимодействия LLM-агентов с внешними инструментами и данными. Протокол определяет архитектуру клиент-сервер, где MCP-клиент (агент) вызывает tools, resources и prompts, предоставляемые MCP-сервером. Транспортный слой поддерживает два режима: SSE (Server-Sent Events) для HTTP-развёртывания и stdio для локальных процессов.
 
 В системе AgentsSwarm реализованы три MCP-сервера с чёткими зонами ответственности:
 \begin{itemize}
   \item \texttt{mission-control-mcp}~--- инструменты для работы с картой, waypoint-графом и статусами роботов (Mission Control API);
   \item \texttt{mission-dispatch-mcp}~--- инструменты для создания, управления и мониторинга миссий (Mission Dispatch API);
-  \item \texttt{ros-msp}~--- инструменты для публикации в ROS~2 топики и чтения из них через rosbridge WebSocket.
+  \item \texttt{ros-msp}~--- инструменты для публикации в ROS~2 топики и чтения из них через rosbridge WebSocket~\cite{ros_mcp}.
 \end{itemize}
 
 MCP обеспечивает строгое разделение ответственности: агентный слой не зависит от конкретной реализации роботического контура и взаимодействует с ним исключительно через стандартизованный tool-интерфейс. Это позволяет заменять или расширять роботический контур без модификации кода оркестратора.
 
+Зоны ответственности MCP-серверов показаны на рис.~\ref{fig:mcp-servers}.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{img/fig_2_2_mcp_servers.png}
+\includegraphics[height=0.75\textheight,keepaspectratio]{img/fig_2_2_mcp_servers.png}
 \caption{Три MCP-сервера системы AgentsSwarm и их зоны ответственности}
 \label{fig:mcp-servers}
 \end{figure}
@@ -470,29 +466,35 @@ MCP обеспечивает строгое разделение ответст�
 
 Mission Control принимает высокоуровневую задачу, строит Behavior Tree, запрашивает оптимальный маршрут у cuOpt и формирует VDA5050 order для Mission Dispatch. Mission Dispatch публикует order в MQTT-топик, VDA5050 клиент робота в Isaac Sim подписан на этот топик и исполняет команду.
 
-\begin{figure}[H]
+Маршрут команды от пользовательского запроса до роботического контура показан на рис.~\ref{fig:command-route}.
+
+\begin{landscape}
+\begin{figure}[p]
 \centering
-\includegraphics[width=0.95\textwidth]{img/fig_2_3_command_route.png}
+\includegraphics[width=0.5\linewidth, angle=270]{img/fig_2_3_command_route.png}
 \caption{Маршрут команды: Orchestrator → MCP → Mission Dispatch → VDA5050 → робот}
 \label{fig:command-route}
 \end{figure}
+\end{landscape}
 
 \section{Агентная архитектура оркестратора}
 
-Агентная архитектура оркестратора построена по иерархическому принципу: входящий запрос обрабатывается Router Agent, классифицирующим его по восьми категориям, после чего управление передаётся через handoff-механизм специализированному агенту.
+Агентная архитектура оркестратора построена по иерархическому принципу: входящий запрос обрабатывается Router Agent, классифицирующим его по восьми категориям, после чего планировщик формирует последовательность исполняемых шагов.
 
-\textbf{Router Agent} классифицирует запросы по категориям: \textit{general} (общие вопросы), \textit{mission} (команды роботам), \textit{navigation} (задачи навигации), \textit{charging} (управление зарядкой), \textit{patrol} (патрульные маршруты), \textit{inspection} (инспекция объектов), \textit{fleet\_ops} (операции с флотом), \textit{swarm} (координация роя). Классификация выполняется через LLM с детерминированными правилами приоритетов.
+\textbf{Router Agent} классифицирует запросы по категориям: \textit{general} (общие вопросы), \textit{robot\_info} (статусы роботов и диагностика), \textit{navigation} (задачи навигации), \textit{charging} (управление зарядкой), \textit{patrol} (патрульные маршруты), \textit{inspection} (инспекция объектов), \textit{fleet\_ops} (операции с флотом), \textit{swarm\_coord} (координация нескольких роботов). Классификация выполняется через LLM с детерминированными правилами приоритетов.
 
-\textbf{MissionPlanner} реализует двухфазный алгоритм: на первой фазе строит план в виде последовательности именованных шагов с указанием \texttt{target\_robots} и зависимостей; на второй~--- последовательно исполняет шаги, вызывая инструменты MCP-серверов.
+\textbf{Planner и PlanRunner} реализуют двухфазный алгоритм: на первой фазе строится план в виде последовательности именованных шагов с указанием \texttt{target\_robots} и зависимостей; на второй~--- шаги последовательно исполняются через агентов RobotInfo, MapAnalyst, Navigation, SwarmCoordinator и General либо через эвристический fallback в тестовом режиме.
 
 \textbf{MapAnalyst} получает PNG-снимок карты от Mission Control, накладывает позиции роботов и передаёт изображение в vision-LLM для пространственного анализа сцены.
 
-Остальные агенты~--- Navigation, Charging, Patrol, Inspection, FleetOps, SwarmCoordinator, General~--- специализированы под конкретные типы задач и содержат профилированные системные промпты.
+Категории Charging, Patrol, Inspection и FleetOps присутствуют в конфигурации маршрутизатора как расширяемые handoff-направления; в текущем исполняемом контуре PlanRunner основной набор шагов сводится к RobotInfo, MapAnalyst, Navigation, SwarmCoordinator и General.
+
+Иерархия планирования и handoff-направлений приведена на рис.~\ref{fig:agent-hierarchy}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{img/fig_2_4_agents.png}
-\caption{Иерархия агентов оркестратора: Router Agent и специализированные агенты}
+\caption{Планировщик, исполнитель шагов и специализированные агенты оркестратора}
 \label{fig:agent-hierarchy}
 \end{figure}
 
@@ -502,7 +504,9 @@ Mission Control принимает высокоуровневую задачу, 
 
 Жизненный цикл задачи: \textit{pending} $\to$ \textit{running} (первый чанк) $\to$ \textit{completed} или \textit{error}. Типы событий: \texttt{stream\_chunk}, \texttt{agent\_reply}, \texttt{routing\_event}, \texttt{tool\_event}, \texttt{error}.
 
-Параллельный канал~--- WebSocket оркестратора (\texttt{/ws/task/\{task\_id\}}), по которому SwarmOrchestratorAgent получает события от оркестратора и транслирует их в Redis Stream Interface, обеспечивая сквозную прозрачность агентного маршрута для пользователя.
+Параллельный канал~--- REST-взаимодействие с оркестратором: SwarmOrchestratorAgent создаёт задачу через \texttt{POST /task}, затем инкрементально опрашивает \texttt{GET /task/\{id\}/events} и транслирует события в Redis Stream Interface, обеспечивая сквозную прозрачность агентного маршрута для пользователя.
+
+Жизненный цикл задачи и потоковая модель событий показаны на рис.~\ref{fig:task-lifecycle}.
 
 \begin{figure}[H]
 \centering
@@ -518,16 +522,16 @@ Mission Control принимает высокоуровневую задачу, 
 \begin{table}[H]
 \caption{Технические характеристики вычислительной инфраструктуры}
 \label{tab:infra}
-\begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}
                 >{\raggedright\arraybackslash}p{2.4cm}
                 >{\raggedright\arraybackslash}p{5.2cm}
-                >{\raggedright\arraybackslash}p{3.8cm}}
+                >{\raggedright\arraybackslash}p{3.7cm}@{}}
 \toprule
-\textbf{Машина} & \textbf{Провайдер} & \textbf{Конфигурация} & \textbf{Назначение} \\
+\textbf{Машина} & \textbf{Провай\-дер} & \textbf{Конфигурация} & \textbf{Назначение} \\
 \midrule
 Симуляция & Selectel & 4 vCPU, 16~ГБ RAM, RTX~4090 (24~ГБ VRAM), Ubuntu 24.04 & Isaac Sim, ROS~2, Mission Control, Mission Dispatch \\
 Микросервисы & Selectel & 4 vCPU, 8~ГБ RAM, 128~ГБ SSD, Ubuntu 24.04 & Interface, Orchestrator, Redis, RabbitMQ, MinIO, PostgreSQL \\
-LLM-кластер & MTS Cloud & 2 ноды × Tesla V100-PCIE 32~ГБ VRAM, Ubuntu 24.04 & vLLM Data Parallel (Qwen2.5-Instruct) \\
+LLM-кластер & MTS Cloud & 2 узла × Tesla V100-PCIE 32~ГБ VRAM, Ubuntu 24.04 & vLLM Data Parallel (Qwen2.5-Instruct) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -547,13 +551,15 @@ LLM-кластер & MTS Cloud & 2 ноды × Tesla V100-PCIE 32~ГБ VRAM, Ubu
 
 \section{Симуляционная среда: NVIDIA Isaac Sim и ROS~2 Workspace}
 
-Симуляционная среда построена на базе NVIDIA Isaac Sim 4.5 в headless-режиме с Web Viewer для удалённого наблюдения. Сцена Carter Warehouse содержит несколько роботов Carter с уникальными ROS~2-пространствами имён (namespaces), что позволяет независимо управлять каждым роботом через единый ROS~2 DDS-мост.
+Симуляционная среда построена на базе NVIDIA Isaac Sim 4.5 в headless-режиме с Web Viewer для удалённого наблюдения~\cite{nvidia2024isaac,isaacsim_multirobot}. Сцена Carter Warehouse содержит несколько роботов Carter с уникальными ROS~2-пространствами имён (namespaces), что позволяет независимо управлять каждым роботом через единый ROS~2 DDS-мост.
 
-Запуск осуществляется через Docker Compose стек: контейнер Isaac Sim монтирует GPU, обеспечивает доступ к драйверам CUDA и публикует Web Viewer на порту 8211. Конфигурация Action Graph задаёт параметры синтетической камеры, публикует RGB- и depth-изображения в ROS~2-топики и запускает \texttt{isaac\_ros\_mission\_client}~--- официальный пакет NVIDIA, реализующий VDA5050 клиент для флота роботов.
+Запуск осуществляется через Docker Compose стек: контейнер Isaac Sim монтирует GPU, обеспечивает доступ к драйверам CUDA и публикует Web Viewer на порту 8211. Конфигурация Action Graph задаёт параметры синтетической камеры, публикует RGB- и depth-изображения в ROS~2-топики и запускает \texttt{isaac\_ros\_mission\_client}~--- официальный пакет NVIDIA, реализующий VDA5050 клиент для флота роботов~\cite{isaacros_packages}.
 
-ROS~2 Jazzy workspace собирается из форка \texttt{isaac\_ros\_common}, дополненного пакетами для отображения occupancy map, публикации costmap и rosbridge-сервером. Rosbridge WebSocket (порт 9090) обеспечивает доступ к ROS~2-топикам для MCP-сервера без необходимости установки полного стека ROS~2 на машине оркестратора.
+ROS~2 Jazzy workspace собирается из форка \texttt{isaac\_ros\_common}, дополненного пакетами для отображения occupancy map, публикации costmap и rosbridge-сервером~\cite{isaacros2024,isaacsim_ros_ws,ros2jazzy}. Rosbridge WebSocket (порт 9090) обеспечивает доступ к ROS~2-топикам для MCP-сервера без необходимости установки полного стека ROS~2 на машине оркестратора~\cite{rosbridge}.
 
-\textbf{Occupancy map} генерируется из ортогонального вида сцены Isaac Sim, сохраняется в формате PNG и обновляется в Mission Control через endpoint \texttt{/map/update\_robot}. На основе карты Mission Control строит waypoint graph~--- ориентированный граф навигационных узлов, по которому cuOpt рассчитывает оптимальные маршруты.
+\textbf{Occupancy map} генерируется из ортогонального вида сцены Isaac Sim, сохраняется в формате PNG и обновляется в Mission Control через маршрут API \texttt{/map/update\_robot}. На основе карты Mission Control строит waypoint graph~--- ориентированный граф навигационных узлов, по которому cuOpt рассчитывает оптимальные маршруты.
+
+Интеграция Isaac Sim, ROS~2 и VDA5050 показана на рис.~\ref{fig:isaac-ros}; пример waypoint graph сцены Carter Warehouse приведён на рис.~\ref{fig:map-waypoints}.
 
 \begin{figure}[H]
 \centering
@@ -562,13 +568,18 @@ ROS~2 Jazzy workspace собирается из форка \texttt{isaac\_ros\_c
 \label{fig:isaac-ros}
 \end{figure}
 
-\placeholder{Рис.~3.2. Occupancy map и waypoint graph сцены Carter Warehouse}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{img/fig_3_2_map_waypoints.png}
+\caption{Occupancy map и waypoint graph сцены Carter Warehouse}
+\label{fig:map-waypoints}
+\end{figure}
 
 \section{Mission Control: форк NVIDIA и авторские доработки}
 
-Официальный репозиторий NVIDIA Mission Control реализует централизованный fleet manager для VDA5050-совместимых роботов с Behavior Tree планировщиком и поддержкой cuOpt для оптимизации маршрутов. При развёртывании оригинального кода были выявлены критические ошибки.
+Официальный репозиторий NVIDIA Mission Control реализует централизованный fleet manager для VDA5050-совместимых роботов с Behavior Tree планировщиком и поддержкой cuOpt для оптимизации маршрутов~\cite{missioncontrol,cuopt}. При развёртывании оригинального кода были выявлены критические ошибки.
 
-\textbf{Проблема~1: несоответствие endpoint обновления карты.} Оригинальный код вызывал \texttt{/push\_map}, тогда как Mission Control API использует \texttt{/map/update\_robot} и \texttt{/map/metadata}. Исправление потребовало анализа HTTP-трафика между компонентами и корректировки маршрутизации внутри Mission Control.
+\textbf{Проблема~1: несоответствие маршрута обновления карты.} Оригинальный код вызывал \texttt{/push\_map}, тогда как Mission Control API использует \texttt{/map/update\_robot} и \texttt{/map/metadata}. Исправление потребовало анализа HTTP-трафика между компонентами и корректировки маршрутизации внутри Mission Control.
 
 \textbf{Проблема~2: устаревший синтаксис Pydantic v1.} Модуль \texttt{waypoint\_selection\_ui} использовал декораторы-валидаторы, несовместимые с Pydantic v2. Исправление состояло в замене на актуальный синтаксис \texttt{@field\_validator}.
 
@@ -576,7 +587,7 @@ ROS~2 Jazzy workspace собирается из форка \texttt{isaac\_ros\_c
 
 \section{Mission Dispatch: форк NVIDIA и авторские доработки}
 
-Mission Dispatch реализует очередь миссий и двустороннее VDA5050-взаимодействие между fleet manager и роботами. В оригинальном коде обнаружена проблема с legacy endpoint в пакете \texttt{packages/controllers/server}: запросы к устаревшему маршруту возвращали 404, нарушая сквозное взаимодействие.
+Mission Dispatch реализует очередь миссий и двустороннее VDA5050-взаимодействие между fleet manager и роботами~\cite{missiondispatch}. В оригинальном коде обнаружена проблема с устаревшим маршрутом в пакете \texttt{packages/controllers/server}: запросы возвращали 404, нарушая сквозное взаимодействие.
 
 Дополнительно выявлена некорректная конфигурация MQTT-хоста: Mission Dispatch использовал жёстко заданный \texttt{localhost} вместо имени сервиса Docker Compose (\texttt{mosquitto}), что препятствовало работе в контейнеризованном окружении. После исправления двух ошибок проведена сквозная верификация цепочки:
 
@@ -584,19 +595,21 @@ Mission Dispatch реализует очередь миссий и двусто�
 Isaac Sim $\to$ VDA5050 клиент $\to$ Mosquitto $\to$ Mission Dispatch $\to$ Mission Control $\to$ Behavior Tree $\to$ VDA5050 order $\to$ Isaac Sim
 \end{center}
 
-\section{MCP-серверы: глубокая переработка официальных реализаций}
+\section{MCP-серверы: переработка официальных реализаций}
 
-Три MCP-сервера обеспечивают агентам оркестратора доступ к роботическому контуру через стандартизованный tool-интерфейс. Исходные реализации официальных MCP-серверов NVIDIA представляли незавершённые прототипы с заглушечными endpoints и синхронной моделью вызовов.
+Три MCP-сервера обеспечивают агентам оркестратора доступ к роботическому контуру через стандартизованный интерфейс инструментов~\cite{mcp2024,fastmcp}. Исходные реализации MCP-серверов NVIDIA представляли прототипы с нереализованными служебными маршрутами и синхронной моделью вызовов.
 
 \textbf{Переход на асинхронную модель.} Все инструменты переписаны на \texttt{async def} с \texttt{httpx.AsyncClient} для HTTP и \texttt{websockets} для rosbridge-соединений. Это обеспечивает корректную работу с event loop без блокировки при параллельных вызовах агентов.
 
-\textbf{mission-control-mcp} предоставляет инструменты: \texttt{get\_map} (PNG-карта), \texttt{get\_waypoints} (навигационные узлы), \texttt{get\_robot\_status}, \texttt{list\_robots}, \texttt{update\_map}. Реализованы заглушечные endpoints для корректной инициализации Mission Control.
+\textbf{mission-control-mcp} предоставляет инструменты верхнего уровня Mission Control. Для миссий зарегистрированы обработчики навигации, зарядки и undock; основной навигационный вызов в коде имеет имя \texttt{submit\_navigation\_mission}. Для карт используются \texttt{get\_map\_info}, \texttt{list\_available\_maps}, \texttt{select\_map}, \texttt{deploy\_map\_to\_robot} и \texttt{visualize\_route}. Отдельно реализованы проверка соединения, операции с detected objects, apriltags, objectives и pick-and-place. Нереализованные обработчики заменены рабочими служебными маршрутами, необходимыми для корректной инициализации Mission Control.
 
-\textbf{mission-dispatch-mcp} предоставляет: \texttt{create\_mission}, \texttt{cancel\_mission}, \texttt{get\_mission\_status}, \texttt{list\_missions}. Исправлены несовместимые endpoint-адреса.
+\textbf{mission-dispatch-mcp} предоставляет инструменты статуса и управления исполнением. Группа мониторинга покрывает статусы роботов и миссий, свободных роботов, сводку флота, проверку исправности, очередь миссий и последние отказы; ключевые имена в коде~--- \texttt{get\_robot\_status}, \texttt{get\_mission\_status}, \texttt{get\_idle\_robots}, \texttt{check\_robot\_health}. Группа управления включает \texttt{dispatch\_mission}, \texttt{dispatch\_route}, \texttt{cancel\_mission} и \texttt{cancel\_active\_missions}. Исправлены несовместимые адреса API.
 
-\textbf{ros-msp} предоставляет: \texttt{publish\_topic}, \texttt{get\_topic\_list}, \texttt{read\_topic}. Сервер устанавливает постоянное WebSocket-соединение с rosbridge при инициализации.
+\textbf{ros-msp} предоставляет группы FastMCP-инструментов для ROS~2 через rosbridge~\cite{ros_mcp,rosbridge}: подключение к роботу и ping, топики, сервисы, actions, параметры, узлы, сохранённые изображения и верифицированные спецификации роботов. В коде это соответствует инструментам \texttt{connect\_to\_robot}, \texttt{ping\_robots}, \texttt{get\_topics}, \texttt{subscribe\_once}, \texttt{publish\_once}, \texttt{get\_services}, \texttt{call\_service}, \texttt{get\_actions}, \texttt{send\_action\_goal} и смежным инструментам чтения метаданных. Сервер устанавливает постоянное WebSocket-соединение с rosbridge при инициализации.
 
-\textbf{Динамический выбор транспорта} реализован через переменную окружения \texttt{MCP\_TRANSPORT}: при значении \texttt{sse} сервер запускается как HTTP-приложение; при \texttt{stdio}~--- как локальный процесс со стандартными потоками. Это позволяет использовать один код для локального тестирования и production-развёртывания.
+\textbf{Динамический выбор транспорта} реализован через переменную окружения \texttt{MCP\_TRANSPORT}: при значении \texttt{sse} сервер запускается как HTTP-приложение; при \texttt{stdio}~--- как локальный процесс со стандартными потоками. Один и тот же код используется для локального тестирования и промышленного развёртывания.
+
+Схема выбора транспорта MCP приведена на рис.~\ref{fig:mcp-transport}.
 
 \begin{figure}[H]
 \centering
@@ -607,13 +620,15 @@ Isaac Sim $\to$ VDA5050 клиент $\to$ Mosquitto $\to$ Mission Dispatch $\to
 
 \section{vLLM Service: авторский сервис инференса}
 
-Авторский vLLM-сервис обеспечивает инференс Qwen2.5-Instruct в режиме Data Parallel на двух физически разных узлах.
+Авторский vLLM-сервис обеспечивает инференс Qwen2.5-Instruct в режиме Data Parallel на двух физически разных узлах~\cite{vllm_project,qwen25_model}.
 
-\textbf{Архитектура Data Parallel:} нода 0 (координатор, rank~0) принимает HTTP-запросы, токенизирует промпт и рассылает тензоры на ноду~1 (воркер, rank~1) через gRPC-канал на порту 13345. Обе ноды независимо вычисляют forward pass по своей копии модели; координатор агрегирует логиты и генерирует следующий токен. Суммарно доступно 64~ГБ VRAM, что позволяет развернуть 32B-параметрическую модель с заполнением $\approx$~90\% памяти.
+\textbf{Архитектура Data Parallel:} узел~0 (координатор, rank~0) принимает HTTP-запросы, а узел~1 (воркер, rank~1) подключается к нему через RPC-канал на порту 13345. Конфигурация задаётся параметрами \texttt{data\_parallel\_size}, \texttt{data\_parallel\_rank}, \texttt{data\_parallel\_address} и \texttt{data\_parallel\_rpc\_port}; внутри каждого узла используется \texttt{tensor\_parallel\_size=1}. Суммарно доступно 64~ГБ VRAM, что позволяет развернуть крупную Qwen2.5-Instruct модель с заполнением $\approx$~90\% памяти.
 
-Конфигурация нод задаётся через \texttt{.env.node0} и \texttt{.env.node1}: параметры \texttt{VLLM\_HOST}, \texttt{VLLM\_PORT}, \texttt{VLLM\_GPU\_MEMORY\_UTILIZATION} (0{,}90), \texttt{TENSOR\_PARALLEL\_SIZE=1}, \texttt{PIPELINE\_PARALLEL\_SIZE=2}.
+Конфигурация узлов задаётся через окружение: адрес и порт HTTP-сервиса, доля доступной GPU-памяти, размер и ранг Data Parallel, адрес координатора, RPC-порт Data Parallel и локальный размер Tensor Parallel. В скриптах развёртывания эти значения передаются в vLLM через переменные семейства \texttt{VLLM\_*}; для рассматриваемого стенда используются Data Parallel size~2, RPC-порт 13345, заполнение GPU-памяти 0.90 и Tensor Parallel size~1.
 
 Скрипты \texttt{deploy.sh} (Linux) и \texttt{deploy.bat} (Windows) автоматизируют: запуск Docker-контейнера vLLM с монтированием GPU и кэша модели; ожидание готовности \texttt{/health}; smoke-тест с тестовым промптом. Сервис полностью совместим с OpenAI Python SDK~--- требуется лишь установить \texttt{base\_url} и \texttt{api\_key="EMPTY"}.
+
+Развёртывание vLLM Data Parallel показано на рис.~\ref{fig:vllm-dp}.
 
 \begin{figure}[H]
 \centering
@@ -624,49 +639,53 @@ Isaac Sim $\to$ VDA5050 клиент $\to$ Mosquitto $\to$ Mission Dispatch $\to
 
 \section{Orchestrator: главный интеллектуальный микросервис}
 
-Оркестратор~--- основной интеллектуальный сервис системы AgentsSwarm, реализованный на FastAPI с lifespan-менеджером (версия v0.5.6, 56~коммитов).
+Оркестратор~--- основной интеллектуальный сервис системы AgentsSwarm, реализованный на FastAPI с lifespan-менеджером (срез v0.5.6, 61~коммит).
 
-\textbf{Структура приложения.} FastAPI-приложение организовано по роутерам: \texttt{/health}, \texttt{/agents}, \texttt{/sessions}, \texttt{/tasks}, \texttt{/ws}. Зависимости (SessionManager, StreamCollector, MCP-клиенты) регистрируются через Depends и инициализируются при старте lifespan.
+\textbf{Структура приложения.} FastAPI-приложение предоставляет системный маршрут \texttt{/health}, маршрут постановки задачи \texttt{/task} и семейство маршрутов жизненного цикла \texttt{/task/\{task\_id\}/...}: \texttt{status}, \texttt{plan}, \texttt{logs}, \texttt{cancel}, \texttt{events}, \texttt{run}, \texttt{replan}. Поток событий отдаётся через WebSocket \texttt{/ws/task/\{task\_id\}}. Зависимости (SessionManager, StreamCollector, MCP-клиенты) регистрируются через Depends и инициализируются при старте lifespan.
 
-\textbf{Агентная архитектура (9 агентов).} Все агенты наследуют от базового класса \texttt{BaseAgent} и конфигурируются через JSON-файлы промптов:
+\textbf{Агентная архитектура.} Агенты оркестратора создаются через OpenAI Agents SDK~\cite{openai_agents} и конфигурируются системными промптами:
 \begin{itemize}
   \item \textit{Router}~--- классификация запросов по 8 категориям;
-  \item \textit{MissionPlanner}~--- двухфазный алгоритм планирования и исполнения;
+  \item \textit{RobotInfo}~--- статусы роботов, батарея, позиция и ROS~2-диагностика;
   \item \textit{MapAnalyst}~--- vision-LLM для пространственного анализа карты;
-  \item \textit{Navigation, Charging, Patrol, Inspection}~--- специализированные агенты навигационных задач;
-  \item \textit{FleetOps}~--- мониторинг и операции с флотом;
-  \item \textit{SwarmCoordinator}~--- параллельная координация нескольких роботов.
+  \item \textit{Navigation}~--- навигационные команды, отмена активных миссий и контроль исполнения;
+  \item \textit{SwarmCoordinator}~--- координация нескольких роботов;
+  \item \textit{General}~--- ответы на общие вопросы без вызова роботических инструментов.
 \end{itemize}
 
-\textbf{Интеграция OpenAI Agents SDK.} Вызов \texttt{Runner.run\_streamed(agent, messages, context)} возвращает асинхронный итератор событий. StreamCollector присваивает каждому событию порядковый номер (seq), буферизует и публикует в WebSocket \texttt{/ws/task/\{task\_id\}} с гарантией доставки по seq-номеру.
+\textbf{Интеграция OpenAI Agents SDK.} Исполнитель использует \texttt{Runner.run\_streamed(agent, input=..., run\_config=..., max\_turns=...)} и читает асинхронный поток событий SDK. StreamCollector присваивает каждому событию порядковый номер (seq), буферизует его в памяти по \texttt{task\_id} и отдаёт накопленные события через \texttt{GET /task/\{task\_id\}/events} либо WebSocket \texttt{/ws/task/\{task\_id\}}.
 
-\textbf{SessionManager} хранит историю диалога в Redis с TTL 24~часа. Кэш результатов MCP-инструментов снижает число повторных HTTP-запросов к Mission Control.
+\textbf{SessionManager} хранит историю диалога и кэш MCP-результатов в контексте задачи: при наличии \texttt{REDIS\_URL} данные сохраняются в Redis hash, при недоступности Redis используется in-memory fallback. Явный TTL для сессий в текущей реализации не задан.
 
-\textbf{Guardrails} реализованы как слой валидации: входящий запрос проверяется на допустимую категорию, выходящий ответ~--- на соответствие схеме. Guardrails работают в silent fallback-режиме: невалидный ответ заменяется стандартным сообщением без прерывания сессии.
+\textbf{Guardrails} реализованы как слой валидации: входящий запрос проверяется на пустоту и чрезмерную длину, а результат маршрутизатора нормализуется к разрешённым категориям \textit{robot\_info}, \textit{navigation}, \textit{swarm\_coord} и \textit{general}. Невалидный результат переводится в fallback-ветку без прерывания сессии.
 
-Retry с экспоненциальным backoff (максимум 3 попытки, начальный интервал 1~с) применяется для всех внешних вызовов (MCP, vLLM, Mission Control API).
+Retry с экспоненциальным backoff и jitter применяется для сетевых операций: общая утилита retry использует по умолчанию 3 попытки с базовой задержкой 0{,}1~с, а PlanRunner повторяет неуспешный handoff до двух попыток с задержкой 0{,}05~с.
+
+Структура FastAPI-приложения оркестратора показана на рис.~\ref{fig:orchestrator-app}; отдельная схема StreamCollector приведена на рис.~\ref{fig:streamcollector}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{img/fig_3_5_orchestrator_app.png}
+\includegraphics[height=0.72\textheight,keepaspectratio]{img/fig_3_5_orchestrator_app.png}
 \caption{Структура FastAPI-приложения оркестратора: роутеры, зависимости и агентный слой}
 \label{fig:orchestrator-app}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.50\textwidth]{img/fig_3_6_streamcollector.png}
-\caption{StreamCollector: seq-нумерация событий Agents SDK и WebSocket push-доставка}
+\includegraphics[height=0.72\textheight,keepaspectratio]{img/fig_3_6_streamcollector.png}
+\caption{StreamCollector: seq-нумерация событий Agents SDK и выдача через polling/WebSocket}
 \label{fig:streamcollector}
 \end{figure}
 
 \section{Interface: веб-платформа управления}
 
-Interface~--- полнофункциональный веб-портал для взаимодействия пользователя с системой AgentsSwarm (v0.5.0, 168~коммитов). Компонент разработан полностью с нуля.
+Interface~--- веб-портал для взаимодействия пользователя с системой AgentsSwarm (v0.5.0, 168~коммитов). Компонент разработан как самостоятельный сервис. Исходный код проекта AgentsSwarm опубликован в репозитории~\cite{agentsswarm_repo}.
 
 \subsection{Общая архитектура и стек}
 
-Бэкенд реализован по clean architecture: слои \textit{domain} (сущности и интерфейсы), \textit{application} (ChatService, AgentExecutionService, JobOrchestrator), \textit{infrastructure} (PostgreSQL/SQLAlchemy, Redis, MinIO), \textit{api} (FastAPI роутеры, WebSocket-слой). Docker Compose предоставляет dev-стек (hot-reload) и prod-стек (Nginx + Gunicorn).
+Бэкенд реализован по clean architecture: слои \textit{domain} (сущности и интерфейсы), \textit{application} (ChatService, ChatJobOrchestrator, AgentExecutionService), \textit{infrastructure} (PostgreSQL/SQLAlchemy, Redis, MinIO), \textit{api} (FastAPI роутеры, WebSocket-слой). Docker Compose предоставляет dev-стек (hot-reload) и prod-стек (Nginx + Gunicorn).
+
+Архитектура Interface показана на рис.~\ref{fig:interface-arch}.
 
 \begin{figure}[H]
 \centering
@@ -677,22 +696,22 @@ Interface~--- полнофункциональный веб-портал для 
 
 \subsection{Backend: агенты и обработка задач}
 
-JobOrchestrator маршрутизирует задачу к одному из семи агентов (Табл.~\ref{tab:iface-agents}):
+ChatJobOrchestrator и агентный pipeline маршрутизируют задачу к одному из семи агентов (Табл.~\ref{tab:iface-agents}):
 
 \begin{table}[H]
-\caption{Специализированные агенты компонента Interface}
+\caption{Специализированные агенты компонента Interface и ключи их регистрации}
 \label{tab:iface-agents}
-\begin{tabular}{p{3.5cm}p{9.5cm}}
+\begin{tabular}{p{4.7cm}p{8.3cm}}
 \toprule
-\textbf{Агент} & \textbf{Описание} \\
+\textbf{Ключ агента} & \textbf{Описание} \\
 \midrule
-General & Универсальный LLM-чат (Qwen2.5-Instruct) \\
-WebSearch & Поиск в интернете с агрегацией результатов \\
-DeepResearch & Многоитерационное глубокое исследование темы \\
-ImageGen & Генерация изображений через внешний Image API \\
-PptxGen & Создание PPTX-презентаций по шаблону \\
-AudioTranscribe & Транскрипция аудио через Whisper \\
-SwarmOrchestrator & Проксирование запросов к Orchestrator через WebSocket \\
+\texttt{general} & Универсальный LLM-чат (Qwen2.5-Instruct) \\
+\texttt{web\_search} & Поиск в интернете с агрегацией результатов \\
+\texttt{deep\_research} & Многоитерационное глубокое исследование темы \\
+\texttt{image\_gen} & Генерация изображений через внешний Image API \\
+\texttt{pptx\_gen} & Создание PPTX-презентаций по шаблону \\
+\texttt{audio\_transcribe} & Транскрипция аудио через Whisper \\
+\texttt{swarm\_orchestrator} & Создание задачи в Orchestrator через REST и инкрементальный polling \texttt{/task/\{id\}/events} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -701,7 +720,9 @@ Celery-задача \texttt{process\_agent\_message} запускается пр
 
 \subsection{Потоковая модель: Redis Streams и WebSocket}
 
-WebSocket-обработчик в FastAPI читает Redis Stream через XREAD с блокирующим ожиданием (block=0) и проталкивает каждое событие клиенту. Heartbeat-механизм каждые 15~с отправляет пинг для поддержания соединения.
+WebSocket-обработчик в FastAPI читает Redis Stream через XREAD с блокирующим ожиданием \texttt{block=1000} и проталкивает каждое событие клиенту. Heartbeat-механизм по умолчанию каждые 5~с отправляет JSON-сообщение для поддержания соединения.
+
+Путь событий через Redis Stream и WebSocket приведён на рис.~\ref{fig:redis-stream}.
 
 \begin{figure}[H]
 \centering
@@ -715,28 +736,38 @@ WebSocket-обработчик в FastAPI читает Redis Stream через X
 React-приложение на Chakra UI реализует четыре основных страницы:
 \begin{itemize}
   \item \textit{Chat}~--- список диалогов, поле ввода с Markdown-рендером, потоковые фрагменты, загрузка файлов, выбор агента;
-  \item \textit{TracePanel}~--- timeline событий агентного маршрута: тип события, агент-источник, инструмент, временна'я метка;
+  \item \textit{TracePanel}~--- временная шкала событий агентного маршрута: тип события, агент-источник, инструмент, временная метка;
   \item \textit{Files}~--- галерея артефактов (изображения, PPTX, аудио) с предпросмотром и прямой ссылкой MinIO;
   \item \textit{Profile / Memory}~--- управление персональной памятью пользователя (интеграция Mem0).
 \end{itemize}
 
 \subsection{Демонстрация рабочего воркфлоу}
 
-В записанном демо показан полный сквозной сценарий: пользователь вводит запрос о навигации робота в Chat с выбором агента SwarmOrchestrator; Interface создаёт Celery-задачу, SwarmOrchestratorAgent устанавливает WebSocket-соединение с оркестратором; оркестратор выполняет Router $\to$ MissionPlanner $\to$ Navigation pipeline, вызывает MCP-инструменты, направляет робота Carter в заданную точку; результат стримится через Redis Stream и отображается в Chat и TracePanel в реальном времени.
+В записанном демо показан сквозной сценарий: пользователь вводит запрос о навигации робота в Chat с выбором агента SwarmOrchestrator; Interface создаёт Celery-задачу, SwarmOrchestratorAgent создаёт задачу в Orchestrator через REST и опрашивает события выполнения; оркестратор выполняет цепочку Router $\to$ MapAnalyst $\to$ Navigation, вызывает MCP-инструменты, направляет робота Carter в заданную точку; результат стримится через Redis Stream и отображается в Chat и TracePanel в реальном времени.
 
-\placeholder{Рис.~3.9. Скриншот Chat: диалог с агентом SwarmOrchestrator}
+Примеры пользовательского интерфейса приведены на рис.~\ref{fig:chat-screen} и рис.~\ref{fig:trace-screen}.
 
-\placeholder{Рис.~3.10. Скриншот TracePanel: трассировка агентного маршрута}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{img/fig_3_9_chat.png}
+\caption{Экран Chat: диалог с агентом SwarmOrchestrator}
+\label{fig:chat-screen}
+\end{figure}
 
-\placeholder{Рис.~3.11. Скриншот Files: галерея сгенерированных артефактов}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{img/fig_3_10_trace.png}
+\caption{Экран TracePanel: трассировка агентного маршрута}
+\label{fig:trace-screen}
+\end{figure}
 
 \section{Выводы и результаты по главе~3}
 
-В данной главе описана реализация всех восьми компонентов AgentsSwarm. Ключевые технические решения и их обоснование:
+В главе описана реализация восьми компонентов AgentsSwarm. Ключевые технические решения и их обоснование:
 
 \begin{itemize}
   \item \textit{Асинхронная модель MCP-серверов}~--- требование совместимости с event loop Agents SDK и параллельными вызовами инструментов;
-  \item \textit{Data Parallel vLLM}~--- единственная возможность уместить 32B-параметрическую модель на доступных Tesla V100;
+  \item \textit{Data Parallel vLLM}~--- способ развернуть крупную LLM на доступных Tesla V100 без внешнего API;
   \item \textit{Clean architecture Interface}~--- требование к независимому расширению набора агентов без модификации инфраструктурного кода;
   \item \textit{Redis Streams для стриминга}~--- гарантированная доставка событий с возможностью переигрывания из истории.
 \end{itemize}
@@ -744,22 +775,23 @@ React-приложение на Chakra UI реализует четыре осн
 Сводная таблица реализованных компонентов приведена в Табл.~\ref{tab:components}.
 
 \begin{table}[H]
-\caption{Компоненты системы AgentsSwarm: версии и объём разработки}
+\caption{Компоненты системы AgentsSwarm: срезы разработки и объём разработки}
 \label{tab:components}
-\begin{tabular}{p{3.5cm}p{2cm}p{2cm}p{5.5cm}}
+\begin{tabular}{@{}p{3.3cm}p{1.8cm}p{2.4cm}p{5.3cm}@{}}
 \toprule
-\textbf{Компонент} & \textbf{Версия} & \textbf{Коммиты} & \textbf{Стек} \\
+\textbf{Компонент} & \textbf{Срез} & \textbf{Коммиты} & \textbf{Стек} \\
 \midrule
 Interface & v0.5.0 & 168 & React, FastAPI, Celery, Redis, PostgreSQL, MinIO \\
-Orchestrator & v0.5.6 & 56 & FastAPI, OpenAI Agents SDK, Redis \\
-vLLM Service & v0.2.9 & — & vLLM, Docker, Qwen2.5-Instruct \\
+Orchestrator & v0.5.6 & 61 & FastAPI, OpenAI Agents SDK, Redis \\
+vLLM Service & v0.2.9 & 32 & vLLM, Docker, Qwen2.5-Instruct \\
 Mission Control & форк & — & NVIDIA (исправления + Docker) \\
 Mission Dispatch & форк & — & NVIDIA (исправления + Docker) \\
 Isaac Sim & форк & — & NVIDIA Isaac Sim 4.5, ROS~2 Jazzy \\
 ROS~2 Workspace & форк & — & ROS~2 Jazzy, rosbridge, VDA5050 клиент \\
-SmolVLA Tools & v0.1.0 & — & PyTorch, LeRobot, ONNX \\
+SmolVLA Tools & v0.2.0 & 2 & PyTorch, LeRobot, ONNX \\
 \bottomrule
 \end{tabular}
+{\footnotesize\par\vspace{2pt}Примечание: для SmolVLA Tools указан version из \texttt{pyproject.toml}; последний subject git-коммита в локальном срезе~--- \texttt{v0.0.1}.}
 \end{table}
 
 % ============================================================
@@ -769,28 +801,31 @@ SmolVLA Tools & v0.1.0 & — & PyTorch, LeRobot, ONNX \\
 
 \section{Постановка задачи и мотивация}
 
-Текущая архитектура AgentsSwarm использует облачный LLM для высокоуровневого planning и reasoning. Это вводит два фундаментальных ограничения: \textit{задержка} между запросом агента и ответом LLM (при загруженном кластере~--- от 1 до нескольких секунд); \textit{зависимость от сети}~--- при нестабильном соединении с облачным кластером роботический контур не может получить инструкции.
+Текущая архитектура AgentsSwarm использует облачный LLM для высокоуровневого планирования и рассуждения. Это вводит два ограничения: \textit{задержка} между запросом агента и ответом LLM (при загруженном кластере~--- от 1 до нескольких секунд); \textit{зависимость от сети}~--- при нестабильном соединении с облачным кластером роботический контур не может получить инструкции.
 
 Интеграция компактной VLA-модели непосредственно на борту каждого робота (целевая платформа~--- NVIDIA Jetson Orin Nano, 8~ГБ VRAM) решает оба ограничения: инференс выполняется локально без сетевых запросов, задержка определяется только вычислительными ресурсами платформы.
 
-\textbf{SmolVLA}~\cite{retzlaff2025smolvla}~--- компактная VLA-модель на 450M параметров от HuggingFace/LeRobot~--- была выбрана как наиболее перспективный кандидат для бортового развёртывания благодаря открытым весам, документированному API LeRobot и наличию асинхронного inference stack.
+\textbf{SmolVLA}~\cite{retzlaff2025smolvla,smolvla_model,lerobot,lerobot_docs}~--- компактная VLA-модель на 450M параметров от HuggingFace/LeRobot~--- была выбрана как наиболее перспективный кандидат для бортового развёртывания благодаря открытым весам, документированному API LeRobot и наличию асинхронного inference stack.
 
 \section{Архитектура SmolVLA и исходные характеристики}
 
-SmolVLA базируется на видеоэнкодере SigLIP и языковой модели SmolLM2, соединённых projection-слоем. На вход поступают RGB-изображение наблюдения и языковая инструкция; на выходе~--- последовательность действий манипулятора (7-мерный вектор: позиции 6 суставов и захват). Модель обучена на данных Open X-Embodiment через дифференциальный policy learning с action chunking.
+SmolVLA базируется на видеоэнкодере SigLIP и языковой модели SmolLM2, соединённых projection-слоем. На вход поступают RGB-изображение наблюдения, состояние робота и языковая инструкция; на выходе~--- вектор действий манипулятора. В реализованном модуле размерность выхода выравнивается по Teacher-модели и датасету: код поддерживает 6- и 7-мерные действия, а при необходимости обрезает тензоры до общей размерности. Модель обучена на данных Open X-Embodiment через дифференциальный policy learning с action chunking.
 
 Для верификации исходной точности проведена валидация Teacher-модели на датасете \texttt{lerobot/libero} (Табл.~\ref{tab:teacher-metrics}).
 
 \begin{table}[H]
 \caption{Базовые метрики Teacher-модели SmolVLA на lerobot/libero}
 \label{tab:teacher-metrics}
-\begin{tabular}{lcc}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.8cm}
+                >{\raggedright\arraybackslash}p{3.0cm}
+                >{\raggedright\arraybackslash}p{6.4cm}@{}}
 \toprule
 \textbf{Метрика} & \textbf{Значение} & \textbf{Комментарий} \\
 \midrule
 MSE & 0{,}1782 & Среднеквадратичная ошибка действий \\
+MAE & 0{,}3245 & Средняя абсолютная ошибка действий \\
 $R^2$ & 0{,}8412 & Коэффициент детерминации \\
-Параметры & 450M & FP32, 6~ГБ VRAM \\
+Параметры & 450{,}05M & FP32, оценка VRAM около 6~ГБ \\
 Латентность инференса & 450~мс & RTX~4090, FP32 \\
 \bottomrule
 \end{tabular}
@@ -800,25 +835,29 @@ $R^2$ & 0{,}8412 & Коэффициент детерминации \\
 
 Пайплайн состоит из четырёх последовательных этапов.
 
-\textbf{Этап~1: Knowledge Distillation (KD).} Student-модель строится как уменьшенная копия Teacher с коэффициентом \texttt{student\_ratio} (отношение числа attention heads и скрытых размерностей к базовым). Функция потерь:
+\textbf{Этап~1: Knowledge Distillation (KD).} Student-модель реализована как компактная CNN + state encoder + action head, обучаемые под руководством замороженной Teacher-модели. Параметр \texttt{student\_ratio} управляет скрытыми размерностями Student, а функция потерь для регрессионного предсказания действий задаётся формулой~\ref{eq:kd-loss}:
 \begin{equation}
-\mathcal{L}_{KD} = \alpha \cdot \mathcal{L}_{MSE} + (1-\alpha) \cdot \mathcal{L}_{KL} + \lambda \cdot \mathcal{L}_{AT},
+\mathcal{L}_{KD} = \alpha \cdot MSE(y_s, y_t) + (1-\alpha) \cdot MSE(y_s, y),
 \label{eq:kd-loss}
 \end{equation}
-где $\mathcal{L}_{MSE}$~--- среднеквадратичная ошибка между выходами Student и Teacher, $\mathcal{L}_{KL}$~--- дивергенция Kullback--Leibler смягчённых вероятностей с температурой $T=3{,}0$, $\mathcal{L}_{AT}$~--- ошибка передачи карт внимания (attention transfer loss). Гиперпараметры: $\alpha = 0{,}7$, $\lambda = 0{,}1$, 10~эпох обучения.
+где $y_s$~--- выход Student, $y_t$~--- выход Teacher, $y$~--- истинные действия из датасета. Параметр \texttt{temperature} сохранён в API для совместимости, но в текущей регрессионной реализации не участвует; KL-дивергенция и attention transfer loss в коде не используются.
 
-\textbf{Этап~2: Mixed Precision Inference (FP16).} Применяется \texttt{torch.cuda.amp} с автоматическим управлением precision: веса остаются в FP32, активации вычисляются в FP16. Ускорение инференса в 1{,}5--2~раза без дополнительной потери точности.
+\textbf{Этап~2: Mixed Precision Inference (FP16).} При включённом mixed precision тренер использует \texttt{torch.cuda.amp.autocast()} и \texttt{GradScaler}; отдельный модуль квантизации поддерживает преобразование весов в FP16 для анализа инференса. Ускорение инференса оценивается в составе полного пайплайна.
 
-\textbf{Этап~3: Structured Pruning.} Обнуляется 30\% весов в Linear-слоях по критерию наименьшей $L_2$-нормы. Прунинг применяется к слоям attention projection и feed-forward, нетронутыми остаются слои нормализации и embedding.
+\textbf{Этап~3: Structured Pruning.} В текущем коде реализован экспериментальный прунинг Linear-слоёв: случайная маска с заданной \texttt{sparsity} обнуляет часть весов. Это оценочный механизм для проверки чувствительности к разреживанию, а не L2-критерий важности весов.
 
-\textbf{Этап~4: INT8 Quantization Analysis.} Оценивается применимость INT8-квантизации к каждому слою по метрике чувствительности. Выявлены критические слои (первый и последний Linear в каждом transformer-блоке), для которых квантизация приводит к значительной деградации точности; они исключаются из схемы.
+\textbf{Этап~4: INT8 Quantization Analysis.} Модуль квантизации поддерживает dynamic, static и manual режимы для \texttt{nn.Linear}. Статическая квантизация использует упрощённую симулированную калибровку, поэтому результаты трактуются как инженерный анализ применимости INT8, а не как финальная production-схема с исключением критических слоёв.
 
-\begin{figure}[H]
+Схема пайплайна оптимизации SmolVLA показана на рис.~\ref{fig:smolvla-pipeline}.
+
+\begin{landscape}
+\begin{figure}[p]
 \centering
-\includegraphics[width=0.95\textwidth]{img/fig_4_1_smolvla_pipeline.png}
+\includegraphics[height=0.92\linewidth, angle=270]{img/fig_4_1_smolvla_pipeline.png}
 \caption{Четырёхэтапный пайплайн оптимизации SmolVLA: дистилляция, FP16, прунинг, INT8-анализ}
 \label{fig:smolvla-pipeline}
 \end{figure}
+\end{landscape}
 
 \section{Результаты экспериментов}
 
@@ -834,18 +873,18 @@ $R^2$ & 0{,}8412 & Коэффициент детерминации \\
 Параметры & 450M & $\approx$1M & $\times$443 сжатие \\
 VRAM & 6{,}0~ГБ & <0{,}5~ГБ & $\times$12 сжатие \\
 MSE & 0{,}1782 & 0{,}1944 & +9{,}1\% \\
-MAE (средн.) & — & — & +5{,}1\% \\
-$R^2$ & 0{,}8412 & 0{,}8261 & $-$1{,}8\% \\
+Относительная MAE по действиям & 1{,}000 & 1{,}051 & +5{,}1\% \\
+$R^2$ & 0{,}8412 & 0{,}8256 & $-$1{,}8\% \\
 Латентность & 450~мс & 18~мс & $\times$25 ускорение \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Качество сохраняется на уровне выше 90\% от исходного по всем трём метрикам. По всем семи степеням свободы манипулятора per-action MAE остаётся в пределах допустимого для лабораторных условий. Дополнительно выполнен экспорт модели в формат ONNX и верификация совместимости с NVIDIA TensorRT.
+Качество сохраняется на уровне выше 90\% от исходного по ключевым метрикам. По всем семи степеням свободы манипулятора MAE по действиям остаётся в пределах допустимого для лабораторных условий. Дополнительно выполнен экспорт модели в формат ONNX и верификация совместимости с NVIDIA TensorRT.
 
 \section{Выводы и результаты по главе~4}
 
-Экспериментальный модуль SmolVLA Tools демонстрирует принципиальную достижимость бортового VLA-инференса на NVIDIA Jetson Orin Nano при сохранении более 90\% точности управления манипулятором и латентности 18~мс~--- что на два порядка меньше задержки облачного LLM.
+Экспериментальный модуль SmolVLA Tools демонстрирует принципиальную достижимость бортового VLA-инференса на NVIDIA Jetson Orin Nano при сохранении более 90\% точности управления манипулятором и латентности 18~мс на RTX~4090; перенос этой оценки на Jetson Orin Nano требует отдельного профилирования.
 
 Ключевые ограничения: эксперименты проводились исключительно на датасете \texttt{lerobot/libero} (имитация манипулятора), физическая верификация на реальном роботе не выполнялась. Область применимости модели ограничена задачами, близкими к обучающему датасету.
 
@@ -858,31 +897,31 @@ $R^2$ & 0{,}8412 & 0{,}8261 & $-$1{,}8\% \\
 
 \section{Стратегия тестирования}
 
-Стратегия верификации AgentsSwarm охватывает три уровня: \textit{unit-тесты} базовых сервисов и вспомогательных функций; \textit{контрактные тесты} поведения ключевых агентов; \textit{интеграционные тесты} HTTP API. Все тесты реализованы на pytest с использованием Docker Compose для запуска необходимой инфраструктуры (Redis, RabbitMQ, PostgreSQL). Покрытые компоненты: Orchestrator и Interface~--- два наиболее значимых сервиса системы.
+Стратегия верификации AgentsSwarm охватывает три уровня: \textit{unit-тесты} базовых сервисов и вспомогательных функций; \textit{контрактные тесты} поведения ключевых агентов; \textit{интеграционные тесты} HTTP API. Тесты реализованы на pytest; внешние зависимости подменяются тестовыми объектами либо запускаются через Docker Compose в сценариях, где требуется Redis, RabbitMQ или PostgreSQL. Покрытые компоненты: Orchestrator и Interface~--- два наиболее значимых сервиса системы.
 
 \section{Тестирование оркестратора}
 
-Тестовый набор оркестратора включает 43 теста, организованных по четырём группам.
+Текущий тестовый набор оркестратора включает 88 тестов, организованных вокруг базовых сервисов, планировщика, StreamCollector, MapAnalyst и HTTP API.
 
-\textbf{Unit-тесты базовых сервисов} проверяют: корректность health-check эндпоинта, инициализацию SessionManager в Redis, seq-нумерацию StreamCollector при пакетной публикации, поведение retry-механизма при имитации сетевых ошибок.
+\textbf{Unit-тесты базовых сервисов} проверяют: корректность health-check эндпоинта, инициализацию SessionManager в in-memory режиме и статус Redis-подключения, seq-нумерацию StreamCollector при пакетной публикации, поведение retry-механизма при имитации сетевых ошибок.
 
-\textbf{Контрактные тесты планировщика} верифицируют структуру выходных данных MissionPlanner: обязательное наличие полей \texttt{steps}, \texttt{target\_robots} и \texttt{dependencies}; корректность ссылок зависимостей; непустоту \texttt{target\_robots} для mission-категорий.
+\textbf{Контрактные тесты планировщика} верифицируют структуру выходных данных Planner: наличие описания шагов, списка \texttt{target\_robots}, зависимостей, а также корректность вставки MapAnalyst для навигационных сценариев.
 
-\textbf{Тесты guardrails} проверяют граничные сценарии: пустой запрос возвращает standard error-ответ; запрос вне компетенции агента~--- silent fallback; попытка handoff к несуществующему агенту~--- перехват на уровне guardrail.
+\textbf{Тесты guardrails} проверяют граничные сценарии: пустой запрос возвращает стандартный ответ об ошибке; запрос вне компетенции агента переводится в fallback-режим; попытка handoff к несуществующему агенту перехватывается на уровне guardrail.
 
-\textbf{Интеграционные тесты HTTP API} проверяют все эндпоинты с реальным FastAPI-приложением. Результат: \textbf{43/43 тестов пройдено}~$\checkmark$. Покрытые сценарии: создание сессии, отправка сообщения, получение статуса задачи, история диалога, принудительная отмена, graceful shutdown.
+\textbf{Интеграционные тесты HTTP API} проверяют маршруты реального FastAPI-приложения: постановку задачи, получение статуса, плана, логов и событий, внешний push события, запуск отложенной задачи, отмену и replanning. Контрольный локальный запуск 19.05.2026 командой \texttt{uv run --with pytest --with pytest-asyncio pytest tests/ -q} завершился результатом \textbf{66 passed / 22 failed}. Падения не следует трактовать как пройденную верификацию: они указывают на долг синхронизации тестов с актуальным pipeline (переупорядочивание PlanRunner/MapAnalyst, добавление \texttt{max\_turns} в вызовы Agents SDK, изолированные проверки LLM-клиента без ключа API).
 
 \section{Тестирование Interface}
 
-Pytest-покрытие Interface включает: эндпоинты управления чатами (создание, получение, удаление), загрузку файлов с верификацией сохранения в MinIO, маршрутизацию к агентам с mock-объектами Celery-задач, авторизацию WebSocket-соединений.
+Pytest-покрытие Interface включает: маршруты управления чатами (создание, получение, удаление), загрузку файлов с верификацией сохранения в MinIO, маршрутизацию к агентам с тестовыми объектами Celery-задач, авторизацию WebSocket-соединений.
 
 Проверка потоковой модели: тест публикует серию событий в Redis Stream через XADD и верифицирует, что WebSocket-клиент получает их в правильном порядке без потерь. Тест завершения сессии проверяет, что сигнал \texttt{agent\_reply} корректно закрывает XREAD-цикл.
 
-\textbf{Smoke-тест полного стека} запускает docker-compose с минимальной конфигурацией (FastAPI + Redis + RabbitMQ + Celery) и выполняет сценарий: POST \texttt{/api/chats/} $\to$ POST \texttt{/api/chats/\{id\}/messages/} $\to$ WebSocket \texttt{/ws/chat/\{id\}} $\to$ ожидание события \texttt{agent\_reply}. Тест подтверждает корректную работу всей цепочки без реального LLM-бэкенда.
+\textbf{Smoke-тест полного стека} запускает docker-compose с минимальной конфигурацией (FastAPI + Redis + RabbitMQ + Celery) и выполняет сценарий: POST \texttt{/api/chats/} $\to$ POST \texttt{/api/chats/\{thread\_id\}/message} $\to$ WebSocket \texttt{/api/chats/\{thread\_id\}/ws} $\to$ ожидание события \texttt{agent\_reply}. Тест подтверждает корректную работу всей цепочки без реального LLM-бэкенда.
 
 \section{Выводы и результаты по главе~5}
 
-Автоматизированное тестирование подтвердило корректность работы оркестратора (43/43) и Interface. Ограничения текущего покрытия: отсутствие E2E-тестов с реальным LLM-инференсом (зависимость от GPU-кластера); отсутствие нагрузочного тестирования при параллельных сессиях.
+Автоматизированное тестирование подтвердило работоспособность значительной части базовых сервисов оркестратора и Interface, но текущий локальный прогон Orchestrator не является полностью успешным: 22 из 88 тестов требуют актуализации под текущую реализацию. Ограничения текущего покрытия: отсутствие E2E-тестов с реальным LLM-инференсом (зависимость от GPU-кластера); отсутствие нагрузочного тестирования при параллельных сессиях; необходимость синхронизировать тестовые ожидания с изменениями PlanRunner и MapAnalyst.
 
 Централизованная архитектура вводит единую точку отказа: при недоступности Redis или vLLM все сессии теряют работоспособность. Формальная верификация LLM-планов~--- устойчивость к hallucination и нарушениям constraint~--- остаётся открытым исследовательским вопросом, требующим инструментов в стиле SELP~\cite{pan2025selp}.
 
@@ -896,11 +935,11 @@ Pytest-покрытие Interface включает: эндпоинты упра�
 
 \textbf{Основные результаты работы.}
 
-Реализованы восемь самостоятельных компонентов: Interface (React + FastAPI + Celery, 168~коммитов, v0.5.0), Orchestrator (FastAPI + OpenAI Agents SDK, 56~коммитов, v0.5.6), vLLM Service (Data Parallel, 2\,$\times$\,Tesla V100, v0.2.9), доработанные форки NVIDIA Mission Control и Mission Dispatch с устранёнными критическими ошибками, настроенный ROS~2 Jazzy workspace с VDA5050 клиентом, три переработанных MCP-сервера с полным переходом на асинхронную модель вызовов.
+Реализованы восемь самостоятельных компонентов: Interface (React + FastAPI + Celery, 168~коммитов, срез v0.5.0), Orchestrator (FastAPI + OpenAI Agents SDK, 61~коммит, срез v0.5.6), vLLM Service (Data Parallel, 2\,$\times$\,Tesla V100, срез v0.2.9), доработанные форки NVIDIA Mission Control и Mission Dispatch с устранёнными критическими ошибками, настроенный ROS~2 Jazzy workspace с VDA5050 клиентом, три переработанных MCP-сервера с полным переходом на асинхронную модель вызовов.
 
-Пройдено 43 из 43 интеграционных тестов HTTP API оркестратора; записана демонстрация полного воркфлоу от пользовательского запроса до исполнения VDA5050 order роботом Carter в симуляторе Isaac Sim.
+Контрольный локальный pytest-прогон Orchestrator подтвердил 66 из 88 тестов; для полной автоматизированной верификации требуется актуализировать оставшиеся тесты под текущий pipeline. Записана демонстрация полного воркфлоу от пользовательского запроса до исполнения VDA5050 order роботом Carter в симуляторе Isaac Sim.
 
-Для VLA-модели SmolVLA достигнуто сжатие в 443 раза по числу параметров при сохранении более 90\% точности (MSE~+9{,}1\%, $R^2$~$-$1{,}8\%) и ускорении инференса в 25~раз (450~мс~$\to$~18~мс, RTX~4090).
+Для VLA-модели SmolVLA достигнуто сжатие в 443 раза по числу параметров при сохранении более 90\% точности (MSE~+9{,}1\%, $R^2$~$-$1{,}8\%) и ускорении инференса в 25~раз (450~мс~$\to$~18~мс, RTX~4090). В коде дистилляция реализована как регрессионная MSE-дистилляция без KL-компоненты и attention transfer.
 
 \textbf{Научная и практическая значимость.} Практическая значимость системы состоит в демонстрации воспроизводимой системной интеграции, объединяющей кооперативное восприятие, fleet management (VDA5050), LLM-агентный слой (OpenAI Agents SDK + MCP) и симуляционный цифровой двойник (Isaac Sim). Интеграция LLM-слоя с промышленным VDA5050-контуром через MCP-протокол представляет новый архитектурный подход, не реализованный в рассмотренных аналогах.
 
@@ -1037,6 +1076,9 @@ NVIDIA Corporation. Multiple Robot ROS~2 Navigation --- NVIDIA Isaac Sim Tutoria
 Qwen Team, Alibaba Group. Qwen2.5 Technical Report~// arXiv preprint. 2024. arXiv:~2412.15115.
 
 % 6. Симуляция и роботические платформы (задействованы в проекте)
+\bibitem{agentsswarm_repo}
+Денисов~Д. AgentsSwarm: Multi-agent robotic platform source code [Электронный ресурс]. URL:~\url{https://github.com/deneal123/AgentsSwarm} (дата обращения: 19.05.2026).
+
 \bibitem{isaacros2024}
 NVIDIA Corporation. Isaac ROS~--- Accelerated Computing for ROS~2 [Электронный ресурс]. 2024. URL:~\url{https://nvidia-isaac-ros.github.io/getting_started/index.html} (дата обращения: 01.05.2025).
 
@@ -1132,7 +1174,6 @@ HuggingFace. LeRobot Documentation [Электронный ресурс]. URL:~\
 \addcontentsline{toc}{chapter}{ПРИЛОЖЕНИЯ}
 
 \chapter{Глоссарий предметной области}
-\addcontentsline{toc}{section}{Приложение А. Глоссарий предметной области}
 
 \begin{longtable}{p{3.5cm}p{10cm}}
 \toprule
@@ -1161,7 +1202,6 @@ WebSocket & Протокол двунаправленной связи для п
 \end{longtable}
 
 \chapter{Список сокращений}
-\addcontentsline{toc}{section}{Приложение Б. Список сокращений}
 
 \begin{longtable}{p{3cm}p{10.5cm}}
 \toprule
@@ -1192,26 +1232,24 @@ VRAM & Video Random Access Memory \\
 \end{longtable}
 
 \chapter{Технические характеристики инфраструктуры}
-\addcontentsline{toc}{section}{Приложение В. Технические характеристики инфраструктуры}
 
 \begin{table}[H]
 \caption*{Вычислительная инфраструктура AgentsSwarm}
-\begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}
                 >{\raggedright\arraybackslash}p{2.4cm}
                 >{\raggedright\arraybackslash}p{5.2cm}
-                >{\raggedright\arraybackslash}p{3.8cm}}
+                >{\raggedright\arraybackslash}p{3.7cm}@{}}
 \toprule
-\textbf{Машина} & \textbf{Провайдер} & \textbf{Конфигурация} & \textbf{Назначение} \\
+\textbf{Машина} & \textbf{Провай\-дер} & \textbf{Конфигурация} & \textbf{Назначение} \\
 \midrule
 Симуляция & Selectel & 4~vCPU, 16~ГБ RAM, RTX~4090 (24~ГБ VRAM), 128~ГБ SSD, Ubuntu~24.04 & Isaac Sim, ROS~2, Mission Control/Dispatch \\
 Микросервисы & Selectel & 4~vCPU, 8~ГБ RAM, 128~ГБ SSD, Ubuntu~24.04 & Interface, Orchestrator, Redis, RabbitMQ, MinIO, PostgreSQL \\
-LLM-кластер & MTS Cloud & 2 ноды × Tesla V100-PCIE 32~ГБ VRAM, 1{,}6~ТБ/нода, Ubuntu~24.04 & vLLM Data Parallel (Qwen2.5-Instruct) \\
+LLM-кластер & MTS Cloud & 2 узла × Tesla V100-PCIE 32~ГБ VRAM, 1{,}6~ТБ/узел, Ubuntu~24.04 & vLLM Data Parallel (Qwen2.5-Instruct) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \chapter{Ключевые фрагменты кода}
-\addcontentsline{toc}{section}{Приложение Г. Ключевые фрагменты кода}
 
 \subsection*{Г.1. Конфигурация динамического выбора транспорта MCP}
 
@@ -1219,16 +1257,13 @@ LLM-кластер & MTS Cloud & 2 ноды × Tesla V100-PCIE 32~ГБ VRAM, 1{,
 import os
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.server.sse import SseServerTransport
 
 async def main():
     transport = os.getenv("MCP_TRANSPORT", "stdio")
     server = Server("mission-control-mcp")
     # ... регистрация инструментов ...
     if transport == "sse":
-        port = int(os.getenv("MCP_PORT", "8080"))
-        async with SseServerTransport(port) as sse:
-            await server.run(sse.read_stream, sse.write_stream)
+        await run_sse_app(server)  # ASGI + SseServerTransport("/messages/")
     else:
         async with stdio_server() as (r, w):
             await server.run(r, w)
@@ -1237,42 +1272,57 @@ async def main():
 \subsection*{Г.2. StreamCollector: seq-нумерация событий}
 
 \begin{lstlisting}[language=Python, caption={StreamCollector: буферизация и seq-нумерация}]
-class StreamCollector:
-    def __init__(self, task_id: str, redis: Redis):
-        self.task_id = task_id
-        self.redis = redis
-        self._seq = 0
+from collections import deque
 
-    async def publish(self, event_type: str, data: dict):
-        self._seq += 1
-        payload = {"seq": self._seq, "type": event_type, **data}
-        stream_key = f"task:{self.task_id}:stream"
-        await self.redis.xadd(stream_key, {"payload": json.dumps(payload)})
+class StreamCollector:
+    def __init__(self, task_store=None, max_events_per_task=500):
+        self._events = {}
+        self._seq = {}
+        self._max = max_events_per_task
+        self._task_store = task_store
+
+    def record(self, event):
+        seq = self._seq.get(event.task_id, 0) + 1
+        self._seq[event.task_id] = seq
+        self._events.setdefault(event.task_id, deque(maxlen=self._max))
+        self._events[event.task_id].append((seq, event))
+        if self._task_store:
+            self._task_store.add_log(event.task_id, event.source, event.message, event.level)
+        return seq
+
+    def get_since(self, task_id, after_seq=0):
+        items = self._events.get(task_id, [])
+        events = [(seq, ev) for seq, ev in items if seq > after_seq]
+        last_seq = events[-1][0] if events else after_seq
+        return [ev for _, ev in events], last_seq
 \end{lstlisting}
 
 \subsection*{Г.3. Функция потерь Knowledge Distillation}
 
 \begin{lstlisting}[language=Python, caption={Функция потерь KD для дистилляции SmolVLA}]
-def distillation_loss(student_out, teacher_out, student_attn,
-                      teacher_attn, alpha=0.7, T=3.0, lam=0.1):
-    mse = F.mse_loss(student_out, teacher_out)
-    s_soft = F.log_softmax(student_out / T, dim=-1)
-    t_soft = F.softmax(teacher_out / T, dim=-1)
-    kl = F.kl_div(s_soft, t_soft, reduction='batchmean') * (T ** 2)
-    at = sum(F.mse_loss(s, t) for s, t in zip(student_attn, teacher_attn))
-    return alpha * mse + (1 - alpha) * kl + lam * at
+def distillation_loss(student_actions, teacher_actions,
+                      true_actions, alpha=0.5):
+    min_dim = min(student_actions.shape[-1],
+                  teacher_actions.shape[-1],
+                  true_actions.shape[-1])
+    student_actions = student_actions[..., :min_dim]
+    teacher_actions = teacher_actions[..., :min_dim]
+    true_actions = true_actions[..., :min_dim]
+
+    task_loss = F.mse_loss(student_actions, true_actions)
+    distill_loss = F.mse_loss(student_actions, teacher_actions)
+    return alpha * distill_loss + (1 - alpha) * task_loss
 \end{lstlisting}
 
 \chapter{Протоколы экспериментов}
-\addcontentsline{toc}{section}{Приложение Д. Протоколы экспериментов}
 
 \subsection*{Д.1. Протокол тестирования API оркестратора}
 
-Среда: Ubuntu 24.04, Python 3.11, pytest 8.x, Redis 7.x (Docker). Конфигурация тестов: переменные окружения \texttt{TEST\_MODE=true}, \texttt{MOCK\_LLM=true} (ответы агентов заменяются mock-объектами). Команда запуска: \texttt{pytest tests/ -v --tb=short}. Результат: 43 пройдено, 0 провалено, 0 пропущено. Время выполнения: $\approx$\,45~с.
+Контрольная локальная проверка редакции 19.05.2026 выполнялась через uv на Python~3.12: \texttt{uv run --with pytest --with pytest-asyncio pytest tests/ -q}. Дополнительно задавались \texttt{TEST\_MODE=true} и \texttt{MOCK\_LLM=true}. Результат текущего набора: 66 пройдено, 22 провалено, 16 предупреждений. Основные причины падений: тестовые mock-объекты не принимают новый аргумент \texttt{max\_turns}; часть тестов планировщика ожидает старую фиксированную префиксную структуру Router/RobotInfo; отдельные проверки LLM-клиента требуют изоляции от реального \texttt{OPENAI\_API\_KEY}.
 
 \subsection*{Д.2. Протокол эксперимента по дистилляции SmolVLA}
 
-Среда: Ubuntu 22.04, CUDA 12.1, PyTorch 2.2, RTX~4090 (24~ГБ VRAM). Датасет: \texttt{lerobot/libero} (train: 18\,000 траекторий, val: 2\,000 траекторий). Гиперпараметры: lr~=~1e-4, batch\_size~=~32, epochs~=~10, $T$~=~3{,}0, $\alpha$~=~0{,}7, $\lambda$~=~0{,}1, student\_ratio~=~0{,}1. Время обучения: $\approx$\,4~ч.
+Среда: Ubuntu 22.04, CUDA 12.1, PyTorch, RTX~4090 (24~ГБ VRAM). Датасет: \texttt{lerobot/libero}; в отчёте эксперимента использована валидационная выборка 1200 семплов и 10 эпох стабилизации метрик. Ключевые параметры запуска: batch\_size~=~32, epochs~=~10, student\_ratio~=~0{,}5. Параметр \texttt{temperature} присутствует в API, но не используется в регрессионной MSE-функции потерь; отдельной $\lambda$-компоненты в коде нет.
 
 \subsection*{Д.3. Протокол профилирования инференса}
 

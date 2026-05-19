@@ -1,29 +1,27 @@
-graph LR
-    Teacher["SmolVLA Teacher\n450M параметров\nFP32 · 6.0 ГБ VRAM"]
+graph TB
+    Data["Данные\nLeRobot / LIBERO"]
+    Teacher["Teacher · SmolVLA 450M"]
+    Student["Student · модель-ученик"]
+    FP16["FP16 · AMP / GradScaler"]
+    Pruning["Pruning · 30% Linear mask"]
+    INT8["INT8 · анализ квантизации"]
+    Export["Export · ONNX + TensorRT"]
+    Result["Результат\n~1M params · <0.5 GB VRAM · 18 ms · 443× · R² 0.826"]
 
-    Stage1["Этап 1: Knowledge Distillation\nL = α·MSE + (1-α)·KL + λ·AT\nα=0.7 · λ=0.1\nДатасет: lerobot/libero"]
+    Data -->|"batches"| Teacher
+    Teacher -->|"distillation target"| Student
+    Data -->|"ground-truth action"| Student
+    Student -->|"Loss: MSE(student,teacher) + MSE(student,action)"| FP16
+    FP16 -->|"AMP / GradScaler"| Pruning
+    Pruning -->|"30% Linear random mask"| INT8
+    INT8 -->|"dynamic / static / manual"| Export
+    Export -->|"ONNX + TensorRT check"| Result
 
-    Stage2["Этап 2: Mixed Precision FP16\ntorch.cuda.amp\nActivations → FP16\nWeights → FP32"]
-
-    Stage3["Этап 3: Structured Pruning\nL2-norm · 30% весов\nLinear: attention + FFN\nLayerNorm и embed — нетронуты"]
-
-    Stage4["Этап 4: INT8 Analysis\nанализ чувствительности слоёв\nкритические — исключены\nпериферийные — квантизованы"]
-
-    Student["SmolVLA Student\n~1M параметров\n<0.5 ГБ VRAM"]
-
-    Metrics["Результаты\n×443 сжатие параметров\n×12 VRAM · ×25 латентность\nMSE: 0.1782→0.1944\nR²: 0.841→0.826"]
-
-    Teacher -->|"обучающие сигналы\nsoft targets"| Stage1
-    Stage1 -->|"student checkpoint"| Stage2
-    Stage2 -->|"fp16 model"| Stage3
-    Stage3 -->|"pruned model"| Stage4
-    Stage4 --> Student
-    Student --> Metrics
-
-    style Teacher fill:none,stroke:#e67e22,stroke-width:2px,color:#000
-    style Stage1 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Stage2 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Stage3 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Stage4 fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Student fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style Metrics fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Data fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Teacher fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style Student fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style FP16 fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Pruning fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style INT8 fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Export fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Result fill:none,stroke:#52c41a,stroke-width:2px,color:#000

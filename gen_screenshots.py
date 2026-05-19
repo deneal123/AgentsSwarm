@@ -1,6 +1,7 @@
 """
 Mock-скриншоты интерфейса AgentsSwarm Interface для ВКР.
-Рис. 3.9 — Chat, Рис. 3.10 — TracePanel, Рис. 3.11 — Files
+Рис. 3.9 — Chat, Рис. 3.10 — TracePanel.
+Рис. 3.11 удалён из текста ВКР и этим скриптом больше не создаётся.
 """
 import matplotlib
 matplotlib.use('Agg')
@@ -251,5 +252,4 @@ def fig_files():
 print('Генерация mock-скриншотов...')
 fig_chat()
 fig_trace()
-fig_files()
 print('Готово!')

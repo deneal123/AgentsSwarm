@@ -1,52 +1,46 @@
-graph LR
-    Orchestrator["Orchestrator\nAgents SDK"]
+flowchart LR
+    Orchestrator["Orchestrator\nAgents SDK + MCP clients"]
 
     subgraph mcp1["mission-control-mcp  :8010"]
-        get_map["get_map"]
-        get_waypoints["get_waypoints"]
-        get_robot_status["get_robot_status"]
-        list_robots["list_robots"]
-        update_map["update_map"]
+        mc_mission["missions\nsubmit_navigation\nsubmit_charging\nsubmit_undock"]
+        mc_map["maps\nget_map_info\nlist/select/deploy map"]
+        mc_route["route/objectives\nvisualize_route\nobjectives · pick-and-place"]
     end
 
     subgraph mcp2["mission-dispatch-mcp  :8011"]
-        create_mission["create_mission"]
-        cancel_mission["cancel_mission"]
-        get_mission_status["get_mission_status"]
-        list_missions["list_missions"]
+        md_status["status\nget_robot_status\nget_mission_status"]
+        md_fleet["fleet\nget_idle_robots\ncheck_robot_health\nfleet summary"]
+        md_control["control\ndispatch_mission\ndispatch_route\ncancel mission"]
     end
 
     subgraph mcp3["ros-msp  :8012"]
-        publish_topic["publish_topic"]
-        get_topic_list["get_topic_list"]
-        read_topic["read_topic"]
+        ros_conn["connection\nconnect_to_robot\nping_robots"]
+        ros_topics["topics\nget_topics\nsubscribe_once\npublish_once"]
+        ros_meta["ROS metadata\nservices · actions\nnodes · params · images"]
     end
 
-    MissionControlAPI["Mission Control API\n:8080"]
-    MissionDispatchAPI["Mission Dispatch API\n:8090"]
-    RosBridge["rosbridge WebSocket\n:9090"]
+    MissionControlAPI["Mission Control API\nmaps · objectives · route visualisation"]
+    MissionDispatchAPI["Mission Dispatch API\nrobots · missions · queue"]
+    RosBridge["rosbridge WebSocket\nROS 2 graph"]
 
-    Orchestrator --> get_map & get_waypoints & get_robot_status & list_robots & update_map
-    Orchestrator --> create_mission & cancel_mission & get_mission_status & list_missions
-    Orchestrator --> publish_topic & get_topic_list & read_topic
+    Orchestrator --> mc_mission & mc_map & mc_route
+    Orchestrator --> md_status & md_fleet & md_control
+    Orchestrator --> ros_conn & ros_topics & ros_meta
 
-    get_map & get_waypoints & get_robot_status & list_robots & update_map --> MissionControlAPI
-    create_mission & cancel_mission & get_mission_status & list_missions --> MissionDispatchAPI
-    publish_topic & get_topic_list & read_topic --> RosBridge
+    mc_mission & mc_map & mc_route --> MissionControlAPI
+    md_status & md_fleet & md_control --> MissionDispatchAPI
+    ros_conn & ros_topics & ros_meta --> RosBridge
 
     style Orchestrator fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style get_map fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style get_waypoints fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style get_robot_status fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style list_robots fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style update_map fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style create_mission fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style cancel_mission fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style get_mission_status fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style list_missions fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style publish_topic fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style get_topic_list fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style read_topic fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style mc_mission fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style mc_map fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style mc_route fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style md_status fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style md_fleet fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style md_control fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style ros_conn fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style ros_topics fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style ros_meta fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style MissionControlAPI fill:none,stroke:#e67e22,stroke-width:2px,color:#000
     style MissionDispatchAPI fill:none,stroke:#e67e22,stroke-width:2px,color:#000
     style RosBridge fill:none,stroke:#e67e22,stroke-width:2px,color:#000

@@ -11,7 +11,7 @@ graph LR
         GPU1["Tesla V100\n32 ГБ VRAM"]
     end
 
-    Config["Конфигурация\nTP=1 · PP=2\nGPU util=90%\nМодель: Qwen2.5-32B"]
+    Config["Конфигурация\nData Parallel size=2\nTensor Parallel size=1\nGPU util=90%"]
 
     Client -->|"POST /v1/chat/completions\nOpenAI-compatible API"| Coordinator
     Coordinator <-->|"gRPC RPC\nforward pass sync"| Worker

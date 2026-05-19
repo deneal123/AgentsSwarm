@@ -1,9 +1,9 @@
 graph TB
-    HttpClient["HTTP Client\nPOST /tasks"]
+    HttpClient["HTTP Client\nPOST /task"]
     Runner["Runner.run_streamed\nOpenAI Agents SDK"]
     StreamCollector["StreamCollector\nbuffer + seq counter"]
     WebSocket["WebSocket\n/ws/task/{task_id}"]
-    BrowserClient["Browser Client\nReact EventSource"]
+    BrowserClient["Interface bridge\nSwarmOrchestratorAgent"]
 
     AgentSDK["Agent SDK\nRawEvent stream"]
     SeqBuffer["seq buffer\n{seq: event}"]

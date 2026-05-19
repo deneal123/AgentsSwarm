@@ -8,16 +8,16 @@ graph LR
 
     RedisStream["Redis Stream\nchat:{thread_id}:stream\nXADD id=* type data ts"]
 
-    XRead["XREAD block=0\nWebSocket Handler"]
-    Heartbeat["Heartbeat\npong каждые 15s"]
+    XRead["XREAD block=1000 ms\nWebSocket Handler"]
+    Heartbeat["Heartbeat\nJSON каждые 5s"]
 
-    BrowserClient["Browser Client\nReact · EventSource"]
+    BrowserClient["Browser Client\nReact WebSocket"]
 
     AgentExec --> StreamChunk & AgentReply & RoutingEvent & ToolEvent
     StreamChunk & AgentReply & RoutingEvent & ToolEvent -->|"XADD"| RedisStream
     RedisStream -->|"XREAD"| XRead
     XRead -->|"JSON frame"| BrowserClient
-    Heartbeat -->|"ping"| BrowserClient
+    Heartbeat -->|"heartbeat"| BrowserClient
 
     style AgentExec fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style StreamChunk fill:none,stroke:#4a9eff,stroke-width:2px,color:#000

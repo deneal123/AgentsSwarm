@@ -1,8 +1,10 @@
 graph TB
-    Request["Входящий запрос\nHTTP POST /tasks"]
-    Router["Router Agent\n8 категорий · LLM-классификатор"]
+    Request["Входящий запрос\nHTTP POST /task"]
+    Planner["Planner\nLLM + эвристический fallback"]
+    Runner["PlanRunner\nпоследовательное исполнение шагов"]
+    Router["Router Agent\nкатегории маршрутизации · handoff"]
 
-    MissionPlanner["MissionPlanner\nдвухфазный алгоритм"]
+    RobotInfo["RobotInfo\nстатус и диагностика"]
     MapAnalyst["MapAnalyst\nvision-LLM"]
     Navigation["Navigation\nнавигация"]
     Charging["Charging\nзарядка"]
@@ -14,23 +16,27 @@ graph TB
 
     MCPLayer["MCP Layer\nmission-control · mission-dispatch · ros-msp"]
 
-    Request --> Router
-    Router -->|"mission"| MissionPlanner
-    Router -->|"map"| MapAnalyst
+    Request --> Planner
+    Planner --> Runner
+    Runner --> Router
+    Runner -->|"movement tasks"| MapAnalyst
+    Router -->|"robot_info"| RobotInfo
     Router -->|"navigation"| Navigation
     Router -->|"charging"| Charging
     Router -->|"patrol"| Patrol
     Router -->|"inspection"| Inspection
     Router -->|"fleet_ops"| FleetOps
-    Router -->|"swarm"| SwarmCoordinator
+    Router -->|"swarm_coord"| SwarmCoordinator
     Router -->|"general"| General
 
-    MissionPlanner & MapAnalyst & Navigation & Charging --> MCPLayer
+    RobotInfo & MapAnalyst & Navigation & Charging --> MCPLayer
     Patrol & Inspection & FleetOps & SwarmCoordinator --> MCPLayer
 
     style Request fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
+    style Planner fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style Runner fill:none,stroke:#ffa500,stroke-width:2px,color:#000
     style Router fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style MissionPlanner fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style RobotInfo fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style MapAnalyst fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style Navigation fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style Charging fill:none,stroke:#52c41a,stroke-width:2px,color:#000

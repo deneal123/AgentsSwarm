@@ -1,54 +1,37 @@
 graph TB
     App["FastAPI Application\nlifespan manager · v0.5.6"]
+    Routes["Routes\n/health · POST /task\n/task/{id}: status · plan · logs · cancel\nevents · run · replan\n/ws/task/{id}"]
+    Depends["Depends\nSessionManager: Redis hash / memory fallback\nStreamCollector: in-memory seq buffer\nMCP clients"]
 
-    subgraph routers["Роутеры"]
-        Health["/health"]
-        Agents["/agents"]
-        Sessions["/sessions"]
-        Tasks["/tasks"]
-        WsEndpoint["/ws  WebSocket"]
-    end
+    Planner["Planner\nLLM JSON plan + heuristic fallback"]
+    Runner["PlanRunner\nsequential execution + retries"]
+    SDK["Agents SDK Executor\nRunner.run_streamed"]
+    Agents["Agents\nRouter · RobotInfo · MapAnalyst\nNavigation · SwarmCoordinator · General"]
 
-    subgraph deps["Зависимости  Depends"]
-        SessionMgr["SessionManager\nRedis · TTL 24h"]
-        StreamColl["StreamCollector\nseq-нумерация событий"]
-        MCPClients["MCP Clients\nmission-control · dispatch · ros"]
-    end
+    MCP["MCP servers\nmission-control · mission-dispatch · ros-msp"]
+    Mission["Mission APIs\nMission Control / Dispatch · rosbridge"]
+    VLLM["vLLM Service\nQwen2.5-Instruct"]
+    Redis["Redis optional\nsessions + MCP cache"]
+    Stream["TaskStore + StreamCollector\nGET /events · WebSocket push"]
 
-    subgraph agentLayer["Агентный слой  9 агентов"]
-        RouterA["Router\n8 категорий"]
-        MissionA["MissionPlanner\nдвухфазный"]
-        MapA["MapAnalyst\nvision-LLM"]
-        NavGroup["Navigation · Charging\nPatrol · Inspection"]
-        FleetA["FleetOps\nSwarmCoordinator"]
-        GenA["General"]
-    end
-
-    vLLM["vLLM Service\nQwen2.5-Instruct"]
-    Redis["Redis\nСессии · Кэш"]
-
-    App --> Health & Agents & Sessions & Tasks & WsEndpoint
-    Tasks & WsEndpoint --> SessionMgr & StreamColl & MCPClients
-    StreamColl --> RouterA
-    RouterA --> MissionA & MapA & NavGroup & FleetA & GenA
-    MissionA & MapA & NavGroup & FleetA --> MCPClients
-    MCPClients --> vLLM
-    SessionMgr --> Redis
+    App --> Routes --> Depends
+    Routes --> Planner --> Runner --> SDK --> Agents
+    Agents --> MCP --> Mission
+    Agents --> VLLM
+    Depends --> Redis
+    Depends --> Stream
+    Runner --> Stream
+    Stream --> Routes
 
     style App fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style Health fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Agents fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Sessions fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style Tasks fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style WsEndpoint fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style SessionMgr fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style StreamColl fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style MCPClients fill:none,stroke:#ffa500,stroke-width:2px,color:#000
-    style RouterA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style MissionA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style MapA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style NavGroup fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style FleetA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style GenA fill:none,stroke:#52c41a,stroke-width:2px,color:#000
-    style vLLM fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Routes fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style Depends fill:none,stroke:#ffa500,stroke-width:2px,color:#000
+    style Planner fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Runner fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style SDK fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style Agents fill:none,stroke:#52c41a,stroke-width:2px,color:#000
+    style MCP fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style Mission fill:none,stroke:#e67e22,stroke-width:2px,color:#000
+    style VLLM fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
     style Redis fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
+    style Stream fill:none,stroke:#9b59b6,stroke-width:2px,color:#000

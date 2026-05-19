@@ -2,16 +2,17 @@ graph TB
     User["Пользователь"]
     Frontend["React Frontend\nChat + TracePanel + Files + Profile"]
 
-    FastAPI["FastAPI\n/api/chats/ + /ws"]
+    FastAPI["FastAPI\n/api/chats/*"]
     WsLayer["WebSocket Layer\nauth → stream → heartbeat"]
-    ChatSvc["ChatService\nJobOrchestrator"]
+    ChatSvc["ChatService\nChatJobOrchestrator"]
     RabbitMQ["RabbitMQ\nброкер задач"]
     CeleryTask["Celery Worker\nprocess_agent_message"]
 
-    AgentExec["AgentExecutionService\nроутинг + сборка ответа"]
-    OrchestratorWS["Orchestrator\nWebSocket /ws/task/{id}"]
+    AgentExec["AgentExecutionService\nвыбор локального агента"]
+    SwarmAgent["SwarmOrchestratorAgent\nREST polling к Orchestrator"]
+    OrchestratorAPI["Orchestrator\nPOST /task + GET /events"]
 
-    Agents["Агенты\nGeneral · WebSearch · DeepResearch\nImageGen · PptxGen · Audio · Swarm"]
+    Agents["Агенты\nGeneral · WebSearch · DeepResearch\nImageGen · PptxGen · AudioTranscribe\nSwarmOrchestrator"]
     LLMProviders["LLM Providers\nOpenAI / OpenRouter / MWS"]
     ExternalAPIs["External APIs\nWeb Search · Image Gen · Mem0"]
 
@@ -28,10 +29,12 @@ graph TB
     WsLayer -->|"XREAD"| RedisStream
 
     CeleryTask --> AgentExec
-    AgentExec --> OrchestratorWS
-    OrchestratorWS -->|"выбор агента"| Agents
+    AgentExec --> Agents
+    Agents --> SwarmAgent
+    SwarmAgent -->|"POST /task\nGET /task/{id}/events"| OrchestratorAPI
     Agents -->|"completions"| LLMProviders
     Agents -->|"tools"| ExternalAPIs
+    OrchestratorAPI -->|"task events"| SwarmAgent
     Agents -->|"AgentEvent XADD"| RedisStream
 
     RedisStream -->|"stream_chunk\nagent_reply\nrouting/tool events"| WsLayer
@@ -47,7 +50,7 @@ graph TB
     style RabbitMQ fill:none,stroke:#ffa500,stroke-width:2px,color:#000
     style CeleryTask fill:none,stroke:#ffa500,stroke-width:2px,color:#000
     style AgentExec fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
-    style OrchestratorWS fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
+    style OrchestratorAPI fill:none,stroke:#4a9eff,stroke-width:2px,color:#000
     style Agents fill:none,stroke:#52c41a,stroke-width:2px,color:#000
     style RedisStream fill:none,stroke:#9b59b6,stroke-width:2px,color:#000
     style LLMProviders fill:none,stroke:#e67e22,stroke-width:2px,color:#000

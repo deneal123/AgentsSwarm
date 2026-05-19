@@ -1,5 +1,5 @@
 graph LR
-    POST["POST /tasks\nсоздание задачи"]
+    POST["POST /api/chats/{thread_id}/message\nсоздание Celery-задачи"]
     Pending["pending\nожидание воркера"]
     Running["running\nCelery выполняет"]
     Completed["completed\nagent_reply получен"]
@@ -11,7 +11,7 @@ graph LR
     ToolEvent["tool_event\nвызов инструмента"]
 
     RedisStream["Redis Stream\nchat:{thread_id}:stream\nXADD"]
-    WebSocket["WebSocket\nXREAD → push → клиент"]
+    WebSocket["WebSocket\n/api/chats/{thread_id}/ws\nXREAD → push → клиент"]
 
     POST -->|"apply_async"| Pending
     Pending -->|"Celery pick up"| Running
@@ -20,7 +20,7 @@ graph LR
 
     Running --> StreamChunk & AgentReply & RoutingEvent & ToolEvent
     StreamChunk & AgentReply & RoutingEvent & ToolEvent -->|"XADD"| RedisStream
-    RedisStream -->|"XREAD block=0"| WebSocket
+    RedisStream -->|"XREAD block=1000 ms"| WebSocket
 
     style POST fill:none,stroke:#ff6b6b,stroke-width:2px,color:#000
     style Pending fill:none,stroke:#ffa500,stroke-width:2px,color:#000

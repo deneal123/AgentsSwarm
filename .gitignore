@@ -6,3 +6,6 @@
 ВКР.log/
 ВКР.out/
 ВКР.synctex.gz/
+.venv/
+mmdc-puppeteer.json
+uv.lock

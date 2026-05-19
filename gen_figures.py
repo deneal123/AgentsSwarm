@@ -2,7 +2,16 @@
 Генератор диаграмм для диссертации AgentsSwarm.
 Запуск: python gen_figures.py
 Выходные файлы: img/fig_*.png (300 dpi)
+
+DEPRECATED: актуальные схемы хранятся в mmd/fig_*.mmd и рендерятся через
+Mermaid CLI. Этот старый Matplotlib-генератор оставлен только как архивный
+черновик и не должен перезаписывать финальные PNG.
 """
+raise SystemExit(
+    "gen_figures.py is deprecated. Render mmd/fig_*.mmd with Mermaid CLI "
+    "using mmdc-puppeteer.json; keep fig_3_2/fig_3_9/fig_3_10 as manual screenshots."
+)
+
 import os
 import textwrap
 import matplotlib
