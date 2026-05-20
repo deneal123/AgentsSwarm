@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.5.19)  19 MAY 2026 21:03
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.5.19)  20 MAY 2026 16:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1638,391 +1638,412 @@ int checking и
  []
 
 [54]
-Underfull \hbox (badness 10000) in paragraph at lines 964--965
+ignored: Infinite glue shrinkage found in box being split [55
+
+] [56]
+Underfull \hbox (badness 10000) in paragraph at lines 989--990
 \TU/TimesNewRoman(0)/m/n/14.4 Systems Magazine. 2023. DOI: 10.1109/MITS.2023.32
 98534.
  []
 
 
-Underfull \hbox (badness 4569) in paragraph at lines 970--971
+Underfull \hbox (badness 4569) in paragraph at lines 995--996
 \TU/TimesNewRoman(0)/m/n/14.4 Communication for Joint Perception and Prediction
  // ECCV 2020.
  []
 
 
-Underfull \hbox (badness 2080) in paragraph at lines 973--974
+Underfull \hbox (badness 2080) in paragraph at lines 998--999
 []\TU/TimesNewRoman(0)/m/n/14.4 Лю Й.-Ч., Тянь Дж., Глэйзер Н., Кира З. When2co
 m: Multi-Agent
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 973--974
+Underfull \hbox (badness 10000) in paragraph at lines 998--999
 \TU/TimesNewRoman(0)/m/n/14.4 Perception via Communication Graph Grouping // CV
 PR 2020.
  []
 
 
-Underfull \hbox (badness 1102) in paragraph at lines 976--977
+Underfull \hbox (badness 1102) in paragraph at lines 1001--1002
 []\TU/TimesNewRoman(0)/m/n/14.4 Ху Й., Фан С., Лэй З. и др. Where2comm: Communi
 cation-Efficient
  []
 
 
-Underfull \hbox (badness 7796) in paragraph at lines 992--993
+Underfull \hbox (badness 7796) in paragraph at lines 1017--1018
 \TU/TimesNewRoman(0)/m/n/14.4 Simultaneous Localization and Mapping: a Survey o
 f the Current
  []
 
 
-Underfull \hbox (badness 3417) in paragraph at lines 992--993
+Underfull \hbox (badness 3417) in paragraph at lines 1017--1018
 \TU/TimesNewRoman(0)/m/n/14.4 Research Landscape // Field Robotics. 2022. Vol. 
 2. Pp. 971–1000.
  []
 
-[55
+[57
 
 ]
-Underfull \hbox (badness 7722) in paragraph at lines 995--996
+Underfull \hbox (badness 7722) in paragraph at lines 1020--1021
 []\TU/TimesNewRoman(0)/m/n/14.4 Лажуа П.-И., Бельтраме Дж. Swarm-SLAM: Sparse D
 ecentralized
  []
 
 
-Underfull \hbox (badness 2591) in paragraph at lines 995--996
+Underfull \hbox (badness 2591) in paragraph at lines 1020--1021
 \TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and Mappi
 ng Framework for
  []
 
 
-Underfull \hbox (badness 1354) in paragraph at lines 998--999
+Underfull \hbox (badness 1354) in paragraph at lines 1023--1024
 []\TU/TimesNewRoman(0)/m/n/14.4 VDA, VDMA. VDA 5050: Interface for the Communic
 ation Between
  []
 
 
-Underfull \hbox (badness 2245) in paragraph at lines 1001--1002
+Underfull \hbox (badness 2245) in paragraph at lines 1026--1027
 \TU/TimesNewRoman(0)/m/n/14.4 Perspective on Multi-Agent Decision Making for In
 teroperable Robot
  []
 
 
-Underfull \hbox (badness 1881) in paragraph at lines 1001--1002
+Underfull \hbox (badness 1881) in paragraph at lines 1026--1027
 \TU/TimesNewRoman(0)/m/n/14.4 Navigation following the VDA5050 Standard // arXi
 v preprint. 2023.
  []
 
 
-Underfull \hbox (badness 1953) in paragraph at lines 1004--1005
+Underfull \hbox (badness 1953) in paragraph at lines 1029--1030
 []\TU/TimesNewRoman(0)/m/n/14.4 Open Robotics. Open RMF (Open Robotics Middlewa
 re Framework).
  []
 
 
-Underfull \hbox (badness 2556) in paragraph at lines 1004--1005
+Underfull \hbox (badness 2556) in paragraph at lines 1029--1030
 \TU/TimesNewRoman(0)/m/n/14.4 2021–2024. URL: [][]$[][][][][] [] [] [] [][][][]
 [][] [] [][][] [] [][][][][][][][][]$[][] (дата обращения:
  []
 
-[56]
-Underfull \hbox (badness 3312) in paragraph at lines 1029--1030
+[58]
+Underfull \hbox (badness 3312) in paragraph at lines 1054--1055
 []\TU/TimesNewRoman(0)/m/n/14.4 Сингх И., Блукис В., Мусавьян А. и др. ProgProm
 pt: Generating
  []
 
 
-Underfull \hbox (badness 2837) in paragraph at lines 1032--1033
+Underfull \hbox (badness 2837) in paragraph at lines 1057--1058
 []\TU/TimesNewRoman(0)/m/n/14.4 Пан Дж., Тан Л. и др. SELP: Generating Safe and
  Efficient Task
  []
 
 
-Underfull \hbox (badness 1515) in paragraph at lines 1032--1033
+Underfull \hbox (badness 1515) in paragraph at lines 1057--1058
 \TU/TimesNewRoman(0)/m/n/14.4 Plans for Robot Agents with Large Language Models
  // ICRA 2025.
  []
 
 
-Underfull \hbox (badness 2229) in paragraph at lines 1039--1040
+Underfull \hbox (badness 2229) in paragraph at lines 1064--1065
 \TU/TimesNewRoman(0)/m/n/14.4 Models Transfer Web Knowledge to Robotic Control 
 // CoRL 2023.
  []
 
 
-Underfull \hbox (badness 2913) in paragraph at lines 1042--1043
+Underfull \hbox (badness 2913) in paragraph at lines 1067--1068
 []\TU/TimesNewRoman(0)/m/n/14.4 Хуан В., Ван Ч., Чжан Р. и др. VoxPoser: Compos
 able 3D Value
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1048--1049
+Underfull \hbox (badness 10000) in paragraph at lines 1073--1074
 []\TU/TimesNewRoman(0)/m/n/14.4 Open X-Embodiment Collaboration. Open X-Embodim
 ent: Robotic
  []
 
 
-Underfull \hbox (badness 5726) in paragraph at lines 1054--1055
+Underfull \hbox (badness 5726) in paragraph at lines 1079--1080
 []\TU/TimesNewRoman(0)/m/n/14.4 Ретцлафф М. и др. (HuggingFace/LeRobot). SmolVL
 A: A Vision-
  []
 
-[57]
-Underfull \hbox (badness 10000) in paragraph at lines 1064--1065
+[59]
+Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
 []\TU/TimesNewRoman(0)/m/n/14.4 Миттал М., Ю Ч., Ю К. и др. Orbit: A Unified Si
 mulation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1064--1065
+Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
 \TU/TimesNewRoman(0)/m/n/14.4 Framework for Interactive Robot Learning Environm
 ents // IEEE
  []
 
 
-Underfull \hbox (badness 1817) in paragraph at lines 1067--1068
+Underfull \hbox (badness 1817) in paragraph at lines 1092--1093
 []\TU/TimesNewRoman(0)/m/n/14.4 Жасинто М.Ф., Пинто Дж. и др. Pegasus Simulator
 : An Isaac Sim
  []
 
 
-Underfull \hbox (badness 3078) in paragraph at lines 1067--1068
+Underfull \hbox (badness 3078) in paragraph at lines 1092--1093
 \TU/TimesNewRoman(0)/m/n/14.4 Framework for Multiple Aerial Vehicles Simulation
  // ICUAS 2024.
  []
 
 
-Underfull \hbox (badness 1389) in paragraph at lines 1073--1074
+Underfull \hbox (badness 1389) in paragraph at lines 1098--1099
 []\TU/TimesNewRoman(0)/m/n/14.4 Квон В., Ли З., Чжуан С. и др. Efficient Memory
  Management for
  []
 
 
-Underfull \hbox (badness 3471) in paragraph at lines 1073--1074
+Underfull \hbox (badness 3471) in paragraph at lines 1098--1099
 \TU/TimesNewRoman(0)/m/n/14.4 Large Language Model Serving with PagedAttention 
 // SOSP 2023.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1083--1084
+Underfull \hbox (badness 10000) in paragraph at lines 1108--1109
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. 2024. URL: [][]$[][][][][] 
 [] [] [] [][][][][][][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1083--1084
+Underfull \hbox (badness 10000) in paragraph at lines 1108--1109
 [][][][][][] [] [][] [] [][][][][][][] [] [][][][][][][] [] [][][][][] [] [][][
 ][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (дата обращения:
  []
 
-[58]
-Underfull \hbox (badness 4634) in paragraph at lines 1086--1087
+[60]
+Underfull \hbox (badness 4634) in paragraph at lines 1111--1112
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Corporation. Isaac ROS Repositories and 
 Packages [Элек-
  []
 
 
-Underfull \hbox (badness 2020) in paragraph at lines 1086--1087
+Underfull \hbox (badness 2020) in paragraph at lines 1111--1112
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. 2024. URL: [][]$[][][][][] [] []
  [] [][][][][][][][][][][][][][][][][][] [] [][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1086--1087
+Underfull \hbox (badness 10000) in paragraph at lines 1111--1112
 [][] [] [][][][][][][][][][][][] [] [][][] [] [][][][][][][][] [] [][][][][] []
  [][][][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (дата обращения:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
+Underfull \hbox (badness 10000) in paragraph at lines 1114--1115
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. 2025. URL: [][]$[][][][][] 
 [] [] [] [][][][] [] [][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1089--1090
+Underfull \hbox (badness 10000) in paragraph at lines 1114--1115
 [][][][][][][][][] [] [][][][][][] [] [][][] [] [] [] [] [] [] [] [][][] [] [][
 ][][][][][][][] [] [][][][][][][][] [] [][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
+Underfull \hbox (badness 10000) in paragraph at lines 1117--1118
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Omniverse. IsaacSim-ros_workspaces: Offi
 cial ROS 2
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
+Underfull \hbox (badness 10000) in paragraph at lines 1117--1118
 \TU/TimesNewRoman(0)/m/n/14.4 Workspaces for Isaac Sim [Электронный ресурс]. UR
 L: [][]$[][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1092--1093
+Underfull \hbox (badness 10000) in paragraph at lines 1117--1118
 [] [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][][][][][] [] [][][][][
 ][][][][][][][][] [] [][][][][][][][][][]$[][] \TU/TimesNewRoman(0)/m/n/14.4 (д
 ата
  []
 
 
-Underfull \hbox (badness 3514) in paragraph at lines 1095--1096
+Underfull \hbox (badness 3514) in paragraph at lines 1120--1121
 []\TU/TimesNewRoman(0)/m/n/14.4 Open Robotics. ROS 2 Jazzy Jalisco [Электронный
  ресурс]. 2024.
  []
 
 
-Underfull \hbox (badness 6412) in paragraph at lines 1101--1102
+Underfull \hbox (badness 6412) in paragraph at lines 1126--1127
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. URL: [][]$[][][][][] [] [] 
 [] [][][][][][] [] [][][] [] [][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 1104--1105
+Underfull \hbox (badness 2418) in paragraph at lines 1129--1130
 []\TU/TimesNewRoman(0)/m/n/14.4 NVIDIA Isaac. Mission Dispatch: VDA5050 Fleet D
 ispatcher [Элек-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1104--1105
+Underfull \hbox (badness 10000) in paragraph at lines 1129--1130
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. URL: [][]$[][][][][] [] [] [] []
 [][][][][] [] [][][] [] [][][][][][][][][][][][][] []
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1111--1112
+Underfull \hbox (badness 10000) in paragraph at lines 1136--1137
 []\TU/TimesNewRoman(0)/m/n/14.4 OpenAI. OpenAI Agents SDK [Электронный ресурс].
  2025.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1111--1112
+Underfull \hbox (badness 10000) in paragraph at lines 1136--1137
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][] [] [][
 ][] [] [][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][]$[][] (дата
  []
 
-[59]
-Underfull \hbox (badness 7326) in paragraph at lines 1114--1115
+[61]
+Underfull \hbox (badness 7326) in paragraph at lines 1139--1140
 []\TU/TimesNewRoman(0)/m/n/14.4 Anthropic. Model Context Protocol (MCP) [Электр
 онный ресурс].
  []
 
 
-Underfull \hbox (badness 2478) in paragraph at lines 1114--1115
+Underfull \hbox (badness 2478) in paragraph at lines 1139--1140
 \TU/TimesNewRoman(0)/m/n/14.4 2024. URL: [][]$[][][][][] [] [] [] [][][][][][][
 ][][][][][][][][][][][][][] [] [][][]$[][] (дата обращения:
  []
 
 
-Underfull \hbox (badness 1147) in paragraph at lines 1117--1118
+Underfull \hbox (badness 1147) in paragraph at lines 1142--1143
 []\TU/TimesNewRoman(0)/m/n/14.4 RobotMCP. ros-mcp-server: ROS MCP Server [Элект
 ронный ресурс].
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1127--1128
+Underfull \hbox (badness 10000) in paragraph at lines 1152--1153
 []\TU/TimesNewRoman(0)/m/n/14.4 Alibaba Cloud. Qwen2.5-7B-Instruct [Электронный
  ресурс]. 2024.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1127--1128
+Underfull \hbox (badness 10000) in paragraph at lines 1152--1153
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][][][][][
 ][] [] [][] [] [][][][] [] [][][][][] [] [][][][][][][][][][][][][][][]$[][] (д
 ата
  []
 
 
-Underfull \hbox (badness 1308) in paragraph at lines 1134--1135
+Underfull \hbox (badness 1308) in paragraph at lines 1159--1160
 []\TU/TimesNewRoman(0)/m/n/14.4 Redis Ltd. Redis-py: Python Client for Redis [Э
 лектронный ресурс].
  []
 
 
-Underfull \hbox (badness 2343) in paragraph at lines 1137--1138
+Underfull \hbox (badness 2343) in paragraph at lines 1162--1163
 []\TU/TimesNewRoman(0)/m/n/14.4 Broadcom Inc. RabbitMQ: Open Source Message Bro
 ker [Электрон-
  []
 
 
-Underfull \hbox (badness 2626) in paragraph at lines 1137--1138
+Underfull \hbox (badness 2626) in paragraph at lines 1162--1163
 \TU/TimesNewRoman(0)/m/n/14.4 ный ресурс]. URL: [][]$[][][][][] [] [] [] [][][]
  [] [][][][][][][][] [] [][][][]$[][] (дата обращения:
  []
 
 
-Underfull \hbox (badness 1292) in paragraph at lines 1143--1144
+Underfull \hbox (badness 1292) in paragraph at lines 1168--1169
 \TU/TimesNewRoman(0)/m/n/14.4 [Электронный ресурс]. URL: [][]$[][][][][] [] [] 
 [] [][][][] [] [][][][][][][][][][] [] [][][][]$[][] (дата
  []
 
-[60]
-Underfull \hbox (badness 1253) in paragraph at lines 1162--1163
+[62]
+Underfull \hbox (badness 1253) in paragraph at lines 1187--1188
 \TU/TimesNewRoman(0)/m/n/14.4 тронный ресурс]. URL: [][]$[][][][][] [] [] [] []
 [][][][][] [] [][][] [] [][][][][][][][][][][] [] [][][][][][][]$[][]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1165--1166
+Underfull \hbox (badness 10000) in paragraph at lines 1190--1191
 []\TU/TimesNewRoman(0)/m/n/14.4 HuggingFace. LeRobot Documentation [Электронный
  ресурс].
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1165--1166
+Underfull \hbox (badness 10000) in paragraph at lines 1190--1191
 \TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][][][][][][][
 ][] [] [][] [] [][][][] [] [][][][][][][]$[][] (дата обращения:
  []
 
-[61]
-Приложение А.
 
-Underfull \hbox (badness 10000) in paragraph at lines 1184--1184
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Behavior Tree
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1185--1186
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1186--1186
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Cooperative
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1187--1187
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Fleet
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1188--1188
-[]|\TU/TimesNewRoman(0)/m/n/14.4 Foundation
+Underfull \hbox (badness 1515) in paragraph at lines 1193--1194
+[]\TU/TimesNewRoman(0)/m/n/14.4 Google. Use Deep Research in Gemini Apps [Элект
+ронный ресурс].
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1196--1197
+[]\TU/TimesNewRoman(0)/m/n/14.4 OpenAI. Deep research in ChatGPT [Электронный р
+есурс].
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1196--1197
+\TU/TimesNewRoman(0)/m/n/14.4 URL: [][]$[][][][][] [] [] [] [][][][] [] [][][][
+][][] [] [][][] [] [][][][][][][][] [] [][][][][][][][]$[][] (дата обра-
+ []
+
+[63]
+Приложение А.
+
+Underfull \hbox (badness 10000) in paragraph at lines 1215--1215
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Behavior Tree
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1216--1217
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1217--1217
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Cooperative
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1218--1218
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Fleet
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1219--1219
+[]|\TU/TimesNewRoman(0)/m/n/14.4 Foundation
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1227--1228
 []|\TU/TimesNewRoman(0)/m/n/14.4 Открытый стандарт коммуникации между
  []
 
 
-Underfull \hbox (badness 2717) in paragraph at lines 1197--1198
+Underfull \hbox (badness 2717) in paragraph at lines 1228--1229
 []|\TU/TimesNewRoman(0)/m/n/14.4 Vision-Language-Action model — мультимо-
  []
 
 
-ignored: Infinite glue shrinkage found in box being split [62
+ignored: Infinite glue shrinkage found in box being split [64
 
-] [63]
+] [65]
 Приложение Б.
 
-Underfull \hbox (badness 10000) in paragraph at lines 1215--1216
+Underfull \hbox (badness 10000) in paragraph at lines 1246--1247
 []|\TU/TimesNewRoman(0)/m/n/14.4 Collaborative Simultaneous Localization and
  []
 
-[64
+[66
 
 ]
 Приложение В.
-[65
+[67
 
 ]
 Приложение Г.
@@ -2030,28 +2051,28 @@ Underfull \hbox (badness 10000) in paragraph at lines 1215--1216
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 1256.
+nput line 1287.
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 10.20007pt on input line 1256.
+(Font)              scaled to size 10.20007pt on input line 1287.
 
-[66
+[68
 
-] [67]
+] [69]
 Приложение Д.
 
-Underfull \hbox (badness 10000) in paragraph at lines 1321--1322
+Underfull \hbox (badness 10000) in paragraph at lines 1352--1353
 \TU/CourierNew(0)/m/n/14.4 pytest tests/ -q\TU/TimesNewRoman(0)/m/n/14.4 . Допо
 лнительно задавались \TU/CourierNew(0)/m/n/14.4 TEST_MODE=true \TU/TimesNewRoma
 n(0)/m/n/14.4 и
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1329--1330
+Underfull \hbox (badness 10000) in paragraph at lines 1360--1361
 []\TU/TimesNewRoman(0)/m/n/14.4 Условия измерения: RTX 4090 (24 ГБ VRAM), CUDA 
 12.1,
  []
 
-[68
+[70
 
 ] (ВКР.aux)
  ***********
@@ -2059,15 +2080,15 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `ВКР.out' has not changed.
-(rerunfilecheck)             Checksum: F4EEE614A4B264551B4EAEE46EE1496F;20742.
+(rerunfilecheck)             Checksum: 4BF3B8B27A8D6A7B0118A057F09C9F0F;21102.
  ) 
 Here is how much of TeX's memory you used:
- 19307 strings out of 402807
- 357636 string characters out of 5445135
- 1191114 words of memory out of 5000000
- 47915 multiletter control sequences out of 15000+600000
+ 19310 strings out of 402807
+ 357701 string characters out of 5445135
+ 1191331 words of memory out of 5000000
+ 47918 multiletter control sequences out of 15000+600000
  631040 words of font info for 97 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  73i,17n,93p,864b,1829s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on ВКР.pdf (68 pages).
+Output written on ВКР.pdf (70 pages).

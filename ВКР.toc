@@ -53,10 +53,11 @@
 \contentsline {section}{\numberline {5.3}Тестирование Interface}{51}{section.5.3}%
 \contentsline {section}{\numberline {5.4}Выводы и результаты по главе~5}{51}{section.5.4}%
 \contentsline {chapter}{ЗАКЛЮЧЕНИЕ}{53}{chapter*.23}%
-\contentsline {chapter}{БИБЛИОГРАФИЧЕСКИЙ СПИСОК}{54}{Item.28}%
-\contentsline {chapter}{ПРИЛОЖЕНИЯ}{61}{chapter*.24}%
-\contentsline {chapter}{\numberline {А}Глоссарий предметной области}{62}{chapter.A}%
-\contentsline {chapter}{\numberline {Б}Список сокращений}{64}{chapter.B}%
-\contentsline {chapter}{\numberline {В}Технические характеристики инфраструктуры}{65}{chapter.C}%
-\contentsline {chapter}{\numberline {Г}Ключевые фрагменты кода}{66}{chapter.D}%
-\contentsline {chapter}{\numberline {Д}Протоколы экспериментов}{68}{chapter.E}%
+\contentsline {chapter}{ОПИСАНИЕ ПРИМЕНЕНИЯ ГЕНЕРАТИВНОЙ МОДЕЛИ}{55}{chapter*.24}%
+\contentsline {chapter}{БИБЛИОГРАФИЧЕСКИЙ СПИСОК}{56}{table.5.1}%
+\contentsline {chapter}{ПРИЛОЖЕНИЯ}{63}{chapter*.25}%
+\contentsline {chapter}{\numberline {А}Глоссарий предметной области}{64}{chapter.A}%
+\contentsline {chapter}{\numberline {Б}Список сокращений}{66}{chapter.B}%
+\contentsline {chapter}{\numberline {В}Технические характеристики инфраструктуры}{67}{chapter.C}%
+\contentsline {chapter}{\numberline {Г}Ключевые фрагменты кода}{68}{chapter.D}%
+\contentsline {chapter}{\numberline {Д}Протоколы экспериментов}{70}{chapter.E}%
