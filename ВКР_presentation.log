@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.5.19)  26 MAY 2026 19:37
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.5) (preloaded format=xelatex 2026.5.19)  27 MAY 2026 17:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1292,12 +1292,16 @@ File: Титульный слайд.pdf Graphic file (type pdf)
 
 
 ]
-Overfull \vbox (10.39749pt too high) detected at line 176
+Overfull \vbox (42.19951pt too high) detected at line 176
  []
 
 [2] [3
 
-] [4
+]
+Overfull \vbox (1.28676pt too high) detected at line 221
+ []
+
+[4
 
 ] [5
 
@@ -1318,6 +1322,10 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 340
 (C:\Users\denea\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+Overfull \hbox (1.26225pt too wide) in paragraph at lines 340--340
+[]|\TU/Arial(0)/b/n/9 Провайдер|  
+ []
+
 [8
 
 ] [9
@@ -1326,13 +1334,22 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 ] [11
 
-] [12
+]
+Overfull \hbox (1.7264pt too wide) in paragraph at lines 577--577
+ [][]\TU/Arial(0)/m/n/10 Navigation 
+ []
+
+
+Overfull \vbox (1.16248pt too high) detected at line 577
+ []
+
+[12
 
 ]
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 6.88pt on input line 594.
+(Font)              scaled to size 6.88pt on input line 622.
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 8.6pt on input line 594.
+(Font)              scaled to size 8.6pt on input line 622.
  [13
 
 ]
@@ -1351,7 +1368,7 @@ File: assets/fig_3_10_trace.png Graphic file (type bmp)
 
 ]
 LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 5.16pt on input line 755.
+(Font)              scaled to size 5.16pt on input line 785.
  [17
 
 ] [18
@@ -1391,11 +1408,11 @@ Package rerunfilecheck Info: File `ВКР_presentation.out' has not changed.
 (rerunfilecheck)             Checksum: 38F1AED3F90A2E26E3640EC6CD145B91;121.
  ) 
 Here is how much of TeX's memory you used:
- 29907 strings out of 402807
- 621763 string characters out of 5445135
- 1095643 words of memory out of 5000000
- 58227 multiletter control sequences out of 15000+600000
- 633216 words of font info for 103 fonts, out of 8000000 for 9000
+ 29912 strings out of 402807
+ 621508 string characters out of 5445135
+ 1106459 words of memory out of 5000000
+ 58226 multiletter control sequences out of 15000+600000
+ 634777 words of font info for 111 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  128i,17n,123p,431b,1095s stack positions out of 10000i,1000n,20000p,200000b,200000s
 

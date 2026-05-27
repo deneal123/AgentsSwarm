@@ -148,30 +148,30 @@
 \begin{frame}{Предметная область и термины}
   \sectiontag{Контекст работы}
   {\large\bfseries Работа находится на стыке multi-robot systems, fleet management,
-  LLM-агентов и цифрового двойника.}
-  \vspace{0.28cm}
+  LLM-агентов и симуляционного роботического контура.}
+  \vspace{0.18cm}
 
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.49\textwidth}
       \begin{minipage}[t][2.10cm][t]{\linewidth}
-        \keybox{AMR/AGV-флот}{группа мобильных роботов, которым нужны общая карта, статусы и согласованные маршруты}
+        \keybox{AMR/AGV-флот}{группа мобильных роботов, требующая общей карты, координации статусов и согласованного планирования маршрутов}
       \end{minipage}
       \vspace{0.14cm}
-      \keybox{VDA5050}{промышленный формат обмена между fleet manager и роботами}
+      \keybox{VDA5050}{промышленный протокол обмена командами и состояниями между fleet manager и роботами}
     \end{column}
     \begin{column}{0.49\textwidth}
       \begin{minipage}[t][2.10cm][t]{\linewidth}
-        \keybox{MCP}{стандартный tool-интерфейс между LLM-агентами и внешними сервисами}
+        \keybox{MCP}{стандартизованный интерфейс вызова инструментов между LLM-агентом и внешними сервисами}
       \end{minipage}
       \vspace{0.14cm}
-      \keybox{Digital twin}{Isaac Sim и ROS\,2 позволяют проверить маршрут до физического внедрения}
+      \keybox{Isaac Sim + ROS\,2}{физически правдоподобная симуляционная среда для верификации миссий до развёртывания на реальном оборудовании}
     \end{column}
   \end{columns}
 
-  \vspace{0.22cm}
+  \vspace{0.06cm}
   \begin{beamercolorbox}[wd=\linewidth,sep=0.13cm]{block body}
-    \small Предмет работы не низкоуровневое управление колесами, а архитектура,
-    которая переводит смысловую задачу человека в исполнимый контур миссий.
+    \small Предмет работы~--- не низкоуровневое управление движением робота, а системная интеграция
+    семантического планирования с промышленным исполнительным контуром.
   \end{beamercolorbox}
 \end{frame}
 
@@ -192,9 +192,9 @@
     \begin{column}{0.46\textwidth}
       \keybox{Локальное восприятие}{камера, лидар и вычисления ограничены одним роботом}
       \vspace{0.16cm}
-      \keybox{Разрозненные контуры}{симуляция, VDA5050, LLM и UI обычно живут отдельно}
+      \keybox{Разрозненные контуры}{симуляция, VDA5050, LLM и UI функционируют как независимые компоненты без единого интеграционного слоя}
       \vspace{0.16cm}
-      \keybox{Нет реактивной оркестрации}{сложно быстро перестроить миссии роя по наблюдениям}
+      \keybox{Нет реактивной оркестрации}{отсутствует механизм динамической коррекции миссий группы по наблюдениям агентов}
     \end{column}
   \end{columns}
 \end{frame}
@@ -203,20 +203,20 @@
 \begin{frame}{Исследовательский разрыв}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.31\textwidth}
-      \keybox{Cooperative perception}{алгоритмы дают обмен признаками и детекциями, но редко интегрируются с промышленным fleet management}
-    \end{column}
+      \keybox{Cooperative perception}{алгоритмы обеспечивают обмен признаками и детекциями, однако редко интегрируются с промышленными системами fleet management}
+\end{column}
     \begin{column}{0.31\textwidth}
-      \keybox{VDA5050 и fleet management}{дают надежную диспетчеризацию, но требуют формальных API-команд}
-    \end{column}
+      \keybox{VDA5050 и fleet management}{обеспечивают надёжную диспетчеризацию миссий, однако требуют формальных API-команд без поддержки естественного языка}
+\end{column}
     \begin{column}{0.31\textwidth}
-      \keybox{LLM-агенты}{умеют планировать и вызывать инструменты, но нуждаются в ограниченном исполнимом контуре}
+      \keybox{LLM-агенты}{обеспечивают высокоуровневое планирование и вызов инструментов, однако требуют детерминированного исполнительного контура}
     \end{column}
   \end{columns}
   \vspace{0.42cm}
   \begin{beamercolorbox}[wd=\linewidth,sep=0.18cm]{block body}
     \textbf{\color{hseblue}Вклад работы:}
     воспроизводимая интеграция LLM-слоя, MCP-инструментов, VDA5050,
-    ROS 2 и цифрового двойника Isaac Sim в одну исполнимую архитектуру.
+    ROS 2 и симуляционного контура Isaac Sim в единую исполнимую архитектуру.
   \end{beamercolorbox}
 \end{frame}
 
@@ -316,10 +316,10 @@
 % 8
 \begin{frame}{Инфраструктура развёртывания}
   \vspace{0.08cm}
-  \small
-  \renewcommand{\arraystretch}{1.2}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.05}
   \tablecaption{Технические характеристики вычислительной инфраструктуры}
-  \begin{tabular}{@{}>{\bfseries\color{hseblue}\raggedright\arraybackslash}m{2.80cm}>{\raggedright\arraybackslash}m{1.95cm}>{\raggedright\arraybackslash}m{4.05cm}>{\raggedright\arraybackslash}m{3.45cm}@{}}
+  \begin{tabular}{@{}>{\bfseries\color{hseblue}\raggedright\arraybackslash}m{2.40cm}>{\raggedright\arraybackslash}m{1.70cm}>{\raggedright\arraybackslash}m{3.60cm}>{\raggedright\arraybackslash}m{3.20cm}@{}}
     \toprule
     \textbf{Назначение} & \textbf{Провайдер} & \textbf{Конфигурация} & \textbf{Сервисы} \\
     \midrule
@@ -340,19 +340,17 @@
 \end{frame}
 
 % 9
-\begin{frame}{Идея}
+\begin{frame}{Архитектурная идея}
   \sectiontag{Ключевой принцип}
   {\large\bfseries LLM не управляет роботом напрямую: LLM планирует поверх ограниченного набора инструментов.}
-  \vspace{0.20cm}
+  \vspace{0.62cm}
 
-  % Fixed-size tikzpicture scaled to fit the text column.
-  % Native width ≈ 14 cm → scale 0.86 → rendered ≈ 12.0 cm ≈ \linewidth.
-  \scalebox{0.86}{%
+  \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
-    box/.style={draw=hseblue, line width=0.8pt, rounded corners=2pt, align=center,
-                minimum height=0.90cm, text width=2.35cm, font=\small},
-    arrow/.style={-{Latex[length=1.8mm]}, line width=0.85pt, draw=hseblue},
-    back/.style={-{Latex[length=1.8mm]}, line width=0.75pt, draw=hsegray, dashed}
+    box/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, align=center,
+                minimum height=0.80cm, text width=2.35cm, font=\small},
+    arrow/.style={-{Latex[length=1.8mm]}, line width=0.7pt, draw=hseblue},
+    back/.style={-{Latex[length=1.6mm]}, line width=0.65pt, draw=hsegray, dashed}
   ]
     \node[box] (user)  at (0,    0) {Естественный\\язык};
     \node[box] (llm)   at (3.00, 0) {Агент};
@@ -365,7 +363,6 @@
     \draw[arrow] (mcp)   -- (vda);
     \draw[arrow] (vda)   -- (robot);
 
-    % feedback arc stays below boxes; label on the line
     \draw[back]
       (robot.south) -- ++(0,-0.70)
       -- node[below, font=\scriptsize, text=hsegray, fill=white, inner sep=1pt,
@@ -374,7 +371,7 @@
   \end{tikzpicture}%
   }
 
-  \vspace{0.10cm}
+  \vspace{0.32cm}
 
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.30\textwidth}
@@ -391,159 +388,190 @@
 
 % 10
 \begin{frame}{Общая архитектура AgentsSwarm}
-  \vspace{-0.10cm}
+  \vspace{-0.42cm}
   \begin{center}
+  \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
-    layerbox/.style={draw=hseline, line width=0.6pt, rounded corners=2pt, fill=hselightblue, inner sep=4pt},
-    component/.style={draw=hseblue, line width=0.7pt, rounded corners=2pt, fill=white,
-                      align=center, minimum height=0.68cm, text width=3.00cm, font=\scriptsize},
-    service/.style={component, draw=hseviolet},
-    robot/.style={component, draw=hsegreen},
-    queue/.style={component, draw=hseorange},
-    arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt},
-    event/.style={-{Latex[length=1.8mm]}, draw=hsegray, line width=0.6pt, dashed},
-    layername/.style={font=\small\bfseries, text=hseblue, align=center}
+    nd/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
+               align=center, minimum height=0.82cm, text width=2.10cm, font=\scriptsize},
+    ndo/.style={nd, draw=hseorange},
+    ndv/.style={nd, draw=hseviolet},
+    ndg/.style={nd, draw=hsegreen},
+    arr/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt},
+    biarr/.style={{Latex[length=1.6mm]}-{Latex[length=1.6mm]}, draw=hseblue, line width=0.7pt}
   ]
-    % layer backgrounds (width 3.6cm each, gap 0.5cm, centres at 1.9, 6.0, 10.1)
-    \node[layerbox, minimum width=3.60cm, minimum height=4.10cm] at (1.90,2.05) {};
-    \node[layerbox, minimum width=3.60cm, minimum height=4.10cm] at (6.00,2.05) {};
-    \node[layerbox, minimum width=3.60cm, minimum height=4.10cm] at (10.10,2.05) {};
+    % ── Col 1: User (x=0) ────────────────────────────────────────────────
+    \node[ndo] (user) at (0.00, 4.00) {Пользователь};
+    \node[ndo] (ui)   at (0.00, 2.70) {Interface\\React + FastAPI};
+    \node[ndo] (rmq)  at (0.00, 1.30) {RabbitMQ\\Task Queue};
 
-    \node[layername] at (1.90,3.95)  {Пользователь};
-    \node[layername] at (6.00,3.95)  {Планирование};
-    \node[layername] at (10.10,3.95) {Исполнение};
+    % ── Col 2: Redis (x=2.60) ─────────────────────────────────────────────
+    \node[ndv] (redis) at (2.60, 2.70) {Redis\\Streams + Cache};
 
-    \node[component] (user)    at (1.90,3.22) {Пользователь\\естественный язык};
-    \node[component] (ui)      at (1.90,2.05) {Interface\\React + FastAPI};
-    \node[queue]     (streams) at (1.90,0.88) {RabbitMQ / Redis\\queue + events};
+    % ── Col 3: LLM layer (x=5.20) ────────────────────────────────────────
+    \node[ndo] (orch) at (5.20, 2.70) {Orchestrator\\FastAPI + SDK};
+    \node[ndv] (vllm) at (5.20, 1.30) {vLLM Service\\2\,×\,Tesla V100};
 
-    \node[component] (orch) at (6.00,3.22) {Orchestrator\\Router / Planner / PlanRunner};
-    \node[service]   (vllm) at (6.00,2.05) {vLLM Service\\Qwen2.5 · 2\,×\,V100};
-    \node[component] (mcp)  at (6.00,0.88) {3 MCP-сервера\\MC / Dispatch / ROS\,2};
+    % ── Col 4: MCP layer (x=8.00) ────────────────────────────────────────
+    \node[nd] (mcp1) at (8.00, 3.80) {mission-control\\-mcp :8010/SSE};
+    \node[nd] (mcp2) at (8.00, 2.70) {mission-dispatch\\-mcp :8011/SSE};
+    \node[nd] (mcp3) at (8.00, 1.60) {ros-msp\\:8012/HTTP};
 
-    \node[robot] (mc)  at (10.10,3.22) {Mission Control\\Behavior Tree};
-    \node[robot] (md)  at (10.10,2.05) {Mission Dispatch\\VDA5050 / MQTT};
-    \node[robot] (sim) at (10.10,0.88) {ROS\,2 + Isaac Sim\\Carter robots};
+    % ── Col 5: Services (x=11.00) ────────────────────────────────────────
+    \node[nd]  (mc)  at (11.00, 3.80) {Mission Control\\BT + cuOpt};
+    \node[nd]  (md)  at (11.00, 2.70) {Mission Dispatch\\VDA5050 Fleet};
+    \node[ndg] (ros) at (11.00, 1.60) {ROS\,2 Jazzy\\rosbridge :9090};
 
-    \draw[arrow] (user) -- (ui);
-    \draw[arrow] (ui)   -- (streams);
-    \draw[arrow] (ui.east)  -- (orch.west);
-    \draw[arrow] (orch) -- (vllm);
-    \draw[arrow] (orch) -- (mcp);
-    \draw[arrow] (mcp.east) -- (mc.west);
-    \draw[arrow] (mcp.east) -- (md.west);
-    \draw[arrow] (mcp.east) -- (sim.west);
-    \draw[arrow] (mc)  -- (md);
-    \draw[arrow] (md)  -- (sim);
-    \draw[event] (streams.east) -- (orch.west);
-  \end{tikzpicture}
+    % ── Col 6: Sim (x=14.00) ─────────────────────────────────────────────
+    \node[ndg] (sim) at (14.00, 2.70) {Isaac Sim\\headless + Web};
+
+    % ── Edges ─────────────────────────────────────────────────────────────
+    \draw[arr]   (user)  -- (ui);
+    \draw[arr]   (ui)    -- (rmq);
+    \draw[biarr] (ui)    -- (redis);
+    \draw[biarr] (redis) -- (orch);
+    \draw[arr]   (orch)  -- (vllm);
+    \draw[arr]   (orch.north east) -- (mcp1.west);
+    \draw[arr]   (orch)  -- (mcp2);
+    \draw[arr]   (orch.south east) -- (mcp3.west);
+    \draw[arr]   (mcp1)  -- (mc);
+    \draw[arr]   (mcp2)  -- (md);
+    \draw[arr]   (mcp3)  -- (ros);
+    \draw[biarr] (mc)    -- (md);
+    \draw[arr]   (mc.east)  .. controls +(1.0,0) and +(0,0.8) .. (sim.north);
+    \draw[arr]   (md)    -- (sim);
+    \draw[arr]   (ros.east) .. controls +(1.0,0) and +(0,-0.8) .. (sim.south);
+  \end{tikzpicture}%
+  }
   \end{center}
-  \vspace{-0.02cm}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.32\textwidth}
-      \columnmetric{8}{самостоятельных компонентов}{UI, Orchestrator, vLLM, MCP, ROS\,2, Isaac Sim, Mission Control/Dispatch, SmolVLA}
-    \end{column}
-    \begin{column}{0.32\textwidth}
-      \columnmetric{3}{логических слоя}{восприятие, планирование, исполнение}
-    \end{column}
-    \begin{column}{0.32\textwidth}
-      \columnmetric{4}{протокола связи}{REST, WebSocket, MQTT, MCP}
-    \end{column}
-  \end{columns}
+  \figcaption{Общая архитектура AgentsSwarm: компоненты, потоки управления и данных}
 \end{frame}
 
 % 11
 \begin{frame}{Сквозной маршрут команды}
-  \vspace{0.05cm}
+  \vspace{-0.30cm}
   \begin{center}
+  \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
     rstep/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
-                  align=center, minimum height=1.0cm, text width=1.70cm, font=\scriptsize},
+                  align=center, minimum height=0.80cm, text width=1.60cm, font=\scriptsize},
     tool/.style={rstep, fill=hselightblue},
     exec/.style={rstep, draw=hsegreen, fill=white},
     arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.75pt},
     event/.style={-{Latex[length=1.8mm]}, draw=hsegray, line width=0.65pt, dashed}
   ]
-    \node[rstep] (s1) at (0.0, 1.85) {Запрос\\на языке};
-    \node[rstep] (s2) at (1.95,1.85) {Interface\\task};
-    \node[tool]  (s3) at (3.90,1.85) {Orchestrator\\план};
-    \node[tool]  (s4) at (5.85,1.85) {MCP\\tools};
-    \node[exec]  (s5) at (7.80,1.85) {Mission\\Dispatch};
-    \node[exec]  (s6) at (9.75,1.85) {VDA5050\\MQTT};
-    \node[exec]  (s7) at (11.70,1.85){Carter\\Isaac Sim};
+    % ── Заголовки слоёв ───────────────────────────────────────────────
+    \node[font=\small\bfseries, text=hsegray]  at (1.00, 3.10) {Пользователь};
+    \node[font=\small\bfseries, text=hseblue]  at (5.00, 3.10) {Планирование};
+    \node[font=\small\bfseries, text=hsegreen] at (11.00, 3.10) {Исполнение};
 
-    \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5,s5/s6,s6/s7}
+    % ── Разделители слоёв ─────────────────────────────────────────────
+    \draw[draw=hseline, line width=0.5pt] (3.00, 2.92) -- (3.00, 1.72);
+    \draw[draw=hseline, line width=0.5pt] (7.00, 2.92) -- (7.00, 1.72);
+
+    % ── 8 узлов (spacing 2.00 cm, text width 1.60 cm → зазор ≈ 0.2 cm) ──
+    \node[rstep] (s1) at (0.00,  2.35) {Запрос\\на языке};
+    \node[rstep] (s2) at (2.00,  2.35) {Interface\\task};
+    \node[tool]  (s3) at (4.00,  2.35) {Orchestrator\\план};
+    \node[tool]  (s4) at (6.00,  2.35) {MCP\\tools};
+    \node[exec]  (s5) at (8.00,  2.35) {Mission\\Control};
+    \node[exec]  (s6) at (10.00, 2.35) {Mission\\Dispatch};
+    \node[exec]  (s7) at (12.00, 2.35) {VDA5050\\MQTT};
+    \node[exec]  (s8) at (14.00, 2.35) {Carter\\Isaac Sim};
+
+    \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5,s5/s6,s6/s7,s7/s8}
       \draw[arrow] (\a) -- (\b);
 
+    % ── Обратный канал событий ─────────────────────────────────────────
     \node[draw=hsegray, rounded corners=2pt, fill=hselightblue,
-          align=center, text width=6.20cm, font=\scriptsize,
-          inner sep=4pt] (events) at (5.85,0.18)
+          align=center, text width=6.40cm, font=\scriptsize,
+          inner sep=4pt] (events) at (8.00, 0.68)
       {Redis Streams + WebSocket\\возвращают статусы, tool-события и финальный ответ};
 
-    \draw[event] (s7.south) .. controls +(0,-0.90) and +(2.4,0.65) .. (events.east);
-    \draw[event] (events.west) .. controls +(-2.4,0.65) and +(0,-0.90) .. (s2.south);
-  \end{tikzpicture}
+    \draw[event] (s8.south) .. controls +(0,-0.85) and +(2.2,0.60) .. (events.east);
+    \draw[event] (events.west) .. controls +(-2.2,0.60) and +(0,-0.85) .. (s2.south);
+  \end{tikzpicture}%
+  }
   \end{center}
-  \vspace{0.06cm}
-  \begin{beamercolorbox}[wd=\linewidth,sep=0.14cm]{block body}
+  \figcaption{Сквозной маршрут команды: запрос $\to$ Orchestrator $\to$ MCP $\to$ Mission Control $\to$ Dispatch $\to$ VDA5050 $\to$ Isaac Sim}
+  \vspace{0.32cm}
+  \begin{beamercolorbox}[wd=\linewidth,sep=0.11cm]{block body}
     \small
-    Пользовательский запрос превращается в план, затем в вызовы MCP-инструментов,
-    затем в VDA5050 order через Mission Dispatch и MQTT-контур робота в Isaac Sim.
+    Пользовательский запрос превращается в план, затем в вызовы MCP-инструментов.
+    Mission Control строит маршрут (BT + cuOpt), Mission Dispatch публикует VDA5050-заказ
+    через MQTT-контур робота в Isaac Sim.
   \end{beamercolorbox}
 \end{frame}
 
 % 12
 \begin{frame}{Orchestrator: агентная архитектура}
-  \vspace{0.05cm}
+  \vspace{-0.48cm}
   \begin{center}
   \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
-    main/.style={draw=hseblue, line width=0.9pt, rounded corners=2pt, fill=white,
-                 align=center, minimum height=0.90cm, text width=2.60cm, font=\normalsize},
-    agent/.style={main, fill=hselightblue, text width=2.10cm, minimum height=0.78cm},
-    tool/.style={main, draw=hsegreen, text width=2.60cm},
-    arrow/.style={-{Latex[length=2mm]}, draw=hseblue, line width=0.8pt},
+    main/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
+                 align=center, minimum height=0.80cm, text width=2.10cm, font=\small},
+    agent/.style={main, fill=hselightblue, text width=1.60cm, minimum height=0.70cm},
+    tool/.style={main, draw=hsegreen, text width=2.10cm},
+    arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt},
+    back/.style={-{Latex[length=1.6mm]}, draw=hsegray, line width=0.65pt, dashed},
     bus/.style={draw=hseblue, line width=0.7pt}
   ]
-    \node[main, text width=2.20cm] (task)    at (0,    2.85) {Task\\+ context};
-    \node[main] (router)  at (2.90, 2.85) {Router\\класс запроса};
-    \node[main] (planner) at (5.80, 2.85) {Planner\\план шагов};
-    \node[main] (runner)  at (8.70, 2.85) {PlanRunner\\исполнение};
-    \node[tool] (mcp)     at (11.60,2.85) {MCP tools\\robotic APIs};
+    % ── Верхний пайплайн ──────────────────────────────────────────────
+    \node[main, text width=1.90cm] (task)    at (0.80, 3.20) {Task\\+ context};
+    \node[main]  (planner) at (4.50,  3.20) {Planner\\план шагов};
+    \node[main]  (runner)  at (8.20,  3.20) {PlanRunner\\исполнение};
+    \node[tool]  (mcp)     at (12.20, 3.20) {MCP tools\\robotic APIs};
 
-    \draw[arrow] (task)    -- (router);
-    \draw[arrow] (router)  -- (planner);
+    \draw[arrow] (task)    -- (planner);
     \draw[arrow] (planner) -- (runner);
     \draw[arrow] (runner)  -- (mcp);
 
+    % ── Циклическая петля PlanRunner (шаги 1..N) — левая сторона ──────
+    \draw[back]
+      (runner.north west)
+      to[out=150, in=-150, looseness=1.8]
+      node[left, align=center, font=\tiny, text=hsegray, fill=white, inner sep=2pt]
+        {шаги\\1..N}
+      (runner.south west);
+
+    % ── Обратная связь: результат шага возвращается в PlanRunner ───────
+    \draw[back]
+      (mcp.north) .. controls +(0,0.90) and +(0,0.90) ..
+      node[above, font=\tiny, text=hsegray, fill=white, inner sep=2pt]
+        {результат шага}
+      (runner.north);
+
+    % ── Шина handoff ──────────────────────────────────────────────────
     \node[font=\small, text=hsegray, fill=white, inner sep=1.5pt]
-      at (5.80, 1.95) {handoff к специализированным агентам};
+      at (6.30, 2.32) {handoff к специализированным агентам};
+    \draw[bus]   (0, 2.00) -- (12.50, 2.00);
+    \draw[arrow] (runner.south) -- (8.20, 2.00);
 
-    \draw[bus] (0,1.72) -- (11.60,1.72);
+    % ── 6 агентов ────────────────────────────────────────────────────
+    \node[agent] (ro)  at (0.00,  0.80) {Router};
+    \node[agent] (ri)  at (2.50,  0.80) {RobotInfo};
+    \node[agent] (ma)  at (5.00,  0.80) {Map\\Analyst};
+    \node[agent] (nav) at (7.50,  0.80) {Navigation};
+    \node[agent] (sw)  at (10.00, 0.80) {Swarm\\Coord};
+    \node[agent] (gen) at (12.50, 0.80) {General};
 
-    \draw[arrow] (runner.south) -- (8.70,1.72);
-
-    \node[agent] (ri)  at (0,    0.78) {RobotInfo};
-    \node[agent] (ma)  at (2.90, 0.78) {MapAnalyst};
-    \node[agent] (nav) at (5.80, 0.78) {Navigation};
-    \node[agent] (sw)  at (8.70, 0.78) {Swarm\\Coordinator};
-    \node[agent] (gen) at (11.60,0.78) {General};
-
-    \foreach \a/\x in {ri/0, ma/2.90, nav/5.80, sw/8.70, gen/11.60}
-      \draw[arrow] (\x,1.72) -- (\a.north);
+    \foreach \a/\x in {ro/0.00, ri/2.50, ma/5.00, nav/7.50, sw/10.00, gen/12.50}
+      \draw[arrow] (\x, 2.00) -- (\a.north);
   \end{tikzpicture}%
   }
   \end{center}
+  \figcaption{Агентная иерархия оркестратора: Task $\to$ Planner $\to$ PlanRunner (цикл шагов) $\to$ handoff к агентам}
   \vspace{0.02cm}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.32\textwidth}
-      \columnmetric{Router}{классификация запроса}{выбор handoff-направления}
+      \columnmetric{Planner}{декомпозиция задачи}{JSON-план шагов и зависимости}
     \end{column}
     \begin{column}{0.32\textwidth}
-      \columnmetric{Planner}{декомпозиция миссии}{шаги, зависимости, роботы}
+      \columnmetric{PlanRunner}{цикл по шагам}{handoff + retry до 2 попыток}
     \end{column}
     \begin{column}{0.32\textwidth}
-      \columnmetric{PlanRunner}{исполнение}{агенты и MCP-инструменты}
+      \columnmetric{Router}{классификация запроса}{8 категорий handoff}
     \end{column}
   \end{columns}
 \end{frame}
@@ -556,15 +584,15 @@
       \resizebox{\linewidth}{!}{%
       \begin{tikzpicture}[
         box/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
-                    align=center, minimum height=0.72cm, text width=2.30cm, font=\scriptsize},
+                    align=center, minimum height=0.80cm, text width=2.30cm, font=\scriptsize},
         mcp/.style={box, fill=hselightblue},
         backend/.style={box, draw=hsegreen},
-        arrow/.style={-{Latex[length=1.7mm]}, draw=hseblue, line width=0.7pt}
+        arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt}
       ]
         \node[box, text width=2.60cm] (orch) at (3.60,3.55) {Orchestrator\\MCP clients};
         \node[mcp] (mcpmc)  at (0.95,2.15) {\texttt{mission\vphantom{p}}\\\texttt{-control-mcp}};
         \node[mcp] (mcpmd)  at (3.60,2.15) {\texttt{mission\vphantom{p}}\\\texttt{-dispatch-mcp}};
-        \node[mcp] (mcpros) at (6.25,2.15) {\texttt{ros-msp}\\stdio / WS};
+        \node[mcp] (mcpros) at (6.25,2.15) {\texttt{ros-msp}\\HTTP / stdio};
 
         \node[backend] (mc)  at (0.95,0.72) {Mission Control\\карта · robots\\waypoints};
         \node[backend] (md)  at (3.60,0.72) {Mission Dispatch\\миссии\\очередь};
@@ -601,11 +629,11 @@
       \vspace{0.00cm}
       \begin{tikzpicture}[
         box/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
-                    align=center, minimum height=0.68cm, text width=4.05cm, font=\small},
+                    align=center, minimum height=0.80cm, text width=4.05cm, font=\small},
         robot/.style={box, draw=hsegreen},
         broker/.style={box, draw=hseorange},
-        arrow/.style={-{Latex[length=1.7mm]}, draw=hseblue, line width=0.72pt},
-        state/.style={-{Latex[length=1.5mm]}, draw=hsegray, line width=0.62pt, dashed}
+        arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt},
+        state/.style={-{Latex[length=1.6mm]}, draw=hsegray, line width=0.65pt, dashed}
       ]
         \node[box]    (mc)   at (2.10,4.95) {Mission Control\\route + Behavior Tree};
         \node[box]    (md)   at (2.10,3.75) {Mission Dispatch\\mission queue};
@@ -618,8 +646,10 @@
         \draw[arrow] (mqtt) -- (ros);
         \draw[arrow] (ros) -- (sim);
 
-        \draw[state] (sim.east) -- ++(0,0) |- node[pos=0.25, right, font=\tiny, text=hsegray]
-          {state} (mc.east);
+        \draw[state]
+          (sim.west) .. controls +(-0.80,0) and +(-0.80,0) ..
+          node[left, font=\tiny, text=hsegray, fill=white, inner sep=1.5pt] {state}
+          (mc.west);
       \end{tikzpicture}\par
       \figcaption{Схема интеграции Isaac Sim, ROS\,2 и VDA5050 в симуляционном контуре}
     \end{column}
@@ -634,13 +664,13 @@
 \begin{frame}{Потоковая модель событий}
   \vspace{0.10cm}
   \begin{center}
-  \scalebox{0.86}{%
+  \resizebox{\linewidth}{!}{%
   \begin{tikzpicture}[
-    state/.style={draw=hseblue, line width=0.85pt, rounded corners=2pt, fill=white,
-                  align=center, minimum height=0.95cm, text width=2.60cm, font=\small},
+    state/.style={draw=hseblue, line width=0.75pt, rounded corners=2pt, fill=white,
+                  align=center, minimum height=0.80cm, text width=2.60cm, font=\small},
     stream/.style={state, fill=hselightblue, text width=2.80cm},
-    arrow/.style={-{Latex[length=1.9mm]}, draw=hseblue, line width=0.8pt},
-    event/.style={-{Latex[length=1.9mm]}, draw=hsegray, line width=0.65pt, dashed}
+    arrow/.style={-{Latex[length=1.8mm]}, draw=hseblue, line width=0.7pt},
+    event/.style={-{Latex[length=1.8mm]}, draw=hsegray, line width=0.65pt, dashed}
   ]
     \node[state]                 (pending) at (0.0,  0) {\texttt{pending}\\задача создана};
     \node[state]                 (running) at (3.20, 0) {\texttt{running}\\агенты + tools};
@@ -718,7 +748,7 @@
       \end{tikzpicture}
       \vspace{0.03cm}
 
-      {\tiny\color{hsegray}Рисунок~5~\textemdash{} Навигация~+~бортовая автономность}
+      {\tiny\color{hsegray}Рисунок~8~\textemdash{} Навигация~+~бортовая автономность}
     \end{column}%
     \begin{column}{0.61\textwidth}
       \scriptsize\textbf{\color{hseblue}Идея:} VDA5050 order содержит поле \texttt{actions} в узлах маршрута; тип \texttt{vla\_action} запускает локальный инференс SmolVLA вместо навигационной команды. Робот останавливается, выполняет задание, продолжает миссию.
@@ -765,7 +795,7 @@
     \midrule
     vLLM Service & v0.2.9, 32 коммита & Qwen2.5-Instruct развёрнут как OpenAI-compatible сервис на 2\,×\,Tesla V100. \\
     \midrule
-    Ros2 контур & форки и настройка окружения & Mission Control/Dispatch, VDA5050/MQTT, ROS\,2 Jazzy исполняют миссию, а Isaac Sim реализует миссию в физической симуляции. \\
+    ROS\,2 контур & форки и настройка окружения & Mission Control/Dispatch, VDA5050/MQTT, ROS\,2 Jazzy обеспечивают исполнение миссии; Isaac Sim предоставляет физически правдоподобную симуляционную среду. \\
     \midrule
     MCP-серверы & 3 async-сервера & Orchestrator получает tool-интерфейс к Mission Control, Mission Dispatch и ros-msp. \\
     \midrule
@@ -773,9 +803,9 @@
     \midrule
     Interface & v0.5.0, 168 коммитов & Пользователь ставит задачу, запускает агентный сценарий и видит поток выполнения в веб-интерфейсе. \\
     \midrule
-    Тестирование & 66 тестов & Проверены ключевые сценарии Orchestrator; Interface закрыт route, WebSocket и smoke-проверками. \\
+    Тестирование & 66 из 88 тестов & Проверены ключевые сценарии Orchestrator; Interface закрыт route, WebSocket и smoke-проверками. \\
     \midrule
-    SmolVLA Tools & v0.2.3, 6 коммитов & Показаны сжатие параметров, снижение VRAM и ускорение при падении $R^2$ на 1.8\%. \\
+    SmolVLA Tools & v0.2.0, 2 коммита & Показаны сжатие параметров, снижение VRAM и ускорение при падении $R^2$ на 1.8\%. \\
     \bottomrule
   \end{tabularx}
   \vspace{0.32cm}
