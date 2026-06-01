@@ -3,7 +3,7 @@
 
 ![Демо](docs\agents_swarm_demo.mp4)
 
-[Яндекс-диск](https://disk.yandex.ru/i/7aUTWh48tYnPbA)
+[Яндекс-диск](https://disk.yandex.ru/i/JnYbZ7TQbGvw5w)
 
 # Документация: AgentsSwarm
 
