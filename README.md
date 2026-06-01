@@ -1,3 +1,10 @@
+
+# Демонстрация работы
+
+![Демо](docs\agents_swarm_demo.mp4)
+
+[Яндекс-диск](https://disk.yandex.ru/i/7aUTWh48tYnPbA)
+
 # Документация: AgentsSwarm
 
 ## Официальное название:
