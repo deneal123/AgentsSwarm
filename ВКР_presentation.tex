@@ -1,4 +1,4 @@
-% !TEX program = xelatex
+﻿% !TEX program = xelatex
 % Финальная презентация ВКР: AgentsSwarm
 \documentclass[aspectratio=169,11pt]{beamer}
 
@@ -148,7 +148,7 @@
 \begin{frame}{Предметная область и термины}
   \sectiontag{Контекст работы}
   {\large\bfseries Работа находится на стыке multi-robot systems, fleet management,
-  LLM-агентов и симуляционного роботического контура.}
+  LLM-агентов и симуляционного робототехнического контура.}
   \vspace{0.18cm}
 
   \begin{columns}[T,onlytextwidth]
@@ -234,7 +234,7 @@
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.49\textwidth}
       \begin{minipage}[t][1.60cm][t]{\linewidth}
-        \tightkeybox{Архитектура}{8 компонентов: интерфейс, Orchestrator, vLLM, MCP-слой и роботический контур}
+        \tightkeybox{Архитектура}{8 компонентов: интерфейс, Orchestrator, vLLM, MCP-слой и робототехнический контур}
       \end{minipage}
       \vspace{0.11cm}
       \tightkeybox{Агентное планирование}{Router, Planner, PlanRunner и агенты для карт, роботов и маршрутов}
@@ -270,7 +270,7 @@
         \tightkeybox{MCP}{LLM вызывает ограниченный каталог инструментов}
       \end{minipage}
       \vspace{0.12cm}
-      \tightkeybox{ROS\,2 + Isaac Sim}{проверка идет в симуляционном роботическом контуре}
+      \tightkeybox{ROS\,2 + Isaac Sim}{проверка идет в симуляционном робототехническом контуре}
     \end{column}
     \begin{column}{0.32\textwidth}
       \begin{minipage}[t][1.80cm][t]{\linewidth}
@@ -283,7 +283,7 @@
   \vspace{0.28cm}
   \begin{beamercolorbox}[wd=\linewidth,sep=0.14cm]{block body}
     \small Ограничение принципиально: LLM не помещается в servo-loop робота;
-    она работает на уровне плана и инструментов, а выполнение остаётся в роботическом контуре.
+    она работает на уровне плана и инструментов, а выполнение остаётся в робототехническом контуре.
   \end{beamercolorbox}
 \end{frame}
 
@@ -303,13 +303,13 @@
         \keybox{LLM-инференс}{vLLM Service, Qwen2.5-Instruct, OpenAI-compatible API, Data Parallel на 2\,×\,Tesla V100}
       \end{minipage}
       \vspace{0.10cm}
-      \keybox{Роботический контур}{NVIDIA Isaac Sim, ROS\,2 Jazzy, Nav2, rosbridge, Mosquitto, VDA5050}
+      \keybox{Робототехнический контур}{NVIDIA Isaac Sim, ROS\,2 Jazzy, Nav2, rosbridge, Mosquitto, VDA5050}
     \end{column}
   \end{columns}
   \vspace{0.20cm}
   \begin{beamercolorbox}[wd=\linewidth,sep=0.13cm]{block body}
     \small Стек выбран под разделение ролей: веб-интерфейс, агентное планирование,
-    LLM-инференс и роботическое исполнение связаны через REST, WebSocket, MCP и MQTT.
+    LLM-инференс и робототехническое исполнение связаны через REST, WebSocket, MCP и MQTT.
   \end{beamercolorbox}
 \end{frame}
 
@@ -577,7 +577,7 @@
 \end{frame}
 
 % 13
-\begin{frame}{MCP-слой: стандартный интерфейс к роботическому контуру}
+\begin{frame}{MCP-слой: стандартный интерфейс к робототехническому контуру}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.56\textwidth}
       \vspace{0.10cm}
@@ -618,11 +618,11 @@
     \end{column}
   \end{columns}
   \vspace{0.52cm}
-  \keybox{Почему это важно}{Оркестратор не зависит от конкретной реализации роботического контура и работает через tool-интерфейс.}
+  \keybox{Почему это важно}{Оркестратор не зависит от конкретной реализации робототехнического контура и работает через tool-интерфейс.}
 \end{frame}
 
 % 14
-\begin{frame}{Роботический контур: Isaac Sim, ROS 2 и VDA5050}
+\begin{frame}{Робототехнический контур: Isaac Sim, ROS 2 и VDA5050}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.45\textwidth}
       \centering
@@ -708,7 +708,7 @@
 \begin{frame}{Демонстрация интерфейса}
   \begin{columns}[T,onlytextwidth]
     \begin{column}{0.33\textwidth}
-      \includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{qr_demo.pdf}\par
+      \includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{assets/qr-code.png}\par
       \figcaption{QR-код на видео-демо}
     \end{column}
     \begin{column}{0.65\textwidth}
@@ -813,7 +813,7 @@
   \begin{beamercolorbox}[wd=\linewidth,sep=0.12cm]{block body}
     \scriptsize\bfseries\color{hseblue}
     Итог: сквозной маршрут от естественного языка до исполнимой VDA5050-миссии
-    собран, описан и проверен в симуляционном роботическом контуре.
+    собран, описан и проверен в симуляционном робототехническом контуре.
   \end{beamercolorbox}
   \vspace{0.04cm}
   \begin{center}
