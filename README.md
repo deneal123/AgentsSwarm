@@ -1,7 +1,7 @@
 
 # Демонстрация работы
 
-![Демо](https://github.com/user-attachments/assets/71dba6e6-9148-4177-b58e-83d579df35ce)
+![Демо](https://github-production-user-asset-6210df.s3.amazonaws.com/52132611/600920893-71dba6e6-9148-4177-b58e-83d579df35ce.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260601%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260601T115222Z&X-Amz-Expires=300&X-Amz-Signature=43ed2589c2c61828a30b062d8e5facc5b72cd01e3b0fbcff2bbde43fe2e159c3&X-Amz-SignedHeaders=host&response-content-type=video%2Fmp4)
 
 [Яндекс-диск](https://disk.yandex.ru/i/JnYbZ7TQbGvw5w)
 
