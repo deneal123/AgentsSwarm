@@ -1,7 +1,7 @@
 
 # Демонстрация работы
 
-![Демо](docs\agents_swarm_demo.mp4)
+![Демо](./docs/agents_swarm_demo.mp4)
 
 [Яндекс-диск](https://disk.yandex.ru/i/JnYbZ7TQbGvw5w)
 
